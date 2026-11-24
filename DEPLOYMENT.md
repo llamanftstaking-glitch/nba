@@ -25,6 +25,11 @@ docker compose exec worker gizer ingest-results --season 2025-26   # one-off his
 docker compose exec worker gizer ingest-results --season 2026-27
 docker compose exec worker gizer backtest   # validates models; promotes only those passing the gate
 ```
+**Server M uses a Caddy container (`mon-caddy`, Caddyfile at `/opt/mon/Caddyfile`) that reaches apps over a
+shared Docker network.** Use `bash scripts/connect-caddy.sh`: it attaches only the web container to that network
+via `docker-compose.override.yml`, appends one site block between `gizer-nba-begin/end` markers (with a backup and
+validation), and reloads Caddy. The generic instructions below apply to a host-level proxy instead.
+
 Then add the proxy site (do not edit other sites):
 `infrastructure/proxy/nginx-nba.gizergroup.com.conf` (or `Caddyfile.snippet`), issue the certificate with the
 proxy's existing ACME tooling, reload the proxy, and run:
