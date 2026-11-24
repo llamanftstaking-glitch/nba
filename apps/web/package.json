@@ -1,0 +1,34 @@
+{
+  "name": "gizer-nba-web",
+  "version": "0.1.0",
+  "private": true,
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "mock-api": "node e2e/mock-api.mjs",
+    "smoke": "node e2e/smoke.mjs"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "5.108.4",
+    "next": "15.5.29",
+    "react": "19.2.9",
+    "react-dom": "19.2.9",
+    "recharts": "3.11.1"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "3.3.7",
+    "@types/node": "22.20.5",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
+    "autoprefixer": "10.7.0",
+    "eslint": "9.39.5",
+    "eslint-config-next": "15.5.29",
+    "postcss": "8.5.33",
+    "tailwindcss": "3.4.19",
+    "typescript": "5.9.3"
+  }
+}

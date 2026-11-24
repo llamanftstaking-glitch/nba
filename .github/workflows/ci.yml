@@ -1,0 +1,49 @@
+name: ci
+on:
+  push: { branches: [main] }
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16.6-alpine
+        env: { POSTGRES_USER: gizer, POSTGRES_PASSWORD: gizer_dev, POSTGRES_DB: gizer_nba_test }
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U gizer" --health-interval 5s --health-timeout 5s --health-retries 10
+    defaults: { run: { working-directory: apps/api } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.13" }
+      - run: pip install -r requirements.lock && pip install --no-deps -e . && pip install pytest==8.3.4 ruff==0.8.4 pip-audit==2.7.3
+      - run: ruff check gizer tests --select E9,F
+      - run: pytest -q
+      - name: Dependency vulnerability scan
+        run: pip-audit -r requirements.lock
+  web:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: apps/web } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "22" }
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm audit --omit=dev --audit-level=high
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: gitleaks/gitleaks-action@v2
+        env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+  images:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t gizer-nba-api apps/api
+      - run: docker build -t gizer-nba-web apps/web

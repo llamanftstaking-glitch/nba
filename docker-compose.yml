@@ -1,0 +1,123 @@
+# GIZER NBA — single-server deployment. Nothing here publishes a database port.
+# Only the web container is bound to a loopback port for the host's existing reverse proxy.
+name: gizer-nba
+
+x-api: &api
+  build: ./apps/api
+  image: gizer-nba-api:${GIZER_VERSION:-local}
+  restart: unless-stopped
+  env_file: .env
+  environment:
+    GIZER_ENV: production
+    GIZER_DATABASE_URL: postgresql+psycopg://gizer:${POSTGRES_PASSWORD}@postgres:5432/gizer_nba
+  networks: [internal, egress]
+  depends_on:
+    migrate:
+      condition: service_completed_successfully
+  security_opt: ["no-new-privileges:true"]
+  cap_drop: [ALL]
+  read_only: true
+  tmpfs: [/tmp]
+  logging: &logging
+    driver: json-file
+    options: { max-size: "20m", max-file: "5" }
+
+services:
+  postgres:
+    image: postgres:16.6-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: gizer
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: gizer_nba
+    volumes: [pgdata:/var/lib/postgresql/data]
+    networks: [internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gizer -d gizer_nba"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    shm_size: 256mb
+    mem_limit: 2g
+    cpus: 2
+    logging: *logging
+
+  migrate:
+    <<: *api
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["sh", "-c", "alembic upgrade head && gizer seed && gizer bootstrap-owner"]
+
+  api:
+    <<: *api
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=4).status == 200 else 1)"]
+      interval: 15s
+      timeout: 6s
+      retries: 5
+    mem_limit: 1500m
+    cpus: 2
+
+  worker:
+    <<: *api
+    command: ["gizer", "worker"]
+    mem_limit: 3g
+    cpus: 2
+
+  research-worker:
+    <<: *api
+    command: ["gizer", "worker"]
+    mem_limit: 3g
+    cpus: 2
+
+  scheduler:
+    <<: *api
+    command: ["gizer", "scheduler"]
+    mem_limit: 512m
+    cpus: 0.5
+
+  web:
+    build: ./apps/web
+    image: gizer-nba-web:${GIZER_VERSION:-local}
+    restart: unless-stopped
+    environment:
+      API_INTERNAL_URL: http://api:8000
+      NODE_ENV: production
+    depends_on:
+      api:
+        condition: service_healthy
+    ports: ["127.0.0.1:${GIZER_WEB_PORT:-3410}:3000"]
+    networks: [internal]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    mem_limit: 768m
+    cpus: 1
+    logging: *logging
+
+  backup:
+    image: postgres:16.6-alpine
+    restart: unless-stopped
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-14}
+    volumes:
+      - backups:/backups
+      - ./infrastructure/backup:/scripts:ro
+    entrypoint: ["sh", "/scripts/backup-loop.sh"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    networks: [internal]
+    mem_limit: 512m
+    logging: *logging
+
+networks:
+  internal:
+    internal: true   # no route to the internet; database is reachable only from these containers
+  egress: {}         # outbound access for provider calls (api/worker/scheduler only)
+
+volumes:
+  pgdata:
+  backups:

@@ -1,0 +1,8 @@
+# Alternative if Server M's proxy is Caddy: add this block to the existing Caddyfile.
+nba.gizergroup.com {
+    encode gzip
+    header X-Robots-Tag "noindex, nofollow"
+    reverse_proxy 127.0.0.1:3410 {
+        header_up X-Forwarded-For {remote_host}
+    }
+}
