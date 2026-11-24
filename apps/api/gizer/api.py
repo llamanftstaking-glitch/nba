@@ -725,7 +725,9 @@ def players(q: str | None = None, team: str | None = None, limit: int = Query(50
                        func.avg(PlayerBox.reb), func.avg(PlayerBox.ast), func.avg(PlayerBox.fg3m))
                 .join(PlayerBox, (PlayerBox.player_id == Player.id) & (PlayerBox.season == season)).group_by(Player.id))
         if q:
-            stmt = stmt.where(Player.name.ilike(f"%{q[:60]}%"))
+            from .providers import name_key
+            key = name_key(q[:60])  # accent- and punctuation-insensitive ("Jokic" finds "Jokić")
+            stmt = stmt.where(Player.name_key.like(f"%{key}%") if key else Player.name.ilike(f"%{q[:60]}%"))
         if team:
             t = next((x for x in teams.values() if x.abbr == team.upper()), None)
             stmt = stmt.where(Player.team_id == (t.id if t else -1))

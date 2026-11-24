@@ -373,7 +373,9 @@ def lineups(date: str | None = None):
     with session_scope() as s:
         teams = {t.id: t for t in s.scalars(select(Team))}
         games = list(s.scalars(select(Game).where(Game.game_date == d).order_by(Game.tipoff_utc, Game.id)))
-        ctx = LineupContext(s, d) if games and d >= ingestion.today_et() else None
+        have = lineup_status_map(s, [g.id for g in games])
+        missing = any((g.id, tid) not in have for g in games for tid in (g.home_team_id, g.away_team_id))
+        ctx = LineupContext(s, d) if games and missing and d >= ingestion.today_et() else None  # only when nothing is stored
         return {"date": d, "games": [{
             "game": {"id": g.id, "label": f"{teams[g.away_team_id].abbr} @ {teams[g.home_team_id].abbr}", "tipoff_utc": g.tipoff_utc,
                      "status": g.status, "home": team_ref(teams[g.home_team_id]), "away": team_ref(teams[g.away_team_id])},
@@ -387,7 +389,8 @@ def game_lineups(game_id: str):
         if g is None:
             raise ApiError(404, "not_found", "Game not found.")
         teams = {t.id: t for t in s.scalars(select(Team))}
-        ctx = LineupContext(s, g.game_date) if g.status == "scheduled" else None
+        have = lineup_status_map(s, [g.id])
+        ctx = LineupContext(s, g.game_date) if g.status == "scheduled" and len(have) < 2 else None
         return {"game_id": g.id, "home": _team_lineup(s, ctx, g, teams[g.home_team_id]),
                 "away": _team_lineup(s, ctx, g, teams[g.away_team_id])}
 
