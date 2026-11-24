@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.1 — 2026-11-24
+* Dashboard: Kalshi Market Watch and market detail, Minutes Intelligence, injury change centre, game-page
+  minutes and Kalshi sections, player minutes block and contract ladder.
+* History load fetches newest games first, current season first. `gizer quickstart` gives a fresh server
+  today's slate, injuries, projected lineups, Kalshi markets and an edition within about a minute.
+* Lineup projection falls back to a team's last ESPN box score when its history is not loaded yet.
+
 ## 0.4.0 — 2026-11-24 (Core Intelligence V1.0)
 * Kalshi market intelligence (read-only): contract discovery, conservative interpretation with verbatim rules,
   append-only price observations, descriptive movement, market detail with event timeline. Kalshi quotes feed

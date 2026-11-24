@@ -47,6 +47,9 @@ class LineupContext:
         pf = M.load_player_frame(s, before=d)
         self.feats = M.live_player_features(pf, d) if not pf.empty else pd.DataFrame()
         self.recent_min = pf.groupby("player_id")["minutes"].apply(lambda x: float(x.tail(5).mean())).to_dict() if not pf.empty else {}
+        from .providers import name_key
+        self.inj_by_name = {(i.team_id, name_key(i.player_name)): i for i in latest_injuries(s, self.now)}
+        self.fallback: dict[int, dict] = {}  # team_id -> last game's box rows from the schedule provider
 
     def roster(self, team_id: int) -> pd.DataFrame:
         f = self.feats
@@ -125,6 +128,10 @@ def build_team_lineup(ctx: LineupContext, game: Game, team: Team, provider_rows:
                         + (f" Replaced (unavailable or no longer with the team): {', '.join(swapped)}." if swapped else ""))
             else:
                 note = "Not enough available rotation players with history to project five starters."
+        elif team.id in ctx.fallback:
+            fb = _from_last_box(ctx, team, ctx.fallback[team.id])
+            if fb is not None:
+                return fb
     rows = [ctx.player_row(p, "starter") for p in starters]
     out_rows = [ctx.player_row(p, "bench") for p in roster_ids if p not in starters]
     injured_extra = [i for pid, i in ctx.inj.items() if i.team_id == team.id and pid not in roster_ids and pid not in starters
@@ -136,17 +143,59 @@ def build_team_lineup(ctx: LineupContext, game: Game, team: Team, provider_rows:
             "starters": rows, "bench": bench[:10], "unavailable": unavailable}
 
 
+FALLBACK_SOURCE = "GIZER projection: starters of the team's last game (ESPN box score) adjusted for the latest injury report"
+
+
+def _from_last_box(ctx: LineupContext, team: Team, fb: dict) -> dict | None:
+    """Projection when this team's history is not loaded yet: the five starters of its last game, with anyone now
+    listed out replaced by the highest-minute non-starter from that same game. Returns None rather than a
+    partial five. Minutes projections are left empty (they need loaded history)."""
+    from .ingestion import match_player
+    from .providers import name_key
+
+    def row(r, role):
+        inj = ctx.inj_by_name.get((team.id, name_key(r["name"])))
+        av, det = availability_of(inj)
+        pid = match_player(ctx.s, r["name"], [team.id])
+        return {"player_id": pid, "name": r["name"], "headshot_url": r.get("headshot_url"), "jersey": r.get("jersey"),
+                "position": r.get("position"), "role": role, "availability": av, "injury_detail": det, "proj_min": None,
+                "recent_min": None, "starts_last10": None, "_min": r.get("minutes") or 0.0, "_dnp": r.get("dnp")}
+    rows = [row(r, "starter" if r["starter"] else "bench") for r in fb["rows"]]
+    keep = [r for r in rows if r["role"] == "starter" and not is_out(r["availability"])]
+    repl = sorted([r for r in rows if r["role"] == "bench" and not is_out(r["availability"]) and not r["_dnp"] and r["_min"] > 0],
+                  key=lambda r: -r["_min"])
+    need = 5 - len(keep)
+    if need > len(repl):
+        return None
+    starters = keep + [{**r, "role": "starter"} for r in repl[:need]]
+    names = {r["name"] for r in starters}
+    swapped = [r["name"] for r in rows if r["role"] == "starter" and is_out(r["availability"])]
+    clean = lambda r, role: {k: v for k, v in r.items() if not k.startswith("_")} | {"role": role}  # noqa: E731
+    listed = {r["name"] for r in rows}
+    extra_out = [{"player_id": i.player_id, "name": i.player_name, "headshot_url": None, "jersey": None, "position": None,
+                  "role": "bench", "availability": i.status.lower(), "injury_detail": i.detail or i.comment, "proj_min": None,
+                  "recent_min": None, "starts_last10": None}
+                 for (tid, _), i in ctx.inj_by_name.items() if tid == team.id and i.player_name not in listed and is_out(i.status.lower())]
+    return {"team_id": team.id, "status": "projected", "source": FALLBACK_SOURCE, "verified_at": ctx.now,
+            "note": (f"Projected — not official. Starters of {fb['date']} per ESPN box score."
+                     + (f" Replaced (now listed out): {', '.join(swapped)}." if swapped else "")
+                     + " Minutes projections appear once this team's history is loaded."),
+            "starters": [clean(r, "starter") for r in starters],
+            "bench": [clean(r, "bench") for r in sorted(rows, key=lambda r: -r["_min"]) if r["name"] not in names and not is_out(r["availability"])][:10],
+            "unavailable": [clean(r, "bench") for r in rows if r["name"] not in names and is_out(r["availability"])] + extra_out}
+
+
 def _signature(lu: dict) -> str:
-    key = [lu["status"], sorted((r["player_id"], r["availability"]) for r in lu["starters"]),
-           sorted(r["player_id"] for r in lu["unavailable"] if r["player_id"])]
+    key = [lu["status"], sorted((r["name"], r["availability"]) for r in lu["starters"]),
+           sorted(r["name"] for r in lu["unavailable"])]
     return hashlib.sha256(json.dumps(key, default=str).encode()).hexdigest()
 
 
 def describe_change(prev: LineupSnapshot | None, lu: dict) -> str:
     if prev is None:
         return f"First {lu['status']} lineup recorded."
-    old = {p["player_id"]: p for p in prev.players if p["role"] == "starter"}
-    new = {p["player_id"]: p for p in lu["starters"]}
+    old = {p["name"]: p for p in prev.players if p["role"] == "starter"}
+    new = {p["name"]: p for p in lu["starters"]}
     parts = []
     if prev.status != lu["status"]:
         parts.append(f"status {prev.status} → {lu['status']}")
@@ -157,9 +206,9 @@ def describe_change(prev: LineupSnapshot | None, lu: dict) -> str:
     for k in new.keys() & old.keys():
         if new[k]["availability"] != old[k]["availability"]:
             parts.append(f"{new[k]['name']}: {old[k]['availability']} → {new[k]['availability']}")
-    old_un = {p["player_id"] for p in prev.players if p["role"] == "unavailable"}
+    old_un = {p["name"] for p in prev.players if p["role"] == "unavailable"}
     for p in lu["unavailable"]:
-        if p["player_id"] not in old_un:
+        if p["name"] not in old_un:
             parts.append(f"{p['name']} now unavailable ({p['availability']})")
     return "; ".join(parts) or "availability details updated"
 
@@ -172,7 +221,17 @@ def refresh_lineups(d: date, now: datetime | None = None, provider: EspnProvider
     with session_scope() as s:
         ctx = LineupContext(s, d, now)
         teams = {t.id: t for t in s.scalars(select(Team))}
-        for g in s.scalars(select(Game).where(Game.game_date == d, Game.status != "postponed").order_by(Game.tipoff_utc)):
+        games_today = list(s.scalars(select(Game).where(Game.game_date == d, Game.status != "postponed").order_by(Game.tipoff_utc)))
+        if fetch_live:
+            need = {tid for g in games_today if g.status == "scheduled" for tid in (g.home_team_id, g.away_team_id)
+                    if last_confirmed_five(ctx, tid) is None and confirmed_from_box(ctx, g, tid) is None}
+            if need:
+                try:
+                    ctx.fallback = (provider or EspnProvider()).last_game_boxes(need, d)
+                except ProviderError:
+                    out["provider_errors"] += 1
+                out["fallback_teams"] = len(ctx.fallback)
+        for g in games_today:
             out["games"] += 1
             live_rows = None
             near_tip = g.tipoff_utc is not None and (g.tipoff_utc - now).total_seconds() <= 45 * 60

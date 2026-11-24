@@ -13,6 +13,12 @@ confirmation, and a confirmed lineup is never downgraded by a later projection. 
 There is **no pre-tipoff confirmed-lineup source** in the current provider set (none is free and authorized).
 Positions are the provider's designation (G/F/C); the system does not invent PG/SG/SF/PF/C slots.
 
+## When a team's history is not loaded yet
+If our database has no confirmed starters for a team (fresh server, history still loading), the projection is
+built from the team's most recent box score on ESPN: its five starters, with anyone now listed out replaced by
+the highest-minute non-starter from that same game. It is labelled projected with that source, minutes
+projections are left empty rather than estimated, and no lineup is shown if five real players cannot be named.
+
 ## Data
 * `player_box.starter` — confirmed starter flag per appearance (1,444 of 1,477 games; the rest had incomplete source data).
 * `player_absences` — rostered players who did not appear, with the published reason (6,341 rows).

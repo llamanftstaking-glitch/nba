@@ -365,11 +365,9 @@ def ingest_confirmed_starters(since: date, until: date | None = None, max_games:
             "unmatched_player_rows": unmatched}
 
 
-def quickstart(games_per_team: int = 8) -> dict:
-    """Get today's slate usable quickly on a fresh server: schedule and quotes, the most recent box scores of the
-    teams playing today and tomorrow, their confirmed starters, injuries. History beyond that keeps loading
-    separately. Every step is the normal ingestion path; nothing is estimated or substituted."""
-    from .providers import season_for_date
+def quickstart() -> dict:
+    """Fast first pass for a server whose history is still loading: today's and tomorrow's schedule with game
+    quotes, and the injury report. Uses only the fast schedule provider; box-score history loads separately."""
     d = today_et()
     out: dict = {"date": d.isoformat()}
     for dd in (d, d + timedelta(days=1)):
@@ -377,17 +375,8 @@ def quickstart(games_per_team: int = 8) -> dict:
             out[f"slate_{dd}"] = ingest_slate(dd)
         except ProviderError as e:
             out[f"slate_{dd}"] = {"error": str(e)}
-    with session_scope() as s:
-        today_teams = {t for g in s.scalars(select(Game).where(Game.game_date == d)) for t in (g.home_team_id, g.away_team_id)}
-        next_teams = {t for g in s.scalars(select(Game).where(Game.game_date == d + timedelta(days=1))) for t in (g.home_team_id, g.away_team_id)}
-    season = season_for_date(d)
-    out["boxes_today_teams"] = ingest_results(season, recent_for_teams=(today_teams, games_per_team)) if today_teams else None
-    out["starters"] = ingest_confirmed_starters(d - timedelta(days=45))
     try:
         out["injuries"] = ingest_injuries()
     except ProviderError as e:
         out["injuries"] = {"error": str(e)}
-    out["boxes_tomorrow_teams"] = ingest_results(season, recent_for_teams=(next_teams - today_teams, games_per_team)) if next_teams - today_teams else None
-    if out["boxes_tomorrow_teams"]:
-        out["starters_2"] = ingest_confirmed_starters(d - timedelta(days=45))
     return out

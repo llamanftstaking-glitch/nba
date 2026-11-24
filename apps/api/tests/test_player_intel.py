@@ -1,6 +1,6 @@
 """V3: player historical intelligence, lineup statuses and change detection, manual markets, props API.
 All data is SYNTHETIC and lives only in the test database."""
-from datetime import timedelta
+from datetime import date, timedelta
 
 import numpy as np
 import pytest
@@ -265,3 +265,28 @@ def test_manual_market_rules_and_props_api():
     keys = {g["key"] for g in stg["groups"]}
     assert {"single_player", "single_team", "player_pts", "player_pra", "DOUBLE", "SIX", "SGP", "CROSS"} <= keys
     assert all(g["hit_rate"] is None for g in stg["groups"] if g["settled"] == 0)  # honest empty groups
+
+
+def test_lineup_falls_back_to_last_box_score_when_history_is_not_loaded():
+    from gizer.lineups import _from_last_box
+    t3 = ST["teams"][3]
+    rows = [{"name": f"Fallback Starter {chr(65 + i)}", "team_id": t3, "starter": True, "dnp": False, "minutes": 30.0 - i,
+             "position": "G", "jersey": str(i), "headshot_url": None} for i in range(5)]
+    rows += [{"name": "Fallback Bench Big", "team_id": t3, "starter": False, "dnp": False, "minutes": 22.0, "position": "C", "jersey": "50", "headshot_url": None},
+             {"name": "Fallback Bench Small", "team_id": t3, "starter": False, "dnp": False, "minutes": 9.0, "position": "G", "jersey": "51", "headshot_url": None},
+             {"name": "Fallback Dnp", "team_id": t3, "starter": False, "dnp": True, "minutes": None, "position": "F", "jersey": "52", "headshot_url": None}]
+    now = ST["tipoff"] - timedelta(hours=5)
+    add_injuries([(None, "Fallback Starter A", t3, "Out")], at=now - timedelta(minutes=3))
+    with gdb.session_scope() as s:
+        ctx = LineupContext(s, SLATE, now)
+        lu = _from_last_box(ctx, s.get(gdb.Team, t3), {"date": date(2026, 3, 18), "rows": rows})
+        names = [p["name"] for p in lu["starters"]]
+        assert lu["status"] == "projected" and "not official" in lu["note"] and "ESPN box score" in lu["source"]
+        assert len(names) == 5 and "Fallback Starter A" not in names and "Fallback Bench Big" in names  # highest-minute available sub
+        assert "Fallback Dnp" not in names and all(p["proj_min"] is None for p in lu["starters"])       # minutes are not invented
+        assert any(p["name"] == "Fallback Starter A" for p in lu["unavailable"])
+        # two starters out and only one usable replacement → no partial five
+        add_injuries([(None, "Fallback Starter A", t3, "Out"), (None, "Fallback Starter B", t3, "Out"), (None, "Fallback Bench Small", t3, "Out")],
+                     at=now - timedelta(minutes=1))
+        ctx2 = LineupContext(s, SLATE, now)
+        assert _from_last_box(ctx2, s.get(gdb.Team, t3), {"date": date(2026, 3, 18), "rows": rows}) is None

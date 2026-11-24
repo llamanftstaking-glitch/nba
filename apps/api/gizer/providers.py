@@ -350,9 +350,16 @@ class EspnProvider(BaseProvider):
             for team in (data.get("boxscore") or {}).get("players") or []:
                 tid = ESPN_ABBR_TO_ID.get(team["team"]["abbreviation"])
                 for block in team.get("statistics") or []:
+                    labels = block.get("labels") or block.get("names") or []
+                    mi = labels.index("MIN") if "MIN" in labels else None
                     for a in block.get("athletes") or []:
                         ath = a["athlete"]
-                        out.append({"espn_id": str(ath["id"]), "name": ath["displayName"], "team_id": tid,
+                        st = a.get("stats") or []
+                        try:
+                            mins = float(st[mi]) if mi is not None and mi < len(st) and str(st[mi]).strip() not in ("", "--") else None
+                        except ValueError:
+                            mins = None
+                        out.append({"minutes": mins, "espn_id": str(ath["id"]), "name": ath["displayName"], "team_id": tid,
                                     "starter": bool(a.get("starter")), "dnp": bool(a.get("didNotPlay")),
                                     "reason": a.get("reason") or None, "jersey": ath.get("jersey"),
                                     "position": (ath.get("position") or {}).get("abbreviation"),
@@ -360,6 +367,35 @@ class EspnProvider(BaseProvider):
         except (KeyError, TypeError, ValueError) as e:
             raise ProviderError(f"espn summary {espn_event_id}: schema validation failed ({type(e).__name__}: {e})") from e
         return out
+
+    def last_game_boxes(self, team_ids: set[int], before: date, max_days: int = 12) -> dict[int, dict]:
+        """Most recent completed game's box-score rows for each team: {team_id: {"date", "rows"}}.
+        One scoreboard call per day walked back, one summary call per game needed."""
+        from datetime import timedelta
+        found: dict[int, dict] = {}
+        need = set(team_ids)
+        for back in range(1, max_days + 1):
+            if not need:
+                break
+            d = before - timedelta(days=back)
+            try:
+                games, _ = self.scoreboard(d)
+            except ProviderError:
+                continue
+            for g in games:
+                mine = {g.home_team_id, g.away_team_id} & need
+                if g.status != "final" or not mine or not g.espn_event_id:
+                    continue
+                try:
+                    rows = self.summary_box(g.espn_event_id)
+                except ProviderError:
+                    continue
+                for tid in mine:
+                    trows = [r for r in rows if r["team_id"] == tid]
+                    if sum(1 for r in trows if r["starter"]) == 5:
+                        found[tid] = {"date": g.game_date, "rows": trows}
+                        need.discard(tid)
+        return found
 
     def injuries(self) -> list[InjuryRec]:
         if not self.settings.espn_enabled:

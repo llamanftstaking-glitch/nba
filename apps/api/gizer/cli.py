@@ -19,7 +19,7 @@ def main(argv=None):
     p = sub.add_parser("ingest-results"); p.add_argument("--season"); p.add_argument("--max-boxes", type=int)
     p = sub.add_parser("ingest-slate"); p.add_argument("--date")
     sub.add_parser("ingest-injuries")
-    sub.add_parser("quickstart", help="make today's slate usable fast: recent boxes for today's teams, starters, lineups, edition")
+    sub.add_parser("quickstart", help="fast first pass: today's slate, injuries, projected lineups, Kalshi markets and an edition")
     p = sub.add_parser("ingest-starters", help="confirmed starters + DNPs from box scores"); p.add_argument("--since", required=True); p.add_argument("--max-games", type=int)
     p = sub.add_parser("backtest", help="walk-forward evaluation of all model families"); p.add_argument("--no-register", action="store_true")
     p = sub.add_parser("edition", help="publish a research edition"); p.add_argument("--date"); p.add_argument("--kind", default="morning")
@@ -52,13 +52,14 @@ def main(argv=None):
         from .jobs import run_inline
         from .lineups import refresh_lineups
         r = ingestion.quickstart()
-        r["lineups"] = refresh_lineups(ingestion.today_et())
+        lu = refresh_lineups(ingestion.today_et())
+        r["lineups"] = {k: lu.get(k) for k in ("confirmed", "projected", "unknown", "fallback_teams", "provider_errors")}
         try:
-            r["edition"] = run_inline("edition", {"kind": "update"})
+            ed = run_inline("edition", {"kind": "update"})
+            r["edition"] = {k: ed.get(k) for k in ("edition", "selections", "qualified", "combos")}
         except Exception as e:
             r["edition"] = {"error": str(e)[:200]}
-        r["lineups_after"] = {k: r["lineups"][k] for k in ("confirmed", "projected", "unknown")}
-        _print({k: v for k, v in r.items() if k != "lineups"})
+        _print(r)
     elif a.cmd == "ingest-injuries":
         _print(ingestion.ingest_injuries())
     elif a.cmd == "backtest":
