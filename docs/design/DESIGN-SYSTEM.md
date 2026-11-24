@@ -163,3 +163,11 @@ horizontally inside their own container.
 
 Never used in UI copy: lock, guaranteed winner, free money, risk-free, can't lose, sure thing. The fixed notice
 "Research and paper testing only. No outcome is guaranteed. No real-money execution." is on every page.
+
+## LineupCard (`components/lineup-card.tsx`)
+Compact lineup board card used as the default view on `/lineups`: tipoff time header, two team columns
+(logo, abbreviation, status bar and label, five starters, "May not play"), footer with the observed game line.
+Status colours: confirmed = accent, projected = warn with the words "not official", unknown = muted
+("Awaiting Lineup", never placeholder players). Availability tags are text (Q, D, DTD, P, OUT) with a tooltip
+carrying the full status and detail. The layout convention is common to lineup boards; all data, wording and
+styling are GIZER's own and no third-party content is used.

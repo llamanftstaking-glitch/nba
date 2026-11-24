@@ -294,6 +294,11 @@ async function runViewport(browser, label, viewport) {
 
   // --- Lineups ---
   await visit(page, "/lineups", label, errors);
+  check(`[${label}] lineups: board view is the default with one card per game`, (await page.locator('[data-testid="lineup-card"]').count()) === 3);
+  check(`[${label}] lineups: board never pads a missing lineup`, (await page.locator('[data-testid="lineup-card"][data-game-id="FIX-G2"] [data-team="BOS"] [data-testid="lc-player"]').count()) === (await page.locator('[data-testid="lineup-card"][data-game-id="FIX-G2"] [data-team="BOS"] ul li').count()) && (await page.locator('[data-testid="lineup-card"][data-game-id="FIX-G2"] [data-team="BOS"] [data-testid="lc-no-lineup"]').count()) === 1);
+  check(`[${label}] lineups: board labels projections as not official`, /Projected Lineup\s*· not official/i.test((await page.locator('[data-testid="lineup-card"]').first().innerText()).replace(/\n/g, " ")));
+  await shot("lineups-board");
+  await page.locator('[data-testid="lineup-view-detailed"]').click();
   check(`[${label}] lineups: three games`, (await page.locator('[data-testid="lineup-game"]').count()) === 3);
   const g1 = page.locator('[data-game-id="FIX-G1"]');
   const det = await g1.locator('[data-team="DET"]').innerText();

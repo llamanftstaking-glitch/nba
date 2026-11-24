@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1 — 2026-11-24
+* Starting Lineups: new default "Lineup board" view — one compact card per game with both teams side by side,
+  five starters with position, availability tags (Q / D / DTD / OUT), a "May not play" list and the game line.
+  The previous table with projected and recent minutes remains as the "Detailed (minutes)" view.
+* Server scripts: `deploy.sh`, `connect-caddy.sh`, `reset-owner.sh`. First production deployment recorded.
+
 ## 0.3.0 — 2026-11-24 (V3)
 * Player intelligence: appearance-based history windows (L3–L30, season, previous season), distributions,
   descriptive threshold comparison, splits with small-sample flags, game logs, missed games.
