@@ -177,7 +177,7 @@ function GameLog({ id }: { id: string }) {
       <QueryView query={q} rows={6} isEmpty={(d) => d.items.length === 0} empty={<EmptyState title="No games match these filters." />}>
         {(d) => (
           <>
-            <div className="hidden md:block">
+            <div className="hidden xl:block">
               <table className="w-full border-collapse text-sm">
                 <caption className="sr-only">Game log</caption>
                 <thead>
@@ -204,7 +204,7 @@ function GameLog({ id }: { id: string }) {
                 </tbody>
               </table>
             </div>
-            <ul className="space-y-2 md:hidden">
+            <ul className="grid gap-2 md:grid-cols-2 xl:hidden">
               {sorted.map((r: GameLogRow) => (
                 <li key={r.game_id} className="rounded-md bg-raised/40 p-3">
                   <div className="num flex items-baseline justify-between text-sm">

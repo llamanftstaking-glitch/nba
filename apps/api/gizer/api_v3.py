@@ -13,7 +13,7 @@ from . import history as H
 from . import ingestion
 from . import modeling as M
 from .api import ApiError, View, _date, api, cfg, team_ref, ticket_dict
-from .db import (Game, InjurySnapshot, OddsSnapshot, PaperSettlement, PaperTicket, Player, PlayerAbsence, PlayerBox,
+from .db import (Game, InjurySnapshot, OddsSnapshot, PaperSettlement, PaperTicket, Player, PlayerBox,
                  Prediction, PredictionOutcome, ProviderCall, ResearchEvent, Team, session_scope, utcnow)
 from .ledger import ALL_ENGINES, DISCLAIMER, summarize
 from .lineups import LineupContext, current_lineup, lineup_status_map
@@ -66,11 +66,8 @@ def player_game_logs(player_id: int, season: str | None = None, venue: str | Non
                           "result": r.result, "team_points": r.team_points, "opp_points": r.opp_points, "min": r.min,
                           **{k: int(getattr(r, k)) for k in ("pts", "reb", "ast", "fg3m", "stl", "blk", "tov", "pra", "fga", "fta")},
                           "usage": None if r.usage is None or pd.isna(r.usage) else round(float(r.usage), 1)})
-        missed = []
-        for a in s.scalars(select(PlayerAbsence).where(PlayerAbsence.player_id == player_id).order_by(PlayerAbsence.game_date.desc()).limit(60)):
-            g = s.get(Game, a.game_id)
-            oid = None if g is None else (g.away_team_id if g.home_team_id == a.team_id else g.home_team_id)
-            missed.append({"date": a.game_date, "opp_abbr": teams[oid].abbr if oid in teams else None, "reason": a.reason})
+        missed = [{"date": m["date"], "opp_abbr": teams[m["opp_team_id"]].abbr if m["opp_team_id"] in teams else None,
+                   "reason": m["reason"]} for m in H.missed_games(s, player_id)]
         return {"items": items, "total": int(len(df)), "missed": missed,
                 "source": "Box scores: PBP Stats API. Starter flags and did-not-play records: ESPN box scores."}
 
@@ -219,7 +216,8 @@ def _quote_status(rows) -> dict:
 
 @api.get("/player-props")
 def player_props(date: str | None = None, game_id: str | None = None, team: str | None = None, market: str | None = None,
-                 q: str | None = None, quoted: bool | None = None, limit: int = Query(100, ge=1, le=500), offset: int = Query(0, ge=0)):
+                 q: str | None = None, quoted: bool | None = None, lineup_status: str | None = None,
+                 model_ready: bool | None = None, limit: int = Query(100, ge=1, le=500), offset: int = Query(0, ge=0)):
     d = _date(date)
     with session_scope() as s:
         v = View(s, d)
@@ -233,6 +231,10 @@ def player_props(date: str | None = None, game_id: str | None = None, team: str 
             rows = [r for r in rows if q.lower()[:60] in r["player_name"].lower()]
         if quoted is not None:
             rows = [r for r in rows if (r["line"] is not None) == quoted]
+        if lineup_status:
+            rows = [r for r in rows if r["lineup_status"] == lineup_status]
+        if model_ready is not None:
+            rows = [r for r in rows if r["model_ready"] == model_ready]
         return {"date": d, "markets": market_catalog(s), "quote_status": {k: qs[k] for k in ("provider_configured", "message")},
                 "items": rows[offset:offset + limit], "total": len(rows)}
 

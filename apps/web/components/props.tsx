@@ -78,7 +78,7 @@ export function PropRow({ p, onOpen, showPlayer = true }: { p: Prop; onOpen?: (p
     <>
       {showPlayer && <PlayerAvatar name={p.player_name} src={p.headshot_url} size={32} />}
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-semibold text-ink">
+        <span className="block break-words text-sm font-semibold text-ink sm:truncate">
           {showPlayer ? `${p.player_name} · ` : ""}
           {propMarketName(p.market)} <Val v={fmtLine(p.line)} />
         </span>
@@ -327,7 +327,7 @@ export function PropDrawer({ p, onClose, onAddManual }: { p: Prop | null; onClos
           </div>
 
           <Block title="Today's market">
-            <div className="grid grid-cols-3 gap-3 rounded-md bg-raised/50 p-3">
+            <div className="grid grid-cols-2 gap-3 rounded-md bg-raised/50 p-3 sm:grid-cols-3">
               <div>
                 <div className="text-2xs font-medium uppercase text-muted">Line</div>
                 <div className="num text-lg font-semibold text-ink"><Val v={fmtLine(p.line)} /></div>
@@ -336,7 +336,7 @@ export function PropDrawer({ p, onClose, onAddManual }: { p: Prop | null; onClos
                 <div className="text-2xs font-medium uppercase text-muted">Over / under</div>
                 <Prices p={p} />
               </div>
-              <div>
+              <div className="col-span-2 sm:col-span-1">
                 <div className="text-2xs font-medium uppercase text-muted">Source</div>
                 <div className="text-sm text-ink">{p.book ?? "—"}</div>
                 <OriginTag origin={p.origin} />

@@ -759,8 +759,13 @@ def player_detail(player_id: int):
         splits = [split("Season", cur), split("Last 5", rows[:5]), split("Last 10", rows[:10]), split("Last 20", rows[:20]),
                   split("Home (season)", [r for r in cur if r.is_home]), split("Away (season)", [r for r in cur if not r.is_home]),
                   split("All ingested", rows)]
-        preds = s.execute(select(Prediction, Game).join(Game, Game.id == Prediction.game_id).where(
-            Prediction.subject_type == "player", Prediction.subject_id == player_id).order_by(Prediction.id.desc()).limit(40)).all()
+        allp = s.execute(select(Prediction, Game).join(Game, Game.id == Prediction.game_id).where(
+            Prediction.subject_type == "player", Prediction.subject_id == player_id).order_by(Prediction.id.desc()).limit(400)).all()
+        seen_p, preds = set(), []
+        for pr, g in allp:  # only the latest forecast per game and stat (the forecast of record)
+            if (pr.game_id, pr.stat) not in seen_p:
+                seen_p.add((pr.game_id, pr.stat)); preds.append((pr, g))
+        preds = preds[:44]
         models = {m.id: m for m in s.scalars(select(ModelVersion))}
         acc = s.execute(text(
             "select o.stat, count(*), avg(abs(o.error)), avg(case when o.in_80 then 1.0 else 0.0 end) from prediction_outcomes o "

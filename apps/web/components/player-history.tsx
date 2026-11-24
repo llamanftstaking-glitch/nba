@@ -92,8 +92,8 @@ export function PlayerHistory({
           <Label>Window</Label>
           <Tabs label="Window" size="sm" scroll value={win} onChange={setWin} items={HISTORY_WINDOWS.map(([id, label]) => ({ id, label }))} />
         </div>
-        <div className={compact ? "grid grid-cols-3 gap-3" : "grid grid-cols-2 gap-3 sm:grid-cols-4 lg:max-w-2xl"}>
-          <Field label="Threshold" className={compact ? "" : "col-span-2 sm:col-span-1"}>
+        <div className={compact ? "grid grid-cols-2 gap-3 sm:grid-cols-3" : "grid grid-cols-2 gap-3 sm:grid-cols-4 lg:max-w-2xl"}>
+          <Field label="Threshold" className="col-span-2 sm:col-span-1">
             <Input
               type="number"
               inputMode="decimal"

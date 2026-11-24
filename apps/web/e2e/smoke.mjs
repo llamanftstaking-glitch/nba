@@ -197,7 +197,7 @@ async function runViewport(browser, label, viewport) {
   check(`[${label}] overview: tipoff shown in ET`, /\d{1,2}:\d{2}\s?(AM|PM) ET/.test(text));
   check(`[${label}] overview: unavailable values use the explicit marker`, (await page.locator('[aria-label="not available"]').count()) > 0);
   check(`[${label}] overview: warnings banner`, (await page.locator('[data-testid="warnings"] li').count()) === 2);
-  check(`[${label}] overview: eight summary tiles incl. lineups and prop markets`, (await page.locator('[data-testid="stat-strip"] [data-testid="tile"]').count()) === 8 && /1\s*confirmed\s*·\s*4\s*projected/i.test(text) && /quoted/i.test(text));
+  check(`[${label}] overview: eight summary tiles incl. lineups and prop markets`, (await page.locator('[data-testid="stat-strip"] [data-testid="tile"]').count()) === 8 && /1\s*confirmed\s*4\s*projected/i.test(text) && /quoted/i.test(text));
   check(`[${label}] overview: per-team lineup status on game cards`, (await page.locator('[data-game-id="FIX-G2"] [data-testid="card-lineups"]').innerText()).replace(/\s+/g, " ").match(/BOS lineup Awaiting NYK lineup Projected/i) !== null);
   check(`[${label}] overview: prop research rows`, (await page.locator('[data-testid="overview-props"] [data-testid="prop-row"]').count()) >= 3);
   check(`[${label}] overview: parlay category strip`, (await page.locator('[data-testid="parlay-strip"] a').count()) === 8);
@@ -281,12 +281,14 @@ async function runViewport(browser, label, viewport) {
   await settle(page);
   check(`[${label}] manual entry: adds a market row`, (await page.locator(`[data-prop="9005:player_reb:FIX-G3"]:visible`).count()) === 1);
   await shot("manual-entry", { fullPage: false });
-  const entry = page.locator('[data-testid="manual-entry"]', { hasText: "REB 11.5" }).first();
+  const live = page.locator('[data-testid="manual-entry"][data-withdrawn="0"]', { hasText: "REB 11.5" });
+  const gone = page.locator('[data-testid="manual-entry"][data-withdrawn="1"]', { hasText: "REB 11.5" });
+  const goneBefore = await gone.count();
   const wd = page.waitForResponse((r) => /\/player-props\/manual\/\d+\/withdraw$/.test(r.url()));
-  await entry.locator('[data-testid="manual-withdraw"]').click();
+  await live.first().locator('[data-testid="manual-withdraw"]').click();
   check(`[${label}] manual entry: withdraw POST`, (await wd).status() === 200);
-  await page.waitForFunction(() => [...document.querySelectorAll('[data-testid="manual-entry"]')].some((e) => e.textContent.includes("REB 11.5") && e.dataset.withdrawn === "1"), null, { timeout: 8000 }).catch(() => {});
-  check(`[${label}] manual entry: withdrawn entry is kept and marked`, (await entry.getAttribute("data-withdrawn")) === "1" && /Withdrawn/i.test(await entry.innerText()));
+  await live.first().waitFor({ state: "detached", timeout: 8000 }).catch(() => {});
+  check(`[${label}] manual entry: withdrawn entry is kept and marked`, (await live.count()) === 0 && (await gone.count()) === goneBefore + 1 && /Withdrawn/i.test(await gone.first().innerText()));
   await settle(page);
   check(`[${label}] manual entry: market row removed after withdraw`, (await page.locator(`[data-prop="9005:player_reb:FIX-G3"]:visible`).count()) === 0);
 
@@ -335,7 +337,7 @@ async function runViewport(browser, label, viewport) {
   check(`[${label}] player: distribution table`, (await page.locator('[data-testid="distribution"]').innerText()).includes("n=24 of 30 requested"));
   check(`[${label}] player: small-sample flags`, (await page.locator('[data-testid="player-page"]').innerText()).match(/Small sample/gi)?.length >= 3);
   check(`[${label}] player: missed games listed`, (await page.locator('[data-testid="missed-games"] li').count()) === 2);
-  if (!isMobile) {
+  if (viewport.width >= 1280) {
     await page.locator('[data-testid="game-log"] [data-sort="pts"]').click();
     const pts = (await page.locator('[data-testid="game-log"] tbody tr td:nth-child(5)').allInnerTexts()).map(Number);
     check(`[${label}] player: game log sortable`, pts.length === 15 && pts.every((v, i) => i === 0 || v <= pts[i - 1]), pts.join(","));

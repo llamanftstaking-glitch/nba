@@ -45,7 +45,7 @@ function breakdownColumns(first: string): Column<Row>[] {
       key: "settled",
       header: "Settled",
       align: "right",
-      className: "md:whitespace-nowrap",
+      className: "xl:whitespace-nowrap",
       cell: (r) => (has(r) ? <span className="num">n={fmtInt(r.s.settled)}</span> : <span className="text-muted" data-testid="engine-empty">{NO_RECORDS}</span>),
     },
     { key: "wl", header: "W / L / P / V", align: "right", className: "whitespace-nowrap", cell: (r) => (has(r) ? <span className="num">{r.s.wins} / {r.s.losses} / {r.s.pushes} / {r.s.voids}</span> : <NoRec />) },

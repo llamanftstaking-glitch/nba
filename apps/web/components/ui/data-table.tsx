@@ -14,7 +14,7 @@ export type Column<T> = {
 };
 
 /**
- * Responsive table: a real <table> from the md breakpoint up, stacked label/value cards below it.
+ * Responsive table: a real <table> from the xl breakpoint up (the sidebar leaves too little room below it), stacked label/value cards below it.
  * This is how every tabular view avoids horizontal scrolling at 375px.
  */
 export function DataTable<T>({
@@ -36,7 +36,7 @@ export function DataTable<T>({
   const rest = columns.filter((c) => !c.primary);
   return (
     <>
-      <div className="hidden md:block">
+      <div className="hidden xl:block">
         <table className="w-full border-collapse text-sm">
           <caption className="sr-only">{caption}</caption>
           <thead>
@@ -71,7 +71,7 @@ export function DataTable<T>({
           </tbody>
         </table>
       </div>
-      <ul className="space-y-2 md:hidden" aria-label={caption}>
+      <ul className="space-y-2 xl:hidden" aria-label={caption}>
         {rows.map((r, i) => (
           <li key={rowKey(r, i)} className={cn("rounded-md bg-raised/40 p-3", rowClassName?.(r))}>
             {primary.length > 0 && (
@@ -83,7 +83,7 @@ export function DataTable<T>({
                 ))}
               </div>
             )}
-            <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3 md:grid-cols-4">
               {rest.filter((c) => !c.hideOnMobile?.(r)).map((c) => (
                 <div key={c.key} className="min-w-0">
                   <dt className="text-2xs uppercase tracking-wide text-muted">{c.header}</dt>

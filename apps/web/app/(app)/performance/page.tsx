@@ -20,14 +20,14 @@ const dash = <span className="text-muted">—</span>;
 const COLUMNS: Column<StrategyGroup>[] = [
   { key: "label", header: "Strategy", primary: true, className: "whitespace-nowrap", cell: (g) => <span className="font-semibold text-ink">{g.label}</span> },
   { key: "n", header: "Tickets", align: "right", cell: (g) => <span className="num">n={fmtInt(g.tickets)}</span> },
-  { key: "settled", header: "Settled", align: "right", className: "md:whitespace-nowrap", cell: (g) => (has(g) ? <span className="num">{fmtInt(g.settled)}</span> : <span className="text-muted" data-testid="strategy-empty">{NO_RECORDS}</span>) },
+  { key: "settled", header: "Settled", align: "right", className: "xl:whitespace-nowrap", cell: (g) => (has(g) ? <span className="num">{fmtInt(g.settled)}</span> : <span className="text-muted" data-testid="strategy-empty">{NO_RECORDS}</span>) },
   { key: "wl", header: "W / L / P / V", align: "right", className: "whitespace-nowrap", hideOnMobile: (g) => !has(g), cell: (g) => (has(g) ? <span className="num">{g.wins}/{g.losses}/{g.pushes}/{g.voids}</span> : dash) },
   {
     key: "hit",
     header: "Hit rate [95% CI]",
     align: "right",
     hideOnMobile: (g) => !has(g),
-    cell: (g) => (has(g) ? <span className="num"><Val v={fmtPct(g.hit_rate)} /> <span className="block text-xs text-muted md:whitespace-nowrap">{ciText(g.hit_rate_ci)}</span></span> : dash),
+    cell: (g) => (has(g) ? <span className="num"><Val v={fmtPct(g.hit_rate)} /> <span className="block text-xs text-muted xl:whitespace-nowrap">{ciText(g.hit_rate_ci)}</span></span> : dash),
   },
   { key: "pred", header: "Avg predicted", align: "right", hideOnMobile: (g) => !has(g), cell: (g) => (has(g) ? <Val v={fmtPct(g.avg_model_prob)} /> : dash) },
   {
@@ -36,7 +36,7 @@ const COLUMNS: Column<StrategyGroup>[] = [
     align: "right",
     hideOnMobile: (g) => !has(g),
     cell: (g) =>
-      !has(g) ? dash : g.priced_tickets === 0 ? <span className="text-xs text-muted">no priced tickets</span> : <span className="num"><Val v={fmtSignedPct(g.roi)} /> <span className="block text-xs text-muted md:whitespace-nowrap">{ciText(g.roi_ci, true)} · {g.priced_tickets} priced</span></span>,
+      !has(g) ? dash : g.priced_tickets === 0 ? <span className="text-xs text-muted">no priced tickets</span> : <span className="num"><Val v={fmtSignedPct(g.roi)} /> <span className="block text-xs text-muted xl:whitespace-nowrap">{ciText(g.roi_ci, true)} · {g.priced_tickets} priced</span></span>,
   },
   { key: "pnl", header: "P&L (units)", align: "right", hideOnMobile: (g) => !has(g), cell: (g) => (has(g) ? <Val v={fmtSigned(g.pnl_units)} /> : dash) },
 ];

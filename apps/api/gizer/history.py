@@ -205,7 +205,22 @@ def splits(s, player_id: int, as_of: date, team_abbr: dict, next_opp_id: int | N
         "Teammate-availability splits and playoff splits are not available yet."]}
 
 
-def missed_games(s, player_id: int, limit: int = 60) -> list[dict]:
-    return [{"date": a.game_date, "game_id": a.game_id, "opp_team_id": None, "reason": a.reason, "team_id": a.team_id}
-            for a in s.scalars(select(PlayerAbsence).where(PlayerAbsence.player_id == player_id)
-                               .order_by(PlayerAbsence.game_date.desc()).limit(limit))]
+def missed_games(s, player_id: int, limit: int = 80) -> list[dict]:
+    """Team games the player did not appear in, between the first and last appearance of each team stint per
+    season. The published reason is attached when the source listed one; otherwise it is stated as unknown."""
+    df = player_frame(s, player_id)
+    if df.empty:
+        return []
+    reasons = {a.game_id: a.reason for a in s.scalars(select(PlayerAbsence).where(PlayerAbsence.player_id == player_id))}
+    played = set(df["game_id"])
+    out = []
+    for (season, tid), grp in df.groupby(["season", "team_id"]):
+        tid = int(tid)
+        for g in s.scalars(select(Game).where(Game.status == "final", Game.season == season,
+                                              Game.game_date >= grp["date"].min(), Game.game_date <= grp["date"].max(),
+                                              (Game.home_team_id == tid) | (Game.away_team_id == tid))):
+            if g.id not in played:
+                out.append({"date": g.game_date, "game_id": g.id, "team_id": tid,
+                            "opp_team_id": g.away_team_id if g.home_team_id == tid else g.home_team_id,
+                            "reason": reasons.get(g.id) or "Did not appear (reason not published by the source)"})
+    return sorted(out, key=lambda r: r["date"], reverse=True)[:limit]

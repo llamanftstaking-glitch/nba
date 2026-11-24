@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.0 — 2026-11-24 (V3)
+* Player intelligence: appearance-based history windows (L3–L30, season, previous season), distributions,
+  descriptive threshold comparison, splits with small-sample flags, game logs, missed games.
+* Lineup intelligence: confirmed starters and did-not-play records from box scores, labelled projections,
+  append-only snapshots, change detection wired into editions and pregame checkpoints.
+* Player props: eleven market types with per-family models and gates; quote origin; owner-entered and
+  hypothetical markets with audit trail; props table; provider configuration centre; strategy performance.
+* Premium redesign: design system, four-group navigation, Overview, Player Props, Starting Lineups, player
+  profile with history chart, comparison, matchups, mobile bottom navigation Home/Games/Props/Parlays/More.
+* Reversible migration 0002; model cards generated from stored evaluations; dependency upgrades after CI audit.
+
 ## 0.1.0 — 2026-11-24
 Initial build (Phase 1 foundation + Phase 2 parlay-first command center, combined).
 

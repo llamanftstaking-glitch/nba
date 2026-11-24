@@ -135,8 +135,13 @@ export default function OverviewPage() {
         </Tile>
         <Tile icon={Users} label="Lineups" sub={ls ? `${ls.unknown} awaiting confirmation` : undefined}>
           {ls ? (
-            <span className="whitespace-nowrap">
-              {ls.confirmed} <span className="text-sm font-medium text-muted">confirmed</span> · {ls.projected} <span className="text-sm font-medium text-muted">projected</span>
+            <span className="flex flex-wrap items-baseline gap-x-2">
+              <span className="whitespace-nowrap">
+                {ls.confirmed} <span className="text-sm font-medium text-muted">confirmed</span>
+              </span>
+              <span className="whitespace-nowrap">
+                {ls.projected} <span className="text-sm font-medium text-muted">projected</span>
+              </span>
             </span>
           ) : (
             <Val v={null} />

@@ -1,16 +1,42 @@
 # Project state
 
-_Last updated: 2026-11-24 (interim, initial build session still in progress)._
+_Last updated: 2026-11-24, end of the V3 build session._
 
+## Status
 | Area | Status |
 |---|---|
-| Backend engine (ingestion, models, risk officer, combinations, editions, ledger, agents, scheduler, API) | IMPLEMENTED, TESTED locally (82 backend tests passed before the governance tests were added) |
-| Docker Compose stack (build, migrate, health, restart recovery, backup + restore test) | TESTED on a local Docker engine |
-| Frontend (parlay-first command center) | IMPLEMENTED, TESTED locally (typecheck, build, mock-API smoke, real-API screenshot pass on desktop and mobile) |
-| Historical ingest, season 2025-26 | IN PROGRESS (rate-limited provider) |
-| Model cards with final validation numbers | IN PROGRESS (waiting for the ingest) |
-| Deployment to Server M | BLOCKED — no server access from the build session |
-| Player-prop research | BLOCKED — no prop odds provider key (owner decision) |
-| CI on GitHub | NOT VERIFIED — workflow defined, not yet observed running |
+| Research engine (ingestion, models, risk officer, combinations, editions, ledger, agents, scheduler, API) | IMPLEMENTED, TESTED (94 backend tests) |
+| V3 player intelligence (history windows, distributions, thresholds, splits, game logs, missed games) | IMPLEMENTED, TESTED, VERIFIED on live data |
+| V3 lineups (confirmed from box scores, labelled projections, snapshots, change detection) | IMPLEMENTED, TESTED, VERIFIED on live data (projected); confirmed-at-tipoff path NOT VERIFIED live |
+| V3 player props (11 market types, origin, manual entry, props table) | IMPLEMENTED, TESTED. Provider quotes BLOCKED (no key) |
+| V3 premium frontend (design system, 4-group navigation, 27 routes, mobile) | IMPLEMENTED, TESTED against mock and real API |
+| Models | team_game, player_reb, player_ast, player_fg3m, player_stl, player_tov in production; player_pts, player_blk, player_pra, player_pr, player_pa, player_ra are candidates (failed the gate) |
+| Docker Compose stack | TESTED on a local Docker engine (build, migrate 0001→0002 on existing data, smoke, restart recovery, backup + restore) |
+| Deployment to Server M | **BLOCKED** — no access from the build session |
+| The Odds API adapter | NOT VERIFIED against the live service |
+| High-confidence tier | Empty by design until ≥200 settled forward paper records exist |
 
-See ROADMAP.md for the plan and docs/DECISIONS.md for decisions.
+## Data held (development database; Server M starts empty)
+Regular seasons 2025-26 (1,221 games) and 2026-27 (256 games through 2026-11-23): box scores for all, confirmed
+starters for 1,444. No playoffs, no historical odds, no play-by-play. See DATA-SOURCES.md.
+
+## Blockers needing the owner
+1. **Server M access** — run a Claude Code session on the server or follow DEPLOYMENT.md by hand.
+2. **Prop odds provider key** — decision and possible cost; see docs/operations/PROVIDER-SETUP.md.
+3. **Data licensing review** before any use beyond private research (ESPN endpoint is unofficial).
+
+## Known limitations (see MODEL-CARDS.md, docs/operations/P0-ISSUE-REGISTER.md)
+* No model is validated against market prices; qualified selections are paper-testing candidates, not evidence of an edge.
+* Points and combination-stat models fail interval coverage; hypothesis: stale player state across the off-season.
+* Minutes projections do not react to a teammate being ruled out (flagged as opposing evidence instead).
+* No pre-tipoff confirmed lineups; no playoff data; teammate-availability splits not implemented.
+* Builder evaluates from two legs; Results filters are not in the URL; edition diff is computed client-side.
+
+## Next priorities
+1. Deploy and complete the DEPLOYMENT.md checklist; run the one-off history load on the server.
+2. Decide on the prop odds provider; verify the adapter live.
+3. Challenger player model with season-boundary carry-over, judged on data after 2026-11-23.
+4. Teammate-absence minutes adjustment; playoff ingestion; official NBA injury report from Server M.
+5. Second factor and off-host encrypted backups.
+
+First-deployment commands and the daily rhythm are in DEPLOYMENT.md and RUNBOOK.md.

@@ -3,176 +3,134 @@
 Scope: `apps/web` (Next.js 15 App Router). The app is an owner-only research terminal in research /
 paper-testing mode. It renders only what `API-CONTRACT.md` provides and contains no fixture data.
 
-## 1. Navigation model (parlay-first)
+## 1. Navigation model (V3)
 
-Primary navigation — desktop left sidebar (collapsible to an icon rail, state kept in `localStorage`):
+Desktop (≥ 1024px): left sidebar with four groups, collapsible to an icon rail.
 
-| # | Label | Route | API |
+| Group | Label | Route | API |
 |---|---|---|---|
-| 1 | Command Center (landing) | `/` | `/command-center` |
-| 2 | Today's Games | `/games` | `/games` |
-| 3 | Top Picks | `/picks` | `/selections` |
-| 4 | Parlay Research | `/parlays` | `/combos`, `/selections` |
-| 5 | Same-Game Research | `/parlays/same-game` | `/combos?category=sgp`, `/games` |
-| 6 | Player Props | `/props` | `/selections` |
-| 7 | My Paper Tickets | `/tickets` | `/paper/tickets` |
-| 8 | Results | `/results` | `/results` (+ `/models`, `/teams`, `/players`, `/data-health` for filter options) |
-| 9 | Performance | `/performance` | `/models`, `/backtests` |
-| 10 | Research Lab | `/research-lab` | `/research-lab` |
-| 11 | Agent Operations | `/agents` | `/agents` |
-| 12 | Settings | `/settings` | `/settings` |
+| Command Center | Overview (landing) | `/` | `/command-center`, `/player-props`, `/combos` |
+| | Today's Games | `/games` | `/games` |
+| | Top Picks | `/picks` | `/selections` |
+| | Player Props | `/player-props` | `/player-props`, `/player-props/manual` (GET/POST/withdraw), `/players/{id}/threshold`, `/players/{id}/averages` |
+| | Starting Lineups | `/lineups` | `/lineups`, `/games/{id}/lineup-history` |
+| | Parlay Research | `/parlays` | `/combos`, `/selections` |
+| | Same-Game Research | `/parlays/same-game` | `/combos?category=sgp`, `/games` |
+| Player Intelligence | Player Explorer | `/players`, `/players/[id]` | `/players`, `/players/{id}` + `/averages`, `/threshold`, `/splits`, `/game-logs` |
+| | Player Comparison | `/players/compare?ids=` | `/players`, `/players/{id}`, `/averages`, `/threshold` |
+| | Historical Performance | `/players/history` | `/players` (deep-links to `/players/[id]#history`) |
+| | Matchup Intelligence | `/matchups` | `/games`, `/games/{id}` |
+| | Injuries & Availability | `/injuries` | `/injuries` |
+| My Research | Research Builder | `/builder` | `/selections`, `/combos`, `POST /builder/evaluate`, `POST /paper/tickets` |
+| | Paper Tickets | `/tickets` | `/paper/tickets` |
+| | Daily Editions | `/research/daily` | `/editions`, `/editions/{id}` |
+| | Results | `/results` | `/results` (+ filter option sources) |
+| | Strategy Performance | `/performance` | `/performance/strategies` |
+| System | Research Lab | `/research-lab` | `/research-lab` |
+| | Agent Operations | `/agents` | `/agents` |
+| | Model Registry | `/models` | `/models`, `/backtests` |
+| | Data Health | `/data-health` | `/data-health`, `/data-health/providers` |
+| | Settings | `/settings` | `/settings` |
 
-Secondary pages — sidebar "More" group, the mobile "More" sheet, the Settings page and in-page links:
+Reachable from Settings ("Operations and research tools"), the mobile "More" sheet and in-page links, but not in
+the sidebar: `/admin`, `/exposure`, `/markets`, `/simulations`, `/backtesting`, `/teams`, `/teams/[id]`,
+`/games/[id]`. `/login` is outside the shell.
 
-| Route | Purpose | API |
-|---|---|---|
-| `/games/[id]` | Game research page | `/games/{id}` |
-| `/builder` | Parlay research builder | `/selections`, `/combos`, `POST /builder/evaluate`, `POST /paper/tickets` |
-| `/exposure` | Shared-risk monitor | `/exposure` |
-| `/research/daily` | Editions list, diff, full edition | `/editions`, `/editions/{id}` |
-| `/injuries` | Injury report + changes | `/injuries` |
-| `/players`, `/players/[id]` | Search/table, detail (log, splits, charts) | `/players`, `/players/{id}` |
-| `/teams`, `/teams/[id]` | Table, detail | `/teams`, `/teams/{id}` |
-| `/markets` | Quotes per game + provider status | `/games`, `/data-health` |
-| `/simulations` | Simulation metadata per combination | `/combos` |
-| `/backtesting` | Backtest runs | `/backtests` |
-| `/data-health` | Freshness, providers, coverage | `/data-health` |
-| `/admin` | Pause toggle, readiness, heartbeats, schedule, jobs | `/operations`, `POST /operations/pause`, `/health/ready` |
-| `/login` | Sign in (outside the shell) | `POST /auth/login` |
+Redirects: `/today` → `/`, `/research` → `/research/daily`, `/props` → `/player-props`.
 
-Redirects: `/today` → `/`, `/research` → `/research/daily`.
-
-Mobile (< 768 px): sticky bottom navigation `Home | Games | Parlays | Results | More`. "More" opens a bottom
-sheet with every other page and the log-out button. The persistent notice sits under the top bar on mobile and
-in a fixed footer on desktop.
+Mobile and tablet (< 1024px): bottom navigation `Home | Games | Props | Parlays | More` (56px, safe-area padded).
+"More" opens a sheet with all four groups plus the extra pages and Log out. The persistent notice sits under the
+top bar; on desktop it is a fixed footer.
 
 ## 2. Global context
 
-* **Date.** The top bar holds previous/next-day arrows and a dropdown of `available_dates` from
-  `/command-center`. The selection lives in the URL (`?date=YYYY-MM-DD`); `DLink` carries it across pages and
-  date-aware queries include it in their keys. Without the parameter the API decides what "today" is. Historical
-  dates show the editions as originally published and are flagged in the header.
-* **Auth.** `middleware.ts` redirects to `/login` when `gizer_session` is absent (UX only). `lib/api.ts`
-  redirects on any `401`. The CSRF token is kept in memory and restored through `/auth/me`.
-* **Notice.** "Research and paper testing only. No outcome is guaranteed. No real-money execution." is on every
-  page, including `/login`.
+* **Date.** Top bar: previous/next-day arrows and a dropdown of `available_dates`. The selection lives in the URL
+  (`?date=YYYY-MM-DD`); `DLink` carries it across pages. Historical dates show the original editions.
+* **Auth.** `middleware.ts` redirects to `/login` without the `gizer_session` cookie (UX only); `lib/api.ts`
+  redirects on any `401`; the CSRF token is kept in memory and restored through `/auth/me`.
+* **Notice.** "Research and paper testing only. No outcome is guaranteed. No real-money execution." on every page.
 
 ## 3. Page composition
 
-**Command Center** — warnings → stat strip (games, markets analyzed, qualified selections, combinations, latest
-refresh, edition badge) → High-confidence research (accent-bordered; explicit message when empty) → matchup
-cards → injury changes · model readiness → paper-testing summary → agent status · recent findings.
+**Overview `/`** — branded heading → compact warnings banner (one line each) → eight summary tiles (games, markets
+analyzed, qualified, combinations, lineups confirmed/projected, prop markets, latest refresh, edition) → game cards
+(three across ≥ 1280) with per-team lineup status, completeness and ranked picks → player-prop research (top quoted
+rows, or `props_summary.message` with a link to manual entry) · parlay category strip → High-confidence research
+(honest empty state) → injury changes · paper-testing performance → operational status (agents, model readiness,
+recent findings) last.
 
-**Matchup card** — logos + abbreviations, tipoff in ET, status, research-completeness meter with missing items,
-injury counts, lineup status, environment (pace / total with p10–p90 / margin / score), up to five ranked picks
-or the API's `no_picks_reason`, link to the game page.
+**Player Props `/player-props`** — quote-provider status → filters (search, game, team, market, lineup status,
+model, quoted only) → market table (≥ 1280) or expandable cards → manual market entry (owner only) with the list of
+manual entries and Withdraw. A row opens the research drawer (right drawer ≥ 768, bottom sheet below): today's
+market, `PlayerHistory` with a free threshold, model projection, selection classification, "Add manual market"
+(prefills the form).
 
-**Parlay Research** — tabs: Individual Picks · 2-Leg · 3-Leg · 4-Leg · 5-Leg · 6-Leg Experimental · Same-Game ·
-Cross-Game, each with its count from `counts` (individual picks: number of qualified selections). The tab is in
-the URL (`?tab=`). Empty categories render an explicit empty state.
+**Starting Lineups `/lineups`** — per game: matchup header, lineup-history toggle, `LineupTable`.
 
-**Builder** — desktop three columns: available selections grouped by game + "load a researched combination" ·
-focused selection with evidence · current combination with live evaluation (debounced 350 ms). `reliable: false`
-raises a red banner; API `warnings` are listed. On < 1024 px the third column becomes an expandable drawer fixed
-above the bottom navigation. `?legs=1,2,3` preloads legs ("Open in builder" on combination cards).
+**Player profile `/players/[id]`** — header (avatar, name, team/position/jersey, availability, lineup role and
+status, next game) → averages strip (Season, L5, L10, L20 with sample sizes and small-sample flags) → today's
+markets → Historical performance → distribution by window → splits → game log explorer (filters, sort, pagination,
+missed games) → quantitative research (projections with intervals, forecast accuracy).
 
-**Game page** — header + completeness + environment → team comparison · lineup and injuries → top picks →
-player projections → all evaluated selections (collapsed; rejected ones show their reasons) → same-game
-combinations → head-to-head · quotes → agent reports · unresolved questions → injury detail.
+**Player Comparison** — pick 2–3 players (`?ids=`), averages for a chosen window with sample sizes, overlaid L10
+values for a chosen stat. **Historical Performance** — search that deep-links to the profile history section.
+**Matchup Intelligence** — per game: team form, environment, head to head.
 
-**Results** — filter bar (date range, season, engine/size, market, classification, model version, team, player)
-→ summary tiles → per-engine table (always SINGLE…SIX; "n=0 — no settled records" for empty rows) → per-structure
-table → calibration chart + bucket table · equity curve → paginated ticket list (wins and losses rendered
-identically) → API `disclaimer`.
+**Game page `/games/[id]`** — A matchup header (completeness, environment, team form) → B starting lineups →
+C player props (search + market filter, same drawer) → D recent player averages and projections (one compact row
+per player) → E qualified research selections (≤ 5, each with a separate "Historical context (descriptive)" row;
+all evaluated selections behind a toggle) → F same-game research → G reports, limitations, unresolved questions,
+head to head.
 
-**Exposure** — overlap notice → four share-bar panels (player / team / game / selection) → simulation block
-placing P(at least one ticket wins) beside expected aggregate P&L → pairwise ticket dependency · shared
-assumptions → API notes. Copy never describes overlapping tickets as unrelated; `independent_p_at_least_one` is
-labelled "Naive figure ignoring overlap — comparison only".
+**Injuries** — changes, then the feed grouped by game then team: avatar, status, previous status, source,
+published and ingested times, stale tag. **Strategy Performance** — groups by market type, engine and structure
+with n, settled, hit rate + CI, ROI where priced ("n=0 — no settled records" otherwise), forecast table, API
+disclaimer. **Model Registry** — models and backtests. **Data Health** — warnings, freshness, provider
+configuration center (status only; credentials live in the server `.env`), coverage.
 
-## 4. Component inventory
+Unchanged in structure, restyled: Today's Games, Top Picks, Parlay Research (eight tabs with counts), Same-Game
+Research, Builder (three columns ≥ 1024, drawer below), Paper Tickets, Daily Editions (list, diff, full edition),
+Results, Exposure, Research Lab, Agent Operations, Settings, Admin, Markets, Simulations, Backtesting, Teams.
 
-`components/ui` (local primitives, no UI library):
+## 4. Component inventory and 5. Design system
 
-| Component | Role |
-|---|---|
-| `Button` | primary / outline / ghost / danger, sm / md |
-| `Badge`, `StaleTag` | text-labelled status chips (neutral, accent, accent-solid, warn, bad, info) |
-| `Panel`, `PageHeader`, `Metric`, `BulletList` | page scaffolding |
-| `DataTable` | table ≥ md, stacked label/value cards < md |
-| `Tabs` | wrapping tab list with counts |
-| `Sheet` | mobile bottom sheet |
-| `Field`, `Input`, `Select` | form controls |
-| `Pagination` | offset/limit pager |
-| `Meter`, `ShareBar` | thin meters and share bars |
-| `NA`, `Val` | explicit "not available" rendering |
-| `Skeleton`, `LoadingState`, `EmptyState`, `ErrorState`, `QueryView` | the four data states |
-
-Domain components:
-
-| Component | Role |
-|---|---|
-| `SelectionCard`, `SelectionList`, `EvidencePanel` | the reusable selection row/card |
-| `SelectionBrowser` | filterable selection list (Top Picks, Player Props) |
-| `ComboCard`, `ComboDetail`, `PricingBlock` | combination research card |
-| `GameMatchupCard`, `Matchup`, `EnvironmentSummary` | slate and game headers |
-| `TicketCard` | paper ticket with leg results and forensic report |
-| `SaveTicketButton` | `POST /paper/tickets` with inline confirmation / 409 message |
-| `ClassificationBadge`, `StatusBadge` | classification and generic status labels |
-| `ProbInterval`, `EvidenceMeter` | probability with interval; evidence quality 0–100 |
-| `SummaryTiles`, `Tile` | summary statistics |
-| `CalibrationChart`, `EquityChart`, `TrendChart` | Recharts wrappers |
-| `ModelsTable`, `BacktestsTable`, `MetricsInline` | registry views |
-| `ProvidersTable`, `FreshnessTable` | data health |
-| `InjuryTable`, `TeamLogo` | shared bits |
-| `AppShell`, `DateSelector`, `Providers`, `DisclaimerText` | shell |
-
-## 5. Design system summary
-
-Bloomberg-terminal density with NBA-analytics clarity.
-
-* Surfaces `#05080f` (page) / `#0a1020` (panel) / `#0f172b` (raised); 1 px borders `#1d2942` / `#2b3a5c`.
-* Text white / `#cbd5e1` / `#94a3b8`. All pass WCAG AA on the panel surface.
-* Emerald `#34d399` = research / qualified / primary action. Amber `#fbbf24` = uncertainty, watchlist, stale.
-  Red `#f87171` = invalidated, failed, rejected. Sky `#7dd3fc` = evidence quality and chart data.
-* Colour is never the only carrier: classifications are text badges; meters have text values; charts have a
-  legend and a table of the same values.
-* Evidence quality (0–100, sky meter, "Evidence n/100") is visually separate from probability (bold percentage
-  with a bracketed interval) because it is not a probability.
-* 11–14 px type, tabular monospace numerals, 3–6 px radii, no gradients, glow, emoji or decorative animation.
-* Charts: one axis, one data hue, 2 px lines, recessive grid, hover tooltip, neutral dashed reference lines.
+Both are maintained in `docs/design/DESIGN-SYSTEM.md` (tokens, typography, breakpoints, every reusable
+component).
 
 ## 6. States
 
 | State | Rendering |
 |---|---|
 | Loading | skeleton blocks (`role="status"`) |
-| Empty | dashed box with an explicit sentence; never filler content |
-| Error | red box with the API message and HTTP status, plus Retry |
-| Stale | amber tag (freshness `ok=false`, invalidated selections/combinations, missing injury timestamp) |
-| Unavailable value | `—` with `title` / `aria-label` "not available" |
+| Empty | icon + one explicit sentence; never filler content |
+| Error | red panel with the API message and HTTP status, plus Retry |
+| Stale | amber dot + "stale" (freshness `ok=false`, `InjuryRow.stale`, invalidated selections/combinations) |
+| Unavailable value | "—" with `title` / `aria-label` "not available" |
+| Small sample | amber "Small sample" flag beside the averages it applies to |
 
 ## 7. Contract gaps and assumptions
 
 Nothing was invented; where the contract is silent the UI degrades instead.
 
-1. `TeamForm` and `PlayerProj` (`GET /games/{id}`) are named but not defined. Team form is rendered as a generic
-   metric-by-team table over whatever keys arrive. Player projections expect rows shaped like the
-   `/players/{id}` projections (`player_name`/`name`, `team_abbr`, `stat`, `mean`, `p10`, `p50`, `p90`) and fall
-   back to a generic table if `mean` is absent.
-2. `research_completeness.score` has no stated unit. It is treated as 0–100; a fractional value in (0, 1) is
-   scaled by 100.
-3. `/teams/{id}` `team` is `TeamRef & {...}`; assumed to equal a `/teams` item.
-4. `/combos`: whether `category` is required and which keys `counts` uses are not stated. The UI always sends a
-   category and reads `counts` by the category names (`double` … `cross`). There is no count for individual
-   picks, so that tab counts qualified selections client-side.
-5. No endpoint lists valid seasons or model versions for the Results filters. Seasons come from
-   `/data-health.coverage`, model versions from `/models` (assuming `id` is the `model_version_id`).
-6. Nullability is unspecified for most list/detail fields (players, teams, models, agents, data health). They are
-   typed nullable and rendered with the unavailable marker.
-7. `GET /builder/evaluate` behaviour for fewer than two legs is unspecified; the UI evaluates only with ≥ 2 legs
-   and offers a single-selection paper ticket for one leg. A six-leg cap is applied client-side.
-8. The diff between editions is computed client-side from two `/editions/{id}` responses (selections matched by
-   `key`, combinations by their set of leg labels) and shown beside the API's own `changes` list.
-9. Exposure covers one date; there is no all-open-tickets view because the endpoint is date-scoped.
-10. `stake_units` is never sent when saving a ticket (server default applies); there is no stake input.
+1. `/player-props` has no `lineup_status` or `model_ready` query parameter. Those two filters are applied
+   client-side to the loaded page (50 rows), so with more than one page they do not filter the whole set.
+2. `/players/{id}/game-logs` has no sort parameter. Column sorting applies to the rows on the current page only
+   (stated under the table).
+3. `/players/{id}/threshold` requires `line`. With no quoted line for a stat the default threshold is the L10 mean
+   from `/averages`, rounded to the nearest 0.5 (labelled as such). The comparison page calls the same endpoint
+   with `line=0` only to obtain the L10 game values; there is no plain "recent values" endpoint.
+4. `/players` list items carry no `headshot_url`/`jersey`, so search results and the explorer show initials.
+5. `PropRow` has no id. Rows are keyed by `player_id:market:game_id`.
+6. `ManualEntry` → `PropRow` linkage is implicit; the UI refetches `/player-props` after create/withdraw.
+7. Owner-only actions: the UI shows the manual entry form when `/auth/me` reports role `owner`. The contract does
+   not list other role values.
+8. `/injuries` rows without a `game_label` are grouped under "No game on this slate".
+9. `/performance/strategies` has no filters; the page shows all-time groups.
+10. `/data-health/providers` and `/data-health.providers` overlap. The configuration center uses the former;
+    `/markets` still shows the latter's compact table.
+11. `POST /builder/evaluate` now accepts one selection, but the builder still evaluates only from two legs (a
+    single leg is offered as a single paper ticket instead).
+12. Results filter options (seasons, model versions) still have no dedicated endpoint; they come from
+    `/data-health.coverage` and `/models`.
+13. The edition diff is still computed client-side from two `/editions/{id}` responses.
+14. `stake_units` is never sent when saving a ticket; `observed_at` is never sent for manual entries (no field).
