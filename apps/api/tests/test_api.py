@@ -221,12 +221,13 @@ def test_ticket_refused_after_tipoff_and_errors_are_consistent(app):
 
 
 def test_no_real_money_surface(app):
-    paths = {r.path for r in app.routes}
+    spec = app.openapi()["paths"]
     banned = ("deposit", "withdraw", "wager", "place", "sportsbook", "credential", "fund", "bet/")
-    assert not [p for p in paths if any(b in p.lower() for b in banned)]
-    mutating = sorted(p for r in app.routes for p in [r.path] if getattr(r, "methods", None) and "POST" in r.methods)
+    assert not [p for p in spec if any(b in p.lower() for b in banned)]
+    mutating = sorted(p for p, ops in spec.items() if set(ops) - {"get"})
     assert mutating == ["/api/v1/auth/login", "/api/v1/auth/logout", "/api/v1/builder/evaluate",
                         "/api/v1/operations/pause", "/api/v1/paper/tickets"]
+    assert all(set(ops) <= {"get", "post"} for ops in spec.values())  # no PUT/PATCH/DELETE anywhere
 
 
 def test_login_rate_limit_last(app):
