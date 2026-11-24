@@ -11,6 +11,10 @@ local Docker engine (build, migrate, start, health, restart, backup, restore) bu
 * A free loopback port (default 3410). Check first: `ss -ltnp | grep 3410`.
 
 ## First deployment
+
+Shortcut: `bash scripts/deploy.sh` performs the checks, creates `.env` interactively (random database password),
+builds, starts and waits for health; `bash scripts/deploy.sh history` runs the one-off history load and model
+validation. The manual equivalent follows.
 ```bash
 sudo mkdir -p /opt/gizer-nba && cd /opt/gizer-nba
 git clone https://github.com/llamanftstaking-glitch/nba .
