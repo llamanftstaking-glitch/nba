@@ -103,6 +103,7 @@ function GameProps({ gameId, onRows }: { gameId: string; onRows: (r: PropRow[]) 
   const [text, setText] = useState("");
   const [market, setMarket] = useState("");
   const [open, setOpen] = useState<PropRow | null>(null);
+  const [showAllProps, setShowAllProps] = useState(false);
   return (
     <>
       <QueryView query={q} rows={5}>
@@ -128,7 +129,14 @@ function GameProps({ gameId, onRows }: { gameId: string; onRows: (r: PropRow[]) 
               {rows.length === 0 ? (
                 <EmptyState title={d.items.length === 0 ? "No player prop markets are available for this game." : "No markets match these filters."} icon={Target} />
               ) : (
-                <MarketTable rows={rows} onOpen={setOpen} caption="Player prop markets for this game" />
+                <>
+                  <MarketTable rows={showAllProps ? rows : rows.slice(0, 8)} onOpen={setOpen} caption="Player prop markets for this game" />
+                  {rows.length > 8 && (
+                    <Button variant="ghost" aria-expanded={showAllProps} onClick={() => setShowAllProps((v) => !v)}>
+                      {showAllProps ? "Show fewer markets" : `Show all ${rows.length} markets`}
+                    </Button>
+                  )}
+                </>
               )}
             </div>
           );
@@ -140,8 +148,10 @@ function GameProps({ gameId, onRows }: { gameId: string; onRows: (r: PropRow[]) 
 }
 
 /** 7 — descriptive recent averages per quoted/projected market. */
-function HistoricalPerformance({ rows }: { rows: PropRow[] }) {
-  if (rows.length === 0) return <EmptyState title="No player history rows are available for this game." icon={History} />;
+function HistoricalPerformance({ rows: allRows }: { rows: PropRow[] }) {
+  const [all, setAll] = useState(false);
+  const rows = all ? allRows : allRows.slice(0, 12);
+  if (allRows.length === 0) return <EmptyState title="No player history rows are available for this game." icon={History} />;
   return (
     <div data-testid="game-history">
       <ul className="divide-y divide-line/30">
@@ -154,8 +164,8 @@ function HistoricalPerformance({ rows }: { rows: PropRow[] }) {
           <span className="text-right">Season</span>
           <span>History vs line</span>
         </li>
-        {rows.map((p) => (
-          <li key={propKey(p)} className="grid grid-cols-4 gap-x-3 gap-y-1 py-2 md:grid-cols-[minmax(0,2fr)_1fr_repeat(4,0.7fr)_1.4fr] md:items-center">
+        {rows.map((p, idx) => (
+          <li key={propKey(p)} className={`${!all && idx >= 5 ? "hidden md:grid" : "grid"} grid-cols-4 gap-x-3 gap-y-1 py-2 md:grid-cols-[minmax(0,2fr)_1fr_repeat(4,0.7fr)_1.4fr] md:items-center`}>
             <span className="col-span-4 min-w-0 md:col-span-1">
               <DLink href={`/players/${p.player_id}#history`} className="text-sm font-semibold text-ink hover:underline">
                 {p.player_name}
@@ -186,6 +196,11 @@ function HistoricalPerformance({ rows }: { rows: PropRow[] }) {
           </li>
         ))}
       </ul>
+      {allRows.length > 5 && (
+        <Button variant="ghost" className={allRows.length <= 12 ? "mt-2 md:hidden" : "mt-2"} aria-expanded={all} onClick={() => setAll((v) => !v)}>
+          {all ? "Show fewer rows" : `Show all ${allRows.length} rows`}
+        </Button>
+      )}
       <p className="mt-2 text-xs text-muted">Averages over games played and counts against today’s line. Descriptive history, not a probability.</p>
     </div>
   );
@@ -315,7 +330,14 @@ function GameView({ d }: { d: GameDetail }) {
             <>
               <KalshiSyncStatus sync={k.sync} className="mb-3 text-xs" />
               <KalshiCompactList rows={k.items} />
-              <p className="mt-2 text-xs text-muted">Market prices in cents as observed at the last sync. A market price is not a model probability.</p>
+              <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
+                <span>
+                  {k.total > k.items.length ? `Showing the ${k.items.length} highest-volume of ${k.total} contracts. ` : ""}Market prices in cents as observed at the last sync. A market price is not a model probability.
+                </span>
+                <DLink href={`/kalshi-intelligence?game_id=${encodeURIComponent(g.id)}`} className={textLink} data-testid="kalshi-all-link">
+                  All contracts for this game
+                </DLink>
+              </p>
             </>
           )}
         </QueryView>

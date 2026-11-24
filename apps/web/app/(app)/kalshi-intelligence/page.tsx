@@ -10,6 +10,7 @@ import { Pagination } from "@/components/ui/pagination";
 import { PageHeader, Panel } from "@/components/ui/panel";
 import { EmptyState, QueryView } from "@/components/ui/states";
 import { api } from "@/lib/api";
+import { useSearchParams } from "next/navigation";
 import { useSelectedDate } from "@/lib/date";
 import { fmtInt, propMarketName } from "@/lib/format";
 import { useDebounced } from "@/lib/use-debounced";
@@ -20,7 +21,8 @@ const MARKETS = ["player_pts", "player_reb", "player_ast", "player_fg3m", "playe
 export default function KalshiPage() {
   const date = useSelectedDate();
   const [text, setText] = useState("");
-  const [game, setGame] = useState("");
+  const sp = useSearchParams();
+  const [game, setGame] = useState(sp.get("game_id") ?? "");
   const [kind, setKind] = useState("");
   const [market, setMarket] = useState("");
   const [interp, setInterp] = useState("");

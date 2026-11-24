@@ -1,4 +1,6 @@
-import type { ReactNode } from "react";
+"use client";
+
+import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
 export type Column<T> = {
@@ -24,6 +26,7 @@ export function DataTable<T>({
   caption,
   rowClassName,
   dense,
+  mobileLimit,
 }: {
   columns: Column<T>[];
   rows: T[];
@@ -31,7 +34,10 @@ export function DataTable<T>({
   caption: string;
   rowClassName?: (row: T) => string | undefined;
   dense?: boolean;
+  /** In the stacked (below xl) layout, show this many rows first with a "Show all" control. */
+  mobileLimit?: number;
 }) {
+  const [allMobile, setAllMobile] = useState(false);
   const primary = columns.filter((c) => c.primary);
   const rest = columns.filter((c) => !c.primary);
   return (
@@ -72,7 +78,7 @@ export function DataTable<T>({
         </table>
       </div>
       <ul className="space-y-2 xl:hidden" aria-label={caption}>
-        {rows.map((r, i) => (
+        {(mobileLimit && !allMobile ? rows.slice(0, mobileLimit) : rows).map((r, i) => (
           <li key={rowKey(r, i)} className={cn("rounded-md bg-raised/40 p-3", rowClassName?.(r))}>
             {primary.length > 0 && (
               <div className="mb-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium text-ink">
@@ -83,7 +89,7 @@ export function DataTable<T>({
                 ))}
               </div>
             )}
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3 md:grid-cols-4">
+            <dl className="grid grid-cols-3 gap-x-3 gap-y-2 md:grid-cols-4">
               {rest.filter((c) => !c.hideOnMobile?.(r)).map((c) => (
                 <div key={c.key} className="min-w-0">
                   <dt className="text-2xs uppercase tracking-wide text-muted">{c.header}</dt>
@@ -93,6 +99,13 @@ export function DataTable<T>({
             </dl>
           </li>
         ))}
+        {mobileLimit && rows.length > mobileLimit ? (
+          <li>
+            <button type="button" className="inline-flex min-h-[44px] items-center text-sm font-medium text-accent hover:underline" aria-expanded={allMobile} onClick={() => setAllMobile((v) => !v)}>
+              {allMobile ? "Show fewer" : `Show all ${rows.length}`}
+            </button>
+          </li>
+        ) : null}
       </ul>
     </>
   );

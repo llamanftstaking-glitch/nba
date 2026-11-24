@@ -13,10 +13,12 @@ Desktop (≥ 1024px): left sidebar with four groups, collapsible to an icon rail
 | | Today's Games | `/games` | `/games` |
 | | Top Picks | `/picks` | `/selections` |
 | | Player Props | `/player-props` | `/player-props`, `/player-props/manual` (GET/POST/withdraw), `/players/{id}/threshold`, `/players/{id}/averages` |
+| | Kalshi Markets | `/kalshi-intelligence`, `/kalshi-intelligence/[ticker]` | `/kalshi/markets`, `/kalshi/markets/{ticker}` |
 | | Starting Lineups | `/lineups` | `/lineups`, `/games/{id}/lineup-history` |
 | | Parlay Research | `/parlays` | `/combos`, `/selections` |
 | | Same-Game Research | `/parlays/same-game` | `/combos?category=sgp`, `/games` |
 | Player Intelligence | Player Explorer | `/players`, `/players/[id]` | `/players`, `/players/{id}` + `/averages`, `/threshold`, `/splits`, `/game-logs` |
+| | Minutes Intelligence | `/minutes` | `/minutes` |
 | | Player Comparison | `/players/compare?ids=` | `/players`, `/players/{id}`, `/averages`, `/threshold` |
 | | Historical Performance | `/players/history` | `/players` (deep-links to `/players/[id]#history`) |
 | | Matchup Intelligence | `/matchups` | `/games`, `/games/{id}` |
@@ -92,6 +94,26 @@ Unchanged in structure, restyled: Today's Games, Top Picks, Parlay Research (eig
 Research, Builder (three columns ≥ 1024, drawer below), Paper Tickets, Daily Editions (list, diff, full edition),
 Results, Exposure, Research Lab, Agent Operations, Settings, Admin, Markets, Simulations, Backtesting, Teams.
 
+**Kalshi Market Watch `/kalshi-intelligence`** — sync status (last sync, `sync.note`, stale tag) → tiles from
+`counts` and `events` → filters (search, game, kind, stat/market, interpretation, sort; `?game_id=` presets the
+game) → contract table (≥ 1280) or expandable cards → API notes. A row opens the market detail drawer; the same
+view is routable at `/kalshi-intelligence/[ticker]`. **Market detail** — market data (title, threshold and
+comparator, prices, volume, open interest, sync), price history chart with event markers and a Price / Spread /
+Volume toggle ("Only one observation so far" below two points), chronological event list, contract rules verbatim,
+historical results vs the threshold as counts; then, separated and labelled, independent model research
+(projection, projected minutes, selections with classification / probability / break-even / rejection reasons).
+Tracked-only contracts show their note and no model numbers.
+
+**Minutes Intelligence `/minutes`** — header note (descriptive, model status, uncertainty, restrictions) → filters
+(search, team, classification, sort) → table with server-side sort (≥ 1280) or expandable cards.
+
+**Additions to existing pages** — Overview: a ninth tile "Kalshi markets" (contract count, last sync). Player
+profile: "Minutes & role" and "Available Kalshi contracts" (threshold ladder per stat). Injuries is now the
+Injury Intelligence Centre with a "Status changes" section (material-only toggle) above the availability feed.
+Game page order: 1 matchup header · 2 game environment · 3 lineups · 4 player minutes · 5 player market
+availability · 6 Kalshi market observations · 7 historical player performance · 8 injury & availability timeline ·
+9 projections (expandable) · 10 research selections · 11 same-game research · 12 sources and limitations.
+
 ## 4. Component inventory and 5. Design system
 
 Both are maintained in `docs/design/DESIGN-SYSTEM.md` (tokens, typography, breakpoints, every reusable
@@ -134,3 +156,15 @@ Nothing was invented; where the contract is silent the UI degrades instead.
     `/data-health.coverage` and `/models`.
 13. The edition diff is still computed client-side from two `/editions/{id}` responses.
 14. `stake_units` is never sent when saving a ticket; `observed_at` is never sent for manual entries (no field).
+15. `/injuries/changes` has no `game_id` parameter; the game page filters the date's changes client-side.
+16. `/minutes` has no `game_id` parameter; the game page requests the date (limit 200) and filters by `game_id`.
+17. `/kalshi/markets` for one game can exceed any reasonable page (hundreds of contracts). The game page shows the
+    200 highest-volume contracts grouped by stat and links to the market watch filtered by game. There is no
+    grouped/summary endpoint.
+18. The Kalshi "Stat / market" filter options are a fixed list of GIZER market keys; the response does not list
+    the markets present.
+19. `/kalshi/markets` `sort=spread` direction is unspecified; the UI sends it as-is.
+20. The real `sync.note` currently contains the phrase "not a real-time feed". The UI shows the note verbatim as
+    required; the phrase is a negation, but it is the one place that wording can appear.
+21. `GET /players/{id}/minutes` returns 404 for an unknown player id (seen on the running backend); the profile
+    block then shows the error state with Retry.

@@ -241,50 +241,67 @@ export function KalshiTable({ rows, onOpen }: { rows: KalshiMarketRow[]; onOpen:
   );
 }
 
-/** Compact rows grouped by stat/kind: contract title, market price, move since first observation, volume. */
-export function KalshiCompactList({ rows, ladder = false }: { rows: KalshiMarketRow[]; ladder?: boolean }) {
+function CompactGroup({ label, list, ladder, perGroup }: { label: string; list: KalshiMarketRow[]; ladder: boolean; perGroup: number }) {
+  const [all, setAll] = useState(false);
+  const shown = all ? list : list.slice(0, perGroup);
+  return (
+    <div className="min-w-0" data-testid="kalshi-group">
+      <div className="flex items-baseline justify-between border-b border-line/50 pb-1 text-2xs font-semibold uppercase tracking-wide text-muted">
+        <span>
+          {label} · {list.length}
+        </span>
+        <span>Market price · move · volume</span>
+      </div>
+      <ul className="divide-y divide-line/30">
+        {shown.map((m, idx) => (
+          <li key={m.ticker} className={cn(!all && idx >= 3 && "hidden md:block")}>
+            <DLink href={`/kalshi-intelligence/${encodeURIComponent(m.ticker)}`} className={cn("flex min-h-[44px] items-center gap-3 py-1.5 hover:bg-raised/40", m.interpretation !== "normalized" && "opacity-75")} data-testid="kalshi-compact-row">
+              <span className="min-w-0 flex-1">
+                <span className="block break-words text-sm font-medium text-ink">{ladder ? (m.comparator ?? m.title) : m.title}</span>
+                {ladder && <span className="block break-words text-xs text-muted">{m.title}</span>}
+                <TrackedOnlyTag m={m} />
+              </span>
+              <span className="num w-14 shrink-0 text-right text-sm font-semibold text-ink">
+                <Val v={fmtCents(m.price)} />
+              </span>
+              <span className="w-16 shrink-0 text-right text-xs">
+                <PriceMove v={m.change_since_first} />
+              </span>
+              <span className="num w-16 shrink-0 text-right text-xs text-muted">
+                <Val v={fmtInt(m.volume)} />
+              </span>
+            </DLink>
+          </li>
+        ))}
+      </ul>
+      {list.length > 3 && (
+        <button type="button" className={cn("mt-1 inline-flex min-h-[44px] items-center text-xs font-medium text-accent hover:underline md:min-h-0", list.length <= perGroup && "md:hidden")} aria-expanded={all} onClick={() => setAll((v) => !v)} data-testid="kalshi-group-more">
+          {all ? "Show fewer" : `Show all ${list.length}`}
+        </button>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Compact rows grouped by stat/kind: contract title, market price, move since first observation, volume.
+ * Each group shows its first `perGroup` rows (a real slate has hundreds of contracts per game).
+ */
+export function KalshiCompactList({ rows, ladder = false, perGroup = 5 }: { rows: KalshiMarketRow[]; ladder?: boolean; perGroup?: number }) {
   const groups = useMemo(() => {
     const m = new Map<string, KalshiMarketRow[]>();
     for (const r of rows) {
       const key = r.stat_label ?? (r.stat ? statLabel(r.stat) : titleCase(r.kind));
       m.set(key, [...(m.get(key) ?? []), r]);
     }
-    for (const list of m.values()) list.sort((a, b) => (a.player_name ?? "").localeCompare(b.player_name ?? "") || (a.threshold ?? 0) - (b.threshold ?? 0));
+    // ladders read by threshold; game lists keep the API order (volume) so the busiest contracts lead
+    if (ladder) for (const list of m.values()) list.sort((a, b) => (a.threshold ?? 0) - (b.threshold ?? 0));
     return [...m.entries()];
-  }, [rows]);
+  }, [rows, ladder]);
   return (
     <div className="grid gap-x-6 gap-y-4 lg:grid-cols-2" data-testid="kalshi-compact">
       {groups.map(([label, list]) => (
-        <div key={label} className="min-w-0" data-testid="kalshi-group">
-          <div className="flex items-baseline justify-between border-b border-line/50 pb-1 text-2xs font-semibold uppercase tracking-wide text-muted">
-            <span>
-              {label} · {list.length}
-            </span>
-            <span>Market price · move · volume</span>
-          </div>
-          <ul className="divide-y divide-line/30">
-            {list.map((m) => (
-              <li key={m.ticker}>
-                <DLink href={`/kalshi-intelligence/${encodeURIComponent(m.ticker)}`} className={cn("flex min-h-[44px] items-center gap-3 py-1.5 hover:bg-raised/40", m.interpretation !== "normalized" && "opacity-75")} data-testid="kalshi-compact-row">
-                  <span className="min-w-0 flex-1">
-                    <span className="block break-words text-sm font-medium text-ink">{ladder ? (m.comparator ?? m.title) : m.title}</span>
-                    {ladder && <span className="block break-words text-xs text-muted">{m.title}</span>}
-                    <TrackedOnlyTag m={m} />
-                  </span>
-                  <span className="num w-12 shrink-0 text-right text-sm font-semibold text-ink">
-                    <Val v={fmtCents(m.price)} />
-                  </span>
-                  <span className="w-14 shrink-0 text-right text-xs">
-                    <PriceMove v={m.change_since_first} />
-                  </span>
-                  <span className="num w-14 shrink-0 text-right text-xs text-muted">
-                    <Val v={fmtInt(m.volume)} />
-                  </span>
-                </DLink>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <CompactGroup key={label} label={label} list={list} ladder={ladder} perGroup={perGroup} />
       ))}
     </div>
   );
@@ -387,6 +404,11 @@ export function KalshiDetailView({ d }: { d: KalshiMarketDetail }) {
                 </li>
               ))}
             </ul>
+          )}
+          {points.length >= 2 && marks.some((e) => e.t < (points[0]?.t ?? 0) || e.t > (points[points.length - 1]?.t ?? 0)) && (
+            <p className="mt-1 text-xs text-muted" data-testid="kd-outside">
+              {marks.filter((e) => e.t < (points[0]?.t ?? 0) || e.t > (points[points.length - 1]?.t ?? 0)).length} event(s) fall outside the observed price window, so they are listed here but have no marker on the chart.
+            </p>
           )}
           <p className="mt-1 text-xs text-muted">Events are shown for context in time order. An event next to a price change does not establish that one caused the other.</p>
         </div>

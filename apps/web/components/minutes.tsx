@@ -217,7 +217,7 @@ export function MinutesTable({ rows, sort, onSort }: { rows: MinutesRow[]; sort:
             <tr className="border-b border-line text-left">
               {th("player_name", "Player", "text-left")}
               {th(null, "Starting status", "text-left")}
-              {th("proj_min", "Proj min [band]")}
+              {th("proj_min", "Proj min")}
               {th("l3", "L3")}
               {th("l5", "L5")}
               {th("l10", "L10")}
@@ -306,8 +306,11 @@ function FragmentRow({ r, open, onToggle }: { r: MinutesRow; open: boolean; onTo
 }
 
 /** Compact minutes table for a game: player, role, projected minutes, L5, L10, season, variability, classification. */
-export function MinutesCompact({ rows }: { rows: MinutesRow[] }) {
+export function MinutesCompact({ rows: allRows, limit = 12 }: { rows: MinutesRow[]; limit?: number }) {
+  const [all, setAll] = useState(false);
+  const rows = all ? allRows : allRows.slice(0, limit);
   return (
+    <>
     <ul className="divide-y divide-line/30" data-testid="minutes-compact">
       <li className="hidden grid-cols-[minmax(0,2.2fr)_1.1fr_1.1fr_0.6fr_0.6fr_0.7fr_1fr_1.6fr] gap-x-3 pb-2 text-2xs font-semibold uppercase tracking-wide text-muted lg:grid" aria-hidden>
         <span>Player</span>
@@ -319,8 +322,8 @@ export function MinutesCompact({ rows }: { rows: MinutesRow[] }) {
         <span className="text-right">Variability</span>
         <span>Classification</span>
       </li>
-      {rows.map((r) => (
-        <li key={r.player_id} className="grid grid-cols-2 gap-x-3 gap-y-1 py-2 lg:grid-cols-[minmax(0,2.2fr)_1.1fr_1.1fr_0.6fr_0.6fr_0.7fr_1fr_1.6fr] lg:items-center" data-testid="minutes-compact-row">
+      {rows.map((r, idx) => (
+        <li key={r.player_id} className={cn(!all && idx >= 6 ? "hidden md:grid" : "grid", "grid-cols-2 gap-x-3 gap-y-1 py-2 lg:grid-cols-[minmax(0,2.2fr)_1.1fr_1.1fr_0.6fr_0.6fr_0.7fr_1fr_1.6fr] lg:items-center")} data-testid="minutes-compact-row">
           <span className="col-span-2 min-w-0 lg:col-span-1">
             <DLink href={`/players/${r.player_id}`} className="text-sm font-semibold text-ink hover:underline">
               {r.player_name}
@@ -358,6 +361,12 @@ export function MinutesCompact({ rows }: { rows: MinutesRow[] }) {
         </li>
       ))}
     </ul>
+      {allRows.length > 6 && (
+        <button type="button" className={cn("mt-2 inline-flex min-h-[44px] items-center text-xs font-medium text-accent hover:underline md:min-h-0", allRows.length <= limit && "md:hidden")} aria-expanded={all} onClick={() => setAll((v) => !v)} data-testid="minutes-compact-more">
+          {all ? "Show fewer players" : `Show all ${allRows.length} players`}
+        </button>
+      )}
+    </>
   );
 }
 

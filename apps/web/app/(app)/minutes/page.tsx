@@ -66,7 +66,7 @@ export default function MinutesPage() {
             ))}
           </Select>
         </Field>
-        <Field label="Sort">
+        <Field label="Sort" className="col-span-2 md:col-span-1">
           <Select value={`${sort.key}:${sort.order}`} onChange={(e) => { const [key, order] = e.target.value.split(":"); setSort({ key: key ?? "proj_min", order: order === "asc" ? "asc" : "desc" }); setOffset(0); }} data-testid="minutes-sort">
             {SORTS.flatMap(([k, l]) => [
               <option key={`${k}:desc`} value={`${k}:desc`}>{l} ↓</option>,

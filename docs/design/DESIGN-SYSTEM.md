@@ -159,9 +159,36 @@ horizontally inside their own container.
 * `OverlayLineChart` (≤ 3 players): `#3B9AE6`, `#BF8A12`, `#A866DC` — checked with the dataviz palette validator
   for the dark surface (lightness band, chroma, CVD and normal-vision separation, contrast: all pass).
 
+## 9a. Core Intelligence V1 components
+
+| Component | File | Notes |
+|---|---|---|
+| `KalshiSyncStatus` | `kalshi.tsx` | last sync time (ET), age, poll interval, the API `sync.note`, amber "Stale" dot when `sync.stale` |
+| `PriceMove` | `kalshi.tsx` | movement in cents with a sign and an arrow; up = data hue `#7DC4F0`, down = slate. Never green/red: a price move is not good or bad |
+| `TrackedOnlyTag` | `kalshi.tsx` | "Tracked only" for `unsupported` / `unmatched` contracts, `interpretation_note` as the tooltip; such rows are dimmed and never show model numbers |
+| `KalshiTable` / `KalshiCard` | `kalshi.tsx` | contract table ≥ xl, expandable cards below; always shows the original `title` and the comparator |
+| `KalshiCompactList` | `kalshi.tsx` | grouped compact rows (game page) or a threshold ladder (player profile); 5 rows per group (3 on phones) with "Show all" |
+| `KalshiDetailView`, `KalshiDrawer` | `kalshi.tsx` | market data block first (label "Market data · Kalshi", data hue), then "Independent model research · GIZER" (emerald label), separated by a rule |
+| `KalshiPriceChart` | `charts.tsx` | price line in cents, bid–ask band at 14% opacity, vertical event markers: availability amber, lineup teal, market status slate; the contract's own player is a solid 2px line, others dashed. Price / Spread / Volume toggle (one axis at a time) |
+| `MinutesTable` / cards, `MinutesCompact`, `MinutesProfile` | `minutes.tsx` | projected minutes with `[low–high]` band, L3–season, ±SD and min–max, starts, classification (dot + label, reason in tooltip and expanded row), tier, flags |
+| `MinutesNotes` | `minutes.tsx` | "descriptive context, not qualification rules", model name/version/status ("… — did not pass validation" unless production), `uncertainty`, `restrictions_note` |
+| `InjuryChangeList` | `injury-changes.tsx` | previous → current status, Material badge, affected game, lineup changes, "N research records to reassess (M qualified)", source and times |
+
+Number formats: Kalshi prices are shown in cents (`56.5¢`), moves as `+4¢` / `−2.5¢` / `0¢`. A Kalshi price is always
+labelled "Market price" and a GIZER figure "Model probability"; the two never share a component. Kalshi data is
+described as polled / observed, with the last sync time — never with wording that implies a continuous feed.
+
+Classification labels (badge and text): Validated research · Standard research · Watchlist · Insufficient
+information · Stale (amber) · Invalidated · Rejected.
+
+Long lists are capped with an explicit "Show all N" control (game-page markets, minutes, history, Kalshi groups;
+splits and distribution cards on phones) because a real slate carries hundreds of contracts per game.
+
 ## 10. Vocabulary
 
-Never used in UI copy: lock, guaranteed winner, free money, risk-free, can't lose, sure thing. The fixed notice
+Never used in UI copy: lock, guaranteed winner, free money, risk-free, can't lose, sure thing; and for market data:
+sharp money, smart money, insiders, "confirms the projection", or wording that calls polled data continuous.
+There are no buy / sell / trade / order controls anywhere. The fixed notice
 "Research and paper testing only. No outcome is guaranteed. No real-money execution." is on every page.
 
 ## LineupCard (`components/lineup-card.tsx`)

@@ -96,7 +96,7 @@ function Distribution({ windows }: { windows: AveragesWindow[] }) {
       <div className="mb-3">
         <Tabs label="Distribution stat" size="sm" scroll value={stat} onChange={setStat} items={["min", ...HISTORY_STATS].map((s) => ({ id: s, label: statLabel(s) }))} />
       </div>
-      {rows.length === 0 ? <EmptyState title="No distribution data is available." /> : <DataTable columns={cols} rows={rows} rowKey={(w) => w.key} caption={`${statLabel(stat)} distribution by window`} dense />}
+      {rows.length === 0 ? <EmptyState title="No distribution data is available." /> : <DataTable columns={cols} rows={rows} rowKey={(w) => w.key} caption={`${statLabel(stat)} distribution by window`} dense mobileLimit={4} />}
       {windows.some((w) => !w.available) && (
         <p className="mt-2 text-xs text-muted">
           Not available: {windows.filter((w) => !w.available).map((w) => `${w.label}${w.note ? ` (${w.note})` : ""}`).join(", ")}
@@ -371,7 +371,7 @@ function View({ d, id }: { d: PlayerDetail; id: string }) {
         <QueryView query={splits} rows={3} isEmpty={(s) => s.splits.length === 0} empty={<EmptyState title="No splits are available." />}>
           {(s) => (
             <>
-              <DataTable columns={SPLIT_COLUMNS} rows={s.splits} rowKey={(r) => `${r.group}-${r.label}`} caption="Splits" dense />
+              <DataTable columns={SPLIT_COLUMNS} rows={s.splits} rowKey={(r) => `${r.group}-${r.label}`} caption="Splits" dense mobileLimit={5} />
               {s.notes.length > 0 && (
                 <ul className="mt-2 space-y-0.5 text-xs text-muted">
                   {s.notes.map((n, i) => (

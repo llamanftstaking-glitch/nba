@@ -442,6 +442,11 @@ async function runViewport(browser, label, viewport) {
   await hist.locator('[data-testid="history-table-toggle"]').click();
   check(`[${label}] player: accessible table alternative`, (await hist.locator('[data-testid="history-table"] tbody tr').count()) === 20);
   await shot("player-history");
+  const distMore = page.locator('[data-testid="distribution"] button:visible', { hasText: "Show all" });
+  if (await distMore.count()) {
+    check(`[${label}] player: long stacked tables are capped with a Show all control`, true);
+    await distMore.first().click();
+  }
   check(`[${label}] player: distribution table`, (await page.locator('[data-testid="distribution"]').innerText()).includes("n=24 of 30 requested"));
   check(`[${label}] player: small-sample flags`, (await page.locator('[data-testid="player-page"]').innerText()).match(/Small sample/gi)?.length >= 3);
   check(`[${label}] player: missed games listed`, (await page.locator('[data-testid="missed-games"] li').count()) === 2);

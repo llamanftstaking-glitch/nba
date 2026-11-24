@@ -62,8 +62,13 @@ def upsert_game(s, rec: GameRec) -> Game:
     return g
 
 
-def ingest_results(season: str, max_boxes: int | None = None, provider: PbpStatsProvider | None = None) -> dict:
-    """Completed games + player box scores from PBP Stats. Safe to re-run; only missing boxes are fetched."""
+def ingest_results(season: str, max_boxes: int | None = None, provider: PbpStatsProvider | None = None,
+                   recent_for_teams: tuple[set[int], int] | None = None) -> dict:
+    """Completed games + player box scores from PBP Stats. Safe to re-run; only missing boxes are fetched.
+
+    Boxes are fetched newest first, so the most recent games (which lineups, minutes and current form depend on)
+    arrive before older history. `recent_for_teams=(team_ids, n)` restricts the run to the latest n missing
+    games of each listed team — used to get tonight's teams ready within minutes."""
     p = provider or PbpStatsProvider()
     recs = p.games(season)
     with session_scope() as s:
@@ -72,9 +77,22 @@ def ingest_results(season: str, max_boxes: int | None = None, provider: PbpStats
             g = upsert_game(s, r)
             s.flush()
             if g.box_ingested_at is None:
-                pending.append((g.id, r.nba_game_id, r.game_date))
+                pending.append((g.id, r.nba_game_id, r.game_date, r.home_team_id, r.away_team_id))
+    pending.sort(key=lambda x: x[2], reverse=True)
+    if recent_for_teams is not None:
+        teams, n = recent_for_teams
+        taken: dict[int, int] = {}
+        keep = []
+        for row in pending:
+            mine = [t for t in (row[3], row[4]) if t in teams and taken.get(t, 0) < n]
+            if mine:
+                keep.append(row)
+                for t in (row[3], row[4]):
+                    if t in teams:
+                        taken[t] = taken.get(t, 0) + 1
+        pending = keep
     done, failed = 0, []
-    for gid, nba_id, gdate in sorted(pending, key=lambda x: x[2]):
+    for gid, nba_id, gdate, _h, _a in pending:
         if max_boxes is not None and done >= max_boxes:
             break
         try:
@@ -345,3 +363,31 @@ def ingest_confirmed_starters(since: date, until: date | None = None, max_games:
         done += 1
     return {"dates_linked": linked, "games_done": done, "games_failed": failed, "games_pending": max(0, len(todo) - done - failed),
             "unmatched_player_rows": unmatched}
+
+
+def quickstart(games_per_team: int = 8) -> dict:
+    """Get today's slate usable quickly on a fresh server: schedule and quotes, the most recent box scores of the
+    teams playing today and tomorrow, their confirmed starters, injuries. History beyond that keeps loading
+    separately. Every step is the normal ingestion path; nothing is estimated or substituted."""
+    from .providers import season_for_date
+    d = today_et()
+    out: dict = {"date": d.isoformat()}
+    for dd in (d, d + timedelta(days=1)):
+        try:
+            out[f"slate_{dd}"] = ingest_slate(dd)
+        except ProviderError as e:
+            out[f"slate_{dd}"] = {"error": str(e)}
+    with session_scope() as s:
+        today_teams = {t for g in s.scalars(select(Game).where(Game.game_date == d)) for t in (g.home_team_id, g.away_team_id)}
+        next_teams = {t for g in s.scalars(select(Game).where(Game.game_date == d + timedelta(days=1))) for t in (g.home_team_id, g.away_team_id)}
+    season = season_for_date(d)
+    out["boxes_today_teams"] = ingest_results(season, recent_for_teams=(today_teams, games_per_team)) if today_teams else None
+    out["starters"] = ingest_confirmed_starters(d - timedelta(days=45))
+    try:
+        out["injuries"] = ingest_injuries()
+    except ProviderError as e:
+        out["injuries"] = {"error": str(e)}
+    out["boxes_tomorrow_teams"] = ingest_results(season, recent_for_teams=(next_teams - today_teams, games_per_team)) if next_teams - today_teams else None
+    if out["boxes_tomorrow_teams"]:
+        out["starters_2"] = ingest_confirmed_starters(d - timedelta(days=45))
+    return out

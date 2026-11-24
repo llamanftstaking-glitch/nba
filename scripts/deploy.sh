@@ -14,10 +14,13 @@ docker compose version >/dev/null 2>&1 || die "The Docker Compose plugin is not 
 docker info >/dev/null 2>&1 || die "Cannot talk to Docker. Run this as a user in the 'docker' group (or with sudo)."
 
 if [ "${1:-}" = "history" ]; then
-  say "Loading two seasons of results (the data provider throttles requests; this takes about two hours)"
-  docker compose exec -T worker gizer ingest-results --season 2025-26
+  say "Loading the current season, newest games first (the data provider throttles requests; this can take hours)"
   docker compose exec -T worker gizer ingest-results --season 2026-27
-  say "Loading confirmed starters and did-not-play records"
+  say "Loading confirmed starters for the current season"
+  docker compose exec -T worker gizer ingest-starters --since 2026-10-01
+  say "Loading the previous season"
+  docker compose exec -T worker gizer ingest-results --season 2025-26
+  say "Loading confirmed starters and did-not-play records for the previous season"
   docker compose exec -T worker gizer ingest-starters --since 2025-10-01
   say "Validating models (only models that pass the gate are promoted)"
   docker compose exec -T worker gizer backtest | tail -n 40
