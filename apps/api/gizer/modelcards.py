@@ -34,7 +34,7 @@ def render() -> str:
                     f"* **Status:** {mv.status}" + (f" (promoted by {mv.promoted_by})" if mv.promoted_by else " — not promoted; this family produces no qualified selections"),
                     f"* **Author:** {mv.created_by}",
                     f"* **Training / calibration / evaluation periods:** {mv.training_period} / {mv.calibration_period} / {mv.evaluation_period}",
-                    "* **Applicable markets:** " + ("spread, total, moneyline" if mv.family == "team_game" else f"player {mv.family.split('_')[1]} over/under"),
+                    "* **Applicable markets:** " + ("spread, total, moneyline" if mv.family == "team_game" else "context for all player markets (not a market itself)" if mv.family == "player_minutes" else f"player {mv.family.split('_')[1]} thresholds"),
                     f"* **Parameters:** `{ {k: (round(v, 4) if isinstance(v, float) else v) for k, v in mv.params.items()} }`",
                     f"* **Known limitations:** {mv.limitations}", ""]
             if ev is None:
@@ -53,7 +53,16 @@ def render() -> str:
                         f"| Calibration error (ECE) | {_f(m['ece'], 4)} | — |", "", m["calibration_note"] + ".", ""]
             else:
                 out += ["| Model | MAE | RMSE | Bias |", "|---|---|---|---|"]
-                out += [f"| {k} | {_f(v['mae'])} | {_f(v['rmse'])} | {_f(v['bias'])} |" for k, v in m["models"].items()]
+                out += [f"| {k} | {_f(v['mae'])} | {_f(v.get('rmse'))} | {_f(v.get('bias'))} |" for k, v in m["models"].items()]
+                if mv.family == "player_minutes":
+                    out += ["", f"80% band coverage {_f(m['band_coverage_80'])} (nominal 0.80). Error bands by projected-minutes tier "
+                            f"(minutes below / above projection): `{m['bands']}`.", "",
+                            "Is a higher minutes tier more predictable? Measured, not assumed:", "",
+                            "| Projected-minutes tier | n | Minutes MAE | Band coverage | Points MAE | Points MAE / mean points |", "|---|---|---|---|---|---|"]
+                    out += [f"| {r['tier']} | {r['n']} | {_f(r['minutes_mae'], 2)} | {_f(r['band_coverage'])} | {_f(r['pts_mae'], 2)} | "
+                            f"{_f(r['pts_mae_relative'])} |" for r in m["tier_study"]]
+                    out += ["", m["tier_study_note"], ""]
+                    continue
                 out += ["", f"80% interval coverage {_f(m['coverage_80'])} (model-expected {_f(m.get('coverage_80_expected'))}); "
                         f"Brier {_f(m['brier'], 4)} vs constant baseline {_f(m['brier_baseline_constant'], 4)}; log loss {_f(m['log_loss'], 4)}; "
                         f"ECE {_f(m['ece'], 4)}; dispersion r = {_f(m['dispersion_r'], 2)}.", "", m["pseudo_line_note"] + ".", ""]

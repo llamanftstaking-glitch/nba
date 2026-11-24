@@ -15,13 +15,13 @@ and Agent 01 cannot override Agent 16.
 | 01 | Chief NBA Intelligence Officer | editions 10:00/12:00/15:00, pregame | publishes the edition briefing | job retries; no edition published |
 | 02 | NBA Data Engineer | 04:00, 06:00 | results + box scores, duplicate/plausibility checks | stale data → guard rejects |
 | 03 | Player Performance Analyst | 08:00 | form vs long-run averages with sample sizes | recorded; non-blocking |
-| 04 | Injury Intelligence Analyst | 08:00, every edition | sourced, timestamped injury snapshot | stale injuries → guard rejects |
+| 04 | Injury Intelligence Analyst | 08:00, every edition, every 20 min while games are upcoming (`availability_watch`) | sourced, timestamped injury snapshot; status-change events; queues an `update` edition on material change | stale injuries → records become `stale` |
 | 05 | Lineup, Rotation and Minutes Analyst | 08:00, every edition, pregame | projected vs confirmed lineups, change detection, role changes | lineups stay at last snapshot |
 | 06 | Matchup Intelligence Analyst | 08:00 | off/def rating matchups | recorded; non-blocking |
 | 07 | Pace and Game Environment Analyst | 08:00 | pace, total, blowout probability | recorded; non-blocking |
 | 08 | Schedule and Fatigue Analyst | 08:00 | back-to-backs; measured rest effect with SE | recorded; non-blocking |
 | 09 | Historical Research Analyst | 06:00 | coverage, scoring environment by season | recorded |
-| 10 | Market Intelligence Analyst | 08:00, every edition | quote snapshots, observed line moves | no quotes → nothing evaluated |
+| 10 | Market Intelligence Analyst | 08:00, every edition, every 5 min while games are upcoming (`market_watch`) | Kalshi contract discovery and price observations (read-only), sportsbook game quotes, observed moves | no quotes → nothing evaluated; failed series recorded |
 | 11 | Player Projection Scientist | weekly; each edition | player models (author; cannot promote) | models stay candidate |
 | 12 | Team Projection Scientist | weekly; each edition | team model (author; cannot promote) | models stay candidate |
 | 13 | Correlation Research Scientist | weekly | residual correlations + joint-frequency validation | same-game flagged unreliable |

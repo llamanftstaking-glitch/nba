@@ -195,7 +195,7 @@ def test_remaining_read_endpoints_return_contract_shapes(app):
     assert c.get("/api/v1/backtests").json()["items"] and c.get("/api/v1/research-lab").json()["correlation"]["pairs"]
     assert len(c.get("/api/v1/agents").json()["items"]) == 18
     dh = c.get("/api/v1/data-health").json()
-    assert {p["provider"] for p in dh["providers"]} == {"pbpstats", "espn", "oddsapi"}
+    assert {p["provider"] for p in dh["providers"]} == {"kalshi", "pbpstats", "espn", "oddsapi"}
     assert next(p for p in dh["providers"] if p["provider"] == "oddsapi")["status"] == "not_configured"
     st = c.get("/api/v1/settings").json()
     assert st["timezone"] == "America/New_York" and st["risk_policy"]["version"]

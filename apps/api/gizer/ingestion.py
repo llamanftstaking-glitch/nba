@@ -176,7 +176,70 @@ def ingest_injuries(provider: EspnProvider | None = None) -> dict:
                                  status=r.status, detail=r.detail, comment=r.comment,
                                  source_published_at=r.source_published_at, provider=r.provider,
                                  source_id=r.source_id, quality="ok" if pid else "unmatched"))
-    return {"batch_id": batch, "rows": len(recs), "unmatched_players": unmatched}
+    changes = detect_availability_changes(batch)
+    return {"batch_id": batch, "rows": len(recs), "unmatched_players": unmatched, "changes": len(changes),
+            "material_changes": sum(1 for c in changes if c["material"])}
+
+
+AVAILABILITY_CLASSES = ("available", "probable", "questionable", "doubtful", "out", "game_time_decision", "unknown")
+
+
+def availability_class(status: str | None) -> str:
+    """Map a source status string to a supported classification. Never infers beyond the published words."""
+    if status is None:
+        return "available"  # not listed on the report
+    s = status.lower()
+    if any(w in s for w in ("out", "suspension", "injured reserve")):
+        return "out"
+    if "doubt" in s:
+        return "doubtful"
+    if "question" in s:
+        return "questionable"
+    if "prob" in s:
+        return "probable"
+    if "game-time" in s or "game time" in s or "gtd" in s or "day-to-day" in s or "day to day" in s:
+        return "game_time_decision"
+    return "unknown"
+
+
+def detect_availability_changes(batch_id: str, today: date | None = None) -> list[dict]:
+    """Compare a new injury batch with the previous one and append one audit event per changed player.
+    A change is 'material' when it crosses into or out of `out`, or between certain and uncertain availability."""
+    from .db import ResearchEvent
+    out = []
+    with session_scope() as s:
+        cur = list(s.scalars(select(InjurySnapshot).where(InjurySnapshot.batch_id == batch_id)))
+        if not cur:
+            return out
+        first_id = min(i.id for i in cur)
+        prev_batch = s.scalar(select(InjurySnapshot.batch_id).where(InjurySnapshot.id < first_id).order_by(InjurySnapshot.id.desc()).limit(1))
+        if prev_batch is None:
+            return out  # nothing to compare with: the first report is not a "change"
+        prev = {(i.player_id or i.player_name): i for i in s.scalars(select(InjurySnapshot).where(InjurySnapshot.batch_id == prev_batch))}
+        now = {(i.player_id or i.player_name): i for i in cur}
+        today = today or today_et()
+        games = {}
+        for g in s.scalars(select(Game).where(Game.game_date >= today, Game.game_date <= today + timedelta(days=1),
+                                              Game.status == "scheduled").order_by(Game.game_date.desc())):
+            games[g.home_team_id] = games[g.away_team_id] = g
+        uncertain = {"questionable", "doubtful", "game_time_decision", "unknown"}
+        for key in now.keys() | prev.keys():
+            a, b = prev.get(key), now.get(key)
+            ca, cb = availability_class(a.status if a else None), availability_class(b.status if b else None)
+            if ca == cb and (a.status if a else None) == (b.status if b else None):
+                continue
+            ref = b or a
+            material = ca != cb and ("out" in (ca, cb) or (ca in uncertain) != (cb in uncertain))
+            g = games.get(ref.team_id)
+            d = {"player_id": ref.player_id, "player_name": ref.player_name, "team_id": ref.team_id,
+                 "previous_status": a.status if a else None, "current_status": b.status if b else None,
+                 "previous_class": ca, "current_class": cb, "material": material, "game_id": g.id if g else None,
+                 "source": ref.provider, "source_published_at": (b.source_published_at.isoformat() if b and b.source_published_at else None),
+                 "detail": b.detail if b else None}
+            s.add(ResearchEvent(kind="availability_change", ref_type="player", ref_id=str(ref.player_id or ref.player_name)[:48],
+                                game_date=g.game_date if g else None, actor="agent-04-injury-intelligence-analyst", detail=d))
+            out.append(d)
+    return out
 
 
 def ingest_player_props(d: date, provider: OddsApiProvider | None = None) -> dict:
@@ -214,7 +277,7 @@ def provider_status(s) -> list[dict]:
     month = utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     cfg = get_settings()
     for name, configured, quota, cost in (
-            ("pbpstats", cfg.pbpstats_enabled, None, 0.0), ("espn", cfg.espn_enabled, None, 0.0),
+            ("kalshi", cfg.kalshi_enabled, None, 0.0), ("pbpstats", cfg.pbpstats_enabled, None, 0.0), ("espn", cfg.espn_enabled, None, 0.0),
             ("oddsapi", bool(cfg.odds_api_key), cfg.odds_api_monthly_quota, cfg.odds_api_monthly_cost_usd)):
         last_ok = s.scalar(select(func.max(ProviderCall.called_at)).where(ProviderCall.provider == name,
                                                                           ProviderCall.ok.is_(True)))

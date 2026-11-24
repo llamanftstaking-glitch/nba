@@ -22,11 +22,11 @@ Promotion gate (applied by the Chief Model Auditor, never by the author): `{'min
 * **Status:** production (promoted by agent-18-chief-model-auditor)
 * **Author:** agent-11-player-projection-scientist
 * **Training / calibration / evaluation periods:** 2025-10-30..2026-02-12 / 2026-02-19..2026-03-28 / 2026-03-29..2026-11-23
-* **Applicable markets:** player ast over/under
+* **Applicable markets:** player ast thresholds
 * **Parameters:** `{'decay': 0.94, 'dispersion_r': 10.9282, 'prior_minutes': 60.0}`
 * **Known limitations:** Conditional on the player appearing in the game. Minutes are projected from recent history and do not yet react to same-day lineup news beyond published injury statuses. No opponent adjustment. Over/under calibration was measured at pseudo-lines, not market lines. Regular season only.
 
-Evaluation #3: n = 7211, gate **PASSED** — checks: calibration_ece ✓, interval_coverage ✓, enough_observations ✓, not_worse_than_best_baseline ✓
+Evaluation #16: n = 7211, gate **PASSED** — checks: calibration_ece ✓, interval_coverage ✓, enough_observations ✓, not_worse_than_best_baseline ✓
 
 | Model | MAE | RMSE | Bias |
 |---|---|---|---|
@@ -59,11 +59,11 @@ Calibration (evaluation period):
 * **Status:** candidate — not promoted; this family produces no qualified selections
 * **Author:** agent-11-player-projection-scientist
 * **Training / calibration / evaluation periods:** 2025-10-30..2026-02-12 / 2026-02-19..2026-03-28 / 2026-03-29..2026-11-23
-* **Applicable markets:** player blk over/under
+* **Applicable markets:** player blk thresholds
 * **Parameters:** `{'decay': 0.94, 'dispersion_r': 3.4279, 'prior_minutes': 60.0}`
 * **Known limitations:** Conditional on the player appearing in the game. Minutes are projected from recent history and do not yet react to same-day lineup news beyond published injury statuses. No opponent adjustment. Over/under calibration was measured at pseudo-lines, not market lines. Regular season only.
 
-Evaluation #6: n = 7211, gate **FAILED** — checks: calibration_ece ✓, interval_coverage ✓, enough_observations ✓, not_worse_than_best_baseline ✗
+Evaluation #19: n = 7211, gate **FAILED** — checks: calibration_ece ✓, interval_coverage ✓, enough_observations ✓, not_worse_than_best_baseline ✗
 
 | Model | MAE | RMSE | Bias |
 |---|---|---|---|
@@ -94,11 +94,11 @@ Calibration (evaluation period):
 * **Status:** production (promoted by agent-18-chief-model-auditor)
 * **Author:** agent-11-player-projection-scientist
 * **Training / calibration / evaluation periods:** 2025-10-30..2026-02-12 / 2026-02-19..2026-03-28 / 2026-03-29..2026-11-23
-* **Applicable markets:** player fg3m over/under
+* **Applicable markets:** player fg3m thresholds
 * **Parameters:** `{'decay': 0.94, 'dispersion_r': 8.0962, 'prior_minutes': 60.0}`
 * **Known limitations:** Conditional on the player appearing in the game. Minutes are projected from recent history and do not yet react to same-day lineup news beyond published injury statuses. No opponent adjustment. Over/under calibration was measured at pseudo-lines, not market lines. Regular season only.
 
-Evaluation #4: n = 7211, gate **PASSED** — checks: calibration_ece ✓, interval_coverage ✓, enough_observations ✓, not_worse_than_best_baseline ✓
+Evaluation #17: n = 7211, gate **PASSED** — checks: calibration_ece ✓, interval_coverage ✓, enough_observations ✓, not_worse_than_best_baseline ✓
 
 | Model | MAE | RMSE | Bias |
 |---|---|---|---|
@@ -124,16 +124,48 @@ Calibration (evaluation period):
 | 0.6–0.7 | 334 | 0.639 | 0.611 | 0.558–0.662 |
 | 0.7–0.8 | 42 | 0.727 | 0.690 | 0.540–0.809 |
 
+## `player_minutes` — minutes_blend 1.0.0
+
+* **Status:** candidate — not promoted; this family produces no qualified selections
+* **Author:** agent-11-player-projection-scientist
+* **Training / calibration / evaluation periods:** 2025-10-30..2026-02-12 / 2026-02-19..2026-03-28 / 2026-03-29..2026-11-23
+* **Applicable markets:** context for all player markets (not a market itself)
+* **Parameters:** `{'bands': {'35+': [-7.51, 4.54], 'Below 20': [-9.05, 10.02], '20–24.9': [-7.54, 7.55], '25–29.9': [-7.26, 7.01], '30–34.9': [-7.53, 5.67]}, 'blend': '0.6 x recent EWMA (half-life 4 games) + 0.4 x last-10 average'}`
+* **Known limitations:** Projects minutes from the player's own recent history only. It does not react to a teammate being ruled out, a reported minutes restriction (no authorized source), coaching changes, foul trouble or blowouts beyond what recent history already reflects. The uncertainty band is an empirical error range by projected-minutes tier.
+
+Evaluation #25: n = 7211, gate **FAILED** — checks: band_coverage ✓, enough_observations ✓, not_worse_than_best_baseline ✗
+
+| Model | MAE | RMSE | Bias |
+|---|---|---|---|
+| minutes_blend | 5.396 | — | — |
+| baseline_last10_avg | 5.524 | — | — |
+| baseline_season_avg | 5.986 | — | — |
+| baseline_recent_ewma | 5.340 | — | — |
+
+80% band coverage 0.766 (nominal 0.80). Error bands by projected-minutes tier (minutes below / above projection): `{'35+': [-7.51, 4.54], 'Below 20': [-9.05, 10.02], '20–24.9': [-7.54, 7.55], '25–29.9': [-7.26, 7.01], '30–34.9': [-7.53, 5.67]}`.
+
+Is a higher minutes tier more predictable? Measured, not assumed:
+
+| Projected-minutes tier | n | Minutes MAE | Band coverage | Points MAE | Points MAE / mean points |
+|---|---|---|---|---|---|
+| 35+ | 258 | 3.68 | 0.829 | 6.31 | 0.276 |
+| 30–34.9 | 1370 | 4.37 | 0.791 | 5.74 | 0.321 |
+| 25–29.9 | 1645 | 5.29 | 0.748 | 5.42 | 0.422 |
+| 20–24.9 | 1677 | 5.50 | 0.753 | 4.90 | 0.527 |
+| Below 20 | 2261 | 6.21 | 0.766 | 4.23 | 0.690 |
+
+Absolute error is compared across projected-minutes tiers; a higher tier is not assumed to be more predictable.
+
 ## `player_pa` — minutes_rate_nb 1.0.0
 
 * **Status:** candidate — not promoted; this family produces no qualified selections
 * **Author:** agent-11-player-projection-scientist
 * **Training / calibration / evaluation periods:** 2025-10-30..2026-02-12 / 2026-02-19..2026-03-28 / 2026-03-29..2026-11-23
-* **Applicable markets:** player pa over/under
+* **Applicable markets:** player pa thresholds
 * **Parameters:** `{'decay': 0.94, 'dispersion_r': 7.8252, 'prior_minutes': 60.0}`
 * **Known limitations:** Conditional on the player appearing in the game. Minutes are projected from recent history and do not yet react to same-day lineup news beyond published injury statuses. No opponent adjustment. Over/under calibration was measured at pseudo-lines, not market lines. Regular season only.
 
-Evaluation #10: n = 7211, gate **FAILED** — checks: calibration_ece ✓, interval_coverage ✗, enough_observations ✓, not_worse_than_best_baseline ✓
+Evaluation #23: n = 7211, gate **FAILED** — checks: calibration_ece ✓, interval_coverage ✗, enough_observations ✓, not_worse_than_best_baseline ✓
 
 | Model | MAE | RMSE | Bias |
 |---|---|---|---|
@@ -166,11 +198,11 @@ Calibration (evaluation period):
 * **Status:** candidate — not promoted; this family produces no qualified selections
 * **Author:** agent-11-player-projection-scientist
 * **Training / calibration / evaluation periods:** 2025-10-30..2026-02-12 / 2026-02-19..2026-03-28 / 2026-03-29..2026-11-23
-* **Applicable markets:** player pr over/under
+* **Applicable markets:** player pr thresholds
 * **Parameters:** `{'decay': 0.94, 'dispersion_r': 8.0435, 'prior_minutes': 60.0}`
 * **Known limitations:** Conditional on the player appearing in the game. Minutes are projected from recent history and do not yet react to same-day lineup news beyond published injury statuses. No opponent adjustment. Over/under calibration was measured at pseudo-lines, not market lines. Regular season only.
 
-Evaluation #9: n = 7211, gate **FAILED** — checks: calibration_ece ✓, interval_coverage ✗, enough_observations ✓, not_worse_than_best_baseline ✓
+Evaluation #22: n = 7211, gate **FAILED** — checks: calibration_ece ✓, interval_coverage ✗, enough_observations ✓, not_worse_than_best_baseline ✓
 
 | Model | MAE | RMSE | Bias |
 |---|---|---|---|
@@ -203,11 +235,11 @@ Calibration (evaluation period):
 * **Status:** candidate — not promoted; this family produces no qualified selections
 * **Author:** agent-11-player-projection-scientist
 * **Training / calibration / evaluation periods:** 2025-10-30..2026-02-12 / 2026-02-19..2026-03-28 / 2026-03-29..2026-11-23
-* **Applicable markets:** player pra over/under
+* **Applicable markets:** player pra thresholds
 * **Parameters:** `{'decay': 0.94, 'dispersion_r': 9.3485, 'prior_minutes': 60.0}`
 * **Known limitations:** Conditional on the player appearing in the game. Minutes are projected from recent history and do not yet react to same-day lineup news beyond published injury statuses. No opponent adjustment. Over/under calibration was measured at pseudo-lines, not market lines. Regular season only.
 
-Evaluation #8: n = 7211, gate **FAILED** — checks: calibration_ece ✓, interval_coverage ✗, enough_observations ✓, not_worse_than_best_baseline ✓
+Evaluation #21: n = 7211, gate **FAILED** — checks: calibration_ece ✓, interval_coverage ✗, enough_observations ✓, not_worse_than_best_baseline ✓
 
 | Model | MAE | RMSE | Bias |
 |---|---|---|---|
@@ -240,11 +272,11 @@ Calibration (evaluation period):
 * **Status:** candidate — not promoted; this family produces no qualified selections
 * **Author:** agent-11-player-projection-scientist
 * **Training / calibration / evaluation periods:** 2025-10-30..2026-02-12 / 2026-02-19..2026-03-28 / 2026-03-29..2026-11-23
-* **Applicable markets:** player pts over/under
+* **Applicable markets:** player pts thresholds
 * **Parameters:** `{'decay': 0.94, 'dispersion_r': 6.0807, 'prior_minutes': 60.0}`
 * **Known limitations:** Conditional on the player appearing in the game. Minutes are projected from recent history and do not yet react to same-day lineup news beyond published injury statuses. No opponent adjustment. Over/under calibration was measured at pseudo-lines, not market lines. Regular season only.
 
-Evaluation #1: n = 7211, gate **FAILED** — checks: calibration_ece ✓, interval_coverage ✗, enough_observations ✓, not_worse_than_best_baseline ✓
+Evaluation #14: n = 7211, gate **FAILED** — checks: calibration_ece ✓, interval_coverage ✗, enough_observations ✓, not_worse_than_best_baseline ✓
 
 | Model | MAE | RMSE | Bias |
 |---|---|---|---|
@@ -276,11 +308,11 @@ Calibration (evaluation period):
 * **Status:** candidate — not promoted; this family produces no qualified selections
 * **Author:** agent-11-player-projection-scientist
 * **Training / calibration / evaluation periods:** 2025-10-30..2026-02-12 / 2026-02-19..2026-03-28 / 2026-03-29..2026-11-23
-* **Applicable markets:** player ra over/under
+* **Applicable markets:** player ra thresholds
 * **Parameters:** `{'decay': 0.94, 'dispersion_r': 12.6875, 'prior_minutes': 60.0}`
 * **Known limitations:** Conditional on the player appearing in the game. Minutes are projected from recent history and do not yet react to same-day lineup news beyond published injury statuses. No opponent adjustment. Over/under calibration was measured at pseudo-lines, not market lines. Regular season only.
 
-Evaluation #11: n = 7211, gate **FAILED** — checks: calibration_ece ✓, interval_coverage ✗, enough_observations ✓, not_worse_than_best_baseline ✓
+Evaluation #24: n = 7211, gate **FAILED** — checks: calibration_ece ✓, interval_coverage ✗, enough_observations ✓, not_worse_than_best_baseline ✓
 
 | Model | MAE | RMSE | Bias |
 |---|---|---|---|
@@ -313,11 +345,11 @@ Calibration (evaluation period):
 * **Status:** production (promoted by agent-18-chief-model-auditor)
 * **Author:** agent-11-player-projection-scientist
 * **Training / calibration / evaluation periods:** 2025-10-30..2026-02-12 / 2026-02-19..2026-03-28 / 2026-03-29..2026-11-23
-* **Applicable markets:** player reb over/under
+* **Applicable markets:** player reb thresholds
 * **Parameters:** `{'decay': 0.94, 'dispersion_r': 11.8912, 'prior_minutes': 60.0}`
 * **Known limitations:** Conditional on the player appearing in the game. Minutes are projected from recent history and do not yet react to same-day lineup news beyond published injury statuses. No opponent adjustment. Over/under calibration was measured at pseudo-lines, not market lines. Regular season only.
 
-Evaluation #2: n = 7211, gate **PASSED** — checks: calibration_ece ✓, interval_coverage ✓, enough_observations ✓, not_worse_than_best_baseline ✓
+Evaluation #15: n = 7211, gate **PASSED** — checks: calibration_ece ✓, interval_coverage ✓, enough_observations ✓, not_worse_than_best_baseline ✓
 
 | Model | MAE | RMSE | Bias |
 |---|---|---|---|
@@ -349,11 +381,11 @@ Calibration (evaluation period):
 * **Status:** production (promoted by agent-18-chief-model-auditor)
 * **Author:** agent-11-player-projection-scientist
 * **Training / calibration / evaluation periods:** 2025-10-30..2026-02-12 / 2026-02-19..2026-03-28 / 2026-03-29..2026-11-23
-* **Applicable markets:** player stl over/under
+* **Applicable markets:** player stl thresholds
 * **Parameters:** `{'decay': 0.94, 'dispersion_r': 12.9682, 'prior_minutes': 60.0}`
 * **Known limitations:** Conditional on the player appearing in the game. Minutes are projected from recent history and do not yet react to same-day lineup news beyond published injury statuses. No opponent adjustment. Over/under calibration was measured at pseudo-lines, not market lines. Regular season only.
 
-Evaluation #5: n = 7211, gate **PASSED** — checks: calibration_ece ✓, interval_coverage ✓, enough_observations ✓, not_worse_than_best_baseline ✓
+Evaluation #18: n = 7211, gate **PASSED** — checks: calibration_ece ✓, interval_coverage ✓, enough_observations ✓, not_worse_than_best_baseline ✓
 
 | Model | MAE | RMSE | Bias |
 |---|---|---|---|
@@ -384,11 +416,11 @@ Calibration (evaluation period):
 * **Status:** production (promoted by agent-18-chief-model-auditor)
 * **Author:** agent-11-player-projection-scientist
 * **Training / calibration / evaluation periods:** 2025-10-30..2026-02-12 / 2026-02-19..2026-03-28 / 2026-03-29..2026-11-23
-* **Applicable markets:** player tov over/under
+* **Applicable markets:** player tov thresholds
 * **Parameters:** `{'decay': 0.94, 'dispersion_r': 26.5027, 'prior_minutes': 60.0}`
 * **Known limitations:** Conditional on the player appearing in the game. Minutes are projected from recent history and do not yet react to same-day lineup news beyond published injury statuses. No opponent adjustment. Over/under calibration was measured at pseudo-lines, not market lines. Regular season only.
 
-Evaluation #7: n = 7211, gate **PASSED** — checks: calibration_ece ✓, interval_coverage ✓, enough_observations ✓, not_worse_than_best_baseline ✓
+Evaluation #20: n = 7211, gate **PASSED** — checks: calibration_ece ✓, interval_coverage ✓, enough_observations ✓, not_worse_than_best_baseline ✓
 
 | Model | MAE | RMSE | Bias |
 |---|---|---|---|
@@ -424,7 +456,7 @@ Calibration (evaluation period):
 * **Parameters:** `{'hca': 1.6256, 'rho': 0.2598, 'sd_away': 11.6475, 'sd_home': 11.9385}`
 * **Known limitations:** Ratings use final scores and possessions only; no injury, rest or travel adjustment. Not validated against market prices (no historical odds are held), so disagreement with a market line is more likely model error than opportunity. Normal approximation of integer scores.
 
-Evaluation #12: n = 382, gate **PASSED** — checks: enough_games ✓, calibration_ece ✓, margin_beats_baseline ✓, home_win_brier_beats_baseline ✓
+Evaluation #26: n = 382, gate **PASSED** — checks: enough_games ✓, calibration_ece ✓, margin_beats_baseline ✓, home_win_brier_beats_baseline ✓
 
 | Metric | Model | Baseline |
 |---|---|---|

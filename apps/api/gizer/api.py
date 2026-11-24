@@ -938,7 +938,7 @@ def data_health():
             fr.append({"name": name, "at": at, "age_minutes": None if age is None else round(age), "max_age_minutes": max_min,
                        "ok": age is not None and age <= max_min})
         add("Injury report snapshot", s.scalar(select(func.max(InjurySnapshot.ingested_at))), RISK_POLICY["max_injury_age_hours"] * 60)
-        add("Market quotes verified", s.scalar(text("select max(called_at) from provider_calls where ok and provider in ('espn','oddsapi')")),
+        add("Market quotes verified", s.scalar(text("select max(called_at) from provider_calls where ok and provider in ('kalshi','espn','oddsapi')")),
             RISK_POLICY["max_quote_age_hours"] * 60)
         add("Box scores ingested", s.scalar(select(func.max(Game.box_ingested_at))), 36 * 60)
         add("Latest research edition", s.scalar(select(func.max(Edition.published_at))), 26 * 60)
@@ -973,6 +973,7 @@ def settings_view():
 
 
 from . import api_v3  # noqa: E402,F401  (registers the V3 routes on `api` before it is mounted)
+from . import api_core  # noqa: E402,F401  (Kalshi intelligence, minutes intelligence, availability events)
 
 app.include_router(pub)
 app.include_router(api)

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.0 — 2026-11-24 (Core Intelligence V1.0)
+* Kalshi market intelligence (read-only): contract discovery, conservative interpretation with verbatim rules,
+  append-only price observations, descriptive movement, market detail with event timeline. Kalshi quotes feed
+  the research engine as book `Kalshi`.
+* Minutes and rotation intelligence: profiles, projection with empirical band, tiers, rotation classes,
+  evaluated minutes model (candidate) and a measured tier study.
+* Availability change events; `availability_watch` and `market_watch` jobs; change-triggered `update` editions.
+* Risk policy 1.1: qualifying price band, `stale` classification. Migration 0003. 33 new backend tests.
+
 ## 0.3.1 — 2026-11-24
 * Starting Lineups: new default "Lineup board" view — one compact card per game with both teams side by side,
   five starters with position, availability tags (Q / D / DTD / OUT), a "May not play" list and the game line.

@@ -26,6 +26,10 @@ class Settings(BaseSettings):
     odds_api_monthly_quota: int = 500  # free tier; hard cap enforced in code
     odds_api_monthly_cost_usd: float = 0.0
     espn_enabled: bool = True
+    kalshi_enabled: bool = True          # public read-only market data; no key, no trading
+    kalshi_poll_minutes: int = 5         # observation cadence while games are upcoming (polling; not real-time)
+    availability_poll_minutes: int = 20  # injury + lineup refresh cadence between editions
+    watch_hours_before_tipoff: int = 14
     pbpstats_enabled: bool = True
     provider_min_interval_s: float = 0.8
     http_timeout_s: float = 30.0

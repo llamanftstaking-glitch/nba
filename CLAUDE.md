@@ -27,6 +27,14 @@ Mode: **research, simulation and paper testing only.** NBA only.
 * Player history is descriptive: windows count appearances, a missed game is never a zero, sample sizes are always shown, and a historical frequency is never presented as a probability (`docs/research/PLAYER-HISTORICAL-ANALYSIS.md`).
 * Research completeness is a count of real inputs; never change its calculation to raise the number.
 
+## Core intelligence rules (V1.0)
+* Kalshi (`gizer/kalshi.py`) is the primary market reference and is **read-only**: never add authentication, order, portfolio or trading code.
+* Kalshi decides which contracts exist; GIZER models decide the forecast. A market price is never a model input and never replaces a model probability.
+* Interpret a contract only when its type and rule text support it; protected, escalator and other structures stay `unsupported` with original wording (`docs/data/KALSHI.md`).
+* Price observations are append-only; "first observed" is never called an opening price; polling is never described as real-time.
+* Minutes tiers and rotation classes are descriptive context, not qualification rules (`docs/research/MINUTES-INTELLIGENCE.md`).
+* Availability and lineup changes create events and a new `update` edition; they never edit existing research.
+
 ## Definition of a completed task
 Code + tests executed + docs updated + `PROJECT-STATE.md` updated + `CHANGELOG.md` entry + (if a decision was made) a `docs/DECISIONS.md` entry. Use the status words VERIFIED / IMPLEMENTED / TESTED / DEPLOYED / IN PROGRESS / BLOCKED / NOT VERIFIED precisely.
 
@@ -42,5 +50,5 @@ scripts/smoke.sh https://nba.gizergroup.com                    # production smok
 ```
 
 ## Layout
-`apps/api/gizer/` — one Python package: `providers` → `ingestion` → `history` / `lineups` → `modeling` → `simulation` → `research` (guard, combos, editions) → `ledger` → `jobs` (agents, queue, scheduler) → `api` + `api_v3`/`security`.
+`apps/api/gizer/` — one Python package: `providers` → `ingestion` → `kalshi` / `history` / `lineups` / `minutes` → `modeling` → `simulation` → `research` (guard, combos, editions) → `ledger` → `jobs` (agents, queue, scheduler) → `api` + `api_v3` + `api_core`/`security`.
 `apps/web/` — Next.js parlay-first terminal. `infrastructure/` — proxy, backup. `docs/` — architecture, research, operations.

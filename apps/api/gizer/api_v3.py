@@ -136,14 +136,23 @@ def prop_rows(s, v: View, game_id: str | None = None, player_id: int | None = No
             for p in s.scalars(q):
                 preds[(p.subject_id, p.stat)] = p
         quotes: dict[tuple, dict] = {}
+        ladders: dict[tuple, dict] = {}
         withdrawn = {int(x) for x in s.scalars(select(ResearchEvent.ref_id).where(ResearchEvent.kind == "manual_withdrawn"))}
         for q in s.scalars(select(OddsSnapshot).where(OddsSnapshot.game_id == g.id, OddsSnapshot.subject_type == "player")
                            .order_by(OddsSnapshot.id.desc())):
             if q.id in withdrawn or (player_id and q.subject_id != player_id):
                 continue
-            slot = quotes.setdefault((q.subject_id, q.market), {"book": q.book, "origin": q.origin, "line": q.line, "at": q.ingested_at})
-            if slot["book"] == q.book and slot["line"] == q.line and q.side not in slot:
+            ladder = ladders.setdefault((q.subject_id, q.market), {})
+            slot = ladder.setdefault((q.book, q.line), {"book": q.book, "origin": q.origin, "line": q.line, "at": q.ingested_at})
+            if q.side not in slot:
                 slot[q.side] = q.price_american
+        for key, ladder in ladders.items():
+            # Several thresholds can be listed for one player and stat: show the one priced closest to even,
+            # preferring provider quotes over manual ones.
+            def score(sl):
+                pr = sl.get("over") if sl.get("over") is not None else sl.get("under")
+                return (sl["origin"] != "provider", abs(abs(pr) - 100) if pr is not None else 10 ** 6)
+            quotes[key] = {**min(ladder.values(), key=score), "n_thresholds": len(ladder)}
         pids = sorted({k[0] for k in preds} | {k[0] for k in quotes})
         if not pids:
             continue
@@ -410,6 +419,16 @@ def lineup_history(game_id: str):
 
 # ---------------------------------------------------------------- providers, strategies
 PROVIDER_META = {
+    "kalshi": {"name": "Kalshi (public market data, read-only)",
+               "categories": ["NBA event contracts: player points, rebounds, assists, threes, steals, blocks, PRA", "game winner, total, spread",
+                              "bid/ask, last price, volume, open interest, contract rules"],
+               "credential": "not_required",
+               "limitations": ["Polled on a schedule (default every 5 minutes while games are upcoming) — not real-time; WebSocket streaming needs an authenticated account and is not used",
+                               "Read-only by design: no order, portfolio or trading call exists in this application",
+                               "Protected, escalator, double-double and steals+blocks contracts are tracked but not interpreted",
+                               "Break-even prices include an estimated trading fee (0.07 x price x (1 - price)); the exact fee schedule per series was not verified",
+                               "Price history exists only from the first observation by this system"],
+               "setup": "No credential needed. Controlled by GIZER_KALSHI_ENABLED and GIZER_KALSHI_POLL_MINUTES."},
     "pbpstats": {"name": "PBP Stats API", "categories": ["completed games", "possessions", "player box scores"], "credential": "not_required",
                  "limitations": ["Regular season only is ingested", "Aggressively rate-limited (bursts return HTTP 503)",
                                  "No published commercial licence reviewed"],

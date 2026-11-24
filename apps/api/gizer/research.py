@@ -28,7 +28,8 @@ FORBIDDEN_PHRASES = ("guaranteed", "free money", "risk-free", "risk free", "cann
 
 # Version-controlled risk policy. Changing it requires a commit; no agent or LLM can alter it at runtime.
 RISK_POLICY = {
-    "version": "gizer-risk-1.0",
+    "version": "gizer-risk-1.1",
+    "qualifying_price_band": [0.15, 0.85],  # break-even outside this band cannot rise above watchlist
     "max_quote_age_hours": 12, "fresh_quote_hours": 3,
     "max_injury_age_hours": 8, "max_box_staleness_days": 3,
     "min_team_games": 10, "min_player_games": 10, "min_calibration_bin_n": 30,
@@ -86,11 +87,14 @@ class SlateContext:
         self.last_final_date = s.scalar(select(func.max(Game.game_date)).where(Game.status == "final", Game.game_date < d))
         self.quote_checked_at = s.scalar(select(func.max(ProviderCall.called_at)).where(
             ProviderCall.provider.in_(("espn", "oddsapi")), ProviderCall.ok.is_(True)))
+        self.provider_checked = dict(s.execute(select(ProviderCall.provider, func.max(ProviderCall.called_at)).where(
+            ProviderCall.ok.is_(True)).group_by(ProviderCall.provider)).all())
         gf, pf = M.load_games_frame(s, before=d), M.load_player_frame(s, before=d)
         self.team_state = M.live_team_state(gf, d) if not gf.empty else {"teams": {}, "league": None}
         self.player_feats = M.live_player_features(pf, d) if not pf.empty else pd.DataFrame()
         self.players = {p.id: p for p in s.scalars(select(Player))}
         self.forward = forward_validation(s)
+        self.hist_cache: dict[int, pd.DataFrame] = {}
         self.withdrawn = {int(x) for x in s.scalars(select(ResearchEvent.ref_id).where(ResearchEvent.kind == "manual_withdrawn"))}
         from .lineups import lineup_status_map
         self.lineups = lineup_status_map(s, [g.id for g in self.games])
@@ -112,7 +116,7 @@ class SlateContext:
         for r in rows:
             if r.id in self.withdrawn:
                 continue
-            k = (r.market, r.subject_id, r.side, r.book)
+            k = (r.market, r.subject_id, r.side, r.book, r.line if r.book == "Kalshi" else None)  # Kalshi lists several thresholds
             if k not in seen:
                 seen.add(k); out.append(r)
         return out
@@ -213,7 +217,8 @@ def guard(ctx: SlateContext, c: dict) -> dict:
              f"owner-entered quote ({q.book}), not independently verified; entered {age:.1f}h ago")
         oppose.append("The price was entered by the owner and has not been independently verified against a provider.")
     else:
-        checked = ctx.quote_checked_at or q.ingested_at
+        # freshness is judged against the last successful call to the provider that supplied THIS quote
+        checked = getattr(ctx, "provider_checked", {}).get(q.provider) or (ctx.quote_checked_at if q.provider != "kalshi" else None) or q.ingested_at
         age = _hours(ctx.now, max(checked, q.ingested_at))
         if age > P["max_quote_age_hours"]:
             reasons.append(f"Market quote not re-verified for {age:.0f}h (max {P['max_quote_age_hours']}h)."); hard = True
@@ -258,7 +263,8 @@ def guard(ctx: SlateContext, c: dict) -> dict:
         oppose.append(x)
 
     if hard:
-        cls = "rejected"
+        fresh_words = ("stale", "No fresh injury", "not re-verified", "old (max")
+        cls = "stale" if reasons and all(any(w in r for w in fresh_words) for r in reasons) else "rejected"
     elif insufficient:
         cls = "insufficient_evidence"
     elif edge is not None and abs(edge) > P["max_plausible_edge"]:
@@ -283,6 +289,11 @@ def guard(ctx: SlateContext, c: dict) -> dict:
             cls = "rejected"
             reasons.append("No positive expected difference versus the quoted price." if (edge or 0) <= 0
                            else f"Evidence quality {score}/100 below the watchlist threshold.")
+    lo_b, hi_b = P["qualifying_price_band"]
+    if cls in QUALIFIED and be is not None and not (lo_b <= be <= hi_b):
+        cls = "watchlist"
+        reasons.append(f"Break-even {be:.0%} is outside the {lo_b:.0%}–{hi_b:.0%} band: the model's tail estimates are its least "
+                       "reliable, so long-shot and near-certain contracts are not qualified.")
     return {"classification": cls, "evidence_score": score, "edge": edge, "edge_low": edge_low,
             "evidence": {"components": comps, "supporting": support, "opposing": oppose},
             "rejection_reasons": reasons}
@@ -424,7 +435,9 @@ def evaluate_game(ctx: SlateContext, g: Game, edition_key: str) -> dict:
                 if (r.min_sd or 0) > 6:
                     oppose.append(f"Minutes have been volatile (sd {r.min_sd:.1f} over the last 10 games).")
             from .history import player_frame, quick_averages
-            hist = quick_averages(player_frame(s, pid, before=ctx.date), stat, ctx.date)
+            if pid not in ctx.hist_cache:
+                ctx.hist_cache[pid] = player_frame(s, pid, before=ctx.date)
+            hist = quick_averages(ctx.hist_cache[pid], stat, ctx.date)
             context = {**{k: hist[k] for k in ("l5", "l10", "l20", "season_avg")},
                        "proj_min": float(pp[2].proj_min) if pp else None,
                        **ctx.lineup_of(g.id, pp[3].id if pp else (pl.team_id if pl else None), pid)}
@@ -454,7 +467,9 @@ def evaluate_game(ctx: SlateContext, g: Game, edition_key: str) -> dict:
 
 
 def selection_key(g: Game, c: dict) -> str:
-    return f"{g.id}:{c['market']}:{c['subject_id'] or 'game'}:{c['side']}:{c['quote'].book if c.get('quote') else '-'}"
+    q = c.get("quote")
+    key = f"{g.id}:{c['market']}:{c['subject_id'] or 'game'}:{c['side']}:{q.book if q else '-'}"
+    return f"{key}:{q.line:g}" if q is not None and q.book == "Kalshi" and q.line is not None else key
 
 
 def _rank_key(sel: Selection):
@@ -630,7 +645,7 @@ def assert_no_forbidden_language(text: str):
 
 def publish_edition(d: date, kind: str = "morning", now: datetime | None = None) -> dict:
     """Evaluate the slate and publish a new immutable edition. Earlier editions are never modified."""
-    assert kind in ("morning", "midday", "afternoon", "pregame", "final")
+    assert kind in ("morning", "midday", "afternoon", "pregame", "update", "final")
     with session_scope() as s:
         ctx = SlateContext(s, d, now)
         prev = s.scalar(select(Edition).where(Edition.game_date == d).order_by(Edition.version.desc()).limit(1))
@@ -655,6 +670,7 @@ def publish_edition(d: date, kind: str = "morning", now: datetime | None = None)
                 q = c.get("quote")
                 iv = c.get("interval") or {}
                 v["evidence"].update(context=c.get("context"), origin=(q.origin if q else "provider"),
+                                     contract=(q.source_ref if q is not None and q.book == "Kalshi" else None),
                                      market_label=c["market_label"], game_label=r["label"],
                                      quote_at=q.ingested_at.isoformat() if q else None,
                                      calibration_n=iv.get("n"), policy=RISK_POLICY["version"])
@@ -788,6 +804,10 @@ def build_summary(ctx, kind, open_games, results, sels, combos) -> dict:
         limits.append("No lineup snapshot exists for this slate yet.")
     if any(not r["has_game_quotes"] for r in results):
         limits.append("At least one game has no game-level quote; its markets could not be evaluated.")
+    if len(sels) > 100:
+        limits.append(f"{len(sels)} contracts were evaluated. Picking the largest apparent differences from that many "
+                      "comparisons selects for model error as well as for real differences; the ranked picks are "
+                      "paper-testing candidates, and only their settled record can show whether they mean anything.")
     limits.append("Models are not validated against historical market prices (none are held); probabilities are "
                   "calibrated to outcomes at non-market thresholds only.")
     if ctx.corr is None:

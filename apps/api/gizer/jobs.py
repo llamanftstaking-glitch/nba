@@ -279,6 +279,13 @@ def a10_market(dates: list[date]) -> dict:
         r = ingestion.ingest_slate(d)
         tot["games"] += r["games"]; tot["odds_rows_appended"] += r["odds_rows_appended"]
     tot["props"] = ingestion.ingest_player_props(dates[0])
+    try:
+        from .kalshi import observe
+        k = observe()
+        tot["kalshi"] = {x: k[x] for x in ("markets_seen", "markets_new", "snapshots", "quotes_appended", "normalized", "unsupported")}
+        tot["odds_rows_appended"] += k["quotes_appended"]
+    except Exception as e:  # recorded, never substituted
+        tot["kalshi"] = {"error": str(e)[:160]}
     with session_scope() as s:
         mv = s.execute(text(
             "select game_id, market, side, min(line), max(line), count(*) from odds_snapshots o "
@@ -286,8 +293,8 @@ def a10_market(dates: list[date]) -> dict:
             "group by 1,2,3 having count(*)>1 and max(line)<>min(line)"), {"d": dates[0]}).all()
     tot["moves"] = [{"game_id": r[0], "market": r[1], "side": r[2], "min_line": r[3], "max_line": r[4], "snapshots": r[5]} for r in mv]
     return {"summary": f"{tot['games']} games on the slate; {tot['odds_rows_appended']} new quote snapshots; "
-                       f"{len(tot['moves'])} observed line moves; props: {tot['props']}", "data": tot,
-            "sources": ["espn", "oddsapi" if tot["props"].get("available") else "oddsapi (not configured)"]}
+                       f"{len(tot['moves'])} observed line moves; Kalshi: {tot['kalshi']}", "data": tot,
+            "sources": ["kalshi", "espn", "oddsapi" if tot["props"].get("available") else "oddsapi (not configured)"]}
 
 
 def a14_simulation() -> dict:
@@ -491,7 +498,46 @@ def job_monthly(args: dict, job_id=None) -> dict:
     return {"providers": len(prov), "dead_letter_jobs": int(dead or 0)}
 
 
-HANDLERS = {"edition": job_edition, "settlement": job_settlement, "historical_research": job_historical,
+def job_market_watch(args: dict, job_id=None) -> dict:
+    """Kalshi observation pass: discover contracts and append price observations (read-only)."""
+    from .kalshi import observe
+    res: dict = {}
+
+    def run():
+        nonlocal res
+        res = observe()
+        return {"summary": f"Kalshi: {res['markets_seen']} contracts seen ({res['markets_new']} new), {res['snapshots']} price "
+                           f"observations appended, {res['normalized']} normalised, {res['unsupported']} tracked-only, "
+                           f"{len(res['series_failed'])} series failed",
+                "data": {"games": res["markets_seen"], "odds_rows_appended": res["quotes_appended"], "moves": res["snapshots"], **res},
+                "sources": ["kalshi"], "abstained": res["series_ok"] == 0}
+    run_agent(10, run, job_id)
+    return res
+
+
+def job_availability_watch(args: dict, job_id=None) -> dict:
+    """Injury + lineup refresh between editions. A material change queues an 'update' edition; earlier editions stay."""
+    d = ingestion.today_et()
+    inj = run_agent(4, _inj, job_id)["data"]
+    lu = {}
+    try:
+        lu = run_agent(5, lambda: a05_rotation(d), job_id)["data"].get("lineups", {})
+    except Exception as e:
+        lu = {"error": str(e)[:120]}
+    material = inj.get("material_changes", 0) + len(lu.get("changes", []) if isinstance(lu, dict) else [])
+    queued = False
+    if material:
+        now = utcnow()
+        with session_scope() as s:
+            open_games = s.scalar(select(func.count()).select_from(Game).where(Game.game_date == d, Game.status == "scheduled",
+                                                                               Game.tipoff_utc > now))
+        if open_games:
+            bucket = now.replace(minute=now.minute - now.minute % 10, second=0, microsecond=0)
+            queued = enqueue("edition", {"kind": "update", "date": d.isoformat()}, f"edition:update:{bucket:%Y%m%dT%H%M}")
+    return {"injury_changes": inj.get("changes", 0), "material_changes": material, "edition_queued": queued}
+
+
+HANDLERS = {"market_watch": job_market_watch, "availability_watch": job_availability_watch, "edition": job_edition, "settlement": job_settlement, "historical_research": job_historical,
             "morning_intel": job_morning, "live_status": job_live_status, "weekly_evaluation": job_weekly,
             "monthly_review": job_monthly}
 
@@ -586,6 +632,20 @@ def scheduler_tick(now: datetime | None = None) -> list[str]:
         key = f"edition:pregame:{bucket:%Y%m%dT%H%M}"
         if enqueue("edition", {"kind": "pregame", "date": bucket.date().isoformat()}, key):
             queued.append(key)
+    cfgs = get_settings()
+    with session_scope() as s:
+        upcoming = s.scalar(select(func.count()).select_from(Game).where(
+            Game.status == "scheduled", Game.tipoff_utc.is_not(None), Game.tipoff_utc > now,
+            Game.tipoff_utc <= now + timedelta(hours=cfgs.watch_hours_before_tipoff)))
+    if upcoming:
+        for name, every in (("market_watch", cfgs.kalshi_poll_minutes), ("availability_watch", cfgs.availability_poll_minutes)):
+            if every <= 0 or (name == "market_watch" and not cfgs.kalshi_enabled):
+                continue
+            mins = now.hour * 60 + now.minute
+            bucket = now.replace(hour=(mins - mins % every) // 60, minute=(mins - mins % every) % 60, second=0, microsecond=0)
+            key = f"{name}::{bucket:%Y%m%dT%H%M}"
+            if enqueue(name, {}, key, timeout_s=600):
+                queued.append(key)
     if live:
         bucket = now.replace(minute=now.minute - now.minute % 30, second=0, microsecond=0)
         key = f"live_status::{bucket:%Y%m%dT%H%M}"

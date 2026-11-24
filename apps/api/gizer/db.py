@@ -140,6 +140,56 @@ class LineupSnapshot(Base):
     ingested_at: Mapped[datetime] = _ts(default=utcnow, index=True)
 
 
+class KalshiMarket(Base):
+    """One Kalshi contract as discovered. Wording and rules are stored as first seen; only status/last_seen change."""
+    __tablename__ = "kalshi_markets"
+    ticker: Mapped[str] = mapped_column(String(80), primary_key=True)
+    event_ticker: Mapped[str] = mapped_column(String(64), index=True)
+    series: Mapped[str] = mapped_column(String(32), index=True)
+    game_id: Mapped[str] = mapped_column(String(12), index=True)
+    kind: Mapped[str] = mapped_column(String(12))  # player | game | total | spread | other
+    market: Mapped[str | None] = mapped_column(String(24))  # canonical market when normalised
+    stat: Mapped[str | None] = mapped_column(String(8))
+    player_id: Mapped[int | None] = mapped_column(BigInteger, index=True)
+    player_name: Mapped[str | None] = mapped_column(String(96))
+    team_id: Mapped[int | None] = mapped_column(BigInteger)
+    threshold: Mapped[float | None] = mapped_column(Float)  # exact strike as listed (e.g. 29.5 for "30+")
+    comparator: Mapped[str | None] = mapped_column(String(16))
+    contract_type: Mapped[str | None] = mapped_column(String(24))
+    strike_type: Mapped[str | None] = mapped_column(String(24))
+    interpretation: Mapped[str] = mapped_column(String(12))  # normalized | unsupported | unmatched
+    interpretation_note: Mapped[str | None] = mapped_column(String(300))
+    protected: Mapped[bool] = mapped_column(Boolean, default=False)
+    title: Mapped[str] = mapped_column(String(300))
+    yes_sub_title: Mapped[str | None] = mapped_column(String(200))
+    rules_primary: Mapped[str | None] = mapped_column(Text)
+    rules_secondary: Mapped[str | None] = mapped_column(Text)
+    open_time: Mapped[datetime | None] = _ts()
+    close_time: Mapped[datetime | None] = _ts()
+    status: Mapped[str] = mapped_column(String(16))
+    first_seen_at: Mapped[datetime] = _ts(default=utcnow)
+    last_seen_at: Mapped[datetime] = _ts(default=utcnow)
+
+
+class KalshiSnapshot(Base):
+    """Append-only price/liquidity observation of one contract. Stored only when something changed."""
+    __tablename__ = "kalshi_snapshots"
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    ticker: Mapped[str] = mapped_column(String(80), index=True)
+    observed_at: Mapped[datetime] = _ts(default=utcnow, index=True)
+    yes_bid: Mapped[float | None] = mapped_column(Float)
+    yes_ask: Mapped[float | None] = mapped_column(Float)
+    no_bid: Mapped[float | None] = mapped_column(Float)
+    no_ask: Mapped[float | None] = mapped_column(Float)
+    last_price: Mapped[float | None] = mapped_column(Float)
+    yes_bid_size: Mapped[float | None] = mapped_column(Float)
+    yes_ask_size: Mapped[float | None] = mapped_column(Float)
+    volume: Mapped[float | None] = mapped_column(Float)
+    volume_24h: Mapped[float | None] = mapped_column(Float)
+    open_interest: Mapped[float | None] = mapped_column(Float)
+    status: Mapped[str] = mapped_column(String(16))
+
+
 class RawPayload(Base):
     """Raw provider responses (where licensing permits) for reproducibility."""
     __tablename__ = "raw_payloads"
@@ -513,7 +563,7 @@ class AuditLog(Base):
 IMMUTABLE_TABLES = [
     "injury_snapshots", "odds_snapshots", "predictions", "selections", "combos", "editions",
     "research_events", "paper_tickets", "paper_settlements", "prediction_outcomes", "audit_log",
-    "model_evaluations", "raw_payloads", "lineup_snapshots",
+    "model_evaluations", "raw_payloads", "lineup_snapshots", "kalshi_snapshots",
 ]
 
 IMMUTABILITY_SQL = """

@@ -88,7 +88,7 @@ def test_edition_with_quotes_classifies_and_never_reaches_high_confidence_withou
             assert len([x for x in ranked if x.game_id == gid]) <= 5
         combos = list(s.scalars(select(gdb.Combo).where(gdb.Combo.edition_id == res["id"])))
         ids = {x.id for x in ranked}
-        assert len(ranked) >= 3 and len(combos) >= 2 and {c.engine for c in combos} >= {"DOUBLE"}
+        assert len(ranked) >= 2 and len(combos) >= 1 and {c.engine for c in combos} >= {"DOUBLE"}
         assert res["auto_paper_tickets"] >= len(ranked)
         for c in combos:
             assert set(c.leg_selection_ids) <= ids
@@ -108,7 +108,9 @@ def test_guard_rejects_on_stale_injuries_and_missing_models():
         g = ctx.games[0]
         r = R.evaluate_game(ctx, g, "probe")
         v = R.guard(ctx, r["candidates"][0])
-        assert v["classification"] == "rejected" and any("injury" in x.lower() for x in v["rejection_reasons"])
+        # a record whose only failure is freshness is classified "stale" (still not qualified)
+        assert v["classification"] == "stale" and any("injury" in x.lower() for x in v["rejection_reasons"])
+        assert "stale" not in R.QUALIFIED
         c = dict(r["candidates"][0]); c["model"] = None; c["evaluation"] = None
         ctx.injury_at = late
         v2 = R.guard(ctx, c)
@@ -120,6 +122,21 @@ def test_guard_rejects_on_stale_injuries_and_missing_models():
         assert v4["classification"] == "rejected" and any("Implausible" in x for x in v4["rejection_reasons"])
         c5 = dict(r["candidates"][0]); c5["player_out"] = "Out"
         assert R.guard(ctx, c5)["classification"] == "rejected"
+        s.rollback()
+
+
+def test_long_shot_and_near_certain_prices_cannot_qualify():
+    late = STATE["tipoff"] - timedelta(minutes=30)
+    with gdb.session_scope() as s:
+        ctx = R.SlateContext(s, SLATE, late)
+        c = dict(R.evaluate_game(ctx, ctx.games[0], "probe")["candidates"][0])
+        base = dict(c, sample_size=40, unavailable=[], uncertain=[])
+        ok = R.guard(ctx, dict(base, prob=0.60, breakeven=0.52, interval={"low": 0.56, "high": 0.64, "n": 500}))
+        tail = R.guard(ctx, dict(base, prob=0.20, breakeven=0.12, interval={"low": 0.16, "high": 0.24, "n": 500}))
+        sure = R.guard(ctx, dict(base, prob=0.95, breakeven=0.88, interval={"low": 0.92, "high": 0.97, "n": 500}))
+        assert ok["classification"] == "standard"
+        assert tail["classification"] == "watchlist" and any("outside" in r for r in tail["rejection_reasons"])
+        assert sure["classification"] == "watchlist"
         s.rollback()
 
 

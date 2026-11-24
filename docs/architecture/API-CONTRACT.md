@@ -293,3 +293,58 @@ type ProviderInfo = { provider: string; name: string; categories: string[]; conf
 Lineup semantics: `confirmed` only when the source box score lists starters (at/after tipoff). `projected` is GIZER's
 deterministic projection from each team's most recent confirmed starting five adjusted for the latest injury report —
 it is never an official lineup and must be labelled "Projected". `unknown` when there is no basis.
+
+---
+
+# Core Intelligence V1 additions — Kalshi, minutes, availability events
+
+Kalshi prices are dollars per $1 contract (0–1). `price` = bid/ask midpoint when both exist, else last trade.
+Classification gains `stale` (only freshness checks failed). Edition `kind` gains `update` (published when a material
+availability or lineup change is detected). `Selection.evidence`-derived field `Selection.contract: string|null`
+is NOT exposed; use `book === "Kalshi"` and the Kalshi endpoints.
+
+```ts
+type KalshiMarketRow = {
+  ticker: string; event_ticker: string; series: string; game_id: string; game_label: string|null;
+  kind: "player"|"game"|"total"|"spread"|"other";
+  market: string|null;                 // canonical GIZER market when normalised (e.g. "player_pts"), else null
+  stat: string|null; stat_label: string|null; player_id: number|null; player_name: string|null; team_abbr: string|null;
+  title: string;                       // original contract title, e.g. "Nikola Jokić: 25+ points"
+  threshold: number|null;              // exact strike as listed (24.5 for "25+")
+  comparator: string|null;             // e.g. ">= 25", "> 227.5", "wins"
+  contract_type: string|null;
+  interpretation: "normalized"|"unsupported"|"unmatched"; interpretation_note: string|null; protected: boolean;
+  status: string; open_time: string|null; close_time: string|null;
+  yes_bid: number|null; yes_ask: number|null; no_bid: number|null; no_ask: number|null; last_price: number|null;
+  volume: number|null; open_interest: number|null; yes_ask_size: number|null; yes_bid_size: number|null;
+  price: number|null; first_observed: number|null; first_observed_at: string|null; change_since_first: number|null;
+  high: number|null; low: number|null; spread: number|null;
+  windows: { "5m": number|null; "15m": number|null; "30m": number|null; "60m": number|null; "3h": number|null };  // price change
+  observations: number; last_observed_at: string|null; first_seen_at: string };
+type KalshiSync = { last_sync_at: string|null; age_minutes: number|null; poll_minutes: number; stale: boolean; note: string };
+type MinutesRow = {
+  player_id: number; player_name: string; headshot_url: string|null; position: string|null; team_abbr: string|null;
+  opp_abbr: string|null; game_id: string|null; availability: string; injury_detail: string|null;
+  lineup_role: "starter"|"bench"|null; lineup_status: "confirmed"|"projected"|"unknown";
+  proj_min: number|null; proj_min_low: number|null; proj_min_high: number|null;   // band null until the minutes model is evaluated
+  tier: string|null;                    // "35+", "30–34.9", "25–29.9", "20–24.9", "Below 20" (descriptive only)
+  season_avg: number|null; season_median: number|null; l3: number|null; l5: number|null; l10: number|null; l20: number|null;
+  min_l10: number|null; max_l10: number|null; sd_l10: number|null;
+  starts_l10: number|null; starts_season: number|null; bench_season: number|null; games_season: number; games_all: number;
+  role_change: number|null;             // L5 minus L20 minutes when |diff| >= 6, else null
+  returned_recently: boolean; last_gap_days: number; restriction: string|null; last_game_date: string;
+  classification: "returning"|"uncertain"|"high_minute_starter"|"stable_starter"|"primary"|"variable"|"secondary"|"limited";
+  classification_label: string; classification_reason: string; source_updated_at: string|null };
+```
+
+| Method | Path | Returns |
+|---|---|---|
+| GET | `/kalshi/markets?date=&game_id=&kind=&market=&interpretation=&q=&player_id=&sort=volume\|movement\|player\|spread&limit=&offset=` | `{date, sync: KalshiSync, counts: {total, normalized, unsupported, unmatched}, events: {game_id, label}[], items: KalshiMarketRow[], total, notes: string[]}` |
+| GET | `/kalshi/markets/{ticker}` | `{market: KalshiMarketRow, rules: {primary: string|null, secondary: string|null, settlement_note: string}, series: {at, price, yes_bid, yes_ask, last_price, spread, volume, open_interest, status}[], timeline: {at, type: "availability"|"lineup"|"market_status", own_player: boolean, text, source, source_published_at}[], history: Record<"L5"|"L10"|"L20"|"season", {n, over, under, equal, frequency_over, average}> | null, research: {player: {id,name,headshot_url,position}|null, model_ready: boolean, projection: {mean,p10,p90,proj_min,created_at}|null, selections: {id, side, classification, prob, prob_low, prob_high, breakeven, rejection_reasons}[], note: string} | null, sync: KalshiSync, notes: string[]}` |
+| GET | `/minutes?date=&team=&q=&classification=&sort=proj_min\|l3\|l5\|l10\|l20\|season_avg\|sd_l10\|player_name\|starts_l10&order=asc\|desc&limit=&offset=` | `{date, items: MinutesRow[], total, model: {name, version, status}|null, uncertainty: string, restrictions_note: string, tiers: string[], rules: Record<string, number>}` |
+| GET | `/players/{id}/minutes` | `{profile: MinutesRow|null, model, uncertainty, restrictions_note, tiers, rules}` |
+| GET | `/injuries/changes?date=&material=true\|false&limit=` | `{date, items: {at, player_id, player_name, headshot_url, team_abbr, previous_status, current_status, previous_class, current_class, material, detail, game_id, game_label, source, source_published_at, lineup_changes: string[], records_to_reassess: number, qualified_records_affected: number}[], notes: string[]}` |
+
+`/data-health/providers` now also lists provider `kalshi`. `PropRow.book` may be `"Kalshi"`; when Kalshi lists several
+thresholds for one player and stat, `/player-props` shows the row for one of them — use `/kalshi/markets?player_id=`
+for the full ladder.

@@ -85,6 +85,7 @@ def player_post_state(df: pd.DataFrame) -> pd.DataFrame:
     out["d_min"] = ew("minutes") * wsum
     out["min_ewm"] = g["minutes"].transform(lambda x: x.ewm(halflife=4, adjust=True).mean())
     out["min_l10"] = g["minutes"].transform(lambda x: x.rolling(10, min_periods=1).mean())
+    out["min_avg"] = g["minutes"].transform(lambda x: x.expanding().mean())
     out["min_sd"] = g["minutes"].transform(lambda x: x.rolling(10, min_periods=3).std())
     for st in PLAYER_STATS:
         out[f"d_{st}"] = ew(st) * wsum
@@ -95,7 +96,7 @@ def player_post_state(df: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-STATE_COLS = (["n_games", "d_min", "min_ewm", "min_l10", "min_sd", "last_date"]
+STATE_COLS = (["n_games", "d_min", "min_ewm", "min_l10", "min_avg", "min_sd", "last_date"]
               + [f"{p}_{st}" for st in PLAYER_STATS for p in ("d", "avg", "l10", "ewm")])
 
 
@@ -483,6 +484,9 @@ def latest_evaluation(s, model_version_id: int) -> ModelEvaluation | None:
 PLAYER_LIMITS = ("Conditional on the player appearing in the game. Minutes are projected from recent history and do "
                  "not yet react to same-day lineup news beyond published injury statuses. No opponent adjustment. "
                  "Over/under calibration was measured at pseudo-lines, not market lines. Regular season only.")
+MINUTES_LIMITS = ("Projects minutes from the player's own recent history only. It does not react to a teammate being ruled out, "
+                  "a reported minutes restriction (no authorized source), coaching changes, foul trouble or blowouts beyond what "
+                  "recent history already reflects. The uncertainty band is an empirical error range by projected-minutes tier.")
 TEAM_LIMITS = ("Ratings use final scores and possessions only; no injury, rest or travel adjustment. Not validated "
                "against market prices (no historical odds are held), so disagreement with a market line is more "
                "likely model error than opportunity. Normal approximation of integer scores.")
@@ -491,7 +495,7 @@ TEAM_LIMITS = ("Ratings use final scores and possessions only; no injury, rest o
 def run_all_backtests(register: bool = True) -> dict:
     """Reproducible walk-forward evaluation of every model family. Stores every result, pass or fail."""
     from .simulation import estimate_correlations
-    report = {"player": {}, "team": None, "correlation": None}
+    report = {"player": {}, "team": None, "correlation": None, "minutes": None}
     with session_scope() as s:
         pf, gf = load_player_frame(s), load_games_frame(s)
     if pf.empty or pf["game_date"].nunique() < 30:
@@ -514,6 +518,19 @@ def run_all_backtests(register: bool = True) -> dict:
                 s.add(evl); s.flush()
                 if res["passed"] and mv.status == "candidate":
                     promote_model(s, mv, evl, AUDITOR)
+    from .minutes import evaluate_minutes
+    mres = evaluate_minutes(f)
+    report["minutes"] = {"passed": mres["passed"], **{k: v for k, v in mres["metrics"].items() if k != "tier_study"}}
+    if register:
+        with session_scope() as s:
+            mv = register_model(s, "player_minutes", "minutes_blend", "1.0.0", mres["params"], mres["periods"], MINUTES_LIMITS,
+                                SCIENTIST_PLAYER)
+            evl = ModelEvaluation(model_version_id=mv.id, family="player_minutes", model_name=mv.name, kind="walk_forward",
+                                  period=mres["periods"]["evaluation"], n_obs=mres["metrics"]["n_eval"], metrics=mres["metrics"],
+                                  passed=mres["passed"], notes="chronological split; bands fitted on the calibration period")
+            s.add(evl); s.flush()
+            if mres["passed"] and mv.status == "candidate":
+                promote_model(s, mv, evl, AUDITOR)
     tg = build_team_backtest_frame(gf)
     tres = backtest_team(tg)
     report["team"] = {"passed": tres["passed"], **{k: v for k, v in tres["metrics"].items() if k != "calibration"}}

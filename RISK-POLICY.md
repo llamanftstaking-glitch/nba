@@ -1,4 +1,4 @@
-# Risk Policy — `gizer-risk-1.0`
+# Risk Policy — `gizer-risk-1.1`
 
 The policy is the constant `RISK_POLICY` in `apps/api/gizer/research.py`, applied by `guard()` (Agent 16,
 "GIZER GUARD"). It is version-controlled; there is no runtime switch, API or prompt that changes it.
@@ -22,6 +22,14 @@ The policy is the constant `RISK_POLICY` in `apps/api/gizer/research.py`, applie
 * No injury snapshot within 8 hours; box-score history more than 3 days behind completed games.
 * The player is listed out / suspended / injured reserve.
 * |model probability − break-even| > 10 percentage points — treated as model or data error, not opportunity.
+
+* A record whose **only** failures are freshness failures is classified `stale` rather than `rejected`.
+
+## Qualifying price band (added in 1.1)
+
+A selection whose break-even probability is below 15% or above 85% cannot rise above `watchlist`. Model tail
+estimates are the least reliable part of a predictive distribution, and Kalshi lists many long-shot and
+near-certain thresholds; this rule only ever removes qualified selections.
 
 ## Evidence quality score (0–100) — **not a probability**
 

@@ -34,3 +34,30 @@ Each rule lists where it is **enforced in code or tests** — a rule that exists
 
 Vocabulary: the owner's informal "lock" maps to the classification **high-confidence research candidate**.
 The words guaranteed, free money, risk-free, cannot lose, sure thing never appear in product output.
+
+## Core intelligence rules (V1.0)
+
+These extend the 25 rules above and are equally binding.
+
+| # | Rule | Enforcement |
+|---|---|---|
+| C-01 | Playing time is fundamental research context. | Minutes profile, projection and band on every player row (`minutes.py`); projected minutes feed every player model. |
+| C-02 | High minutes do not guarantee a particular outcome. | Tiers and rotation classes are descriptive only; nothing in `guard` reads them. The tier study measures, rather than assumes, predictability. |
+| C-03 | Kalshi is the primary market reference. | `kalshi.observe` runs with every edition and on the watch cadence; Kalshi quotes enter the research engine as book `Kalshi`. |
+| C-04 | Actual contracts define available research thresholds. | Player thresholds come only from discovered contracts (or clearly labelled owner-entered / hypothetical entries). |
+| C-05 | Market movement is recorded objectively. | Append-only `kalshi_snapshots`; "first observed" is never called an opening price. |
+| C-06 | Market movement does not establish certainty. | No model reads a market price; API notes state that a move is not evidence of the outcome. |
+| C-07 | Injuries are continuously monitored. | `availability_watch` job; every status change is an `availability_change` event with the previous status. |
+| C-08 | Projected lineups are never represented as confirmed. | Unchanged from V3 (`lineups.py`, tested). |
+| C-09 | Historical frequencies are not future probabilities. | Unchanged from V3 (`history.py`, tested). |
+| C-10 | Independent statistical models stay independently validated. | Promotion gates unchanged; a market price is never a model feature. Using one would require a documented, leakage-tested model version. |
+| C-11 | Missing data stays visible. | Unlisted markets are absent, not synthesised; unmatched players are `unmatched`; bands are null until a model is evaluated. |
+| C-12 | Validation gates are not loosened. | Gate constants unchanged; the minutes model failed its gate and is shown as a candidate. |
+| C-13 | Every research edition is preserved. | Immutable `editions`; change-triggered `update` editions append. |
+| C-14 | Historical predictions are never manipulated. | Database triggers on all research and observation tables. |
+| C-15 | Kalshi markets and prices are never fabricated. | Only API responses are stored; contracts for games not in our schedule are skipped; provider failures are recorded, not filled. |
+| C-16 | Contract-specific settlement rules are preserved. | `rules_primary` / `rules_secondary` stored verbatim; protected, escalator and other structures are `unsupported` and never priced as binary thresholds. |
+| C-17 | Sporting outcomes are never guaranteed. | Forbidden-language check on editions and agent output. |
+| C-18 | No automated real-money execution. | `kalshi.py` has no authentication, order or portfolio call; `test_adapter_is_read_only` and `test_no_real_money_surface`. |
+| C-19 | No uncontrolled provider spending. | Kalshi public data is free; polling cadence is configured and deduplicated; paid providers stay off by default. |
+| C-20 | Every research decision is explainable and reproducible. | Selections carry contract ticker, quote snapshot, model version, prediction and evidence. |
