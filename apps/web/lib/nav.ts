@@ -1,5 +1,7 @@
 import {
   Activity,
+  CandlestickChart,
+  Timer,
   BarChart3,
   BookOpen,
   CalendarDays,
@@ -39,6 +41,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/games", label: "Today's Games", icon: CalendarDays },
       { href: "/picks", label: "Top Picks", icon: ListOrdered },
       { href: "/player-props", label: "Player Props", icon: Target },
+      { href: "/kalshi-intelligence", label: "Kalshi Markets", icon: CandlestickChart },
       { href: "/lineups", label: "Starting Lineups", icon: Users },
       { href: "/parlays", label: "Parlay Research", icon: Layers },
       { href: "/parlays/same-game", label: "Same-Game Research", icon: Network },
@@ -48,6 +51,7 @@ export const NAV_GROUPS: NavGroup[] = [
     title: "Player Intelligence",
     items: [
       { href: "/players", label: "Player Explorer", icon: UserSearch },
+      { href: "/minutes", label: "Minutes Intelligence", icon: Timer },
       { href: "/players/compare", label: "Player Comparison", icon: GitCompare },
       { href: "/players/history", label: "Historical Performance", icon: History },
       { href: "/matchups", label: "Matchup Intelligence", icon: Swords },

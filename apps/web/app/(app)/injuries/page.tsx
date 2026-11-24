@@ -2,7 +2,9 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { HeartPulse } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { InjuryChangeList } from "@/components/injury-changes";
+import { useSelectedDate } from "@/lib/date";
 import { PlayerAvatar } from "@/components/player-avatar";
 import { AvailabilityStatus, FreshnessIndicator } from "@/components/status";
 import { StaleTag } from "@/components/ui/badge";
@@ -49,6 +51,13 @@ function Row({ r }: { r: InjuryRow }) {
 
 export default function InjuriesPage() {
   const q = useQuery({ queryKey: ["injuries"], queryFn: api.injuries });
+  const date = useSelectedDate();
+  const [materialOnly, setMaterialOnly] = useState(false);
+  const changes = useQuery({
+    queryKey: ["injury-changes", date ?? "today", materialOnly],
+    queryFn: () => api.injuryChanges({ date, material: materialOnly ? true : undefined, limit: 100 }),
+    placeholderData: (prev) => prev,
+  });
   const groups = useMemo(() => {
     const byGame = new Map<string, Map<string, InjuryRow[]>>();
     for (const r of q.data?.items ?? []) {
@@ -64,7 +73,7 @@ export default function InjuriesPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Injuries & Availability"
+        title="Injury Intelligence Centre"
         sub={
           q.data ? (
             <span className="inline-flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -77,10 +86,37 @@ export default function InjuriesPage() {
           )
         }
       />
+      <Panel
+        title="Status changes"
+        icon={HeartPulse}
+        id="status-changes"
+        right={
+          <label className="flex min-h-[44px] cursor-pointer items-center gap-2 text-sm text-soft md:min-h-0">
+            <input type="checkbox" checked={materialOnly} onChange={(e) => setMaterialOnly(e.target.checked)} className="h-4 w-4 accent-[rgb(0,229,160)]" data-testid="material-toggle" />
+            Material only
+          </label>
+        }
+      >
+        <QueryView
+          query={changes}
+          rows={3}
+          isEmpty={(c) => c.items.length === 0}
+          empty={<EmptyState title={materialOnly ? "No material status changes recorded for this date." : "No status changes recorded for this date."} icon={HeartPulse} />}
+        >
+          {(c) => <InjuryChangeList items={c.items} />}
+        </QueryView>
+        {changes.data && changes.data.notes.length > 0 && (
+          <ul className="mt-2 space-y-0.5 text-xs text-muted" data-testid="injury-change-notes">
+            {changes.data.notes.map((n, i) => (
+              <li key={i}>· {n}</li>
+            ))}
+          </ul>
+        )}
+      </Panel>
       <QueryView query={q} rows={6}>
         {(d) => (
           <>
-            <Panel title="Changes" icon={HeartPulse}>
+            <Panel title="Report changes (feed text)" icon={HeartPulse}>
               {d.changes.length === 0 ? (
                 <EmptyState title="No injury changes recorded." icon={HeartPulse} />
               ) : (

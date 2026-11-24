@@ -6,7 +6,8 @@ export type Classification =
   | "watchlist"
   | "insufficient_evidence"
   | "rejected"
-  | "invalidated";
+  | "invalidated"
+  | "stale";
 
 export type TeamRef = { id: number; abbr: string; name: string; logo_url: string | null };
 
@@ -197,7 +198,7 @@ export type GameCard = {
   props: { quoted_markets: number; players_projected: number };
 };
 
-export type EditionKind = "morning" | "midday" | "afternoon" | "pregame" | "final";
+export type EditionKind = "morning" | "midday" | "afternoon" | "pregame" | "final" | "update";
 export type EditionRef = { id: number; key: string; kind: EditionKind; version: number; published_at: string };
 export type EditionChange = { type: string; text: string };
 export type EditionListItem = EditionRef & { counts: Record<string, number>; changes: EditionChange[] };
@@ -810,3 +811,164 @@ export type StrategiesResponse = {
   forecast: { stat: string; n: number; mae: number | null; coverage_80: number | null }[];
   disclaimer: string;
 };
+
+// ---------- Core Intelligence V1: Kalshi, minutes, availability events ----------
+export type KalshiInterpretation = "normalized" | "unsupported" | "unmatched";
+export type KalshiMarketRow = {
+  ticker: string;
+  event_ticker: string;
+  series: string;
+  game_id: string;
+  game_label: string | null;
+  kind: "player" | "game" | "total" | "spread" | "other";
+  market: string | null;
+  stat: string | null;
+  stat_label: string | null;
+  player_id: number | null;
+  player_name: string | null;
+  team_abbr: string | null;
+  title: string;
+  threshold: number | null;
+  comparator: string | null;
+  contract_type: string | null;
+  interpretation: KalshiInterpretation;
+  interpretation_note: string | null;
+  protected: boolean;
+  status: string;
+  open_time: string | null;
+  close_time: string | null;
+  yes_bid: number | null;
+  yes_ask: number | null;
+  no_bid: number | null;
+  no_ask: number | null;
+  last_price: number | null;
+  volume: number | null;
+  open_interest: number | null;
+  yes_ask_size: number | null;
+  yes_bid_size: number | null;
+  price: number | null;
+  first_observed: number | null;
+  first_observed_at: string | null;
+  change_since_first: number | null;
+  high: number | null;
+  low: number | null;
+  spread: number | null;
+  windows: Record<"5m" | "15m" | "30m" | "60m" | "3h", number | null>;
+  observations: number;
+  last_observed_at: string | null;
+  first_seen_at: string;
+};
+export type KalshiSync = { last_sync_at: string | null; age_minutes: number | null; poll_minutes: number; stale: boolean; note: string };
+export type KalshiMarketsResponse = {
+  date: string;
+  sync: KalshiSync;
+  counts: { total: number; normalized: number; unsupported: number; unmatched: number };
+  events: { game_id: string; label: string }[];
+  items: KalshiMarketRow[];
+  total: number;
+  notes: string[];
+};
+export type KalshiSeriesPoint = {
+  at: string;
+  price: number | null;
+  yes_bid: number | null;
+  yes_ask: number | null;
+  last_price: number | null;
+  spread: number | null;
+  volume: number | null;
+  open_interest: number | null;
+  status: string | null;
+};
+export type KalshiTimelineEvent = {
+  at: string;
+  type: "availability" | "lineup" | "market_status";
+  own_player: boolean;
+  text: string;
+  source: string | null;
+  source_published_at: string | null;
+};
+export type KalshiHistoryWindow = { n: number; over: number; under: number; equal: number; frequency_over: number | null; average: number | null };
+export type KalshiResearch = {
+  player: { id: number; name: string; headshot_url: string | null; position: string | null } | null;
+  model_ready: boolean;
+  projection: { mean: number | null; p10: number | null; p90: number | null; proj_min: number | null; created_at: string | null } | null;
+  selections: { id: number; side: string; classification: string; prob: number | null; prob_low: number | null; prob_high: number | null; breakeven: number | null; rejection_reasons: string[] }[];
+  note: string;
+};
+export type KalshiMarketDetail = {
+  market: KalshiMarketRow;
+  rules: { primary: string | null; secondary: string | null; settlement_note: string };
+  series: KalshiSeriesPoint[];
+  timeline: KalshiTimelineEvent[];
+  history: Partial<Record<"L5" | "L10" | "L20" | "season", KalshiHistoryWindow>> | null;
+  research: KalshiResearch | null;
+  sync: KalshiSync;
+  notes: string[];
+};
+
+export type MinutesRow = {
+  player_id: number;
+  player_name: string;
+  headshot_url: string | null;
+  position: string | null;
+  team_abbr: string | null;
+  opp_abbr: string | null;
+  game_id: string | null;
+  availability: string;
+  injury_detail: string | null;
+  lineup_role: "starter" | "bench" | null;
+  lineup_status: LineupStatus;
+  proj_min: number | null;
+  proj_min_low: number | null;
+  proj_min_high: number | null;
+  tier: string | null;
+  season_avg: number | null;
+  season_median: number | null;
+  l3: number | null;
+  l5: number | null;
+  l10: number | null;
+  l20: number | null;
+  min_l10: number | null;
+  max_l10: number | null;
+  sd_l10: number | null;
+  starts_l10: number | null;
+  starts_season: number | null;
+  bench_season: number | null;
+  games_season: number;
+  games_all: number;
+  role_change: number | null;
+  returned_recently: boolean;
+  last_gap_days: number;
+  restriction: string | null;
+  last_game_date: string;
+  classification: string;
+  classification_label: string;
+  classification_reason: string;
+  source_updated_at: string | null;
+};
+export type MinutesModel = { name: string; version: string; status: string } | null;
+export type MinutesMeta = { model: MinutesModel; uncertainty: string; restrictions_note: string; tiers: string[]; rules: Record<string, number> };
+export type MinutesResponse = { date: string; items: MinutesRow[]; total: number } & MinutesMeta;
+export type PlayerMinutesResponse = { profile: MinutesRow | null } & MinutesMeta;
+
+export type InjuryChange = {
+  at: string;
+  player_id: number | null;
+  player_name: string;
+  headshot_url: string | null;
+  team_abbr: string | null;
+  previous_status: string | null;
+  current_status: string | null;
+  previous_class: string | null;
+  current_class: string | null;
+  material: boolean;
+  detail: string | null;
+  game_id: string | null;
+  game_label: string | null;
+  source: string | null;
+  source_published_at: string | null;
+  lineup_changes: string[];
+  records_to_reassess: number;
+  qualified_records_affected: number;
+};
+export type InjuryChangesResponse = { date: string; items: InjuryChange[]; notes: string[] };

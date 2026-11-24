@@ -1,6 +1,8 @@
 "use client";
 
-import { Activity, AlertTriangle, ArrowRight, BarChart3, Boxes, CalendarDays, Clock, Crosshair, Filter, HeartPulse, Layers, Target, TrendingUp, Users, Zap } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
+import { Activity, AlertTriangle, CandlestickChart, ArrowRight, BarChart3, Boxes, CalendarDays, Clock, Crosshair, Filter, HeartPulse, Layers, Target, TrendingUp, Users, Zap } from "lucide-react";
 import { StatusBadge } from "@/components/classification-badge";
 import { GameMatchupCard } from "@/components/game-card";
 import { PropRow } from "@/components/props";
@@ -56,13 +58,14 @@ export default function OverviewPage() {
   const date = useSelectedDate();
   const q = useCommandCenter(date);
   const combos = useCombos("double", date);
+  const kalshi = useQuery({ queryKey: ["kalshi-markets", { date, limit: 1 }], queryFn: () => api.kalshiMarkets({ date, limit: 1 }) });
 
   if (q.isPending) {
     return (
       <div>
         <PageHeader title="Command Center" />
         <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
-          {Array.from({ length: 8 }).map((_, i) => (
+          {Array.from({ length: 9 }).map((_, i) => (
             <Skeleton key={i} className="h-20" />
           ))}
         </div>
@@ -120,7 +123,7 @@ export default function OverviewPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4" data-testid="stat-strip">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3" data-testid="stat-strip">
         <Tile icon={CalendarDays} label="Games">
           {fmtInt(d.slate.n_games)}
         </Tile>
@@ -155,6 +158,22 @@ export default function OverviewPage() {
           ) : (
             <Val v={null} />
           )}
+        </Tile>
+        <Tile
+          icon={CandlestickChart}
+          label="Kalshi markets"
+          tone={kalshi.data?.sync.stale ? "warn" : undefined}
+          sub={kalshi.data ? `Last sync ${fmtDateTimeET(kalshi.data.sync.last_sync_at) ?? "—"}${kalshi.data.sync.stale ? " · stale" : ""}` : kalshi.isError ? "Kalshi data unavailable" : undefined}
+        >
+          <DLink href="/kalshi-intelligence" className="hover:underline" data-testid="kalshi-tile">
+            {kalshi.data ? (
+              <>
+                {fmtInt(kalshi.data.counts.total)} <span className="text-sm font-medium text-muted">contracts</span>
+              </>
+            ) : (
+              <Val v={null} />
+            )}
+          </DLink>
         </Tile>
         <Tile icon={Clock} label="Latest refresh">
           <span className="text-base">

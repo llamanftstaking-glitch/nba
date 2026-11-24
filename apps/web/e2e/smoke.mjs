@@ -42,12 +42,12 @@ const EMAIL = "owner@fixture.test";
 const PASSWORD = "fixture-password";
 const DISCLAIMER = "Research and paper testing only. No outcome is guaranteed. No real-money execution.";
 // The mandated footer sentence "No outcome is guaranteed" stays; it is removed before the vocabulary scan.
-const FORBIDDEN = [/\block\b/i, /\blocks\b/i, /guaranteed/i, /guarantee\b/i, /free money/i, /risk[- ]free/i, /can(?:[’']?t|not) lose/i, /sure thing/i];
+const FORBIDDEN = [/\block\b/i, /\blocks\b/i, /guaranteed/i, /guarantee\b/i, /free money/i, /risk[- ]free/i, /can(?:[’']?t|not) lose/i, /sure thing/i, /sharp money/i, /smart money/i, /insider/i, /real[- ]?time/i, /live odds/i];
 
-const NAV = ["/", "/games", "/picks", "/player-props", "/lineups", "/parlays", "/parlays/same-game", "/players", "/players/compare", "/players/history", "/matchups", "/injuries", "/builder", "/tickets", "/research/daily", "/results", "/performance", "/research-lab", "/agents", "/models", "/data-health", "/settings"];
-const OTHER = ["/games/FIX-G1", "/games/FIX-G2", "/players/9001", "/players/9004", "/players/compare?ids=9001,9005", "/teams", "/teams/1", "/exposure", "/markets", "/simulations", "/backtesting", "/admin"];
+const NAV = ["/", "/games", "/picks", "/player-props", "/kalshi-intelligence", "/lineups", "/parlays", "/parlays/same-game", "/players", "/minutes", "/players/compare", "/players/history", "/matchups", "/injuries", "/builder", "/tickets", "/research/daily", "/results", "/performance", "/research-lab", "/agents", "/models", "/data-health", "/settings"];
+const OTHER = ["/kalshi-intelligence/KXFIX-A-PTS25", "/kalshi-intelligence/KXFIX-A-DD", "/games/FIX-G1", "/games/FIX-G2", "/players/9001", "/players/9004", "/players/compare?ids=9001,9005", "/teams", "/teams/1", "/exposure", "/markets", "/simulations", "/backtesting", "/admin"];
 // The ten pages captured at every viewport for design review.
-const GALLERY = [["/", "overview"], ["/games", "games"], ["/lineups", "lineups"], ["/player-props", "player-props"], ["/players/9001", "player-profile"], ["/games/FIX-G1", "game"], ["/parlays", "parlays"], ["/results", "results"], ["/agents", "agents"], ["/data-health", "data-health"]];
+const GALLERY = [["/", "overview"], ["/games", "games"], ["/lineups", "lineups"], ["/player-props", "player-props"], ["/players/9001", "player-profile"], ["/games/FIX-G1", "game"], ["/parlays", "parlays"], ["/results", "results"], ["/agents", "agents"], ["/data-health", "data-health"], ["/kalshi-intelligence", "kalshi"], ["/kalshi-intelligence/KXFIX-A-PTS25", "kalshi-detail"], ["/minutes", "minutes"], ["/injuries", "injuries"]];
 const VIEWPORTS = [[1920, 1080], [1440, 900], [1280, 800], [1024, 768], [768, 1024], [430, 932], [390, 844]];
 
 let passed = 0;
@@ -178,13 +178,13 @@ async function runViewport(browser, label, viewport) {
     check(`[${label}] bottom nav targets are at least 44px`, small === 0, `${small} too small`);
     await page.click('[data-testid="more-button"]');
     await page.waitForSelector('[role="dialog"]');
-    check(`[${label}] More sheet lists the navigation groups`, (await page.locator('[role="dialog"] a').count()) >= 22);
+    check(`[${label}] More sheet lists the navigation groups`, (await page.locator('[role="dialog"] a').count()) >= 24 && /Kalshi Markets/.test(await page.locator('[role="dialog"]').innerText()) && /Minutes Intelligence/.test(await page.locator('[role="dialog"]').innerText()));
     await shot("more-sheet");
     await page.keyboard.press("Escape");
   } else {
     const side = await page.locator('[data-testid="sidebar"]').innerText();
     check(`[${label}] sidebar has the four groups`, ["COMMAND CENTER", "PLAYER INTELLIGENCE", "MY RESEARCH", "SYSTEM"].every((g) => side.toUpperCase().includes(g)));
-    check(`[${label}] sidebar has 22 destinations`, (await page.locator('[data-testid="sidebar"] nav a').count()) === 22);
+    check(`[${label}] sidebar has 24 destinations incl. Kalshi Markets and Minutes Intelligence`, (await page.locator('[data-testid="sidebar"] nav a').count()) === 24 && /Kalshi Markets/.test(side) && /Minutes Intelligence/.test(side));
     check(`[${label}] brand caption present`, /PARLAY COMMAND CENTER/i.test(side));
   }
 
@@ -197,7 +197,7 @@ async function runViewport(browser, label, viewport) {
   check(`[${label}] overview: tipoff shown in ET`, /\d{1,2}:\d{2}\s?(AM|PM) ET/.test(text));
   check(`[${label}] overview: unavailable values use the explicit marker`, (await page.locator('[aria-label="not available"]').count()) > 0);
   check(`[${label}] overview: warnings banner`, (await page.locator('[data-testid="warnings"] li').count()) === 2);
-  check(`[${label}] overview: eight summary tiles incl. lineups and prop markets`, (await page.locator('[data-testid="stat-strip"] [data-testid="tile"]').count()) === 8 && /1\s*confirmed\s*4\s*projected/i.test(text) && /quoted/i.test(text));
+  check(`[${label}] overview: nine summary tiles incl. lineups, prop markets and Kalshi`, (await page.locator('[data-testid="stat-strip"] [data-testid="tile"]').count()) === 9 && /7\s*contracts/.test((await page.locator('[data-testid="kalshi-tile"]').innerText()).replace(/\s+/g, " ")) && /Kalshi/.test(await page.locator('[data-testid="overview-props"]').innerText()) && /1\s*confirmed\s*4\s*projected/i.test(text) && /quoted/i.test(text));
   check(`[${label}] overview: per-team lineup status on game cards`, (await page.locator('[data-game-id="FIX-G2"] [data-testid="card-lineups"]').innerText()).replace(/\s+/g, " ").match(/BOS lineup Awaiting NYK lineup Projected/i) !== null);
   check(`[${label}] overview: prop research rows`, (await page.locator('[data-testid="overview-props"] [data-testid="prop-row"]').count()) >= 3);
   check(`[${label}] overview: parlay category strip`, (await page.locator('[data-testid="parlay-strip"] a').count()) === 8);
@@ -292,6 +292,107 @@ async function runViewport(browser, label, viewport) {
   await settle(page);
   check(`[${label}] manual entry: market row removed after withdraw`, (await page.locator(`[data-prop="9005:player_reb:FIX-G3"]:visible`).count()) === 0);
 
+  // --- Kalshi market watch ---
+  text = await visit(page, "/kalshi-intelligence", label, errors);
+  const kSel = isMobile ? '[data-testid="kalshi-card"]' : '[data-testid="kalshi-row"]';
+  const kCount = async (n) => page.waitForFunction(([sel, k]) => [...document.querySelectorAll(sel)].filter((e) => e.offsetParent !== null).length === k, [kSel, n], { timeout: 8000 }).then(() => true).catch(() => false);
+  check(`[${label}] kalshi: seven contracts`, await kCount(7));
+  check(`[${label}] kalshi: summary tiles from counts`, (await page.locator('[data-testid="kalshi-tiles"] [data-testid="tile"]').allInnerTexts()).map((t) => t.replace(/\s+/g, " ")).join("|").match(/CONTRACTS 7\|NORMALISED 5.*\|TRACKED ONLY 2.*\|EVENTS 3/i) !== null);
+  check(`[${label}] kalshi: stale sync tag, last sync time and sync note`, (await page.locator('[data-testid="kalshi-sync"]').first().getAttribute("data-stale")) === "1" && /Stale/i.test(text) && /Last sync .* ET/.test(text) && text.includes("FIXTURE: prices are polled about every 5 minutes"));
+  check(`[${label}] kalshi: prices in cents and signed moves`, /56\.5¢/.test(text) && /\+6\.5¢/.test(text) && /−3¢/.test(text));
+  check(`[${label}] kalshi: original contract title and comparator`, text.includes("FIXTURE Player A: 25+ points") && (isMobile || />= 25/.test(text)));
+  check(`[${label}] kalshi: tracked-only tags with the note as a tooltip`, (await page.locator(`${kSel} [data-testid="tracked-only"]:visible`).count()) === 2 && /protected double-double/.test((await page.locator(`[data-ticker="KXFIX-A-DD"] [data-testid="tracked-only"]:visible`).first().getAttribute("title")) ?? ""));
+  check(`[${label}] kalshi: API notes under the table`, (await page.locator('[data-testid="kalshi-notes"] li').count()) === 2);
+  const controls = (await page.locator("main button, main a").allInnerTexts()).join(" | ");
+  check(`[${label}] kalshi: no buy / sell / trade / order controls`, !/\b(buy|sell|trade|order|bet)\b/i.test(controls), controls.slice(0, 120));
+  const upColor = await page.locator('[data-move="up"]:visible').first().evaluate((e) => getComputedStyle(e).color);
+  check(`[${label}] kalshi: moves use the neutral data hue, not green/red`, upColor === "rgb(125, 196, 240)", upColor);
+  await page.selectOption('[data-testid="kalshi-kind"]', "player");
+  check(`[${label}] kalshi: kind filter`, await kCount(4));
+  await page.selectOption('[data-testid="kalshi-interp"]', "unsupported");
+  check(`[${label}] kalshi: interpretation filter`, await kCount(1));
+  await page.selectOption('[data-testid="kalshi-interp"]', "");
+  await page.selectOption('[data-testid="kalshi-kind"]', "");
+  await page.selectOption('[data-testid="kalshi-game"]', "FIX-G3");
+  check(`[${label}] kalshi: game filter`, await kCount(2));
+  await page.selectOption('[data-testid="kalshi-game"]', "");
+  await page.fill('[data-testid="kalshi-search"]', "rebounds");
+  check(`[${label}] kalshi: text search`, await kCount(1));
+  await page.fill('[data-testid="kalshi-search"]', "");
+  await kCount(7);
+  await page.selectOption('[data-testid="kalshi-sort"]', "movement");
+  await page.waitForFunction((sel) => [...document.querySelectorAll(sel)].find((e) => e.offsetParent !== null)?.getAttribute("data-ticker") === "KXFIX-A-PTS25", kSel, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] kalshi: sort by movement`, (await page.locator(`${kSel}:visible`).first().getAttribute("data-ticker")) === "KXFIX-A-PTS25");
+  if (isMobile) {
+    await page.locator('[data-ticker="KXFIX-A-PTS25"] [data-testid="kalshi-card-toggle"]').click();
+    await page.locator('[data-ticker="KXFIX-A-PTS25"] [data-testid="kalshi-open"]').click();
+  } else {
+    await page.locator('[data-testid="kalshi-row"][data-ticker="KXFIX-A-PTS25"]').click();
+  }
+  const kd = page.locator('[data-testid="kalshi-drawer"] [data-testid="kalshi-detail"]');
+  await kd.waitFor({ timeout: 10000 }).catch(() => {});
+  check(`[${label}] kalshi detail: opens in a drawer`, (await kd.count()) === 1);
+  check(`[${label}] kalshi detail: price history line and bid/ask band`, (await kd.locator('[data-testid="kalshi-chart"] .recharts-line-curve').count()) === 1 && (await kd.locator('[data-testid="kalshi-chart"] .recharts-area-area').count()) === 1);
+  check(`[${label}] kalshi detail: timeline markers on the chart (two inside the observed window)`, (await kd.locator('[data-testid="kalshi-chart"] .recharts-reference-line').count()) === 2);
+  check(`[${label}] kalshi detail: events listed chronologically`, (await kd.locator('[data-testid="kd-timeline"] li').count()) === 3 && /market opened/.test(await kd.locator('[data-testid="kd-timeline"] li').first().innerText()));
+  const kdText = await kd.innerText();
+  check(`[${label}] kalshi detail: market data precedes model research, both labelled`, /MARKET DATA · KALSHI/i.test(kdText) && /INDEPENDENT MODEL RESEARCH · GIZER/i.test(kdText) && kdText.search(/MARKET DATA/i) < kdText.search(/INDEPENDENT MODEL RESEARCH/i) && /Market price/i.test(kdText) && /Model probability/i.test(kdText));
+  check(`[${label}] kalshi detail: contract rules verbatim`, (await kd.locator('[data-testid="kd-rules"]').innerText()).includes("FIXTURE rule: if Player A: 25+ points is recorded") && /FIXTURE secondary rule/.test(kdText));
+  const kh = (await kd.locator('[data-testid="kd-history"]').innerText()).replace(/\s+/g, " ");
+  check(`[${label}] kalshi detail: history as counts, never a percentage`, /L10 \d+ of 10 over/.test(kh) && !kh.includes("%") && /descriptive history, not a probability/.test(kh), kh.slice(0, 90));
+  check(`[${label}] kalshi detail: research selections with classification and rejection reasons`, (await kd.locator('[data-testid="kd-selection"]').count()) === 2 && /Standard research/i.test(kdText) && /FIXTURE: edge below the minimum threshold/.test(kdText) && /56\.1%\s*\[51\.1–61\.1\]/.test(kdText));
+  check(`[${label}] kalshi detail: both API notes and the research note`, (await kd.locator('[data-testid="kd-notes"] li').count()) === 2 && /fitted without market prices/.test(kdText));
+  await kd.locator('[data-tab="spread"]').click();
+  check(`[${label}] kalshi detail: spread / volume history toggle`, (await kd.locator('[data-testid="kalshi-chart"]').getAttribute("data-metric")) === "spread");
+  await shot("kalshi-detail");
+  o = await overflow(page);
+  check(`[${label}] kalshi detail drawer has no horizontal overflow`, !o, o ? JSON.stringify(o) : "");
+  await visit(page, "/kalshi-intelligence/KXFIX-E-REB10", label, errors);
+  text = await bodyText(page);
+  check(`[${label}] kalshi detail page: single observation is stated, no line drawn`, /Only one observation so far/.test(text) && (await page.locator('[data-testid="kalshi-chart"]').count()) === 0);
+  await visit(page, "/kalshi-intelligence/KXFIX-A-DD", label, errors);
+  text = await bodyText(page);
+  check(`[${label}] kalshi detail page: tracked-only contract shows the note and no model numbers`, (await page.locator('[data-testid="kd-tracked-note"]').innerText()).includes("protected double-double") && (await page.locator('[data-testid="kd-no-model"]').count()) === 1 && (await page.locator('[data-testid="kd-selection"]').count()) === 0 && !/Model probability \[/i.test(text));
+
+  // --- Minutes intelligence ---
+  text = await visit(page, "/minutes", label, errors);
+  const mSel = isMobile ? '[data-testid="minutes-card"]' : '[data-testid="minutes-row"]';
+  const mIds = async () => page.locator(`${mSel}:visible`).evaluateAll((els) => els.map((e) => e.getAttribute("data-player-id")).join(","));
+  check(`[${label}] minutes: five players, default sort by projected minutes`, (await mIds()) === "9001,9005,9002,9003,9004", await mIds());
+  check(`[${label}] minutes: header note, model status shown honestly`, /descriptive context/.test(text) && /Candidate — did not pass validation/i.test(await page.locator('[data-testid="minutes-model-status"]').innerText()) && text.includes("FIXTURE: the minutes band is the candidate model's 80% range"));
+  check(`[${label}] minutes: band, role-change and returned-recently flags`, /\[\d+–\d+\]/.test(text) && /\+7\.2 vs L20/.test(text) && /Returned recently/i.test(text));
+  check(`[${label}] minutes: projected lineup status is labelled Projected`, isMobile || /Projected/.test(await page.locator('[data-testid="minutes-row"][data-player-id="9001"]').innerText()));
+  if (isMobile) {
+    await page.selectOption('[data-testid="minutes-sort"]', "l5:asc");
+  } else {
+    await page.locator('[data-testid="minutes-table"] [data-sort="l5"]').click();
+    await page.waitForFunction(() => document.querySelector('[data-testid="minutes-row"]')?.getAttribute("data-player-id") === "9001", null, { timeout: 8000 }).catch(() => {});
+    await page.locator('[data-testid="minutes-table"] [data-sort="l5"]').click();
+  }
+  await page.waitForFunction((sel) => [...document.querySelectorAll(sel)].find((e) => e.offsetParent !== null)?.getAttribute("data-player-id") === "9003", mSel, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] minutes: server-side sort (L5 ascending, unavailable last)`, (await mIds()).startsWith("9003") && (await mIds()).endsWith("9004"), await mIds());
+  await page.selectOption('[data-testid="minutes-class"]', "variable");
+  await page.waitForFunction((sel) => [...document.querySelectorAll(sel)].filter((e) => e.offsetParent !== null).length === 1, mSel, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] minutes: classification filter`, (await mIds()) === "9002");
+  if (isMobile) await page.locator('[data-testid="minutes-card-toggle"]').first().click();
+  else await page.locator('[data-testid="minutes-row"]').first().click();
+  check(`[${label}] minutes: classification reason in the expanded row`, /minutes ranged widely/.test(await bodyText(page)));
+  await page.selectOption('[data-testid="minutes-class"]', "");
+  await page.fill('[data-testid="minutes-search"]', "Player E");
+  await page.waitForFunction((sel) => [...document.querySelectorAll(sel)].filter((e) => e.offsetParent !== null).length === 1, mSel, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] minutes: search`, (await mIds()) === "9005");
+  await shot("minutes");
+
+  // --- Injury intelligence centre ---
+  text = await visit(page, "/injuries", label, errors);
+  check(`[${label}] injuries: status changes on top with previous → current and reassess counts`, (await page.locator('#status-changes [data-testid="injury-change"]').count()) === 3 && /3 research records to reassess \(2 qualified\)/.test(text) && /Questionable/.test(await page.locator('[data-testid="injury-change"]').first().innerText()) && /Lineup: FIXTURE/.test(text));
+  check(`[${label}] injuries: change notes`, (await page.locator('[data-testid="injury-change-notes"] li').count()) === 2);
+  const top = await page.evaluate(() => [document.querySelector("#status-changes")?.getBoundingClientRect().top ?? -1, document.querySelector('[data-testid="injury-game"]')?.getBoundingClientRect().top ?? -1]);
+  check(`[${label}] injuries: full availability feed kept below`, top[0] >= 0 && top[1] > top[0]);
+  await page.check('[data-testid="material-toggle"]');
+  await page.waitForFunction(() => document.querySelectorAll('[data-testid="injury-change"]').length === 2, null, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] injuries: material-only toggle`, (await page.locator('[data-testid="injury-change"]').count()) === 2 && (await page.locator('[data-testid="injury-change"][data-material="0"]').count()) === 0);
+
   // --- Lineups ---
   await visit(page, "/lineups", label, errors);
   check(`[${label}] lineups: board view is the default with one card per game`, (await page.locator('[data-testid="lineup-card"]').count()) === 3);
@@ -324,6 +425,8 @@ async function runViewport(browser, label, viewport) {
   await visit(page, "/players/9001", label, errors);
   check(`[${label}] player: header with next game and lineup status`, /@ ORL/.test(await page.locator('[data-testid="next-game"]').innerText()) && /Projected — not official/i.test(await page.locator('[aria-label="Player"]').innerText()));
   check(`[${label}] player: averages strip with sample sizes`, (await page.locator('[data-testid="averages-strip"] [data-testid="window-sample"]').allInnerTexts()).join("|") === "n=24|n=5|n=10|n=20");
+  check(`[${label}] player: minutes & role block`, /FIXTURE: started 10 of the last 10/.test(await page.locator('[data-testid="minutes-profile"]').innerText()) && /Starts \/ bench/i.test(await page.locator('[data-testid="minutes-profile"]').innerText()) && /did not pass validation/.test(await page.locator("#minutes").innerText()));
+  check(`[${label}] player: Kalshi threshold ladder linking to the detail`, (await page.locator('#kalshi [data-testid="kalshi-compact-row"]').count()) === 3 && /\/kalshi-intelligence\/KXFIX-A-PTS25/.test((await page.locator('#kalshi [data-testid="kalshi-compact-row"]').first().getAttribute("href")) ?? "") && />= 25/.test(await page.locator("#kalshi").innerText()));
   const hist = page.locator('#history [data-testid="player-history"]');
   await hist.locator('[data-testid="history-summary"]').waitFor({ timeout: 10000 }).catch(() => {});
   const h1 = await hist.locator('[data-testid="history-summary"]').innerText();
@@ -369,8 +472,13 @@ async function runViewport(browser, label, viewport) {
   // --- Game page ---
   await visit(page, "/games/FIX-G1", label, errors);
   const gp = page.locator('[data-testid="game-page"]');
-  const ys = await page.evaluate(() => ['[aria-label="Matchup"]', "#lineups", "#props", '[data-testid="player-averages"]', '[data-testid="toggle-all-selections"]', '[data-testid="combo-card"]'].map((s) => document.querySelector(s)?.getBoundingClientRect().top ?? -1));
-  check(`[${label}] game: sections A–F in order`, ys.every((v, i) => v !== -1 && (i === 0 || v > ys[i - 1])), ys.map(Math.round).join(","));
+  const ys = await page.evaluate(() => ["#matchup", "#environment", "#lineups", "#minutes", "#props", "#kalshi", "#history", "#availability", "#projections", "#selections", "#sgp", "#sources"].map((s) => document.querySelector(s)?.getBoundingClientRect().top ?? -1));
+  check(`[${label}] game: twelve sections in order`, ys.every((v, i) => v !== -1 && (i === 0 || v > ys[i - 1])), ys.map(Math.round).join(","));
+  check(`[${label}] game: player minutes for both teams`, (await gp.locator('#minutes [data-testid="minutes-compact-row"]').count()) === 2 && /did not pass validation/.test(await gp.locator("#minutes").innerText()));
+  check(`[${label}] game: Kalshi observations grouped, with tracked-only and stale tags`, (await gp.locator('#kalshi [data-testid="kalshi-compact-row"]').count()) === 4 && (await gp.locator('#kalshi [data-testid="kalshi-group"]').count()) === 3 && (await gp.locator('#kalshi [data-testid="tracked-only"]').count()) === 1 && (await gp.locator('#kalshi [data-testid="kalshi-sync"]').getAttribute("data-stale")) === "1");
+  check(`[${label}] game: historical player performance rows`, (await gp.locator('[data-testid="game-history"] [data-testid="hist-frequency"]').count()) >= 2);
+  check(`[${label}] game: availability timeline for this game only`, (await gp.locator('#availability [data-testid="injury-change"]').count()) === 2);
+  check(`[${label}] game: model projections are in an expandable block`, (await gp.locator("#projections details").count()) === 1 && !(await gp.locator('[data-testid="player-averages"]').isVisible()));
   check(`[${label}] game: lineup table`, (await gp.locator('[data-testid="team-lineup"]').count()) === 2);
   check(`[${label}] game: player props for the game`, (await gp.locator(`#props ${rowSel}:visible`).count()) === 3);
   check(`[${label}] game: descriptive context row on selections`, /Historical context \(descriptive\)/i.test(await gp.locator('[data-testid="historical-context"]').first().innerText()));
@@ -403,6 +511,7 @@ async function runViewport(browser, label, viewport) {
   await page.locator('[data-testid="evidence-toggle"]').first().click();
   check(`[${label}] selection: evidence panel expands`, await page.locator('[data-testid="evidence-panel"]').first().isVisible());
   check(`[${label}] selection: evidence meter is labelled separately`, /Evidence\s*72\s*\/100/.test((await page.locator('[data-testid="evidence-meter"]').first().innerText()).replace(/\n/g, " ")));
+  check(`[${label}] selection: classification uses the research labels`, /Standard research/i.test(await page.locator('[data-testid="selection-card"]').first().innerText()));
   check(`[${label}] selection: quote origin shown`, /Quote\s+Provider/.test((await page.locator('[data-testid="selection-card"]').first().innerText()).replace(/\s+/g, " ")));
 
   // --- Results ---
@@ -421,7 +530,7 @@ async function runViewport(browser, label, viewport) {
   text = await visit(page, "/models", label, errors);
   check(`[${label}] models: registry moved here`, text.includes("FIXTURE-props-gbm") && text.includes("FIXTURE-copula"));
   text = await visit(page, "/data-health", label, errors);
-  check(`[${label}] data health: provider configuration center`, (await page.locator('[data-testid="provider-card"]').count()) === 3 && /Credential missing/i.test(text) && /Credential present/i.test(text));
+  check(`[${label}] data health: provider configuration center`, (await page.locator('[data-testid="provider-card"]').count()) === 4 && (await page.locator('[data-provider="kalshi"]').count()) === 1 && /Credential missing/i.test(text) && /Credential present/i.test(text));
   check(`[${label}] data health: no key entry field, .env stated`, (await page.locator("main input, main textarea").count()) === 0 && /\.env/.test(text));
   text = await visit(page, "/injuries", label, errors);
   check(`[${label}] injuries: grouped by game then team with stale tags`, (await page.locator('[data-testid="injury-game"]').count()) === 2 && (await page.locator('[data-testid="injury-row"][data-stale="1"]').count()) === 3 && /Previously: Questionable/.test(text));

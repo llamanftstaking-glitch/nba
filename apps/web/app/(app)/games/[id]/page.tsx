@@ -1,14 +1,17 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, FileText, History, Layers, ListChecks, Target, Users } from "lucide-react";
+import { ArrowLeft, CandlestickChart, FileText, Gauge, HeartPulse, History, Layers, LineChart, ListChecks, Target, Timer, Users } from "lucide-react";
+import { InjuryChangeList } from "@/components/injury-changes";
+import { KalshiCompactList, KalshiSyncStatus } from "@/components/kalshi";
+import { MinutesCompact } from "@/components/minutes";
 import { useParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { ComboCard } from "@/components/combo-card";
 import { EnvironmentSummary, MatchupHeader, completenessPct } from "@/components/game-card";
 import { LineupHistoryList } from "@/components/lineup-history";
 import { LineupTable } from "@/components/lineup-table";
-import { MarketTable, PropDrawer, propKey } from "@/components/props";
+import { HistFrequency, MarketTable, PropDrawer, propKey } from "@/components/props";
 import { SelectionList } from "@/components/selection-card";
 import { TeamFormComparison } from "@/components/team-form";
 import { Button, textLink } from "@/components/ui/button";
@@ -136,20 +139,90 @@ function GameProps({ gameId, onRows }: { gameId: string; onRows: (r: PropRow[]) 
   );
 }
 
+/** 7 — descriptive recent averages per quoted/projected market. */
+function HistoricalPerformance({ rows }: { rows: PropRow[] }) {
+  if (rows.length === 0) return <EmptyState title="No player history rows are available for this game." icon={History} />;
+  return (
+    <div data-testid="game-history">
+      <ul className="divide-y divide-line/30">
+        <li className="hidden grid-cols-[minmax(0,2fr)_1fr_repeat(4,0.7fr)_1.4fr] gap-x-3 pb-2 text-2xs font-semibold uppercase tracking-wide text-muted md:grid" aria-hidden>
+          <span>Player</span>
+          <span>Stat · line</span>
+          <span className="text-right">L5</span>
+          <span className="text-right">L10</span>
+          <span className="text-right">L20</span>
+          <span className="text-right">Season</span>
+          <span>History vs line</span>
+        </li>
+        {rows.map((p) => (
+          <li key={propKey(p)} className="grid grid-cols-4 gap-x-3 gap-y-1 py-2 md:grid-cols-[minmax(0,2fr)_1fr_repeat(4,0.7fr)_1.4fr] md:items-center">
+            <span className="col-span-4 min-w-0 md:col-span-1">
+              <DLink href={`/players/${p.player_id}#history`} className="text-sm font-semibold text-ink hover:underline">
+                {p.player_name}
+              </DLink>
+              <span className="num ml-1.5 text-xs text-muted">
+                {p.team_abbr} · n={p.n_games}
+              </span>
+            </span>
+            <span className="col-span-4 text-sm text-soft md:col-span-1">
+              {statLabel(p.stat)} <span className="num text-muted"><Val v={p.line} /></span>
+            </span>
+            {(
+              [
+                ["L5", p.l5],
+                ["L10", p.l10],
+                ["L20", p.l20],
+                ["Season", p.season_avg],
+              ] as const
+            ).map(([l, v]) => (
+              <span key={l} className="num text-sm text-ink md:text-right">
+                <span className="mr-1 text-2xs uppercase text-muted md:hidden">{l}</span>
+                <Val v={fmtNum(v)} />
+              </span>
+            ))}
+            <span className="col-span-4 md:col-span-1">
+              <HistFrequency p={p} />
+            </span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-2 text-xs text-muted">Averages over games played and counts against today’s line. Descriptive history, not a probability.</p>
+    </div>
+  );
+}
+
+function Technical({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <details className="group rounded-md bg-raised/40">
+      <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-2 px-3 text-sm font-medium text-soft md:min-h-9">
+        {title}
+        <span className="text-xs text-muted group-open:hidden">Show</span>
+        <span className="hidden text-xs text-muted group-open:inline">Hide</span>
+      </summary>
+      <div className="border-t border-line/40 p-3">{children}</div>
+    </details>
+  );
+}
+
 function GameView({ d }: { d: GameDetail }) {
   const g = d.game;
   const [showAll, setShowAll] = useState(false);
   const [history, setHistory] = useState(false);
   const [propRows, setPropRows] = useState<PropRow[]>([]);
   const lineups = useQuery({ queryKey: ["game-lineups", g.id], queryFn: () => api.gameLineups(g.id) });
+  const minutes = useQuery({ queryKey: ["minutes", { date: g.date, limit: 200 }], queryFn: () => api.minutes({ date: g.date, sort: "proj_min", order: "desc", limit: 200 }) });
+  const kalshi = useQuery({ queryKey: ["kalshi-markets", { game_id: g.id }], queryFn: () => api.kalshiMarkets({ game_id: g.id, sort: "volume", limit: 200 }) });
+  const changes = useQuery({ queryKey: ["injury-changes", g.date, false], queryFn: () => api.injuryChanges({ date: g.date, limit: 100 }) });
   const pct = completenessPct(g.research_completeness.score);
   const rejected = d.selections.filter((s) => s.rejection_reasons.length > 0 || s.classification === "rejected").length;
   const limitations = g.research_completeness.items.filter((i) => !i.ok);
+  const teamSet = new Set([g.home.abbr, g.away.abbr]);
+  const injuries = [...g.injuries.away, ...g.injuries.home];
 
   return (
     <div className="space-y-5" data-testid="game-page">
-      {/* A — matchup header */}
-      <section className="rounded-lg bg-card p-4 ring-1 ring-inset ring-line/60 md:p-5" aria-label="Matchup">
+      {/* 1 — matchup header */}
+      <section id="matchup" className="rounded-lg bg-card p-4 ring-1 ring-inset ring-line/60 md:p-5" aria-label="Matchup">
         <h1 className="sr-only">
           {g.away.name} at {g.home.name} · game research
         </h1>
@@ -157,24 +230,21 @@ function GameView({ d }: { d: GameDetail }) {
         <p className="mt-1 text-xs text-muted">
           {fmtDate(g.date, { weekday: true, year: true })} · {g.venue ?? "Venue not available"}
         </p>
-        <div className="mt-4 grid gap-5 lg:grid-cols-[1fr_1.6fr_1.2fr]">
-          <div>
-            <div className="flex items-baseline justify-between text-xs">
-              <span className="text-muted">Research completeness</span>
-              <span className="num font-semibold text-ink">{pct}%</span>
-            </div>
-            <Meter value={pct} tone={pct >= 80 ? "neutral" : "warn"} label="Research completeness" className="mt-1" />
-            <ul className="mt-2 space-y-0.5 text-xs">
-              {g.research_completeness.items.map((it) => (
-                <li key={it.name} className="flex gap-1.5">
-                  <span className={it.ok ? "font-semibold text-soft" : "font-semibold text-warn"}>{it.ok ? "OK" : "Missing"}</span>
-                  <span className="min-w-0 break-words text-muted">{it.name}</span>
-                </li>
-              ))}
-            </ul>
+        <div className="mt-3 max-w-md">
+          <div className="flex items-baseline justify-between text-xs">
+            <span className="text-muted">Research completeness</span>
+            <span className="num font-semibold text-ink">{pct}%</span>
           </div>
+          <Meter value={pct} tone={pct >= 80 ? "neutral" : "warn"} label="Research completeness" className="mt-1" />
+          {limitations.length > 0 && <p className="mt-1 text-xs text-warn">Missing: {limitations.map((l) => l.name).join(", ")}</p>}
+        </div>
+      </section>
+
+      {/* 2 — game environment */}
+      <Panel title="Game environment" icon={Gauge} id="environment">
+        <div className="grid gap-5 lg:grid-cols-2">
           <div>
-            <Label>Environment</Label>
+            <Label>Projected environment</Label>
             <EnvironmentSummary env={g.environment} home={g.home.abbr} away={g.away.abbr} />
             {g.environment && g.environment.notes.length > 0 && (
               <ul className="mt-2 space-y-0.5 text-xs text-muted">
@@ -189,9 +259,9 @@ function GameView({ d }: { d: GameDetail }) {
             <TeamFormComparison home={d.team_form.home} away={d.team_form.away} homeAbbr={g.home.abbr} awayAbbr={g.away.abbr} />
           </div>
         </div>
-      </section>
+      </Panel>
 
-      {/* B — starting lineups */}
+      {/* 3 — lineups */}
       <section aria-label="Starting lineups" id="lineups">
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <h2 className="flex items-center gap-2 font-display text-[17px] font-semibold uppercase tracking-wide text-ink">
@@ -213,18 +283,86 @@ function GameView({ d }: { d: GameDetail }) {
         </QueryView>
       </section>
 
-      {/* C — player props */}
-      <Panel title="Player props" icon={Target} id="props">
+      {/* 4 — player minutes */}
+      <Panel title="Player minutes" icon={Timer} id="minutes">
+        <QueryView query={minutes} rows={5}>
+          {(m) => {
+            const rows = m.items.filter((r) => (r.game_id ? r.game_id === g.id : r.team_abbr !== null && teamSet.has(r.team_abbr)));
+            return rows.length === 0 ? (
+              <EmptyState title="No minutes profiles are available for these teams." icon={Timer} />
+            ) : (
+              <>
+                <MinutesCompact rows={rows} />
+                <p className="mt-2 text-xs text-muted">
+                  Classifications are descriptive context, not qualification rules. {m.model && m.model.status !== "production" ? `Minutes model ${m.model.name} ${m.model.version}: ${m.model.status} — did not pass validation. ` : ""}
+                  {m.uncertainty}
+                </p>
+              </>
+            );
+          }}
+        </QueryView>
+      </Panel>
+
+      {/* 5 — player market availability */}
+      <Panel title="Player market availability" icon={Target} id="props">
         <GameProps gameId={g.id} onRows={setPropRows} />
       </Panel>
 
-      {/* D — recent averages */}
-      <Panel title="Recent player averages and projections" icon={History}>
-        <PlayerAverages rows={d.player_projections} props={propRows} />
+      {/* 6 — Kalshi market observations */}
+      <Panel title="Kalshi market observations" icon={CandlestickChart} id="kalshi" right={kalshi.data ? <span className="num">{kalshi.data.total} contract(s)</span> : undefined}>
+        <QueryView query={kalshi} rows={4} isEmpty={(k) => k.items.length === 0} empty={<EmptyState title="No Kalshi contracts have been observed for this game." icon={CandlestickChart} />}>
+          {(k) => (
+            <>
+              <KalshiSyncStatus sync={k.sync} className="mb-3 text-xs" />
+              <KalshiCompactList rows={k.items} />
+              <p className="mt-2 text-xs text-muted">Market prices in cents as observed at the last sync. A market price is not a model probability.</p>
+            </>
+          )}
+        </QueryView>
       </Panel>
 
-      {/* E — qualified research selections */}
-      <Panel title="Qualified research selections" icon={ListChecks} right={<span className="num">{g.n_evaluated} evaluated · {g.n_rejected} rejected</span>}>
+      {/* 7 — historical player performance */}
+      <Panel title="Historical player performance" icon={History} id="history">
+        <HistoricalPerformance rows={propRows} />
+      </Panel>
+
+      {/* 8 — injury & availability timeline */}
+      <Panel title="Injury & availability timeline" icon={HeartPulse} id="availability">
+        <QueryView query={changes} rows={2}>
+          {(c) => {
+            const mine = c.items.filter((x) => x.game_id === g.id);
+            return mine.length === 0 ? <p className="text-sm text-muted">No status changes have been recorded for this game.</p> : <InjuryChangeList items={mine} showGame={false} />;
+          }}
+        </QueryView>
+        <div className="mt-3 border-t border-line/50 pt-3">
+          <Label>Currently listed · {injuries.length}</Label>
+          {injuries.length === 0 ? (
+            <p className="text-sm text-muted">No injuries are listed for either team.</p>
+          ) : (
+            <ul className="grid gap-x-6 gap-y-1 sm:grid-cols-2">
+              {injuries.map((r, i) => (
+                <li key={i} className="flex flex-wrap items-baseline justify-between gap-x-2 text-sm">
+                  <span className="text-ink">
+                    {r.player_name} <span className="text-xs text-muted">{r.team_abbr ?? ""}</span>
+                  </span>
+                  <span className="text-xs text-warn">{r.status}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="mt-2 text-xs text-muted">{g.lineup_status}</p>
+        </div>
+      </Panel>
+
+      {/* 9 — projections */}
+      <Panel title="Projections" icon={LineChart} id="projections">
+        <Technical title={`Model projections with 80% ranges · ${new Set(d.player_projections.map((r) => r.player_id)).size} players`}>
+          <PlayerAverages rows={d.player_projections} props={propRows} />
+        </Technical>
+      </Panel>
+
+      {/* 10 — research selections */}
+      <Panel title="Research selections" icon={ListChecks} id="selections" right={<span className="num">{g.n_evaluated} evaluated · {g.n_rejected} rejected</span>}>
         {g.top_picks.length === 0 ? (
           <EmptyState title="No qualified picks for this game.">{g.no_picks_reason ?? "The API did not provide a reason."}</EmptyState>
         ) : (
@@ -247,13 +385,13 @@ function GameView({ d }: { d: GameDetail }) {
         </div>
       </Panel>
 
-      {/* F — same-game research */}
-      <Panel title="Same-game research" icon={Layers} right={<span className="num">{d.sgp.length}</span>} bodyClassName="space-y-3">
+      {/* 11 — same-game research */}
+      <Panel title="Same-game research" icon={Layers} id="sgp" right={<span className="num">{d.sgp.length}</span>} bodyClassName="space-y-3">
         {d.sgp.length === 0 ? <EmptyState title="No same-game combination met the research criteria for this game." /> : d.sgp.map((c) => <ComboCard key={c.uid} combo={c} />)}
       </Panel>
 
-      {/* G — reports, limitations, unresolved */}
-      <Panel title="Research reports, limitations and unresolved questions" icon={FileText}>
+      {/* 12 — sources and limitations */}
+      <Panel title="Sources and limitations" icon={FileText} id="sources">
         <div className="grid gap-5 lg:grid-cols-3">
           <div>
             <Label>Agent reports</Label>
@@ -275,12 +413,15 @@ function GameView({ d }: { d: GameDetail }) {
           </div>
           <div>
             <Label>Limitations</Label>
-            {limitations.length === 0 ? (
-              <p className="text-sm text-muted">No data limitations were flagged.</p>
-            ) : (
-              <BulletList items={limitations.map((l) => `${l.name}${l.note ? ` — ${l.note}` : ""}`)} tone="warn" />
-            )}
-            <p className="mt-2 text-xs text-muted">{g.lineup_status}</p>
+            {limitations.length === 0 ? <p className="text-sm text-muted">No data limitations were flagged.</p> : <BulletList items={limitations.map((l) => `${l.name}${l.note ? ` — ${l.note}` : ""}`)} tone="warn" />}
+            <ul className="mt-2 space-y-0.5 text-xs">
+              {g.research_completeness.items.filter((it) => it.ok).map((it) => (
+                <li key={it.name} className="text-muted">
+                  <span className="font-semibold text-soft">OK</span> {it.name}
+                  {it.note ? ` — ${it.note}` : ""}
+                </li>
+              ))}
+            </ul>
           </div>
           <div>
             <Label>Unresolved questions</Label>

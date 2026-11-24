@@ -1,13 +1,14 @@
 import { Badge, StatusDot, type Tone } from "@/components/ui/badge";
-import { titleCase } from "@/lib/format";
+import { CLASSIFICATION_LABELS, titleCase } from "@/lib/format";
 
 const MAP: Record<string, { label: string; tone: Tone }> = {
-  high_confidence: { label: "High confidence", tone: "accent-solid" },
-  standard: { label: "Standard", tone: "accent" },
-  watchlist: { label: "Watchlist", tone: "warn" },
-  insufficient_evidence: { label: "Insufficient evidence", tone: "neutral" },
-  rejected: { label: "Rejected", tone: "bad" },
-  invalidated: { label: "Invalidated", tone: "bad" },
+  high_confidence: { label: CLASSIFICATION_LABELS.high_confidence!, tone: "accent-solid" },
+  standard: { label: CLASSIFICATION_LABELS.standard!, tone: "accent" },
+  watchlist: { label: CLASSIFICATION_LABELS.watchlist!, tone: "warn" },
+  insufficient_evidence: { label: CLASSIFICATION_LABELS.insufficient_evidence!, tone: "neutral" },
+  stale: { label: CLASSIFICATION_LABELS.stale!, tone: "warn" },
+  rejected: { label: CLASSIFICATION_LABELS.rejected!, tone: "bad" },
+  invalidated: { label: CLASSIFICATION_LABELS.invalidated!, tone: "bad" },
 };
 
 /** Classification is always carried by a text label; colour is secondary. One of the two places a boxed badge is used. */

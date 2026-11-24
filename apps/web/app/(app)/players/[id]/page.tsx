@@ -1,7 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, BarChart3, FlaskConical, History, ListOrdered, Split, Target } from "lucide-react";
+import { ArrowLeft, BarChart3, CandlestickChart, FlaskConical, History, ListOrdered, Split, Target, Timer } from "lucide-react";
+import { KalshiCompactList, KalshiSyncStatus } from "@/components/kalshi";
+import { MinutesProfile } from "@/components/minutes";
 import { useParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { PlayerAvatar } from "@/components/player-avatar";
@@ -257,6 +259,8 @@ function View({ d, id }: { d: PlayerDetail; id: string }) {
   const [open, setOpen] = useState<Prop | null>(null);
   const averages = useQuery({ queryKey: ["player-averages", id], queryFn: () => api.playerAverages(id) });
   const splits = useQuery({ queryKey: ["player-splits", id], queryFn: () => api.playerSplits(id) });
+  const minutes = useQuery({ queryKey: ["player-minutes", id], queryFn: () => api.playerMinutes(id) });
+  const kalshi = useQuery({ queryKey: ["kalshi-markets", { player_id: id }], queryFn: () => api.kalshiMarkets({ player_id: id, sort: "player", limit: 100 }) });
   const markets = useMemo(() => d.markets ?? [], [d.markets]);
   const lines = useMemo(() => Object.fromEntries(markets.map((m) => [m.stat, m.line])), [markets]);
   const availability = d.injury ? d.injury.status : "available";
@@ -308,6 +312,38 @@ function View({ d, id }: { d: PlayerDetail; id: string }) {
           )}
         </QueryView>
       </section>
+
+      <Panel title="Minutes & role" icon={Timer} id="minutes">
+        <QueryView query={minutes} rows={3}>
+          {(mn) =>
+            mn.profile ? (
+              <>
+                <MinutesProfile r={mn.profile} />
+                <p className="mt-2 text-xs text-muted">
+                  {mn.model ? `Minutes model ${mn.model.name} ${mn.model.version} · ${mn.model.status === "production" ? "production" : `${mn.model.status} — did not pass validation`}. ` : "No minutes model is registered. "}
+                  {mn.uncertainty} {mn.restrictions_note}
+                </p>
+              </>
+            ) : (
+              <EmptyState title="No minutes profile is available for this player." icon={Timer}>
+                {mn.restrictions_note}
+              </EmptyState>
+            )
+          }
+        </QueryView>
+      </Panel>
+
+      <Panel title="Available Kalshi contracts" icon={CandlestickChart} id="kalshi" right={kalshi.data ? <span className="num">{kalshi.data.total} contract(s)</span> : undefined}>
+        <QueryView query={kalshi} rows={3} isEmpty={(k) => k.items.length === 0} empty={<EmptyState title="No Kalshi contracts are listed for this player on the current slate." icon={CandlestickChart} />}>
+          {(k) => (
+            <>
+              <KalshiSyncStatus sync={k.sync} className="mb-3 text-xs" />
+              <KalshiCompactList rows={k.items} ladder />
+              <p className="mt-2 text-xs text-muted">Each row is a separate threshold contract with its own rules. Prices are Kalshi market prices in cents, not model probabilities.</p>
+            </>
+          )}
+        </QueryView>
+      </Panel>
 
       <Panel title="Today's markets" icon={Target}>
         {markets.length === 0 ? (

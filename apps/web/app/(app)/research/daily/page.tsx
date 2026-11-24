@@ -12,7 +12,7 @@ import { EmptyState, ErrorState, LoadingState, QueryView } from "@/components/ui
 import { api } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { useSelectedDate } from "@/lib/date";
-import { fmtDateTimeET, fmtPct, titleCase } from "@/lib/format";
+import { classLabel, fmtDateTimeET, fmtPct, titleCase } from "@/lib/format";
 import type { EditionDetail, EditionListItem } from "@/lib/types";
 
 function editionLabel(e: { kind: string; version: number; published_at: string }): string {
@@ -43,18 +43,18 @@ function computeDiff(from: EditionDetail, to: EditionDetail): { selections: Diff
   for (const [k, s] of b) {
     const prev = a.get(k);
     if (!prev) {
-      selections.push({ kind: "added", label: s.market_label, detail: `${titleCase(s.classification)} · ${fmtPct(s.prob) ?? "probability not available"}` });
+      selections.push({ kind: "added", label: s.market_label, detail: `${classLabel(s.classification)} · ${fmtPct(s.prob) ?? "probability not available"}` });
       continue;
     }
     const parts: string[] = [];
-    if (prev.classification !== s.classification) parts.push(`classification ${titleCase(prev.classification)} → ${titleCase(s.classification)}`);
+    if (prev.classification !== s.classification) parts.push(`classification ${classLabel(prev.classification)} → ${classLabel(s.classification)}`);
     if (prev.prob !== s.prob) parts.push(`probability ${fmtPct(prev.prob) ?? "—"} → ${fmtPct(s.prob) ?? "—"}`);
     if (prev.line !== s.line) parts.push(`line ${prev.line ?? "—"} → ${s.line ?? "—"}`);
     if (prev.price_american !== s.price_american) parts.push(`price ${prev.price_american ?? "—"} → ${s.price_american ?? "—"}`);
     if (prev.invalidated !== s.invalidated) parts.push(s.invalidated ? "invalidated" : "no longer invalidated");
     if (parts.length) selections.push({ kind: "changed", label: s.market_label, detail: parts.join("; ") });
   }
-  for (const [k, s] of a) if (!b.has(k)) selections.push({ kind: "removed", label: s.market_label, detail: `was ${titleCase(s.classification)}` });
+  for (const [k, s] of a) if (!b.has(k)) selections.push({ kind: "removed", label: s.market_label, detail: `was ${classLabel(s.classification)}` });
 
   const combos: DiffRow[] = [];
   const sig = (legs: { label: string }[]) => legs.map((l) => l.label).sort().join(" | ");
@@ -65,7 +65,7 @@ function computeDiff(from: EditionDetail, to: EditionDetail): { selections: Diff
     if (!prev) combos.push({ kind: "added", label: c.name, detail: c.legs.map((l) => l.label).join(" + ") });
     else {
       const parts: string[] = [];
-      if (prev.classification !== c.classification) parts.push(`classification ${titleCase(prev.classification)} → ${titleCase(c.classification)}`);
+      if (prev.classification !== c.classification) parts.push(`classification ${classLabel(prev.classification)} → ${classLabel(c.classification)}`);
       if (prev.joint_prob !== c.joint_prob) parts.push(`joint probability ${fmtPct(prev.joint_prob) ?? "—"} → ${fmtPct(c.joint_prob) ?? "—"}`);
       if (prev.invalidated !== c.invalidated) parts.push(c.invalidated ? "invalidated" : "no longer invalidated");
       if (parts.length) combos.push({ kind: "changed", label: c.name, detail: parts.join("; ") });

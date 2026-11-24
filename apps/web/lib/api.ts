@@ -1,4 +1,9 @@
 import type {
+  InjuryChangesResponse,
+  KalshiMarketDetail,
+  KalshiMarketsResponse,
+  MinutesResponse,
+  PlayerMinutesResponse,
   AveragesResponse,
   GameLineups,
   GameLogsResponse,
@@ -161,6 +166,9 @@ export type GameLogFilters = { season?: string; venue?: string; role?: string; o
 export type ThresholdParams = { stat: string; line: number; window: string; venue?: string; role?: string };
 export type PropFilters = { date?: string; game_id?: string; team?: string; market?: string; q?: string; quoted?: boolean; limit?: number; offset?: number };
 
+export type KalshiFilters = { date?: string; game_id?: string; kind?: string; market?: string; interpretation?: string; q?: string; player_id?: number | string; sort?: string; limit?: number; offset?: number };
+export type MinutesFilters = { date?: string; team?: string; q?: string; classification?: string; sort?: string; order?: "asc" | "desc"; limit?: number; offset?: number };
+
 export type SaveTicketBody = { combo_uid?: string; selection_ids?: number[]; stake_units?: number };
 
 export const api = {
@@ -225,4 +233,11 @@ export const api = {
   lineupHistory: (gameId: string) => get<LineupHistory>(`/games/${encodeURIComponent(gameId)}/lineup-history`),
   providers: () => get<{ items: ProviderInfo[] }>("/data-health/providers"),
   strategies: () => get<StrategiesResponse>("/performance/strategies"),
+
+  // Core Intelligence V1
+  kalshiMarkets: (p: KalshiFilters) => get<KalshiMarketsResponse>("/kalshi/markets", p),
+  kalshiMarket: (ticker: string) => get<KalshiMarketDetail>(`/kalshi/markets/${encodeURIComponent(ticker)}`),
+  minutes: (p: MinutesFilters) => get<MinutesResponse>("/minutes", p),
+  playerMinutes: (id: string | number) => get<PlayerMinutesResponse>(`/players/${id}/minutes`),
+  injuryChanges: (p: { date?: string; material?: boolean; limit?: number }) => get<InjuryChangesResponse>("/injuries/changes", p),
 };

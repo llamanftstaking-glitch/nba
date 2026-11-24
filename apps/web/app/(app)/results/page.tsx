@@ -13,13 +13,13 @@ import { Pagination } from "@/components/ui/pagination";
 import { PageHeader, Panel } from "@/components/ui/panel";
 import { EmptyState, QueryView } from "@/components/ui/states";
 import { api, type ResultsFilters } from "@/lib/api";
-import { ENGINES, MARKET_LABELS, fmtInt, fmtPct, fmtSigned, fmtSignedPct } from "@/lib/format";
+import { classLabel, ENGINES, MARKET_LABELS, fmtInt, fmtPct, fmtSigned, fmtSignedPct } from "@/lib/format";
 import { useDataHealth, useModels, useTeams } from "@/lib/queries";
 import { useDebounced } from "@/lib/use-debounced";
 import type { CalibrationBucket, ResultsResponse, Summary } from "@/lib/types";
 
 const LIMIT = 10;
-const CLASSES = ["high_confidence", "standard", "watchlist", "insufficient_evidence", "rejected", "invalidated"];
+const CLASSES = ["high_confidence", "standard", "watchlist", "insufficient_evidence", "stale", "rejected", "invalidated"];
 const ENGINE_LABEL: Record<string, string> = {
   SINGLE: "SINGLE · 1 leg",
   DOUBLE: "DOUBLE · 2 legs",
@@ -236,7 +236,7 @@ export default function ResultsPage() {
             <option value="">All classifications</option>
             {CLASSES.map((c) => (
               <option key={c} value={c}>
-                {c.replace(/_/g, " ")}
+                {classLabel(c)}
               </option>
             ))}
           </Select>

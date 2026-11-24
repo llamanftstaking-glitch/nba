@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Area,
   Bar,
   BarChart,
   Cell,
@@ -250,6 +251,72 @@ export function OverlayLineChart({ series, statLabel }: { series: { name: string
               <Line key={s.name} type="linear" dataKey={`s${k}`} stroke={OVERLAY[k]} strokeWidth={2} dot={{ r: 3, fill: OVERLAY[k], stroke: "#0D1720", strokeWidth: 2 }} isAnimationActive={false} connectNulls={false} />
             ))}
           </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+
+// ---------- Kalshi price history ----------
+export const TIMELINE_COLORS = { availability: "#F5B942", lineup: "#00BFA6", market_status: "#94A3B8" } as const;
+export type PricePoint = { t: number; price: number | null; band: [number, number] | null; spread: number | null; volume: number | null };
+export type TimelineMark = { t: number; type: keyof typeof TIMELINE_COLORS; own: boolean; text: string };
+
+const timeTick = (t: number) => new Date(t).toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" });
+const timeLabel = (t: number) => `${new Date(t).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} ET`;
+
+/**
+ * Market price over time (cents) with the bid–ask range as a faint band and availability / lineup /
+ * market-status events as vertical markers. One axis; markers are listed again as text under the chart.
+ */
+export function KalshiPriceChart({ points, marks, metric = "price" }: { points: PricePoint[]; marks: TimelineMark[]; metric?: "price" | "spread" | "volume" }) {
+  const isPrice = metric === "price";
+  const label = metric === "price" ? "Market price" : metric === "spread" ? "Bid–ask spread" : "Volume";
+  const fmt = (v: number) => (metric === "volume" ? v.toLocaleString("en-US") : `${Math.round(v * 1000) / 10}¢`);
+  const lo = points[0]?.t ?? 0;
+  const hi = points[points.length - 1]?.t ?? 0;
+  const inRange = marks.filter((m) => m.t >= lo && m.t <= hi);
+  return (
+    <div data-testid="kalshi-chart" data-metric={metric}>
+      <ul className="mb-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
+        <li className="flex items-center gap-1.5">
+          <span className="inline-block h-0.5 w-4" style={{ background: SERIES }} aria-hidden />
+          {label}
+        </li>
+        {isPrice && (
+          <li className="flex items-center gap-1.5">
+            <span className="inline-block h-2.5 w-4 rounded-sm" style={{ background: SERIES, opacity: 0.18 }} aria-hidden />
+            Bid–ask range
+          </li>
+        )}
+        {(Object.keys(TIMELINE_COLORS) as (keyof typeof TIMELINE_COLORS)[]).map((k) => (
+          <li key={k} className="flex items-center gap-1.5">
+            <span className="inline-block h-3 border-l-2" style={{ borderColor: TIMELINE_COLORS[k] }} aria-hidden />
+            {k === "availability" ? "Availability change" : k === "lineup" ? "Lineup change" : "Market status"}
+          </li>
+        ))}
+      </ul>
+      <div className="h-64 w-full" role="img" aria-label={`${label} over time with event markers. The events are listed under the chart.`}>
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart data={points} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
+            <CartesianGrid stroke={GRID} vertical={false} />
+            <XAxis type="number" dataKey="t" domain={["dataMin", "dataMax"]} scale="time" tickFormatter={timeTick} stroke={AXIS} tickLine={false} tick={TICK} minTickGap={40} />
+            <YAxis stroke={AXIS} tickLine={false} tick={TICK} width={44} tickFormatter={fmt} domain={isPrice ? [(min: number) => Math.max(0, Math.floor(min * 20 - 0.5) / 20), (max: number) => Math.min(1, Math.ceil(max * 20 + 0.5) / 20)] : [0, "auto"]} />
+            <Tooltip
+              {...tooltipStyle}
+              cursor={{ stroke: AXIS }}
+              labelFormatter={(t) => timeLabel(Number(t))}
+              formatter={(value, name) => {
+                if (Array.isArray(value)) return [`${fmt(Number(value[0]))} – ${fmt(Number(value[1]))}`, "Bid–ask"];
+                return [typeof value === "number" ? fmt(value) : String(value), name === "band" ? "Bid–ask" : label];
+              }}
+            />
+            {isPrice && <Area dataKey="band" stroke="none" fill={SERIES} fillOpacity={0.14} isAnimationActive={false} connectNulls />}
+            {inRange.map((m, i) => (
+              <ReferenceLine key={i} x={m.t} stroke={TIMELINE_COLORS[m.type]} strokeWidth={m.own ? 2 : 1} strokeDasharray={m.own ? undefined : "3 3"} strokeOpacity={m.own ? 1 : 0.7} />
+            ))}
+            <Line type="linear" dataKey={metric} stroke={SERIES} strokeWidth={2} dot={points.length <= 30 ? { r: 2.5, fill: SERIES } : false} activeDot={{ r: 5 }} isAnimationActive={false} connectNulls />
+          </ComposedChart>
         </ResponsiveContainer>
       </div>
     </div>

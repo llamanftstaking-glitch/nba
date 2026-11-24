@@ -191,7 +191,7 @@ const EDITIONS = {
   [TODAY]: [
     { id: 1, key: `FIXTURE-${TODAY}-morning-v1`, kind: "morning", version: 1, published_at: iso(420) },
     { id: 2, key: `FIXTURE-${TODAY}-midday-v1`, kind: "midday", version: 1, published_at: iso(180) },
-    { id: 3, key: `FIXTURE-${TODAY}-afternoon-v1`, kind: "afternoon", version: 1, published_at: iso(45) },
+    { id: 3, key: `FIXTURE-${TODAY}-update-v1`, kind: "update", version: 1, published_at: iso(45) },
   ],
   [YESTERDAY]: [{ id: 90, key: `FIXTURE-${YESTERDAY}-final-v1`, kind: "final", version: 1, published_at: iso(60 * 20) }],
 };
@@ -521,7 +521,7 @@ function propRows() {
     [9002, "reb", { line: 8.5, over: -118, under: 102, book: B, origin: "provider" }],
     [9003, "ast", {}],
     [9004, "fg3m", {}],
-    [9005, "pts", { line: 27.5, over: -112, under: -108, book: B, origin: "provider" }],
+    [9005, "pts", { line: 27.5, over: -112, under: -108, book: "Kalshi", origin: "provider" }],
     [9005, "pra", { line: 46.5, origin: "hypothetical" }],
   ];
   // a manual entry for a player/market that has no row yet adds one
@@ -567,6 +567,7 @@ const PROVIDERS = [
   { provider: "FIXTURE-quotes", name: "FIXTURE Quotes API", categories: ["game quotes", "player props"], configured: true, credential: "present", status: "degraded", last_success_at: iso(40), last_error_at: iso(55), last_error: "FIXTURE: HTTP 429 from provider.", calls_this_month: 320, quota_used: 320, quota_limit: 500, monthly_cost_usd: 30, limitations: ["FIXTURE: free tier covers two books.", "FIXTURE: no historical lines."], setup: "FIXTURE: set FIXTURE_QUOTES_API_KEY in the server .env and restart the worker." },
   { provider: "FIXTURE-lineups", name: "FIXTURE Lineups Feed", categories: ["starting lineups"], configured: false, credential: "missing", status: "not_configured", last_success_at: null, last_error_at: null, last_error: null, calls_this_month: 0, quota_used: 0, quota_limit: 1000, monthly_cost_usd: 0, limitations: [], setup: "FIXTURE: set FIXTURE_LINEUPS_API_KEY in the server .env." },
 ];
+PROVIDERS.push({ provider: "kalshi", name: "FIXTURE Kalshi (public market data)", categories: ["exchange prices"], configured: true, credential: "not_required", status: "ok", last_success_at: iso(14), last_error_at: null, last_error: null, calls_this_month: 8640, quota_used: 8640, quota_limit: null, monthly_cost_usd: 0, limitations: ["FIXTURE: polled about every 5 minutes; not a streaming feed."], setup: "FIXTURE: no credential needed for public market data." });
 const strat = (key, label, kind, s) => ({ key, label, kind, ...zeroSummary(), ...s });
 const STRATEGIES = {
   groups: [
@@ -579,6 +580,121 @@ const STRATEGIES = {
   forecast: [{ stat: "pts", n: 412, mae: 5.21, coverage_80: 0.78 }, { stat: "reb", n: 398, mae: 2.04, coverage_80: 0.81 }, { stat: "ast", n: 12, mae: null, coverage_80: null }],
   disclaimer: "FIXTURE disclaimer: strategy results are simulated in virtual units. Groups with few settled records carry wide intervals.",
 };
+
+
+// ---------- Core Intelligence V1: Kalshi, minutes, availability events ----------
+// Kalshi sync is deliberately stale in the fixtures (14 minutes old against a 5 minute poll).
+const KSYNC = { last_sync_at: iso(14), age_minutes: 14, poll_minutes: 5, stale: true, note: "FIXTURE: prices are polled about every 5 minutes and stored as observations; the last poll is overdue." };
+const kSeries = (prices, { bidAsk = true, startMin = 240, step = 30 } = {}) => prices.map((pr, i) => ({ at: iso(startMin - i * step), price: pr, yes_bid: bidAsk ? +(pr - 0.02).toFixed(3) : null, yes_ask: bidAsk ? +(pr + 0.02).toFixed(3) : null, last_price: +(pr - 0.01).toFixed(3), spread: bidAsk ? 0.04 : null, volume: 400 + i * 310, open_interest: 900 + i * 120, status: "open" }));
+function kRow(o) {
+  const ser = o.series ?? [];
+  const first = ser[0]?.price ?? null, last = ser[ser.length - 1]?.price ?? null;
+  const back = (n) => (ser.length > n ? +(last - ser[ser.length - 1 - n].price).toFixed(3) : null);
+  const g = { "FIX-G1": "DET @ ORL", "FIX-G2": "BOS @ NYK", "FIX-G3": "LAL @ DEN" }[o.game_id] ?? null;
+  const lastPt = ser[ser.length - 1];
+  return {
+    ticker: o.ticker, event_ticker: `KXFIX-${o.game_id}`, series: "KXFIXTURE", game_id: o.game_id, game_label: g,
+    kind: o.kind, market: o.market ?? null, stat: o.stat ?? null, stat_label: o.stat_label ?? null, player_id: o.player_id ?? null, player_name: o.player_name ?? null, team_abbr: o.team_abbr ?? null,
+    title: o.title, threshold: o.threshold ?? null, comparator: o.comparator ?? null, contract_type: o.contract_type ?? "threshold",
+    interpretation: o.interpretation ?? "normalized", interpretation_note: o.interpretation_note ?? null, protected: Boolean(o.protected),
+    status: "open", open_time: iso(600), close_time: tip(TODAY, 3),
+    yes_bid: lastPt?.yes_bid ?? null, yes_ask: lastPt?.yes_ask ?? null, no_bid: lastPt?.yes_ask == null ? null : +(1 - lastPt.yes_ask).toFixed(3), no_ask: lastPt?.yes_bid == null ? null : +(1 - lastPt.yes_bid).toFixed(3), last_price: lastPt?.last_price ?? null,
+    volume: lastPt?.volume ?? null, open_interest: lastPt?.open_interest ?? null, yes_ask_size: lastPt ? 120 : null, yes_bid_size: lastPt ? 85 : null,
+    price: last, first_observed: first, first_observed_at: ser[0]?.at ?? null, change_since_first: first == null ? null : +(last - first).toFixed(3),
+    high: ser.length ? Math.max(...ser.map((x) => x.price)) : null, low: ser.length ? Math.min(...ser.map((x) => x.price)) : null, spread: lastPt?.spread ?? null,
+    windows: { "5m": null, "15m": back(1) == null ? null : +(back(1) / 2).toFixed(3), "30m": back(1), "60m": back(2), "3h": back(6) },
+    observations: ser.length, last_observed_at: lastPt?.at ?? null, first_seen_at: ser[0]?.at ?? iso(240), _series: ser,
+  };
+}
+const KALSHI = [
+  kRow({ ticker: "KXFIX-A-PTS25", game_id: "FIX-G1", kind: "player", market: "player_pts", stat: "pts", stat_label: "FIXTURE Points", player_id: 9001, player_name: "FIXTURE Player A", team_abbr: "DET", title: "FIXTURE Player A: 25+ points", threshold: 24.5, comparator: ">= 25", series: kSeries([0.5, 0.52, 0.51, 0.55, 0.58, 0.56, 0.57, 0.6, 0.565]) }),
+  kRow({ ticker: "KXFIX-A-PTS30", game_id: "FIX-G1", kind: "player", market: "player_pts", stat: "pts", stat_label: "FIXTURE Points", player_id: 9001, player_name: "FIXTURE Player A", team_abbr: "DET", title: "FIXTURE Player A: 30+ points", threshold: 29.5, comparator: ">= 30", series: kSeries([0.27, 0.25, 0.24], { startMin: 90 }) }),
+  kRow({ ticker: "KXFIX-A-DD", game_id: "FIX-G1", kind: "player", stat: null, stat_label: "FIXTURE Double double", player_id: 9001, player_name: "FIXTURE Player A", team_abbr: "DET", title: "FIXTURE Player A: Double Double (protected)", contract_type: "protected", protected: true, interpretation: "unsupported", interpretation_note: "FIXTURE: protected double-double contract; settlement terms differ from a plain stat threshold, so GIZER tracks the price but does not evaluate it.", series: kSeries([0.33, 0.35, 0.34], { startMin: 90 }) }),
+  kRow({ ticker: "KXFIX-E-REB10", game_id: "FIX-G3", kind: "player", market: "player_reb", stat: "reb", stat_label: "FIXTURE Rebounds", player_id: 9005, player_name: "FIXTURE Player E", team_abbr: "DEN", title: "FIXTURE Player E: 10+ rebounds", threshold: 9.5, comparator: ">= 10", series: kSeries([0.71], { startMin: 14, bidAsk: false }) }),
+  kRow({ ticker: "KXFIX-G1-ML", game_id: "FIX-G1", kind: "game", market: "moneyline", stat_label: "FIXTURE Winner", team_abbr: "DET", title: "FIXTURE DET at ORL: Detroit wins", comparator: "wins", contract_type: "winner", series: kSeries([0.46, 0.45, 0.44, 0.44], { startMin: 120 }) }),
+  kRow({ ticker: "KXFIX-G3-TOT", game_id: "FIX-G3", kind: "total", market: "total", stat_label: "FIXTURE Total points", title: "FIXTURE LAL at DEN: over 229.5 points", threshold: 229.5, comparator: "> 229.5", series: kSeries([0.5, 0.5, 0.52], { startMin: 90 }) }),
+  kRow({ ticker: "KXFIX-G2-MISC", game_id: "FIX-G2", kind: "other", stat_label: null, title: "FIXTURE BOS at NYK: first basket scorer bundle", interpretation: "unmatched", interpretation_note: null, series: kSeries([0.12, 0.12], { startMin: 60 }) }),
+];
+const kPublic = ({ _series, ...r }) => r;
+function kalshiMarkets(q) {
+  const date = q.get("date") || TODAY;
+  let items = date === TODAY ? KALSHI : [];
+  for (const k of ["game_id", "kind", "market", "interpretation"]) if (q.get(k)) items = items.filter((r) => r[k] === q.get(k));
+  if (q.get("player_id")) items = items.filter((r) => String(r.player_id) === q.get("player_id"));
+  if (q.get("q")) items = items.filter((r) => `${r.title} ${r.player_name ?? ""}`.toLowerCase().includes(q.get("q").toLowerCase()));
+  const sort = q.get("sort") || "volume";
+  items = [...items].sort((a, b) => sort === "movement" ? Math.abs(b.change_since_first ?? 0) - Math.abs(a.change_since_first ?? 0) : sort === "player" ? (a.player_name ?? "~").localeCompare(b.player_name ?? "~") || (a.threshold ?? 0) - (b.threshold ?? 0) : sort === "spread" ? (b.spread ?? -1) - (a.spread ?? -1) : (b.volume ?? 0) - (a.volume ?? 0));
+  const all = date === TODAY ? KALSHI : [];
+  const c = (i) => all.filter((r) => r.interpretation === i).length;
+  const pg = page(items.map(kPublic), q);
+  return { date, sync: KSYNC, counts: { total: all.length, normalized: c("normalized"), unsupported: c("unsupported"), unmatched: c("unmatched") }, events: date === TODAY ? GAMES_TODAY.map((g) => ({ game_id: g.id, label: g.label })) : [], ...pg,
+    notes: ["FIXTURE note: Kalshi contracts are thresholds with their own settlement rules, not sportsbook over/under lines.", "FIXTURE note: a market price is the bid/ask midpoint when both exist, otherwise the last trade."] };
+}
+function kalshiDetail(ticker) {
+  const r = KALSHI.find((x) => x.ticker === ticker);
+  if (!r) return null;
+  const logs = r.player_id ? (LOGS.get(r.player_id) ?? []) : [];
+  const hist = (n) => { const rows = n ? logs.slice(0, n) : logs; const vals = rows.map((g) => statOf(g, r.stat)); const over = vals.filter((v) => v > r.threshold).length, equal = vals.filter((v) => v === r.threshold).length; return { n: rows.length, over, under: rows.length - over - equal, equal, frequency_over: rows.length ? +(over / rows.length).toFixed(3) : null, average: avg(rows, r.stat) }; };
+  const sel = r.ticker === "KXFIX-A-PTS25" ? S.g1b : null;
+  const normalized = r.interpretation === "normalized";
+  return {
+    market: kPublic(r),
+    rules: { primary: `FIXTURE rule: if ${r.title.replace("FIXTURE ", "")} is recorded in the official box score, the market resolves to Yes.`, secondary: r.protected ? "FIXTURE secondary rule: if the player does not play, the protected contract resolves at the last traded price." : r.kind === "other" ? null : "FIXTURE secondary rule: overtime counts. A postponed game voids the market.", settlement_note: "FIXTURE: rules are reproduced as listed by the exchange; GIZER does not interpret them beyond the threshold shown." },
+    series: r._series,
+    timeline: r.game_id === "FIX-G1" ? [
+      { at: iso(150), type: "availability", own_player: false, text: "FIXTURE Player F (ORL): Questionable → Out", source: "FIXTURE-injury-feed", source_published_at: iso(155) },
+      { at: iso(75), type: "lineup", own_player: r.player_id === 9001, text: "FIXTURE: DET projected lineup updated — FIXTURE Player A listed as starter", source: "FIXTURE projection", source_published_at: null },
+      { at: iso(400), type: "market_status", own_player: r.player_id === 9001, text: "FIXTURE: market opened", source: "FIXTURE exchange", source_published_at: null },
+    ] : [],
+    history: normalized && r.player_id && r.threshold != null && logs.length ? { L5: hist(5), L10: hist(10), L20: hist(20), season: hist(0) } : null,
+    research: normalized && r.player_id ? {
+      player: { id: r.player_id, name: r.player_name, headshot_url: HEAD[r.player_id] ?? null, position: PLAYERS.find((p) => p.id === r.player_id)?.position ?? null },
+      model_ready: r.stat === "pts",
+      projection: r.ticker === "KXFIX-E-REB10" ? null : { mean: 26.8, p10: 16.6, p90: 37.8, proj_min: 33, created_at: iso(45) },
+      selections: sel ? [{ id: sel.id, side: "over", classification: "standard", prob: 0.561, prob_low: 0.511, prob_high: 0.611, breakeven: 0.565, rejection_reasons: [] }, { id: 99001, side: "under", classification: "rejected", prob: 0.439, prob_low: 0.389, prob_high: 0.489, breakeven: 0.435, rejection_reasons: ["FIXTURE: edge below the minimum threshold."] }] : [],
+      note: "FIXTURE note: the model was fitted without market prices; its probability is not derived from the Kalshi price.",
+    } : null,
+    sync: KSYNC,
+    notes: ["FIXTURE note: prices are stored observations from periodic polls.", "FIXTURE note: events on the timeline are context only."],
+  };
+}
+
+const MIN_MODEL = { name: "FIXTURE-minutes-ridge", version: "0.1.0", status: "candidate" };
+const MIN_META = { model: MIN_MODEL, uncertainty: "FIXTURE: the minutes band is the candidate model's 80% range and has not passed validation.", restrictions_note: "FIXTURE: minutes restrictions are only shown when a source states one; none is inferred.", tiers: ["35+", "30–34.9", "25–29.9", "20–24.9", "Below 20"], rules: { role_change_min_diff: 6, returned_gap_days: 10 } };
+const MIN_CLASS = { 9001: ["high_minute_starter", "FIXTURE High-minute starter", "FIXTURE: started 10 of the last 10 and averaged over 34 minutes."], 9002: ["variable", "FIXTURE Variable role", "FIXTURE: minutes ranged widely over the last 10 games and the role alternated between starter and bench."], 9003: ["returning", "FIXTURE Returning", "FIXTURE: 14 days since the previous appearance; minutes may be managed."], 9004: ["uncertain", "FIXTURE Uncertain", "FIXTURE: no appearances in the data and listed Questionable."], 9005: ["stable_starter", "FIXTURE Stable starter", "FIXTURE: starts consistently with low minute variance."] };
+function minutesRow(p) {
+  const logs = LOGS.get(p.id) ?? [];
+  const m = (n) => avg(n ? logs.slice(0, n) : logs, "min");
+  const l10 = logs.slice(0, 10).map((g) => g.min);
+  const mean = l10.reduce((a, b) => a + b, 0) / (l10.length || 1);
+  const [cls, label, reason] = MIN_CLASS[p.id] ?? ["secondary", "FIXTURE Secondary", "FIXTURE: bench role."];
+  const has = logs.length > 0, g = GAME_OF[p.team_abbr];
+  const proj = has ? +(m(10) * 0.98).toFixed(1) : null;
+  return { player_id: p.id, player_name: p.name, headshot_url: HEAD[p.id] ?? null, position: p.position, team_abbr: p.team_abbr, opp_abbr: OPP[p.team_abbr] ?? null, game_id: g?.game_id ?? null,
+    availability: p.id === 9004 ? "Questionable" : "available", injury_detail: p.id === 9004 ? "FIXTURE wrist" : null, lineup_role: !has ? null : p.id === 9002 ? "bench" : "starter", lineup_status: p.id === 9005 ? "confirmed" : p.id === 9003 ? "unknown" : "projected",
+    proj_min: proj, proj_min_low: has && p.id !== 9003 ? +(proj - 5).toFixed(1) : null, proj_min_high: has && p.id !== 9003 ? +(proj + 4).toFixed(1) : null,
+    tier: !has ? null : proj >= 35 ? "35+" : proj >= 30 ? "30–34.9" : proj >= 25 ? "25–29.9" : "20–24.9",
+    season_avg: m(0), season_median: has ? [...logs.map((x) => x.min)].sort((a, b) => a - b)[Math.floor(logs.length / 2)] : null, l3: m(3), l5: m(5), l10: m(10), l20: m(20),
+    min_l10: has ? Math.min(...l10) : null, max_l10: has ? Math.max(...l10) : null, sd_l10: l10.length > 1 ? +Math.sqrt(l10.reduce((a, b) => a + (b - mean) ** 2, 0) / (l10.length - 1)).toFixed(1) : null,
+    starts_l10: has ? logs.slice(0, 10).filter((x) => x.starter === true).length : null, starts_season: has ? logs.filter((x) => x.starter === true).length : null, bench_season: has ? logs.filter((x) => x.starter === false).length : null, games_season: logs.length, games_all: logs.length,
+    role_change: p.id === 9002 ? 7.2 : null, returned_recently: p.id === 9003, last_gap_days: p.id === 9003 ? 14 : 2, restriction: null, last_game_date: has ? logs[0].date : "",
+    classification: cls, classification_label: label, classification_reason: reason, source_updated_at: has ? iso(38) : null };
+}
+function minutesList(q) {
+  const date = q.get("date") || TODAY;
+  let items = date === TODAY ? PLAYERS.filter((p) => GAME_OF[p.team_abbr]).map(minutesRow) : [];
+  if (q.get("team")) items = items.filter((r) => r.team_abbr === q.get("team"));
+  if (q.get("classification")) items = items.filter((r) => r.classification === q.get("classification"));
+  if (q.get("q")) items = items.filter((r) => r.player_name.toLowerCase().includes(q.get("q").toLowerCase()));
+  const key = q.get("sort") || "proj_min", dir = q.get("order") === "asc" ? 1 : -1;
+  items.sort((a, b) => (a[key] == null) - (b[key] == null) || (typeof a[key] === "string" ? a[key].localeCompare(b[key]) : (a[key] ?? 0) - (b[key] ?? 0)) * dir);
+  return { date, ...page(items, q), ...MIN_META };
+}
+const INJURY_CHANGES = [
+  { at: iso(150), player_id: null, player_name: "FIXTURE Player F", headshot_url: null, team_abbr: "ORL", previous_status: "Questionable", current_status: "Out", previous_class: "uncertain", current_class: "out", material: true, detail: "FIXTURE ankle", game_id: "FIX-G1", game_label: "DET @ ORL", source: "FIXTURE-injury-feed", source_published_at: iso(155), lineup_changes: ["FIXTURE: ORL projected starter replaced by FIXTURE ORL S2"], records_to_reassess: 3, qualified_records_affected: 2 },
+  { at: iso(210), player_id: null, player_name: "FIXTURE Player I", headshot_url: null, team_abbr: "DEN", previous_status: null, current_status: "Doubtful", previous_class: null, current_class: "unlikely", material: true, detail: "FIXTURE hamstring", game_id: "FIX-G3", game_label: "LAL @ DEN", source: "FIXTURE-injury-feed", source_published_at: null, lineup_changes: [], records_to_reassess: 1, qualified_records_affected: 0 },
+  { at: iso(300), player_id: 9001, player_name: "FIXTURE Player A", headshot_url: HEAD[9001], team_abbr: "DET", previous_status: "Probable", current_status: "Available", previous_class: "likely", current_class: "available", material: false, detail: null, game_id: "FIX-G1", game_label: "DET @ ORL", source: "FIXTURE-injury-feed", source_published_at: iso(305), lineup_changes: [], records_to_reassess: 0, qualified_records_affected: 0 },
+];
 
 // ---------- handlers ----------
 const summaryNow = () => SUMMARY;
@@ -768,16 +884,24 @@ function route(method, path, q, body) {
         if (m[2] === "lineups") return { game_id: g.id, ...gameLineups(g) };
         return { items: g.id === "FIX-G2" ? [] : [{ at: iso(60), team_abbr: g.away.abbr, status: "projected", change: "FIXTURE: projection created from the last confirmed five.", source: "FIXTURE projection" }, { at: iso(20), team_abbr: g.home.abbr, status: g.lineup.home.status, change: "FIXTURE: FIXTURE Player F removed after the injury report.", source: "FIXTURE injury feed" }] };
       }
-      const pm = path.match(/^\/players\/(\d+)\/(averages|game-logs|threshold|splits)$/);
+      const pm = path.match(/^\/players\/(\d+)\/(averages|game-logs|threshold|splits|minutes)$/);
       if (pm) {
         const id = pm[1];
         if (!PLAYERS.some((p) => String(p.id) === id)) return { __status: 404, ...err("not_found", "FIXTURE: player not found.") };
+        if (pm[2] === "minutes") { const pl = PLAYERS.find((p) => String(p.id) === id); return { profile: GAME_OF[pl.team_abbr] ? minutesRow(pl) : null, ...MIN_META }; }
         if (pm[2] === "averages") return averages(id);
         if (pm[2] === "threshold") return threshold(id, q);
         if (pm[2] === "splits") return splits(id);
         const rows = filterLogs(id, { venue: q.get("venue"), role: q.get("role"), opponent: q.get("opponent") });
         return { ...page(rows, q), missed: rows.length ? [{ date: shift(TODAY, -8), opp_abbr: "MIA", reason: "FIXTURE: injury (ankle)" }, { date: shift(TODAY, -22), opp_abbr: "CHI", reason: "FIXTURE: rest" }] : [], source: "FIXTURE box scores" };
       }
+    }
+    if (path === "/kalshi/markets") return kalshiMarkets(q);
+    if (path.startsWith("/kalshi/markets/")) return kalshiDetail(decodeURIComponent(path.slice(16))) ?? { __status: 404, ...err("not_found", "FIXTURE: Kalshi market not found.") };
+    if (path === "/minutes") return minutesList(q);
+    if (path === "/injuries/changes") {
+      const items = date === TODAY ? INJURY_CHANGES.filter((c) => q.get("material") !== "true" || c.material) : [];
+      return { date, items, notes: ["FIXTURE note: a change is material when it moves a player across the available / unavailable boundary or changes a projected starter.", "FIXTURE note: records to reassess are research records that referenced the player or game before the change."] };
     }
     if (path === "/player-props") return playerProps(q);
     if (path === "/player-props/manual") return { items: date === TODAY ? MANUAL : [] };

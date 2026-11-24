@@ -161,3 +161,33 @@ export function initials(name: string): string {
   const last = parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? "") : "";
   return (first + last).toUpperCase();
 }
+
+/** Kalshi prices are dollars per $1 contract (0–1); shown in cents. */
+export function fmtCents(v: number | null | undefined): string | null {
+  if (!isNum(v)) return null;
+  const c = v * 100;
+  return `${Number.isInteger(Math.round(c * 10) / 10) ? Math.round(c) : c.toFixed(1)}¢`;
+}
+
+/** Price movement in cents with an explicit sign, e.g. +4¢ / −2.5¢ / 0¢. */
+export function fmtCentsMove(v: number | null | undefined): string | null {
+  if (!isNum(v)) return null;
+  const c = Math.round(v * 1000) / 10;
+  if (c === 0) return "0¢";
+  const abs = Math.abs(c);
+  return `${c > 0 ? "+" : "−"}${Number.isInteger(abs) ? abs : abs.toFixed(1)}¢`;
+}
+
+export const CLASSIFICATION_LABELS: Record<string, string> = {
+  high_confidence: "Validated research",
+  standard: "Standard research",
+  watchlist: "Watchlist",
+  insufficient_evidence: "Insufficient information",
+  stale: "Stale",
+  invalidated: "Invalidated",
+  rejected: "Rejected",
+};
+export function classLabel(c: string | null | undefined): string {
+  if (!c) return "—";
+  return CLASSIFICATION_LABELS[c] ?? titleCase(c);
+}
