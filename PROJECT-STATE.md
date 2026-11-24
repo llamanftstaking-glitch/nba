@@ -1,6 +1,6 @@
 # Project state
 
-_Last updated: 2026-11-24, end of the V3 build session._
+_Last updated: 2026-11-24, after Core Intelligence V1.0._
 
 ## Status
 | Area | Status |
@@ -10,6 +10,9 @@ _Last updated: 2026-11-24, end of the V3 build session._
 | V3 lineups (confirmed from box scores, labelled projections, snapshots, change detection) | IMPLEMENTED, TESTED, VERIFIED on live data (projected); confirmed-at-tipoff path NOT VERIFIED live |
 | V3 player props (11 market types, origin, manual entry, props table) | IMPLEMENTED, TESTED. Provider quotes BLOCKED (no key) |
 | V3 premium frontend (design system, 4-group navigation, 27 routes, mobile) | IMPLEMENTED, TESTED against mock and real API |
+| Core Intelligence V1.0: Kalshi market intelligence (read-only), minutes and rotation intelligence, availability change events, watch jobs, update editions | IMPLEMENTED, TESTED (128 backend tests, 1,781 frontend smoke checks), VERIFIED against live Kalshi data locally. CI green on `89c7d3b`. **Not yet deployed to Server M** (server runs the V3 build until the owner runs the update command) |
+| Lineup projection without loaded history (last ESPN box score) and `gizer quickstart` | IMPLEMENTED, TESTED, rehearsed on an empty database; not yet run on Server M |
+| Minutes model `minutes_blend 1.0.0` | Candidate — failed its gate (5.40 vs 5.34 minutes MAE for the best baseline) |
 | Models | team_game, player_reb, player_ast, player_fg3m, player_stl, player_tov in production; player_pts, player_blk, player_pra, player_pr, player_pa, player_ra are candidates (failed the gate) |
 | Docker Compose stack | TESTED on a local Docker engine (build, migrate 0001→0002 on existing data, smoke, restart recovery, backup + restore) |
 | Deployment to Server M | **DEPLOYED 2026-11-24** at https://nba.gizergroup.com (owner ran `scripts/deploy.sh` and `scripts/connect-caddy.sh`). VERIFIED from outside: HTTPS, health/readiness (database, worker, scheduler), unauthenticated API rejected, owner sign-in. NOT VERIFIED yet: full smoke script, backup + restore on the server, reboot recovery, history load completion |
@@ -22,7 +25,8 @@ starters for 1,444. No playoffs, no historical odds, no play-by-play. See DATA-S
 
 ## Blockers needing the owner
 1. **Post-deployment checks** — after the history load finishes: `scripts/smoke.sh`, backup + restore test, one reboot test (DEPLOYMENT.md checklist).
-2. **Prop odds provider key** — decision and possible cost; see docs/operations/PROVIDER-SETUP.md.
+2. **Server update pending** — run `git pull && docker compose up -d --build`, then `gizer quickstart`, then restart `scripts/deploy.sh history` (history load on the server is slow: the box-score provider was degraded on 2026-11-24).
+3. Prop quotes now come from Kalshi (free, public). A sportsbook prop odds key is optional.
 3. **Data licensing review** before any use beyond private research (ESPN endpoint is unofficial).
 
 ## Known limitations (see MODEL-CARDS.md, docs/operations/P0-ISSUE-REGISTER.md)
