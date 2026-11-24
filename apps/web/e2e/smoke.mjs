@@ -345,8 +345,8 @@ async function runViewport(browser, label, viewport) {
   await kd.locator('[data-tab="spread"]').click();
   check(`[${label}] kalshi detail: spread / volume history toggle`, (await kd.locator('[data-testid="kalshi-chart"]').getAttribute("data-metric")) === "spread");
   await shot("kalshi-detail");
-  o = await overflow(page);
-  check(`[${label}] kalshi detail drawer has no horizontal overflow`, !o, o ? JSON.stringify(o) : "");
+  const ko = await overflow(page);
+  check(`[${label}] kalshi detail drawer has no horizontal overflow`, !ko, ko ? JSON.stringify(ko) : "");
   await visit(page, "/kalshi-intelligence/KXFIX-E-REB10", label, errors);
   text = await bodyText(page);
   check(`[${label}] kalshi detail page: single observation is stated, no line drawn`, /Only one observation so far/.test(text) && (await page.locator('[data-testid="kalshi-chart"]').count()) === 0);
