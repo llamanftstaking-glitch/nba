@@ -27,6 +27,7 @@ def main(argv=None):
     sub.add_parser("scheduler", help="run the scheduler")
     sub.add_parser("bootstrap-owner", help="create/update the owner account from GIZER_OWNER_EMAIL/PASSWORD")
     sub.add_parser("status")
+    sub.add_parser("model-cards", help="render MODEL-CARDS.md content from the registry")
     a = ap.parse_args(argv)
 
     from . import ingestion
@@ -66,6 +67,9 @@ def main(argv=None):
     elif a.cmd == "bootstrap-owner":
         from .security import bootstrap_owner
         print(bootstrap_owner())
+    elif a.cmd == "model-cards":
+        from .modelcards import render
+        print(render())
     elif a.cmd == "status":
         from .jobs import operations_status
         _print(operations_status())
