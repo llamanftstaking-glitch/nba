@@ -78,7 +78,7 @@ function computeDiff(from: EditionDetail, to: EditionDetail): { selections: Diff
 function DiffList({ rows, empty }: { rows: DiffRow[]; empty: string }) {
   if (rows.length === 0) return <p className="text-xs text-muted">{empty}</p>;
   return (
-    <ul className="divide-y divide-line/70">
+    <ul className="divide-y divide-line/40">
       {rows.map((r, i) => (
         <li key={i} className="grid grid-cols-[auto_1fr] gap-x-2 py-1.5 text-xs">
           <Badge tone={r.kind === "added" ? "info" : r.kind === "removed" ? "bad" : "warn"}>{r.kind}</Badge>
@@ -102,7 +102,7 @@ function Diff({ fromId, toId }: { fromId: number; toId: number }) {
   if (b.isError) return <ErrorState error={b.error} onRetry={() => void b.refetch()} />;
   if (!diff) return null;
   return (
-    <div className="grid gap-3 lg:grid-cols-2" data-testid="edition-diff">
+    <div className="grid gap-4 lg:grid-cols-2" data-testid="edition-diff">
       <div>
         <h3 className="mb-1 text-2xs font-semibold uppercase tracking-wide text-muted">Selections · {diff.selections.length} difference(s)</h3>
         <DiffList rows={diff.selections} empty="No selection differences between these editions." />
@@ -120,7 +120,7 @@ function FullEdition({ id }: { id: number }) {
   return (
     <QueryView query={q} rows={6}>
       {(e) => (
-        <div className="space-y-3" data-testid="edition-full">
+        <div className="space-y-4" data-testid="edition-full">
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
             <Badge tone="info">{titleCase(e.kind)}</Badge>
             <span className="num">v{e.version}</span>
@@ -130,7 +130,7 @@ function FullEdition({ id }: { id: number }) {
             </span>
           </div>
           <Counts counts={e.summary.counts} />
-          <div className="grid gap-3 lg:grid-cols-2">
+          <div className="grid gap-4 lg:grid-cols-2">
             <div>
               <h3 className="mb-1 text-2xs font-semibold uppercase tracking-wide text-muted">Narrative</h3>
               {e.summary.narrative.length ? (
@@ -145,7 +145,7 @@ function FullEdition({ id }: { id: number }) {
                 <p className="text-xs text-muted">No narrative recorded.</p>
               )}
             </div>
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div>
                 <h3 className="mb-1 text-2xs font-semibold uppercase tracking-wide text-muted">Limitations</h3>
                 {e.summary.limitations.length ? <BulletList items={e.summary.limitations} tone="warn" /> : <p className="text-xs text-muted">None recorded.</p>}
@@ -161,7 +161,7 @@ function FullEdition({ id }: { id: number }) {
             {e.summary.rejected.length === 0 ? (
               <p className="text-xs text-muted">Nothing was rejected in this edition.</p>
             ) : (
-              <ul className="divide-y divide-line/70 rounded border border-line">
+              <ul className="divide-y divide-line/40 rounded-md bg-raised/40">
                 {e.summary.rejected.map((r, i) => (
                   <li key={i} className="px-2 py-1.5 text-xs">
                     <div className="font-medium text-ink">{r.label}</div>
@@ -208,7 +208,7 @@ function Editions({ items }: { items: EditionListItem[] }) {
   }, [previous.id, latest.id]);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <Panel title="Editions for this date" right={<span className="num">{sorted.length}</span>}>
         <ul className="space-y-2">
           {[...sorted].reverse().map((e) => (
@@ -228,7 +228,7 @@ function Editions({ items }: { items: EditionListItem[] }) {
                 <Counts counts={e.counts} />
               </div>
               {e.changes.length > 0 ? (
-                <ul className="mt-1.5 space-y-0.5 border-t border-line/70 pt-1.5 text-xs">
+                <ul className="mt-1.5 space-y-0.5 border-t border-line/50 pt-1.5 text-xs">
                   {e.changes.map((c, i) => (
                     <li key={i} className="flex gap-2">
                       <span className="shrink-0 text-2xs font-semibold uppercase text-warn">{titleCase(c.type)}</span>
@@ -237,7 +237,7 @@ function Editions({ items }: { items: EditionListItem[] }) {
                   ))}
                 </ul>
               ) : (
-                <p className="mt-1.5 border-t border-line/70 pt-1.5 text-2xs text-muted">No changes recorded against the previous edition.</p>
+                <p className="mt-1.5 border-t border-line/50 pt-1.5 text-2xs text-muted">No changes recorded against the previous edition.</p>
               )}
             </li>
           ))}

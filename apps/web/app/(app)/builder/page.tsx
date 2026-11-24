@@ -52,7 +52,7 @@ function Evaluation({ ids, legs }: { ids: number[]; legs: Selection[] }) {
     const only = legs[0];
     return (
       <div className="space-y-2">
-        <p className="rounded border border-dashed border-line-strong px-2 py-2 text-xs text-muted">
+        <p className="rounded-md bg-raised/40 px-2 py-2 text-xs text-muted">
           One leg selected. Add a second leg to evaluate a joint probability, or save this selection as a single paper ticket.
         </p>
         <SaveTicketButton body={{ selection_ids: ids }} disabled={only?.invalidated} />
@@ -64,16 +64,16 @@ function Evaluation({ ids, legs }: { ids: number[]; legs: Selection[] }) {
   const ev: BuilderEvaluation = q.data;
 
   return (
-    <div className="space-y-3" data-testid="builder-evaluation" data-fetching={q.isFetching ? "1" : "0"}>
+    <div className="space-y-4" data-testid="builder-evaluation" data-fetching={q.isFetching ? "1" : "0"}>
       {!ev.reliable && (
-        <div role="alert" className="rounded border border-bad/60 bg-bad-dim/50 px-2 py-2" data-testid="unreliable-banner">
+        <div role="alert" className="rounded-md bg-bad/10 ring-1 ring-inset ring-bad/40 px-2 py-2" data-testid="unreliable-banner">
           <p className="text-xs font-semibold uppercase tracking-wide text-bad">Estimate not reliable</p>
           <p className="mt-0.5 text-xs text-soft">
             The model could not produce a dependable joint probability for this combination. Treat the figures below as indicative research only.
           </p>
         </div>
       )}
-      <dl className="grid grid-cols-2 gap-2 rounded border border-line bg-bg/50 p-2">
+      <dl className="grid grid-cols-2 gap-2 rounded-md bg-raised/50 p-3">
         <Metric label="Joint probability [interval]">
           <span data-testid="builder-joint">
             <ProbInterval prob={ev.joint_prob} low={ev.joint_low} high={ev.joint_high} stack />
@@ -91,7 +91,7 @@ function Evaluation({ ids, legs }: { ids: number[]; legs: Selection[] }) {
       </div>
       <EvidenceMeter score={ev.evidence_score} />
       {ev.warnings.length > 0 && (
-        <div className="rounded border border-warn/50 bg-warn-dim/40 p-2" data-testid="builder-warnings">
+        <div className="rounded-md bg-warn/10 ring-1 ring-inset ring-warn/40 p-2" data-testid="builder-warnings">
           <h4 className="mb-1 text-2xs font-semibold uppercase tracking-wide text-warn">Warnings</h4>
           <BulletList items={ev.warnings} tone="warn" />
         </div>
@@ -143,14 +143,14 @@ function CombinationPanel({
   onFocus: (id: number) => void;
 }) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {missing > 0 && (
-        <p className="rounded border border-warn/50 bg-warn-dim/40 px-2 py-1 text-xs text-warn">
+        <p className="rounded-md bg-warn/10 ring-1 ring-inset ring-warn/40 px-2 py-1 text-xs text-warn">
           {missing} requested leg(s) are not in the latest edition for this date and were skipped.
         </p>
       )}
       {legs.length > 0 && (
-        <ul className="divide-y divide-line/70 rounded border border-line" data-testid="builder-legs">
+        <ul className="divide-y divide-line/40 rounded-md bg-raised/40" data-testid="builder-legs">
           {legs.map((l, i) => (
             <li key={l.id} className="flex items-start gap-2 px-2 py-1.5">
               <span className="num mt-0.5 text-2xs text-muted">{i + 1}</span>
@@ -245,9 +245,9 @@ export default function BuilderPage() {
         title="Research Builder"
         sub="Assemble a combination from evaluated selections. Each change is re-evaluated by the API; nothing is persisted until saved to the paper ledger."
       />
-      <div className="grid gap-3 lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)_minmax(280px,340px)]">
+      <div className="grid gap-4 lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)_minmax(280px,340px)]">
         {/* Left: games and selections */}
-        <div className="min-w-0 space-y-3">
+        <div className="min-w-0 space-y-4">
           <Panel
             title="Available selections"
             right={
@@ -276,7 +276,7 @@ export default function BuilderPage() {
               }
             >
               {() => (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {groups.map(([gid, g]) => (
                     <div key={gid}>
                       <h3 className="mb-1 border-b border-line pb-1 text-2xs font-semibold uppercase tracking-wide text-soft">{g.label}</h3>
@@ -344,7 +344,7 @@ export default function BuilderPage() {
                 {(d) => (
                   <ul className="space-y-1">
                     {d.items.map((c) => (
-                      <li key={c.uid} className="flex items-start gap-2 rounded border border-line bg-bg/40 px-2 py-1.5">
+                      <li key={c.uid} className="flex items-start gap-2 rounded-md bg-raised/40 px-2 py-1.5">
                         <div className="min-w-0 flex-1">
                           <div className="text-xs font-medium text-ink">{c.name}</div>
                           <div className="break-words text-2xs text-muted">{c.legs.map((l) => l.label).join(" + ")}</div>

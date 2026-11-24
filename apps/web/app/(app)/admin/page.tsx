@@ -72,7 +72,7 @@ export default function AdminPage() {
   const q = useQuery({ queryKey: ["operations"], queryFn: api.operations, refetchInterval: 30_000 });
   const ready = useQuery({ queryKey: ["ready"], queryFn: api.ready, refetchInterval: 30_000 });
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <PageHeader title="Operations Admin" sub="Owner-only controls. Pausing affects research jobs only; this system has no execution path." />
       <Panel title="Service readiness">
         <QueryView query={ready} rows={1}>
@@ -90,11 +90,11 @@ export default function AdminPage() {
       </Panel>
       <QueryView query={q} rows={8}>
         {(d) => (
-          <div className="space-y-3">
+          <div className="space-y-4">
             <Panel title="Pause toggle" tone={d.paused ? "warn" : undefined}>
               <PauseControl paused={d.paused} />
             </Panel>
-            <div className="grid gap-3 xl:grid-cols-2">
+            <div className="grid gap-4 xl:grid-cols-2">
               <Panel title="Heartbeats">
                 {d.heartbeats.length === 0 ? <EmptyState title="No worker has reported a heartbeat." /> : <DataTable columns={BEAT_COLUMNS} rows={d.heartbeats} rowKey={(b) => b.worker} caption="Worker heartbeats" dense />}
               </Panel>

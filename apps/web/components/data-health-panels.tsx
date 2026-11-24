@@ -5,7 +5,9 @@ import { Badge, StaleTag } from "@/components/ui/badge";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { Val } from "@/components/ui/na";
 import { fmtDateTimeET, fmtInt } from "@/lib/format";
-import type { DataHealth } from "@/lib/types";
+import { StatusDot } from "@/components/ui/badge";
+import { FreshnessIndicator } from "@/components/status";
+import type { DataHealth, ProviderInfo } from "@/lib/types";
 
 type Provider = DataHealth["providers"][number];
 type Fresh = DataHealth["freshness"][number];
@@ -47,4 +49,76 @@ const FRESH_COLUMNS: Column<Fresh>[] = [
 
 export function FreshnessTable({ rows }: { rows: Fresh[] }) {
   return <DataTable columns={FRESH_COLUMNS} rows={rows} rowKey={(r) => r.name} caption="Data freshness" dense rowClassName={(r) => (r.ok ? undefined : "bg-warn-dim/20")} />;
+}
+
+const CREDENTIAL: Record<ProviderInfo["credential"], { label: string; tone: "accent" | "warn" | "neutral" }> = {
+  present: { label: "Credential present", tone: "accent" },
+  missing: { label: "Credential missing", tone: "warn" },
+  not_required: { label: "No credential required", tone: "neutral" },
+};
+
+/** Provider configuration center: status only. No secret values and no key entry field. */
+export function ProviderCenter({ items }: { items: ProviderInfo[] }) {
+  return (
+    <ul className="grid gap-4 xl:grid-cols-2" data-testid="provider-center">
+      {items.map((p) => {
+        const cred = CREDENTIAL[p.credential] ?? CREDENTIAL.missing;
+        return (
+          <li key={p.provider} className="rounded-md bg-raised/40 p-4" data-testid="provider-card" data-provider={p.provider}>
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div className="min-w-0">
+                <div className="text-base font-semibold text-ink">{p.name}</div>
+                <div className="text-xs text-muted">
+                  <span className="num">{p.provider}</span> · {p.categories.length ? p.categories.join(", ") : "no categories listed"}
+                </div>
+              </div>
+              <div className="flex flex-col items-end gap-0.5">
+                <StatusBadge value={p.status} />
+                <StatusDot tone={cred.tone}>{cred.label}</StatusDot>
+              </div>
+            </div>
+            <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-4">
+              <div>
+                <dt className="text-2xs font-medium uppercase text-muted">Last success</dt>
+                <dd><FreshnessIndicator at={p.last_success_at} label="" /></dd>
+              </div>
+              <div>
+                <dt className="text-2xs font-medium uppercase text-muted">Calls this month</dt>
+                <dd className="num text-ink">{fmtInt(p.calls_this_month)}</dd>
+              </div>
+              <div>
+                <dt className="text-2xs font-medium uppercase text-muted">Quota</dt>
+                <dd className="num text-ink">
+                  {fmtInt(p.quota_used)} / {p.quota_limit === null ? "no limit" : fmtInt(p.quota_limit)}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-2xs font-medium uppercase text-muted">Monthly cost</dt>
+                <dd className="num text-ink">${p.monthly_cost_usd.toFixed(2)}</dd>
+              </div>
+            </dl>
+            {(p.last_error || p.last_error_at) && (
+              <p className="mt-2 break-words text-xs text-bad">
+                Last error {fmtDateTimeET(p.last_error_at) ?? "—"}: {p.last_error ?? "no message recorded"}
+              </p>
+            )}
+            {p.limitations.length > 0 && (
+              <div className="mt-2">
+                <div className="text-2xs font-medium uppercase text-muted">Limitations</div>
+                <ul className="text-xs text-soft">
+                  {p.limitations.map((l, i) => (
+                    <li key={i}>· {l}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <div className="mt-2">
+              <div className="text-2xs font-medium uppercase text-muted">Setup</div>
+              <p className="break-words text-xs text-soft">{p.setup || "No setup instructions provided."}</p>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  );
 }

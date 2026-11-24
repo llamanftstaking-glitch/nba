@@ -35,7 +35,7 @@ export default function SameGamePage() {
           }
           const without = (games.data?.games ?? []).filter((g) => !byGame.has(g.id));
           return (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {[...byGame.entries()].map(([id, g]) => (
                 <Panel key={id} title={g.label} right={<span className="num">{g.items.length} combination(s)</span>} bodyClassName="space-y-2 p-2">
                   {g.items.map((c) => (

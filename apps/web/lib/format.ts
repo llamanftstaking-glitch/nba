@@ -115,3 +115,49 @@ export function marketName(m: string): string {
 }
 
 export const ENGINES = ["SINGLE", "DOUBLE", "TRIPLE", "QUAD", "FIVE", "SIX"] as const;
+
+export const STAT_LABELS: Record<string, string> = {
+  min: "MIN",
+  pts: "PTS",
+  reb: "REB",
+  ast: "AST",
+  fg3m: "3PM",
+  stl: "STL",
+  blk: "BLK",
+  tov: "TOV",
+  pra: "PRA",
+  pr: "PR",
+  pa: "PA",
+  ra: "RA",
+};
+export const HISTORY_STATS = ["pts", "reb", "ast", "fg3m", "stl", "blk", "tov", "pra", "pr", "pa", "ra"] as const;
+export const HISTORY_WINDOWS = [
+  ["L5", "L5"],
+  ["L10", "L10"],
+  ["L15", "L15"],
+  ["L20", "L20"],
+  ["L30", "L30"],
+  ["season", "Season"],
+] as const;
+
+export function statLabel(stat: string): string {
+  return STAT_LABELS[stat] ?? stat.toUpperCase();
+}
+
+export function propMarketName(market: string): string {
+  return market.startsWith("player_") ? statLabel(market.slice(7)) : marketName(market);
+}
+
+export const ORIGIN_LABELS: Record<string, string> = {
+  provider: "Provider",
+  owner_entered: "Owner-entered",
+  hypothetical: "Hypothetical",
+};
+
+export function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  const first = parts[0]?.[0] ?? "";
+  const last = parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? "") : "";
+  return (first + last).toUpperCase();
+}

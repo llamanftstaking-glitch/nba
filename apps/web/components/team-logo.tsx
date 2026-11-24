@@ -14,7 +14,7 @@ export function TeamLogo({ team, size = 28, className }: { team: Pick<TeamRef, "
         style={box}
         title={team.name}
         className={cn(
-          "inline-flex shrink-0 items-center justify-center rounded border border-line-strong bg-raised font-mono text-[10px] font-semibold text-soft",
+          "inline-flex shrink-0 items-center justify-center rounded-md bg-raised ring-1 ring-inset ring-line text-[11px] font-semibold text-soft",
           className,
         )}
       >

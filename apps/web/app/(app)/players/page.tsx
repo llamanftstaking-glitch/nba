@@ -53,7 +53,7 @@ export default function PlayersPage() {
   return (
     <div>
       <PageHeader title="Players" sub="Per-game averages over the games in the database. The sample size is shown for every player." />
-      <div className="mb-3 grid grid-cols-2 gap-2 rounded border border-line bg-panel p-2 sm:max-w-lg">
+      <div className="mb-3 grid grid-cols-2 gap-2 rounded-lg bg-card ring-1 ring-inset ring-line/60 p-2 sm:max-w-lg">
         <Field label="Search">
           <Input
             type="search"

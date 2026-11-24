@@ -1,43 +1,103 @@
-export type NavItem = { href: string; label: string; short?: string };
+import {
+  Activity,
+  BarChart3,
+  BookOpen,
+  CalendarDays,
+  ClipboardList,
+  Database,
+  FlaskConical,
+  GitCompare,
+  HeartPulse,
+  History,
+  Home,
+  Layers,
+  LayoutDashboard,
+  LineChart,
+  ListOrdered,
+  Network,
+  Settings,
+  Swords,
+  Target,
+  Ticket,
+  Trophy,
+  UserSearch,
+  Users,
+  Wrench,
+  Bot,
+  Boxes,
+  type LucideIcon,
+} from "lucide-react";
 
-export const PRIMARY_NAV: NavItem[] = [
-  { href: "/", label: "Command Center", short: "CC" },
-  { href: "/games", label: "Today's Games", short: "GM" },
-  { href: "/picks", label: "Top Picks", short: "TP" },
-  { href: "/parlays", label: "Parlay Research", short: "PR" },
-  { href: "/parlays/same-game", label: "Same-Game Research", short: "SG" },
-  { href: "/props", label: "Player Props", short: "PP" },
-  { href: "/tickets", label: "My Paper Tickets", short: "TK" },
-  { href: "/results", label: "Results", short: "RS" },
-  { href: "/performance", label: "Performance", short: "PF" },
-  { href: "/research-lab", label: "Research Lab", short: "RL" },
-  { href: "/agents", label: "Agent Operations", short: "AG" },
-  { href: "/settings", label: "Settings", short: "ST" },
+export type NavItem = { href: string; label: string; icon: LucideIcon; short?: string };
+export type NavGroup = { title: string; items: NavItem[] };
+
+export const NAV_GROUPS: NavGroup[] = [
+  {
+    title: "Command Center",
+    items: [
+      { href: "/", label: "Overview", icon: LayoutDashboard },
+      { href: "/games", label: "Today's Games", icon: CalendarDays },
+      { href: "/picks", label: "Top Picks", icon: ListOrdered },
+      { href: "/player-props", label: "Player Props", icon: Target },
+      { href: "/lineups", label: "Starting Lineups", icon: Users },
+      { href: "/parlays", label: "Parlay Research", icon: Layers },
+      { href: "/parlays/same-game", label: "Same-Game Research", icon: Network },
+    ],
+  },
+  {
+    title: "Player Intelligence",
+    items: [
+      { href: "/players", label: "Player Explorer", icon: UserSearch },
+      { href: "/players/compare", label: "Player Comparison", icon: GitCompare },
+      { href: "/players/history", label: "Historical Performance", icon: History },
+      { href: "/matchups", label: "Matchup Intelligence", icon: Swords },
+      { href: "/injuries", label: "Injuries & Availability", icon: HeartPulse },
+    ],
+  },
+  {
+    title: "My Research",
+    items: [
+      { href: "/builder", label: "Research Builder", icon: Wrench },
+      { href: "/tickets", label: "Paper Tickets", icon: Ticket },
+      { href: "/research/daily", label: "Daily Editions", icon: BookOpen },
+      { href: "/results", label: "Results", icon: Trophy },
+      { href: "/performance", label: "Strategy Performance", icon: LineChart },
+    ],
+  },
+  {
+    title: "System",
+    items: [
+      { href: "/research-lab", label: "Research Lab", icon: FlaskConical },
+      { href: "/agents", label: "Agent Operations", icon: Bot },
+      { href: "/models", label: "Model Registry", icon: Boxes },
+      { href: "/data-health", label: "Data Health", icon: Database },
+      { href: "/settings", label: "Settings", icon: Settings },
+    ],
+  },
 ];
 
-export const SECONDARY_NAV: NavItem[] = [
-  { href: "/builder", label: "Research Builder", short: "BD" },
-  { href: "/exposure", label: "Shared-Risk Monitor", short: "EX" },
-  { href: "/research/daily", label: "Daily Research Editions", short: "ED" },
-  { href: "/injuries", label: "Injuries", short: "IN" },
-  { href: "/players", label: "Players", short: "PL" },
-  { href: "/teams", label: "Teams", short: "TM" },
-  { href: "/markets", label: "Markets", short: "MK" },
-  { href: "/simulations", label: "Simulations", short: "SM" },
-  { href: "/backtesting", label: "Backtesting", short: "BT" },
-  { href: "/data-health", label: "Data Health", short: "DH" },
-  { href: "/admin", label: "Operations Admin", short: "AD" },
+/** Reachable from within System / Research pages (Settings lists them), not from the sidebar. */
+export const EXTRA_PAGES: NavItem[] = [
+  { href: "/admin", label: "Operations Admin", icon: Activity },
+  { href: "/exposure", label: "Shared-Risk Monitor", icon: Network },
+  { href: "/markets", label: "Markets", icon: BarChart3 },
+  { href: "/simulations", label: "Simulations", icon: ClipboardList },
+  { href: "/backtesting", label: "Backtesting", icon: History },
+  { href: "/teams", label: "Teams", icon: Users },
 ];
 
 export const MOBILE_NAV: NavItem[] = [
-  { href: "/", label: "Home" },
-  { href: "/games", label: "Games" },
-  { href: "/parlays", label: "Parlays" },
-  { href: "/results", label: "Results" },
+  { href: "/", label: "Home", icon: Home },
+  { href: "/games", label: "Games", icon: CalendarDays },
+  { href: "/player-props", label: "Props", icon: Target },
+  { href: "/parlays", label: "Parlays", icon: Layers },
 ];
 
+const ALL_HREFS = [...NAV_GROUPS.flatMap((g) => g.items), ...EXTRA_PAGES].map((i) => i.href);
+
+/** Active when it is the most specific navigation entry matching the path. */
 export function isActive(pathname: string, href: string): boolean {
-  if (href === "/") return pathname === "/";
-  if (href === "/parlays") return pathname === "/parlays";
-  return pathname === href || pathname.startsWith(`${href}/`);
+  const matches = (h: string) => (h === "/" ? pathname === "/" : pathname === h || pathname.startsWith(`${h}/`));
+  if (!matches(href)) return false;
+  return !ALL_HREFS.some((h) => h !== href && h.length > href.length && matches(h));
 }

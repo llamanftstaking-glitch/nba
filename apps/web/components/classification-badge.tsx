@@ -1,4 +1,4 @@
-import { Badge, type Tone } from "@/components/ui/badge";
+import { Badge, StatusDot, type Tone } from "@/components/ui/badge";
 import { titleCase } from "@/lib/format";
 
 const MAP: Record<string, { label: string; tone: Tone }> = {
@@ -10,7 +10,7 @@ const MAP: Record<string, { label: string; tone: Tone }> = {
   invalidated: { label: "Invalidated", tone: "bad" },
 };
 
-/** Classification is always carried by a text label; colour is secondary. */
+/** Classification is always carried by a text label; colour is secondary. One of the two places a boxed badge is used. */
 export function ClassificationBadge({ value, invalidated }: { value: string; invalidated?: boolean }) {
   const key = invalidated ? "invalidated" : value;
   const m = MAP[key] ?? { label: titleCase(key), tone: "neutral" as Tone };
@@ -21,15 +21,15 @@ export function isQualified(classification: string, invalidated?: boolean): bool
   return !invalidated && (classification === "high_confidence" || classification === "standard");
 }
 
-export function StatusBadge({ value }: { value: string }) {
+export function statusTone(value: string): Tone {
   const v = value.toLowerCase();
-  const tone: Tone =
-    ["ok", "ready", "win", "passed", "alive", "succeeded", "success", "done", "completed", "production", "champion", "active"].includes(v)
-      ? "accent"
-      : ["failed", "loss", "error", "dead", "rejected", "invalidated", "down"].includes(v)
-        ? "bad"
-        : ["abstained", "degraded", "stale", "push", "void", "unresolved", "retrying", "candidate", "shadow", "paused", "watchlist"].includes(v)
-          ? "warn"
-          : "neutral";
-  return <Badge tone={tone}>{v === "never_run" ? "never run" : titleCase(value)}</Badge>;
+  if (["ok", "ready", "win", "passed", "alive", "succeeded", "success", "done", "completed", "production", "champion", "active", "final"].includes(v)) return "accent";
+  if (["failed", "loss", "error", "dead", "rejected", "invalidated", "down", "missing"].includes(v)) return "bad";
+  if (["abstained", "degraded", "stale", "push", "void", "unresolved", "retrying", "candidate", "shadow", "paused", "watchlist", "never_run", "not_configured", "live", "postponed"].includes(v)) return "warn";
+  return "neutral";
+}
+
+/** Generic status: coloured dot + text label (no box). */
+export function StatusBadge({ value }: { value: string }) {
+  return <StatusDot tone={statusTone(value)}>{value.toLowerCase() === "never_run" ? "Never run" : titleCase(value)}</StatusDot>;
 }

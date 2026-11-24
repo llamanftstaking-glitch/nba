@@ -1,254 +1,300 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft, FileText, History, Layers, ListChecks, Target, Users } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useState } from "react";
-import { StatusBadge } from "@/components/classification-badge";
+import { useMemo, useState } from "react";
 import { ComboCard } from "@/components/combo-card";
-import { EnvironmentSummary, Matchup, completenessPct } from "@/components/game-card";
-import { InjuryTable } from "@/components/injury-list";
+import { EnvironmentSummary, MatchupHeader, completenessPct } from "@/components/game-card";
+import { LineupHistoryList } from "@/components/lineup-history";
+import { LineupTable } from "@/components/lineup-table";
+import { MarketTable, PropDrawer, propKey } from "@/components/props";
 import { SelectionList } from "@/components/selection-card";
-import { Button } from "@/components/ui/button";
-import { DataTable, type Column } from "@/components/ui/data-table";
+import { TeamFormComparison } from "@/components/team-form";
+import { Button, textLink } from "@/components/ui/button";
+import { Field, Input, Select } from "@/components/ui/field";
 import { Meter } from "@/components/ui/meter";
-import { NA, Val } from "@/components/ui/na";
-import { BulletList, Panel } from "@/components/ui/panel";
+import { Val } from "@/components/ui/na";
+import { BulletList, Label, Panel } from "@/components/ui/panel";
 import { EmptyState, QueryView } from "@/components/ui/states";
 import { api } from "@/lib/api";
 import { DLink } from "@/lib/date";
-import { fmtAmerican, fmtDate, fmtDateTimeET, fmtLine, fmtTimeET, titleCase } from "@/lib/format";
-import type { GameDetail, LooseValue, PlayerProj, Quote, TeamForm } from "@/lib/types";
+import { fmtDate, fmtDateTimeET, fmtNum, statLabel } from "@/lib/format";
+import type { GameDetail, PlayerProj, PropRow } from "@/lib/types";
 
-function loose(v: LooseValue | undefined, digits = 1) {
-  if (v === null || v === undefined || v === "") return <NA />;
-  if (typeof v === "number") return <span className="num">{Number.isInteger(v) ? v : v.toFixed(digits)}</span>;
-  if (typeof v === "boolean") return <span>{v ? "yes" : "no"}</span>;
-  return <span className="break-words">{v}</span>;
-}
+const PROJ_STATS = ["pts", "reb", "ast", "fg3m"] as const;
 
-function TeamComparison({ home, away, homeAbbr, awayAbbr }: { home: TeamForm; away: TeamForm; homeAbbr: string; awayAbbr: string }) {
-  const keys = [...new Set([...Object.keys(away ?? {}), ...Object.keys(home ?? {})])];
-  if (keys.length === 0) return <EmptyState title="Team form is not available for this game." />;
-  return (
-    <table className="w-full border-collapse text-sm">
-      <caption className="sr-only">Team form comparison</caption>
-      <thead>
-        <tr className="border-b border-line-strong text-2xs uppercase tracking-wide text-muted">
-          <th scope="col" className="py-1.5 pr-2 text-left font-semibold">Metric</th>
-          <th scope="col" className="px-2 py-1.5 text-right font-semibold">{awayAbbr}</th>
-          <th scope="col" className="py-1.5 pl-2 text-right font-semibold">{homeAbbr}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {keys.map((k) => (
-          <tr key={k} className="border-b border-line/70 last:border-0">
-            <th scope="row" className="py-1 pr-2 text-left text-xs font-normal text-muted">{titleCase(k)}</th>
-            <td className="px-2 py-1 text-right text-ink">{loose(away?.[k])}</td>
-            <td className="py-1 pl-2 text-right text-ink">{loose(home?.[k])}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-}
-
-function first(row: PlayerProj, keys: string[]): LooseValue | undefined {
-  for (const k of keys) if (k in row) return row[k];
-  return undefined;
-}
-
-const PROJ_STATS: [string, string][] = [["pts", "PTS"], ["reb", "REB"], ["ast", "AST"], ["fg3m", "3PM"]];
-
-function PlayerProjections({ rows }: { rows: PlayerProj[] }) {
+/** D — one compact row per player: recent averages (descriptive) beside the model projection with its 80% range. */
+function PlayerAverages({ rows, props }: { rows: PlayerProj[]; props: PropRow[] }) {
   const [all, setAll] = useState(false);
-  if (rows.length === 0) return <EmptyState title="No player projections are available for this game." />;
-  // one compact row per player: projected minutes, sample size and mean with the 80% interval per stat
-  const byPlayer = new Map<string, { name: string; team: string; min: LooseValue | undefined; n: LooseValue | undefined; inj: LooseValue | undefined; stats: Record<string, PlayerProj> }>();
-  for (const r of rows) {
-    const id = String(first(r, ["player_id", "player_name"]));
-    if (!byPlayer.has(id)) byPlayer.set(id, { name: String(first(r, ["player_name", "name"]) ?? "—"), team: String(first(r, ["team_abbr"]) ?? ""), min: r.proj_min, n: r.n_games, inj: r.injury_status, stats: {} });
-    byPlayer.get(id)!.stats[String(r.stat)] = r;
-  }
-  const players = [...byPlayer.values()];
+  const players = useMemo(() => {
+    const m = new Map<number, { id: number; name: string; team: string | null; min: number; n: number; inj: string | null; stats: Partial<Record<string, PlayerProj>> }>();
+    for (const r of rows) {
+      const e = m.get(r.player_id) ?? { id: r.player_id, name: r.player_name, team: r.team_abbr, min: r.proj_min, n: r.n_games, inj: r.injury_status, stats: {} };
+      e.stats[r.stat] = r;
+      m.set(r.player_id, e);
+    }
+    return [...m.values()];
+  }, [rows]);
+  const l10 = useMemo(() => new Map(props.map((p) => [`${p.player_id}:${p.stat}`, p.l10])), [props]);
+  if (players.length === 0) return <EmptyState title="No player projections are available for this game." />;
   const shown = all ? players : players.slice(0, 10);
-  const num = (v: LooseValue | undefined, d = 1) => (typeof v === "number" ? v.toFixed(d) : "—");
   return (
-    <div>
-      <div className="hidden grid-cols-[minmax(0,2.2fr)_repeat(4,minmax(0,1fr))] gap-x-2 border-b border-line-strong pb-1.5 text-2xs font-semibold uppercase tracking-wide text-muted sm:grid">
+    <div data-testid="player-averages">
+      <div className="hidden grid-cols-[minmax(0,2.2fr)_repeat(4,minmax(0,1fr))] gap-x-3 border-b border-line pb-2 text-2xs font-semibold uppercase tracking-wide text-muted sm:grid">
         <span>Player · proj min · sample</span>
-        {PROJ_STATS.map(([, label]) => <span key={label} className="text-right">{label} mean [p10–p90]</span>)}
+        {PROJ_STATS.map((k) => (
+          <span key={k} className="text-right">
+            {statLabel(k)} · L10 avg / proj [p10–p90]
+          </span>
+        ))}
       </div>
       <ul>
         {shown.map((p) => (
-          <li key={p.name + p.team} className="grid grid-cols-4 gap-x-2 gap-y-1 border-b border-line/70 py-1.5 last:border-0 sm:grid-cols-[minmax(0,2.2fr)_repeat(4,minmax(0,1fr))]">
+          <li key={p.id} className="grid grid-cols-4 gap-x-3 gap-y-1 border-b border-line/40 py-2 last:border-0 sm:grid-cols-[minmax(0,2.2fr)_repeat(4,minmax(0,1fr))]">
             <div className="col-span-4 min-w-0 sm:col-span-1">
-              <span className="font-medium text-ink">{p.name}</span>{" "}
-              <span className="text-xs text-muted">{p.team} · <span className="num">{num(p.min, 0)}</span> min · n=<span className="num">{num(p.n, 0)}</span></span>
-              {typeof p.inj === "string" && p.inj ? <span className="ml-1 text-xs text-warn">{p.inj}</span> : null}
+              <DLink href={`/players/${p.id}`} className="font-semibold text-ink hover:underline">
+                {p.name}
+              </DLink>{" "}
+              <span className="num text-xs text-muted">
+                {p.team ?? "—"} · {fmtNum(p.min, 0)} min · n={p.n}
+              </span>
+              {p.inj ? <span className="ml-1.5 text-xs text-warn">{p.inj}</span> : null}
             </div>
-            {PROJ_STATS.map(([k, label]) => {
+            {PROJ_STATS.map((k) => {
               const s = p.stats[k];
+              const avg = l10.get(`${p.id}:${k}`);
               return (
                 <div key={k} className="text-left sm:text-right">
-                  <span className="mr-1 text-2xs uppercase text-muted sm:hidden">{label}</span>
-                  <span className="num font-semibold text-ink">{s ? num(s.mean) : "—"}</span>
-                  <span className="num block text-2xs text-muted sm:inline sm:pl-1">{s && typeof s.p10 === "number" && typeof s.p90 === "number" ? `[${s.p10.toFixed(0)}–${s.p90.toFixed(0)}]` : ""}</span>
+                  <span className="mr-1 text-2xs uppercase text-muted sm:hidden">{statLabel(k)}</span>
+                  <span className="num text-xs text-muted" title="L10 average (descriptive)">
+                    <Val v={fmtNum(avg)} /> /{" "}
+                  </span>
+                  <span className="num font-semibold text-ink">{s ? fmtNum(s.mean) : "—"}</span>
+                  {s && <span className="num block text-xs text-muted sm:inline sm:pl-1">[{s.p10.toFixed(0)}–{s.p90.toFixed(0)}]</span>}
                 </div>
               );
             })}
           </li>
         ))}
       </ul>
-      {players.length > 10 ? (
-        <button type="button" onClick={() => setAll((v) => !v)} className="mt-2 text-xs font-medium text-accent hover:underline">
+      {players.length > 10 && (
+        <Button variant="ghost" className="mt-2" onClick={() => setAll((v) => !v)}>
           {all ? "Show fewer players" : `Show all ${players.length} players`}
-        </button>
-      ) : null}
-      <p className="mt-2 text-2xs text-muted">Projections are conditional on the player appearing. Intervals are the model&apos;s 80% range.</p>
+        </Button>
+      )}
+      <p className="mt-2 text-xs text-muted">L10 averages are descriptive history. Projections are model output, conditional on the player appearing; the bracket is the model’s 80% range.</p>
     </div>
   );
 }
 
-const QUOTE_COLUMNS: Column<Quote>[] = [
-  { key: "market", header: "Market", primary: true, cell: (r) => <span className="text-ink">{titleCase(r.market)} · {r.side}</span> },
-  { key: "line", header: "Line", align: "right", cell: (r) => <Val v={fmtLine(r.line)} /> },
-  { key: "price", header: "Price", align: "right", cell: (r) => <Val v={fmtAmerican(r.price_american)} /> },
-  { key: "book", header: "Book", cell: (r) => r.book },
-  { key: "at", header: "Observed", cell: (r) => <Val v={fmtDateTimeET(r.at)} /> },
-];
+function GameProps({ gameId, onRows }: { gameId: string; onRows: (r: PropRow[]) => void }) {
+  const q = useQuery({
+    queryKey: ["game-player-props", gameId],
+    queryFn: async () => {
+      const r = await api.gamePlayerProps(gameId);
+      onRows(r.items);
+      return r;
+    },
+  });
+  const [text, setText] = useState("");
+  const [market, setMarket] = useState("");
+  const [open, setOpen] = useState<PropRow | null>(null);
+  return (
+    <>
+      <QueryView query={q} rows={5}>
+        {(d) => {
+          const needle = text.trim().toLowerCase();
+          const rows = d.items.filter((p) => (!market || p.market === market) && (!needle || p.player_name.toLowerCase().includes(needle)));
+          return (
+            <div className="space-y-3">
+              <p className="text-xs text-muted">{d.quote_status.message}</p>
+              <div className="grid grid-cols-2 gap-3 sm:max-w-md">
+                <Field label="Search">
+                  <Input type="search" placeholder="Player name" value={text} onChange={(e) => setText(e.target.value)} />
+                </Field>
+                <Field label="Market">
+                  <Select value={market} onChange={(e) => setMarket(e.target.value)}>
+                    <option value="">All markets</option>
+                    {d.markets.map((m) => (
+                      <option key={m.key} value={m.key}>{m.label}</option>
+                    ))}
+                  </Select>
+                </Field>
+              </div>
+              {rows.length === 0 ? (
+                <EmptyState title={d.items.length === 0 ? "No player prop markets are available for this game." : "No markets match these filters."} icon={Target} />
+              ) : (
+                <MarketTable rows={rows} onOpen={setOpen} caption="Player prop markets for this game" />
+              )}
+            </div>
+          );
+        }}
+      </QueryView>
+      <PropDrawer key={open ? propKey(open) : "none"} p={open} onClose={() => setOpen(null)} />
+    </>
+  );
+}
 
 function GameView({ d }: { d: GameDetail }) {
   const g = d.game;
   const [showAll, setShowAll] = useState(false);
+  const [history, setHistory] = useState(false);
+  const [propRows, setPropRows] = useState<PropRow[]>([]);
+  const lineups = useQuery({ queryKey: ["game-lineups", g.id], queryFn: () => api.gameLineups(g.id) });
   const pct = completenessPct(g.research_completeness.score);
   const rejected = d.selections.filter((s) => s.rejection_reasons.length > 0 || s.classification === "rejected").length;
+  const limitations = g.research_completeness.items.filter((i) => !i.ok);
 
   return (
-    <div className="space-y-3" data-testid="game-page">
-      <h1 className="text-[17px] font-semibold leading-6 tracking-tight text-ink">
-        {g.away.name} at {g.home.name} <span className="font-normal text-muted">· game research</span>
-      </h1>
-      <div className="rounded border border-line bg-panel p-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <Matchup game={g} size={40} />
-          <div className="text-right">
-            <div className="num text-sm text-ink">
-              {fmtDate(g.date, { weekday: true })} · <Val v={fmtTimeET(g.tipoff_utc)} />
-            </div>
-            <div className="mt-1 flex flex-wrap justify-end gap-1.5">
-              <StatusBadge value={g.status} />
-              <span className="text-2xs text-muted">{g.venue ?? "Venue not available"}</span>
-            </div>
-          </div>
-        </div>
-        <div className="mt-3 grid gap-3 border-t border-line pt-3 md:grid-cols-[1fr_2fr]">
+    <div className="space-y-5" data-testid="game-page">
+      {/* A — matchup header */}
+      <section className="rounded-lg bg-card p-4 ring-1 ring-inset ring-line/60 md:p-5" aria-label="Matchup">
+        <h1 className="sr-only">
+          {g.away.name} at {g.home.name} · game research
+        </h1>
+        <MatchupHeader game={g} size={48} />
+        <p className="mt-1 text-xs text-muted">
+          {fmtDate(g.date, { weekday: true, year: true })} · {g.venue ?? "Venue not available"}
+        </p>
+        <div className="mt-4 grid gap-5 lg:grid-cols-[1fr_1.6fr_1.2fr]">
           <div>
             <div className="flex items-baseline justify-between text-xs">
               <span className="text-muted">Research completeness</span>
-              <span className="num text-ink">{pct}%</span>
+              <span className="num font-semibold text-ink">{pct}%</span>
             </div>
             <Meter value={pct} tone={pct >= 80 ? "neutral" : "warn"} label="Research completeness" className="mt-1" />
-            <ul className="mt-2 space-y-0.5 text-2xs">
+            <ul className="mt-2 space-y-0.5 text-xs">
               {g.research_completeness.items.map((it) => (
                 <li key={it.name} className="flex gap-1.5">
-                  <span className={it.ok ? "font-semibold text-soft" : "font-semibold text-warn"}>{it.ok ? "OK" : "MISSING"}</span>
-                  <span className="min-w-0 break-words text-muted">
-                    {it.name}
-                    {it.note ? ` — ${it.note}` : ""}
-                  </span>
+                  <span className={it.ok ? "font-semibold text-soft" : "font-semibold text-warn"}>{it.ok ? "OK" : "Missing"}</span>
+                  <span className="min-w-0 break-words text-muted">{it.name}</span>
                 </li>
               ))}
             </ul>
           </div>
           <div>
-            <h2 className="mb-1 text-2xs font-semibold uppercase tracking-wide text-muted">Environment</h2>
+            <Label>Environment</Label>
             <EnvironmentSummary env={g.environment} home={g.home.abbr} away={g.away.abbr} />
             {g.environment && g.environment.notes.length > 0 && (
-              <div className="mt-2">
-                <BulletList items={g.environment.notes} />
-              </div>
+              <ul className="mt-2 space-y-0.5 text-xs text-muted">
+                {g.environment.notes.map((n, i) => (
+                  <li key={i}>· {n}</li>
+                ))}
+              </ul>
             )}
           </div>
+          <div>
+            <Label>Team form</Label>
+            <TeamFormComparison home={d.team_form.home} away={d.team_form.away} homeAbbr={g.home.abbr} awayAbbr={g.away.abbr} />
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div className="grid gap-3 lg:grid-cols-2">
-        <Panel title="Team comparison · recent form">
-          <TeamComparison home={d.team_form.home} away={d.team_form.away} homeAbbr={g.home.abbr} awayAbbr={g.away.abbr} />
-        </Panel>
-        <Panel title="Lineup status and injuries">
-          <p className="mb-2 break-words rounded border border-line bg-bg/50 px-2 py-1.5 text-xs text-soft">{g.lineup_status}</p>
-          {(["away", "home"] as const).map((side) => (
-            <div key={side} className="mb-2 last:mb-0">
-              <h3 className="mb-1 text-2xs font-semibold uppercase tracking-wide text-muted">
-                {g[side].abbr} · {g.injuries[side].length} listed
-              </h3>
-              {g.injuries[side].length === 0 ? (
-                <p className="text-xs text-muted">No injuries listed for {g[side].abbr}.</p>
-              ) : (
-                <ul className="divide-y divide-line/70 rounded border border-line">
-                  {g.injuries[side].map((r, i) => (
-                    <li key={i} className="flex flex-wrap items-baseline justify-between gap-x-2 px-2 py-1 text-xs">
-                      <span className="text-ink">{r.player_name}</span>
-                      <span className="text-warn">{r.status}</span>
-                      <span className="w-full break-words text-2xs text-muted">
-                        {[r.detail, r.comment].filter(Boolean).join(" — ") || "No detail"} · {r.source}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          ))}
-        </Panel>
-      </div>
+      {/* B — starting lineups */}
+      <section aria-label="Starting lineups" id="lineups">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="flex items-center gap-2 font-display text-[17px] font-semibold uppercase tracking-wide text-ink">
+            <Users className="h-[18px] w-[18px] text-accent" aria-hidden />
+            Starting lineups
+          </h2>
+          <Button variant="ghost" aria-expanded={history} onClick={() => setHistory((v) => !v)}>
+            <History className="h-3.5 w-3.5" aria-hidden />
+            {history ? "Hide lineup history" : "Lineup history"}
+          </Button>
+        </div>
+        {history && (
+          <div className="mb-3 rounded-lg bg-card p-4 ring-1 ring-inset ring-line/60">
+            <LineupHistoryList gameId={g.id} />
+          </div>
+        )}
+        <QueryView query={lineups} rows={5}>
+          {(l) => <LineupTable away={l.away} home={l.home} />}
+        </QueryView>
+      </section>
 
-      <Panel title="Top picks" right={<span className="num">{g.n_evaluated} evaluated · {g.n_rejected} rejected</span>}>
+      {/* C — player props */}
+      <Panel title="Player props" icon={Target} id="props">
+        <GameProps gameId={g.id} onRows={setPropRows} />
+      </Panel>
+
+      {/* D — recent averages */}
+      <Panel title="Recent player averages and projections" icon={History}>
+        <PlayerAverages rows={d.player_projections} props={propRows} />
+      </Panel>
+
+      {/* E — qualified research selections */}
+      <Panel title="Qualified research selections" icon={ListChecks} right={<span className="num">{g.n_evaluated} evaluated · {g.n_rejected} rejected</span>}>
         {g.top_picks.length === 0 ? (
           <EmptyState title="No qualified picks for this game.">{g.no_picks_reason ?? "The API did not provide a reason."}</EmptyState>
         ) : (
-          <SelectionList items={g.top_picks} showGame={false} />
+          <SelectionList items={g.top_picks.slice(0, 5)} showGame={false} />
         )}
-      </Panel>
-
-      <Panel title="Player projections · mean with p10–p90">
-        <PlayerProjections rows={d.player_projections} />
-      </Panel>
-
-      <Panel
-        title="All evaluated selections"
-        right={
-          <>
-            <span className="num">
-              {d.selections.length} evaluated · {rejected} rejected
+        <div className="mt-4 border-t border-line/50 pt-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="num text-xs text-muted">
+              All evaluated selections: {d.selections.length} · {rejected} rejected
             </span>
-            <Button aria-expanded={showAll} onClick={() => setShowAll((v) => !v)} data-testid="toggle-all-selections">
+            <Button aria-expanded={showAll} onClick={() => setShowAll((v) => !v)} data-testid="toggle-all-selections" disabled={d.selections.length === 0}>
               {showAll ? "Hide" : "Show all, including rejected"}
             </Button>
-          </>
-        }
-      >
-        {d.selections.length === 0 ? (
-          <EmptyState title="No selections were evaluated for this game." />
-        ) : showAll ? (
-          <SelectionList items={d.selections} showGame={false} />
-        ) : (
-          <p className="text-xs text-muted">Collapsed. Rejected selections are kept with their rejection reasons and can be reviewed here.</p>
-        )}
+          </div>
+          {showAll && (
+            <div className="mt-3">
+              <SelectionList items={d.selections} showGame={false} />
+            </div>
+          )}
+        </div>
       </Panel>
 
-      <Panel title="Same-game combination research" right={<span className="num">{d.sgp.length}</span>} bodyClassName="space-y-2 p-3">
+      {/* F — same-game research */}
+      <Panel title="Same-game research" icon={Layers} right={<span className="num">{d.sgp.length}</span>} bodyClassName="space-y-3">
         {d.sgp.length === 0 ? <EmptyState title="No same-game combination met the research criteria for this game." /> : d.sgp.map((c) => <ComboCard key={c.uid} combo={c} />)}
       </Panel>
 
-      <div className="grid gap-3 lg:grid-cols-2">
-        <Panel title="Head to head">
+      {/* G — reports, limitations, unresolved */}
+      <Panel title="Research reports, limitations and unresolved questions" icon={FileText}>
+        <div className="grid gap-5 lg:grid-cols-3">
+          <div>
+            <Label>Agent reports</Label>
+            {d.agent_reports.length === 0 ? (
+              <p className="text-sm text-muted">No agent has reported on this game.</p>
+            ) : (
+              <ul className="space-y-2">
+                {d.agent_reports.map((r, i) => (
+                  <li key={i}>
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <span className="text-sm font-semibold text-ink">{r.agent}</span>
+                      <span className="num text-xs text-muted">{fmtDateTimeET(r.at) ?? "—"}</span>
+                    </div>
+                    <p className="break-words text-sm text-soft">{r.summary}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <div>
+            <Label>Limitations</Label>
+            {limitations.length === 0 ? (
+              <p className="text-sm text-muted">No data limitations were flagged.</p>
+            ) : (
+              <BulletList items={limitations.map((l) => `${l.name}${l.note ? ` — ${l.note}` : ""}`)} tone="warn" />
+            )}
+            <p className="mt-2 text-xs text-muted">{g.lineup_status}</p>
+          </div>
+          <div>
+            <Label>Unresolved questions</Label>
+            {d.unresolved.length === 0 ? <p className="text-sm text-muted">No unresolved questions were recorded.</p> : <BulletList items={d.unresolved} tone="warn" />}
+          </div>
+        </div>
+        <div className="mt-4 border-t border-line/50 pt-3">
+          <Label>Head to head</Label>
           {d.h2h.length === 0 ? (
-            <EmptyState title="No prior meetings in the available data." />
+            <p className="text-sm text-muted">No prior meetings in the available data.</p>
           ) : (
-            <ul className="divide-y divide-line/70">
+            <ul className="grid gap-x-6 gap-y-1 sm:grid-cols-2">
               {d.h2h.map((m, i) => (
-                <li key={i} className="num flex items-baseline justify-between gap-2 py-1 text-xs">
+                <li key={i} className="num flex items-baseline justify-between gap-2 text-sm">
                   <span className="text-muted">{fmtDate(m.date, { year: true }) ?? m.date}</span>
                   <span className="text-ink">
                     {m.away_abbr} <Val v={m.away_points} /> @ {m.home_abbr} <Val v={m.home_points} />
@@ -257,44 +303,8 @@ function GameView({ d }: { d: GameDetail }) {
               ))}
             </ul>
           )}
-        </Panel>
-        <Panel title="Current quotes">
-          {g.quotes.length === 0 ? (
-            <EmptyState title="No verified quotes are available for this game." />
-          ) : (
-            <DataTable columns={QUOTE_COLUMNS} rows={g.quotes} rowKey={(_, i) => i} caption="Current quotes" dense />
-          )}
-        </Panel>
-      </div>
-
-      <div className="grid gap-3 lg:grid-cols-2">
-        <Panel title="Agent reports">
-          {d.agent_reports.length === 0 ? (
-            <EmptyState title="No agent has reported on this game." />
-          ) : (
-            <ul className="divide-y divide-line/70">
-              {d.agent_reports.map((r, i) => (
-                <li key={i} className="py-1.5">
-                  <div className="flex flex-wrap items-baseline justify-between gap-2 text-xs">
-                    <span className="font-medium text-ink">{r.agent}</span>
-                    <span className="num text-muted">{fmtDateTimeET(r.at) ?? "—"}</span>
-                  </div>
-                  <p className="mt-0.5 break-words text-xs text-soft">{r.summary}</p>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Panel>
-        <Panel title="Unresolved questions" tone={d.unresolved.length ? "warn" : undefined}>
-          {d.unresolved.length === 0 ? <EmptyState title="No unresolved questions were recorded." /> : <BulletList items={d.unresolved} tone="warn" />}
-        </Panel>
-      </div>
-
-      {(g.injuries.home.length > 0 || g.injuries.away.length > 0) && (
-        <Panel title="Injury report detail">
-          <InjuryTable rows={[...g.injuries.away, ...g.injuries.home]} caption="Injuries for this game" />
-        </Panel>
-      )}
+        </div>
+      </Panel>
     </div>
   );
 }
@@ -304,9 +314,9 @@ export default function GamePage() {
   const q = useQuery({ queryKey: ["game", id], queryFn: () => api.game(id) });
   return (
     <div>
-      <div className="mb-2 text-xs">
-        <DLink href="/games" className="text-accent hover:underline">
-          ← All games
+      <div className="mb-3">
+        <DLink href="/games" className={textLink}>
+          <ArrowLeft className="h-3 w-3" aria-hidden /> All games
         </DLink>
       </div>
       <QueryView query={q} rows={8}>

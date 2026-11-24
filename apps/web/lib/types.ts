@@ -54,6 +54,29 @@ export type Selection = {
   verified_at: string;
   invalidated: boolean;
   invalidation_reason: string | null;
+  /** Descriptive historical statistics (NOT predictions). null for team/game markets. */
+  context: SelectionContext | null;
+  origin: QuoteOrigin;
+};
+
+export type LineupStatus = "confirmed" | "projected" | "unknown";
+export type QuoteOrigin = "provider" | "owner_entered" | "hypothetical";
+export type SelectionContext = {
+  l5: number | null;
+  l10: number | null;
+  l20: number | null;
+  season_avg: number | null;
+  proj_min: number | null;
+  lineup_role: "starter" | "bench" | null;
+  lineup_status: LineupStatus | null;
+};
+export type PlayerRef = {
+  id: number;
+  name: string;
+  team_abbr: string | null;
+  position: string | null;
+  jersey: string | null;
+  headshot_url: string | null;
 };
 
 export type ComboLeg = {
@@ -124,6 +147,10 @@ export type InjuryRow = {
   source: string;
   source_published_at: string | null;
   ingested_at: string;
+  headshot_url: string | null;
+  game_label: string | null;
+  previous_status: string | null;
+  stale: boolean;
 };
 
 export type Quote = {
@@ -166,6 +193,8 @@ export type GameCard = {
   n_evaluated: number;
   n_rejected: number;
   no_picks_reason: string | null;
+  lineup: { home: { status: LineupStatus; verified_at: string | null }; away: { status: LineupStatus; verified_at: string | null } };
+  props: { quoted_markets: number; players_projected: number };
 };
 
 export type EditionKind = "morning" | "midday" | "afternoon" | "pregame" | "final";
@@ -278,6 +307,8 @@ export type CommandCenter = {
   agents: { ok: number; failed: number; never_run: number };
   findings: { finding_uid: string; hypothesis: string; status: string }[];
   warnings: string[];
+  lineups_summary: { confirmed: number; projected: number; unknown: number };
+  props_summary: { provider_configured: boolean; quoted_markets: number; manual_entries: number; players_projected: number; message: string };
 };
 
 export type ExposureShare = { tickets: number; share: number };
@@ -303,11 +334,33 @@ export type Exposure = {
   notes: string[];
 };
 
-// The contract names TeamForm and PlayerProj on GET /games/{id} without defining their fields.
-// They are typed loosely and rendered defensively (see docs/architecture/FRONTEND-IA.md, "Contract gaps").
-export type LooseValue = string | number | boolean | null;
-export type TeamForm = Record<string, LooseValue>;
-export type PlayerProj = Record<string, LooseValue>;
+export type TeamFormStats = {
+  record: string;
+  last_10: string;
+  points_per_game: number;
+  opp_points_per_game: number;
+  off_rating: number | null;
+  def_rating: number | null;
+  pace: number | null;
+  last_10_points_per_game: number;
+  last_10_opp_points_per_game: number;
+  games_in_sample: number;
+};
+/** `{}` when the team has no history. */
+export type TeamForm = Partial<TeamFormStats>;
+export type PlayerProj = {
+  player_id: number;
+  player_name: string;
+  team_abbr: string | null;
+  stat: "pts" | "reb" | "ast" | "fg3m";
+  mean: number;
+  p10: number;
+  p50: number;
+  p90: number;
+  proj_min: number;
+  n_games: number;
+  injury_status: string | null;
+};
 
 export type GameDetail = {
   game: GameCard;
@@ -344,7 +397,10 @@ export type PlayerListItem = {
 };
 
 export type PlayerDetail = {
-  player: { id: number; name: string; team_abbr: string | null; position: string | null };
+  player: PlayerRef;
+  next_game: { game_id: string; label: string; date: string; tipoff_utc: string | null; opp_abbr: string; is_home: boolean } | null;
+  lineup: { role: "starter" | "bench" | null; status: LineupStatus } | null;
+  markets: PropRow[];
   sample: { games: number };
   splits: {
     label: string;
@@ -535,4 +591,222 @@ export type AuthResponse = { user: AuthUser; csrf: string };
 export type ReadyResponse = {
   status: "ready" | "degraded";
   checks: { database: boolean; worker: boolean; scheduler: boolean };
+};
+
+// ---------- V3: player intelligence, props, lineups ----------
+export type StatKey = "min" | "pts" | "reb" | "ast" | "fg3m" | "stl" | "blk" | "tov" | "pra" | "pr" | "pa" | "ra";
+export type WindowKey = "L3" | "L5" | "L10" | "L15" | "L20" | "L30" | "season" | "prev_season" | "regular_season" | "playoffs";
+export type StatSummary = { mean: number; median: number; min: number; max: number; sd: number | null; p25: number; p75: number };
+export type AveragesWindow = {
+  key: WindowKey;
+  label: string;
+  requested: number | null;
+  games: number;
+  missed: number | null;
+  small_sample: boolean;
+  available: boolean;
+  note: string | null;
+  stats: Record<string, StatSummary>;
+};
+export type AveragesResponse = { definition: string; windows: AveragesWindow[] };
+
+export type GameLogRow = {
+  game_id: string;
+  date: string;
+  opp_abbr: string;
+  is_home: boolean;
+  starter: boolean | null;
+  result: "W" | "L" | null;
+  team_points: number | null;
+  opp_points: number | null;
+  min: number;
+  pts: number;
+  reb: number;
+  ast: number;
+  fg3m: number;
+  stl: number;
+  blk: number;
+  tov: number;
+  pra: number;
+  fga: number;
+  fta: number;
+  usage: number | null;
+};
+export type GameLogsResponse = { items: GameLogRow[]; total: number; missed: { date: string; opp_abbr: string; reason: string }[]; source: string };
+
+export type ThresholdGame = {
+  game_id: string;
+  date: string;
+  opp_abbr: string;
+  is_home: boolean;
+  starter: boolean | null;
+  min: number;
+  value: number;
+  outcome: "over" | "under" | "equal";
+};
+export type Threshold = {
+  player_id: number;
+  stat: string;
+  line: number;
+  window: string;
+  measurement: "A";
+  label: string;
+  n: number;
+  over: number;
+  under: number;
+  equal: number;
+  frequency_over: number | null;
+  average: number | null;
+  games: ThresholdGame[];
+  market_history: { available: false; reason: string } | { available: true; n: number; over: number; under: number; push: number };
+  notes: string[];
+};
+
+export type SplitRow = {
+  group: string;
+  label: string;
+  games: number;
+  small_sample: boolean;
+  min: number | null;
+  pts: number | null;
+  reb: number | null;
+  ast: number | null;
+  fg3m: number | null;
+  pra: number | null;
+};
+export type SplitsResponse = { splits: SplitRow[]; notes: string[] };
+
+export type PropRow = {
+  player_id: number;
+  player_name: string;
+  headshot_url: string | null;
+  team_abbr: string;
+  opp_abbr: string;
+  game_id: string;
+  game_label: string;
+  market: string;
+  stat: string;
+  line: number | null;
+  over_price: number | null;
+  under_price: number | null;
+  book: string | null;
+  origin: QuoteOrigin | null;
+  quote_at: string | null;
+  l5: number | null;
+  l10: number | null;
+  l20: number | null;
+  season_avg: number | null;
+  n_games: number;
+  hist_over: number | null;
+  hist_n: number | null;
+  proj_min: number | null;
+  projection: number | null;
+  p10: number | null;
+  p90: number | null;
+  availability: string;
+  lineup_role: "starter" | "bench" | null;
+  lineup_status: LineupStatus;
+  model_ready: boolean;
+  model_status: string;
+  selection: { id: number; side: string; classification: string; prob: number | null; prob_low: number | null; prob_high: number | null } | null;
+  updated_at: string | null;
+};
+export type PropMarketInfo = { key: string; label: string; stat: string; operational: boolean; note: string | null };
+export type PlayerPropsResponse = {
+  date: string;
+  markets: PropMarketInfo[];
+  quote_status: { provider_configured: boolean; message: string };
+  items: PropRow[];
+  total: number;
+};
+
+export type ManualEntry = {
+  id: number;
+  game_id: string;
+  game_label: string;
+  player_id: number;
+  player_name: string;
+  market: string;
+  line: number;
+  over_price: number | null;
+  under_price: number | null;
+  book: string | null;
+  origin: "owner_entered" | "hypothetical";
+  observed_at: string | null;
+  source_ref: string | null;
+  note: string | null;
+  created_by: string;
+  created_at: string;
+  withdrawn: boolean;
+};
+export type ManualEntryBody = {
+  game_id: string;
+  player_id: number;
+  market: string;
+  line: number;
+  over_price?: number;
+  under_price?: number;
+  odds_format?: "american" | "decimal";
+  origin: "owner_entered" | "hypothetical";
+  book?: string;
+  observed_at?: string;
+  source_ref?: string;
+  note?: string;
+};
+
+export type LineupPlayer = {
+  player_id: number | null;
+  name: string;
+  headshot_url: string | null;
+  jersey: string | null;
+  position: string | null;
+  role: "starter" | "bench";
+  availability: string;
+  injury_detail: string | null;
+  proj_min: number | null;
+  recent_min: number | null;
+  starts_last10: number | null;
+};
+export type TeamLineup = {
+  team: TeamRef;
+  status: LineupStatus;
+  source: string;
+  verified_at: string | null;
+  note: string;
+  starters: LineupPlayer[];
+  bench: LineupPlayer[];
+  unavailable: LineupPlayer[];
+};
+export type LineupGame = {
+  game: { id: string; label: string; tipoff_utc: string | null; status: string; home: TeamRef; away: TeamRef };
+  home: TeamLineup;
+  away: TeamLineup;
+};
+export type LineupsResponse = { date: string; games: LineupGame[] };
+export type GameLineups = { game_id: string; home: TeamLineup; away: TeamLineup };
+export type LineupHistory = { items: { at: string; team_abbr: string; status: LineupStatus; change: string; source: string }[] };
+
+export type ProviderInfo = {
+  provider: string;
+  name: string;
+  categories: string[];
+  configured: boolean;
+  credential: "present" | "missing" | "not_required";
+  status: string;
+  last_success_at: string | null;
+  last_error_at: string | null;
+  last_error: string | null;
+  calls_this_month: number;
+  quota_used: number;
+  quota_limit: number | null;
+  monthly_cost_usd: number;
+  limitations: string[];
+  setup: string;
+};
+
+export type StrategyGroup = { key: string; label: string; kind: "market" | "engine" | "structure" } & Summary;
+export type StrategiesResponse = {
+  groups: StrategyGroup[];
+  forecast: { stat: string; n: number; mae: number | null; coverage_80: number | null }[];
+  disclaimer: string;
 };

@@ -1,30 +1,33 @@
 "use client";
 
 import type { UseQueryResult } from "@tanstack/react-query";
+import { AlertTriangle, Layers, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { ApiError } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { Button } from "./button";
 
 export function Skeleton({ className }: { className?: string }) {
-  return <div className={cn("animate-pulse rounded bg-raised", className)} aria-hidden />;
+  return <div className={cn("animate-pulse rounded-md bg-raised", className)} aria-hidden />;
 }
 
 export function LoadingState({ rows = 4, label = "Loading" }: { rows?: number; label?: string }) {
   return (
     <div role="status" aria-label={label} className="space-y-2" data-state="loading">
       {Array.from({ length: rows }).map((_, i) => (
-        <Skeleton key={i} className={cn("h-9", i % 3 === 2 ? "w-2/3" : "w-full")} />
+        <Skeleton key={i} className={cn("h-10", i % 3 === 2 ? "w-2/3" : "w-full")} />
       ))}
       <span className="sr-only">{label}…</span>
     </div>
   );
 }
 
-export function EmptyState({ title, children }: { title: string; children?: ReactNode }) {
+/** Explicit empty state: one honest sentence, never filler content. */
+export function EmptyState({ title, children, icon: Icon = Layers }: { title: string; children?: ReactNode; icon?: LucideIcon }) {
   return (
-    <div className="rounded border border-dashed border-line-strong px-3 py-5 text-center" data-state="empty">
-      <p className="text-sm text-soft">{title}</p>
+    <div className="flex flex-col items-center rounded-md bg-raised/40 px-4 py-6 text-center" data-state="empty">
+      <Icon className="mb-2 h-5 w-5 text-faint" aria-hidden />
+      <p className="max-w-prose text-sm font-medium text-soft">{title}</p>
       {children && <div className="mx-auto mt-1 max-w-prose text-xs text-muted">{children}</div>}
     </div>
   );
@@ -38,14 +41,17 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
         ? error.message
         : "Unexpected error.";
   return (
-    <div role="alert" className="rounded border border-bad/50 bg-bad-dim/40 px-3 py-3" data-state="error">
-      <p className="text-sm font-medium text-bad">Could not load this data</p>
-      <p className="mt-0.5 break-words text-xs text-soft">{message}</p>
-      {onRetry && (
-        <Button className="mt-2" onClick={onRetry}>
-          Retry
-        </Button>
-      )}
+    <div role="alert" className="flex items-start gap-3 rounded-md bg-bad/10 px-4 py-3 ring-1 ring-inset ring-bad/40" data-state="error">
+      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-bad" aria-hidden />
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold text-bad">Could not load this data</p>
+        <p className="mt-0.5 break-words text-xs text-soft">{message}</p>
+        {onRetry && (
+          <Button className="mt-2" onClick={onRetry}>
+            Retry
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

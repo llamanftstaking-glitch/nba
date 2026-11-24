@@ -21,7 +21,7 @@ const PAIR_COLUMNS: Column<Pair>[] = [
 
 function FindingCard({ f }: { f: Finding }) {
   return (
-    <article className="rounded border border-line bg-bg/40 p-3">
+    <article className="rounded-md bg-raised/40 p-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <h3 className="min-w-0 flex-1 break-words text-sm font-medium text-ink">{f.hypothesis}</h3>
         <StatusBadge value={f.status} />
@@ -29,7 +29,7 @@ function FindingCard({ f }: { f: Finding }) {
       <p className="num mt-0.5 text-2xs text-muted">
         {f.finding_uid} · {fmtDateTimeET(f.created_at) ?? "—"} · sample {f.sample_size === null ? <Val v={null} /> : `n=${fmtInt(f.sample_size)}`}
       </p>
-      <div className="mt-2 grid gap-3 md:grid-cols-2">
+      <div className="mt-2 grid gap-4 md:grid-cols-2">
         <div>
           <h4 className="mb-1 text-2xs font-semibold uppercase tracking-wide text-muted">Supporting</h4>
           {f.supporting.length ? <BulletList items={f.supporting} tone="accent" /> : <p className="text-xs text-muted">None recorded.</p>}
@@ -64,7 +64,7 @@ export default function ResearchLabPage() {
       <PageHeader title="Research Lab" sub="Hypotheses, experiments and correlation estimates. Findings are provisional until an experiment supports them." />
       <QueryView query={q} rows={6}>
         {(d) => (
-          <div className="space-y-3">
+          <div className="space-y-4">
             <Panel title="Findings" right={<span className="num">{d.findings.length}</span>} bodyClassName="space-y-2 p-3">
               {d.findings.length === 0 ? <EmptyState title="No research findings have been recorded." /> : d.findings.map((f) => <FindingCard key={f.finding_uid} f={f} />)}
             </Panel>

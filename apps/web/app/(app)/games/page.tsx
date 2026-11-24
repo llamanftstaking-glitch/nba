@@ -18,7 +18,7 @@ export default function GamesPage() {
       />
       <QueryView query={q} rows={6} isEmpty={(d) => d.games.length === 0} empty={<EmptyState title="No games are scheduled for this date." />}>
         {(d) => (
-          <div className="grid gap-3 xl:grid-cols-2">
+          <div className="grid gap-4 xl:grid-cols-2">
             {d.games.map((g) => (
               <GameMatchupCard key={g.id} game={g} detailed />
             ))}

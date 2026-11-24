@@ -94,6 +94,12 @@ function sel(o) {
     verified_at: iso(35),
     invalidated: Boolean(o.invalidated),
     invalidation_reason: o.invalidated ? "FIXTURE: line moved beyond tolerance after the edition was published." : null,
+    context: o.market.startsWith("player_")
+      ? o.projection == null
+        ? { l5: null, l10: null, l20: null, season_avg: null, proj_min: null, lineup_role: null, lineup_status: null }
+        : { l5: +(o.projection * 1.04).toFixed(1), l10: +(o.projection * 0.99).toFixed(1), l20: +(o.projection * 0.97).toFixed(1), season_avg: +(o.projection * 0.96).toFixed(1), proj_min: 33, lineup_role: "starter", lineup_status: "projected" }
+      : null,
+    origin: o.origin ?? "provider",
   };
 }
 
@@ -195,6 +201,8 @@ const editionCounts = (n) => ({ selections: n, qualified: Math.min(3, n), combin
 const inj = (name, team, status, detail = null) => ({
   player_id: null, player_name: name, team_abbr: team, status, detail, comment: detail ? "FIXTURE comment: synthetic report." : null,
   source: "FIXTURE-injury-feed", source_published_at: detail ? iso(200) : null, ingested_at: iso(190),
+  headshot_url: null, game_label: { DET: "DET @ ORL", ORL: "DET @ ORL", BOS: "BOS @ NYK", NYK: "BOS @ NYK", LAL: "LAL @ DEN", DEN: "LAL @ DEN" }[team] ?? null,
+  previous_status: status === "Out" ? "Questionable" : null, stale: status !== "Probable",
 });
 const quotes = (line, total) => [
   { market: "spread", side: "home", line, price_american: -110, book: "FIXTUREBOOK", at: iso(40) },
@@ -219,6 +227,8 @@ const GAMES_TODAY = [
     environment: { proj_home_points: 107.8, proj_away_points: 106.3, proj_total: 214.1, proj_margin: 1.5, proj_pace: 97.4, total_p10: 196.2, total_p90: 231.8, notes: ["FIXTURE: both teams on one day of rest."] },
     quotes: quotes(2.5, 213.5),
     top_picks: [S.g1a, S.g1b], n_evaluated: 4, n_rejected: 1, no_picks_reason: null,
+    lineup: { home: { status: "projected", verified_at: iso(60) }, away: { status: "projected", verified_at: iso(60) } },
+    props: { quoted_markets: 3, players_projected: 2 },
   },
   {
     id: "FIX-G2", date: TODAY, tipoff_utc: null, status: "scheduled", home: T.NYK, away: T.BOS,
@@ -235,6 +245,8 @@ const GAMES_TODAY = [
     quotes: [],
     top_picks: [], n_evaluated: 3, n_rejected: 3,
     no_picks_reason: "FIXTURE: all 3 evaluated selections were rejected — stale injury report and insufficient sample sizes.",
+    lineup: { home: { status: "projected", verified_at: iso(60) }, away: { status: "unknown", verified_at: null } },
+    props: { quoted_markets: 0, players_projected: 1 },
   },
   {
     id: "FIX-G3", date: TODAY, tipoff_utc: tip(TODAY, 2), status: "scheduled", home: T.DEN, away: T.LAL,
@@ -250,6 +262,8 @@ const GAMES_TODAY = [
     environment: { proj_home_points: 117.5, proj_away_points: 112.4, proj_total: 229.9, proj_margin: 5.1, proj_pace: 100.2, total_p10: 211.0, total_p90: 248.4, notes: [] },
     quotes: quotes(-6.5, 229.5),
     top_picks: [S.g3a], n_evaluated: 3, n_rejected: 1, no_picks_reason: null,
+    lineup: { home: { status: "confirmed", verified_at: iso(20) }, away: { status: "projected", verified_at: iso(60) } },
+    props: { quoted_markets: 2, players_projected: 1 },
   },
 ];
 
@@ -266,6 +280,8 @@ const GAMES_YESTERDAY = [
     research_completeness: { score: 90, items: [{ name: "Box scores", ok: true, note: "" }] },
     environment: { proj_home_points: 110.1, proj_away_points: 106.9, proj_total: 217.0, proj_margin: 3.2, proj_pace: 98.0, total_p10: 199.0, total_p90: 235.0, notes: [] },
     quotes: [], top_picks: [YS.a, YS.b], n_evaluated: 2, n_rejected: 0, no_picks_reason: null,
+    lineup: { home: { status: "confirmed", verified_at: iso(60 * 20) }, away: { status: "confirmed", verified_at: iso(60 * 20) } },
+    props: { quoted_markets: 0, players_projected: 0 },
   },
 ];
 for (const s of Object.values(YS)) SEL_BY_ID.set(s.id, s);
@@ -403,6 +419,167 @@ const operations = {
   dead_letter: 1,
 };
 
+
+// ---------- V3: player intelligence, props, lineups ----------
+const headshot = (name, color) =>
+  `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" fill="${color}"/><circle cx="40" cy="30" r="14" fill="#cbd5e1"/><rect x="16" y="50" width="48" height="34" rx="16" fill="#cbd5e1"/><text x="40" y="76" font-size="9" font-family="sans-serif" text-anchor="middle" fill="#0d1720">FIXTURE</text></svg>`)}`;
+const JERSEY = { 9001: "2", 9002: "22", 9003: "4", 9004: null, 9005: "15", 9010: "14" };
+const HEAD = { 9001: headshot("A", "#1d42ba"), 9002: headshot("B", "#0077c0"), 9005: headshot("E", "#0e2240") }; // others → initials fallback
+const playerRef = (p) => ({ id: p.id, name: p.name, team_abbr: p.team_abbr, position: p.position, jersey: JERSEY[p.id] ?? null, headshot_url: HEAD[p.id] ?? null });
+const OPP = { DET: "ORL", ORL: "DET", BOS: "NYK", NYK: "BOS", LAL: "DEN", DEN: "LAL", MIA: "CHI", CHI: "MIA" };
+const GAME_OF = { DET: G1, ORL: G1, BOS: G2, NYK: G2, LAL: G3, DEN: G3 };
+
+// deterministic synthetic game logs (newest first), 24 appearances per player with history
+const rnd = (seed) => { let x = seed % 2147483647; return () => (x = (x * 48271) % 2147483647) / 2147483647; };
+const LOGS = new Map();
+for (const p of PLAYERS) {
+  if (p.games == null) { LOGS.set(p.id, []); continue; }
+  const r = rnd(p.id * 7919);
+  const n = p.id === 9003 ? 7 : 24;
+  const opps = ["ORL", "BOS", "NYK", "LAL", "DEN", "MIA", "CHI", "DET"].filter((o) => o !== p.team_abbr);
+  LOGS.set(p.id, Array.from({ length: n }, (_, i) => {
+    const v = (base, spread) => Math.max(0, Math.round(base + (r() - 0.5) * 2 * spread));
+    const pts = v(p.pts, 9), reb = v(p.reb, 4), ast = v(p.ast, 4);
+    const tp = 100 + Math.round(r() * 25), op = 100 + Math.round(r() * 25);
+    return { game_id: `FIX-LOG-${p.id}-${i}`, date: shift(TODAY, -(1 + i * 2 + (i > 9 ? 3 : 0))), opp_abbr: opps[i % opps.length], is_home: i % 2 === 0, starter: p.id === 9002 ? i % 3 !== 0 : i === 5 ? null : true,
+      result: tp === op ? null : tp > op ? "W" : "L", team_points: tp, opp_points: op,
+      min: v(p.min, 5), pts, reb, ast, fg3m: v(p.fg3m, 2), stl: v(1, 1), blk: v(0.6, 1), tov: v(2.5, 2), pra: pts + reb + ast, fga: v(p.pts * 0.75, 4), fta: v(4, 3), usage: i % 6 === 0 ? null : +(0.2 + r() * 0.1).toFixed(3) };
+  }));
+}
+const statOf = (g, stat) => ({ pr: g.pts + g.reb, pa: g.pts + g.ast, ra: g.reb + g.ast }[stat] ?? g[stat] ?? 0);
+const WINDOW_N = { L3: 3, L5: 5, L10: 10, L15: 15, L20: 20, L30: 30 };
+const filterLogs = (id, q) => (LOGS.get(Number(id)) ?? []).filter((g) => (!q.venue || (q.venue === "home") === g.is_home) && (!q.role || (q.role === "starter") === (g.starter === true)) && (!q.opponent || g.opp_abbr === q.opponent));
+const pick = (logs, win) => (WINDOW_N[win] ? logs.slice(0, WINDOW_N[win]) : logs);
+const avg = (logs, stat) => (logs.length ? +(logs.reduce((a, g) => a + statOf(g, stat), 0) / logs.length).toFixed(1) : null);
+const STATS = ["min", "pts", "reb", "ast", "fg3m", "stl", "blk", "tov", "pra", "pr", "pa", "ra"];
+function summary(logs, stat) {
+  const xs = logs.map((g) => statOf(g, stat)).sort((a, b) => a - b);
+  const qt = (f) => xs[Math.min(xs.length - 1, Math.floor(f * (xs.length - 1) + 0.5))];
+  const mean = xs.reduce((a, b) => a + b, 0) / xs.length;
+  return { mean: +mean.toFixed(1), median: qt(0.5), min: xs[0], max: xs[xs.length - 1], sd: xs.length < 2 ? null : +Math.sqrt(xs.reduce((a, b) => a + (b - mean) ** 2, 0) / (xs.length - 1)).toFixed(2), p25: qt(0.25), p75: qt(0.75) };
+}
+function averages(id) {
+  const logs = LOGS.get(Number(id));
+  if (!logs) return null;
+  const win = (key, label, requested, rows, extra = {}) => ({ key, label, requested, games: rows.length, missed: requested ? (key === "L10" ? 2 : 0) : null, small_sample: rows.length < 8, available: rows.length > 0, note: rows.length === 0 ? "FIXTURE: no appearances in this window" : null, stats: rows.length ? Object.fromEntries(STATS.map((s) => [s, summary(rows, s)])) : {}, ...extra });
+  return {
+    definition: "FIXTURE definition: per-game averages over the player's most recent appearances; games the player missed are not counted as zeros.",
+    windows: [
+      ...Object.entries(WINDOW_N).map(([k, n]) => win(k, k, n, logs.slice(0, n))),
+      win("season", "Season", null, logs),
+      win("prev_season", "Previous season", null, [], { note: "FIXTURE: previous season not loaded" }),
+      win("playoffs", "Playoffs", null, [], { note: "FIXTURE: not ingested" }),
+    ],
+  };
+}
+function threshold(id, q) {
+  const stat = q.get("stat") || "pts", line = Number(q.get("line") ?? 0), window = q.get("window") || "L10";
+  const logs = pick(filterLogs(id, { venue: q.get("venue"), role: q.get("role") }), window);
+  const games = logs.map((g) => { const value = statOf(g, stat); return { game_id: g.game_id, date: g.date, opp_abbr: g.opp_abbr, is_home: g.is_home, starter: g.starter, min: g.min, value, outcome: value > line ? "over" : value < line ? "under" : "equal" }; }).reverse();
+  const c = (o) => games.filter((g) => g.outcome === o).length;
+  return { player_id: Number(id), stat, line, window, measurement: "A", label: "FIXTURE: Historical results versus today's selected threshold (descriptive)", n: games.length, over: c("over"), under: c("under"), equal: c("equal"),
+    frequency_over: games.length ? +(c("over") / games.length).toFixed(3) : null, average: avg(logs, stat), games,
+    market_history: Number(id) === 9001 && stat === "pts" ? { available: true, n: 6, over: 4, under: 2, push: 0 } : { available: false, reason: "FIXTURE: no historical quoted lines are stored for this player and market." },
+    notes: ["FIXTURE note: counts of past games are descriptive and are not a probability.", "FIXTURE note: the threshold is applied to past games regardless of the line quoted at the time."] };
+}
+function splits(id) {
+  const logs = LOGS.get(Number(id));
+  if (!logs) return null;
+  const row = (group, label, rows) => ({ group, label, games: rows.length, small_sample: rows.length < 8, ...Object.fromEntries(["min", "pts", "reb", "ast", "fg3m", "pra"].map((s) => [s, avg(rows, s)])) });
+  return { splits: logs.length ? [row("venue", "Home", logs.filter((g) => g.is_home)), row("venue", "Away", logs.filter((g) => !g.is_home)), row("role", "Starter", logs.filter((g) => g.starter === true)), row("role", "Bench", logs.filter((g) => g.starter === false)), row("result", "Wins", logs.filter((g) => g.result === "W")), row("rest", "Back-to-back", logs.slice(0, 3))] : [], notes: ["FIXTURE note: rows flagged small sample have fewer than 8 games."] };
+}
+
+const PROP_MARKETS = [
+  ...["pts", "reb", "ast", "fg3m", "pra"].map((k) => ({ key: `player_${k}`, label: `FIXTURE ${k.toUpperCase()}`, stat: k, operational: true, note: null })),
+  { key: "player_stl", label: "FIXTURE STL", stat: "stl", operational: false, note: "FIXTURE: no registered model for steals" },
+];
+let manualId = 700;
+const MANUAL = [
+  { id: ++manualId, game_id: "FIX-G1", game_label: "DET @ ORL", player_id: 9001, player_name: "FIXTURE Player A", market: "player_ast", line: 8.5, over_price: -120, under_price: 100, book: "FIXTUREBOOK-2", origin: "owner_entered", observed_at: iso(70), source_ref: "FIXTURE screenshot ref", note: "FIXTURE seed entry", created_by: USER.email, created_at: iso(69), withdrawn: false },
+];
+function propRows() {
+  const mk = (pid, stat, o = {}) => {
+    const p = PLAYERS.find((x) => x.id === pid), logs = LOGS.get(pid) ?? [], g = GAME_OF[p.team_abbr];
+    const manual = MANUAL.find((m) => !m.withdrawn && m.player_id === pid && m.market === `player_${stat}`);
+    const line = manual ? manual.line : (o.line ?? null);
+    const last10 = logs.slice(0, 10);
+    const sel = TODAY_SELECTIONS.find((s) => s.subject_id === pid && s.market === `player_${stat}`);
+    const has = logs.length > 0;
+    return { player_id: pid, player_name: p.name, headshot_url: HEAD[pid] ?? null, team_abbr: p.team_abbr, opp_abbr: OPP[p.team_abbr], game_id: g.game_id, game_label: g.game_label, market: `player_${stat}`, stat,
+      line, over_price: manual ? manual.over_price : (o.over ?? null), under_price: manual ? manual.under_price : (o.under ?? null), book: manual ? manual.book : (o.book ?? null), origin: manual ? manual.origin : (o.origin ?? null), quote_at: line == null ? null : iso(40),
+      l5: avg(logs.slice(0, 5), stat), l10: avg(last10, stat), l20: avg(logs.slice(0, 20), stat), season_avg: avg(logs, stat), n_games: logs.length,
+      hist_over: line == null || !has ? null : last10.filter((x) => statOf(x, stat) > line).length, hist_n: line == null || !has ? null : last10.length,
+      proj_min: has ? 33 : null, projection: has ? +(avg(last10, stat) * 1.02).toFixed(1) : null, p10: has ? +(avg(last10, stat) * 0.6).toFixed(1) : null, p90: has ? +(avg(last10, stat) * 1.45).toFixed(1) : null,
+      availability: pid === 9004 ? "Questionable" : "available", lineup_role: !has ? null : pid === 9002 ? "bench" : "starter", lineup_status: pid === 9005 ? "confirmed" : pid === 9003 ? "unknown" : "projected",
+      model_ready: stat !== "pra" && has, model_status: stat === "pra" ? "FIXTURE: candidate, not promoted" : has ? "production" : "FIXTURE: insufficient history",
+      selection: sel ? { id: sel.id, side: sel.side, classification: sel.classification, prob: sel.prob, prob_low: sel.prob_low, prob_high: sel.prob_high } : null, updated_at: has ? iso(38) : null };
+  };
+  const B = "FIXTUREBOOK";
+  const base = [
+    [9001, "pts", { line: 24.5, over: -105, under: -115, book: B, origin: "provider" }],
+    [9001, "ast", {}],
+    [9002, "reb", { line: 8.5, over: -118, under: 102, book: B, origin: "provider" }],
+    [9003, "ast", {}],
+    [9004, "fg3m", {}],
+    [9005, "pts", { line: 27.5, over: -112, under: -108, book: B, origin: "provider" }],
+    [9005, "pra", { line: 46.5, origin: "hypothetical" }],
+  ];
+  // a manual entry for a player/market that has no row yet adds one
+  const extra = MANUAL.filter((m) => !m.withdrawn && m.game_id !== "FIX-Y1" && GAME_OF[PLAYERS.find((x) => x.id === m.player_id)?.team_abbr] && !base.some(([i, k]) => i === m.player_id && `player_${k}` === m.market)).map((m) => [m.player_id, m.market.replace("player_", ""), {}]);
+  const seen = new Set();
+  return [...base, ...extra].filter(([i, k]) => !seen.has(`${i}:${k}`) && seen.add(`${i}:${k}`)).map(([i, k, o]) => mk(i, k, o));
+}
+function playerProps(q, gameId) {
+  let items = (q.get("date") && q.get("date") !== TODAY) ? [] : propRows();
+  const gid = gameId ?? q.get("game_id");
+  if (gid) items = items.filter((r) => r.game_id === gid);
+  if (q.get("team")) items = items.filter((r) => r.team_abbr === q.get("team"));
+  if (q.get("market")) items = items.filter((r) => r.market === q.get("market"));
+  if (q.get("q")) items = items.filter((r) => r.player_name.toLowerCase().includes(q.get("q").toLowerCase()));
+  if (q.get("quoted") === "true") items = items.filter((r) => r.origin !== null);
+  return { date: q.get("date") || TODAY, markets: PROP_MARKETS, quote_status: { provider_configured: true, message: "FIXTURE: provider quotes cover DET @ ORL and LAL @ DEN only." }, ...page(items, q) };
+}
+function createManual(body) {
+  const p = PLAYERS.find((x) => x.id === Number(body.player_id)), g = GAMES_TODAY.find((x) => x.id === body.game_id);
+  if (!p || !g || !PROP_MARKETS.some((m) => m.key === body.market) || typeof body.line !== "number" || !["owner_entered", "hypothetical"].includes(body.origin)) return { __status: 422, ...err("invalid", "FIXTURE: unknown game, player or market, or the line is not a number.") };
+  if (body.origin === "owner_entered" && body.over_price == null && body.under_price == null) return { __status: 422, ...err("invalid", "FIXTURE: an owner-entered quote needs at least one price.") };
+  const entry = { id: ++manualId, game_id: g.id, game_label: g.label, player_id: p.id, player_name: p.name, market: body.market, line: body.line, over_price: body.over_price ?? null, under_price: body.under_price ?? null, book: body.book ?? null, origin: body.origin, observed_at: body.observed_at ?? null, source_ref: body.source_ref ?? null, note: body.note ?? null, created_by: USER.email, created_at: new Date().toISOString(), withdrawn: false };
+  MANUAL.unshift(entry);
+  return { entry };
+}
+
+const lp = (pid, role, o = {}) => { const p = PLAYERS.find((x) => x.id === pid); return { player_id: pid, name: p.name, headshot_url: HEAD[pid] ?? null, jersey: JERSEY[pid] ?? null, position: p.position, role, availability: "available", injury_detail: null, proj_min: 33, recent_min: p.min, starts_last10: role === "starter" ? 10 : 3, ...o }; };
+const gen = (team, i, role, o = {}) => ({ player_id: null, name: `FIXTURE ${team} ${role === "starter" ? "S" : "R"}${i}`, headshot_url: null, jersey: String(10 + i), position: ["G", "G", "F", "F", "C"][i % 5], role, availability: "available", injury_detail: null, proj_min: role === "starter" ? 30 - i : 14, recent_min: role === "starter" ? 29.5 - i : null, starts_last10: role === "starter" ? 9 : 0, ...o });
+function teamLineup(abbr) {
+  const team = T[abbr];
+  const out = allGames().flatMap((g) => [...g.injuries.home, ...g.injuries.away]).filter((i) => i.team_abbr === abbr && /out|doubt/i.test(i.status)).map((i) => ({ player_id: null, name: i.player_name, headshot_url: null, jersey: null, position: null, role: "bench", availability: i.status, injury_detail: i.detail, proj_min: null, recent_min: null, starts_last10: null }));
+  const own = PLAYERS.filter((p) => p.team_abbr === abbr && p.games != null);
+  if (abbr === "BOS") return { team, status: "unknown", source: "FIXTURE: no basis", verified_at: null, note: "FIXTURE: no recent confirmed starting five is on record.", starters: [], bench: own.map((p) => lp(p.id, "bench", { proj_min: null })), unavailable: out };
+  const status = abbr === "DEN" || abbr === "CHI" || abbr === "MIA" ? "confirmed" : "projected";
+  const starters = [...own.filter((p) => p.id !== 9002).map((p) => lp(p.id, "starter")), ...[1, 2, 3, 4, 5].map((i) => gen(abbr, i, "starter"))].slice(0, 5);
+  if (abbr === "DET") starters[1] = { ...starters[1], name: "FIXTURE Player G", availability: "Questionable", injury_detail: "FIXTURE knee" };
+  return { team, status, source: status === "confirmed" ? "FIXTURE box score" : "FIXTURE projection (last confirmed five + injury report)", verified_at: status === "confirmed" ? iso(20) : iso(60), note: status === "confirmed" ? "FIXTURE: starters listed in the source box score." : "FIXTURE: projected by GIZER; not an official lineup.", starters, bench: [...own.filter((p) => p.id === 9002).map((p) => lp(p.id, "bench")), gen(abbr, 6, "bench"), gen(abbr, 7, "bench", { proj_min: null })], unavailable: out };
+}
+const gameLineups = (g) => ({ home: teamLineup(g.home.abbr), away: teamLineup(g.away.abbr) });
+
+const PROVIDERS = [
+  { provider: "FIXTURE-stats", name: "FIXTURE Stats Feed", categories: ["schedule", "box scores"], configured: true, credential: "not_required", status: "ok", last_success_at: iso(50), last_error_at: null, last_error: null, calls_this_month: 1840, quota_used: 1840, quota_limit: null, monthly_cost_usd: 0, limitations: ["FIXTURE: box scores arrive after the final buzzer."], setup: "FIXTURE: no credential needed." },
+  { provider: "FIXTURE-quotes", name: "FIXTURE Quotes API", categories: ["game quotes", "player props"], configured: true, credential: "present", status: "degraded", last_success_at: iso(40), last_error_at: iso(55), last_error: "FIXTURE: HTTP 429 from provider.", calls_this_month: 320, quota_used: 320, quota_limit: 500, monthly_cost_usd: 30, limitations: ["FIXTURE: free tier covers two books.", "FIXTURE: no historical lines."], setup: "FIXTURE: set FIXTURE_QUOTES_API_KEY in the server .env and restart the worker." },
+  { provider: "FIXTURE-lineups", name: "FIXTURE Lineups Feed", categories: ["starting lineups"], configured: false, credential: "missing", status: "not_configured", last_success_at: null, last_error_at: null, last_error: null, calls_this_month: 0, quota_used: 0, quota_limit: 1000, monthly_cost_usd: 0, limitations: [], setup: "FIXTURE: set FIXTURE_LINEUPS_API_KEY in the server .env." },
+];
+const strat = (key, label, kind, s) => ({ key, label, kind, ...zeroSummary(), ...s });
+const STRATEGIES = {
+  groups: [
+    strat("spread", "FIXTURE Spread", "market", { tickets: 14, settled: 13, wins: 7, losses: 6, hit_rate: 0.538, hit_rate_ci: [0.291, 0.768], avg_model_prob: 0.561, staked_units: 13, pnl_units: 0.37, roi: 0.028, roi_ci: [-0.4, 0.46], priced_tickets: 13, unresolved: 1 }),
+    strat("player_pts", "FIXTURE Player points", "market", { tickets: 9, settled: 8, wins: 5, losses: 3, hit_rate: 0.625, hit_rate_ci: null, avg_model_prob: 0.557, staked_units: 8, priced_tickets: 0, unresolved: 1 }),
+    strat("player_reb", "FIXTURE Player rebounds", "market", {}),
+    ...BY_ENGINE.map((e) => strat(e.engine.toLowerCase(), e.engine, "engine", e)).map(({ engine, ...r }) => r),
+    ...BY_STRUCTURE.map((e) => strat(e.structure.toLowerCase(), e.structure, "structure", e)).map(({ structure, ...r }) => r),
+  ],
+  forecast: [{ stat: "pts", n: 412, mae: 5.21, coverage_80: 0.78 }, { stat: "reb", n: 398, mae: 2.04, coverage_80: 0.81 }, { stat: "ast", n: 12, mae: null, coverage_80: null }],
+  disclaimer: "FIXTURE disclaimer: strategy results are simulated in virtual units. Groups with few settled records carry wide intervals.",
+};
+
 // ---------- handlers ----------
 const summaryNow = () => SUMMARY;
 
@@ -432,7 +609,11 @@ function commandCenter(date) {
     paper_performance: summaryNow(),
     agents: { ok: 1, failed: 1, never_run: 1 },
     findings: FINDINGS.map(({ finding_uid, hypothesis, status }) => ({ finding_uid, hypothesis, status })),
-    warnings: isToday ? ["FIXTURE: injury report is 190 minutes old (maximum 60)."] : [],
+    warnings: isToday ? ["FIXTURE: injury report is 190 minutes old (maximum 60).", "FIXTURE: provider 'FIXTURE-lineups' is not configured; lineups are projected, not official."] : [],
+    lineups_summary: isToday ? { confirmed: 1, projected: 4, unknown: 1 } : { confirmed: 2, projected: 0, unknown: 0 },
+    props_summary: isToday
+      ? { provider_configured: true, quoted_markets: propRows().filter((r) => r.origin).length, manual_entries: MANUAL.filter((m) => !m.withdrawn).length, players_projected: 4, message: "FIXTURE: quotes cover part of the slate; BOS @ NYK has no quoted player markets." }
+      : { provider_configured: false, quoted_markets: 0, manual_entries: 0, players_projected: 0, message: "FIXTURE: no player prop quotes were stored for this date. Enter a market manually to research it." },
   };
 }
 
@@ -440,14 +621,16 @@ function gameDetail(id) {
   const game = allGames().find((g) => g.id === id);
   if (!game) return null;
   const sels = [...SEL_BY_ID.values()].filter((s) => s.game_id === id);
-  const form = (i) => ({ games: 20 + i, wins: 11 - i, losses: 9 + i, off_rtg: 113.4 + i, def_rtg: 111.9 - i, pace: 98.2 + i, last10: i ? "6-4" : "4-6", rest_days: i ? 1 : null });
+  const form = (i) => ({ record: i ? "12-9" : "11-9", last_10: i ? "6-4" : "4-6", points_per_game: 112.4 + i, opp_points_per_game: 110.8 - i, off_rating: 113.4 + i, def_rating: i ? 110.9 : null, pace: 98.2 + i, last_10_points_per_game: 114.0 + i, last_10_opp_points_per_game: 111.2, games_in_sample: 20 + i });
   return {
     game,
-    team_form: { home: form(1), away: form(0) },
-    player_projections: sels.filter((s) => s.subject_type === "player").map((s) => ({
-      player_id: s.subject_id, player_name: s.subject_name, team_abbr: s.team_abbr, stat: s.market.replace("player_", ""),
-      mean: s.projection, p10: s.projection == null ? null : +(s.projection * 0.62).toFixed(1), p50: s.projection == null ? null : +(s.projection * 0.98).toFixed(1), p90: s.projection == null ? null : +(s.projection * 1.41).toFixed(1),
-    })),
+    team_form: id === "FIX-G2" ? { home: {}, away: {} } : { home: form(1), away: form(0) },
+    player_projections: sels.filter((s) => s.subject_type === "player" && s.projection != null).flatMap((s) => {
+      const base = { player_id: s.subject_id, player_name: s.subject_name, team_abbr: s.team_abbr, proj_min: 33, n_games: s.sample_size ?? 0, injury_status: s.subject_id === 9001 ? null : s.subject_id === 9002 ? "Questionable" : null };
+      const k = s.market.replace("player_", "");
+      const mk = (stat, mean) => ({ ...base, stat, mean: +mean.toFixed(1), p10: +(mean * 0.62).toFixed(1), p50: +(mean * 0.98).toFixed(1), p90: +(mean * 1.41).toFixed(1) });
+      return [mk(k, s.projection), ...(k === "pts" ? [mk("reb", 5.1), mk("ast", 7.2)] : [])];
+    }),
     selections: sels,
     sgp: id === "FIX-G1" ? [C.s1] : [],
     h2h: id === "FIX-G2" ? [] : [
@@ -461,7 +644,7 @@ function gameDetail(id) {
 
 function evaluate(ids) {
   const sels = ids.map((id) => SEL_BY_ID.get(id)).filter(Boolean);
-  if (sels.length < 2) return null;
+  if (sels.length < 1) return null;
   const warnings = [];
   const unqualified = sels.filter((s) => !["standard", "high_confidence"].includes(s.classification) || s.invalidated);
   if (unqualified.length) warnings.push(`FIXTURE: ${unqualified.length} leg(s) are not qualified selections.`);
@@ -540,8 +723,11 @@ function playerDetail(id) {
   }));
   const split = (label, g, k) => ({ label, games: g, min: p.min, pts: p.pts == null ? null : +(p.pts * k).toFixed(1), reb: p.reb, ast: p.ast, fg3m: p.fg3m, stl: 1.1, blk: 0.4, tov: label === "Away" ? null : 2.6 });
   return {
-    player: { id: p.id, name: p.name, team_abbr: p.team_abbr, position: p.position },
-    sample: { games: p.games ?? 0 },
+    player: playerRef(p),
+    next_game: (() => { const g = GAMES_TODAY.find((x) => x.home.abbr === p.team_abbr || x.away.abbr === p.team_abbr); return g ? { game_id: g.id, label: g.label, date: g.date, tipoff_utc: g.tipoff_utc, opp_abbr: g.home.abbr === p.team_abbr ? g.away.abbr : g.home.abbr, is_home: g.home.abbr === p.team_abbr } : null; })(),
+    lineup: p.games == null ? null : { role: p.id === 9002 ? "bench" : "starter", status: p.id === 9005 ? "confirmed" : "projected" },
+    markets: propRows().filter((r) => r.player_id === p.id),
+    sample: { games: (LOGS.get(p.id) ?? []).length },
     splits: p.games == null ? [] : [split("Season", p.games, 1), split("Last 10", 10, 1.04), split("Home", Math.ceil(p.games / 2), 1.02), split("Away", Math.floor(p.games / 2), 0.98)],
     game_log: games,
     projections: p.games == null ? [] : [{ stat: "pts", mean: p.pts + 0.9, p10: +(p.pts * 0.6).toFixed(1), p50: p.pts + 0.4, p90: +(p.pts * 1.45).toFixed(1), game_label: "DET @ ORL", model_version: "FIXTURE-props-gbm 0.3.1", created_at: iso(45) }, { stat: "reb", mean: null, p10: null, p50: null, p90: null, game_label: "DET @ ORL", model_version: "FIXTURE-props-gbm 0.3.1", created_at: iso(45) }],
@@ -573,6 +759,31 @@ function route(method, path, q, body) {
   if (method === "GET") {
     if (path === "/command-center") return commandCenter(date);
     if (path === "/games") return { date, games: GAMES[date] ?? [] };
+    {
+      const m = path.match(/^\/games\/([^/]+)\/(player-props|lineups|lineup-history)$/);
+      if (m) {
+        const g = allGames().find((x) => x.id === decodeURIComponent(m[1]));
+        if (!g) return { __status: 404, ...err("not_found", "FIXTURE: game not found.") };
+        if (m[2] === "player-props") return playerProps(q, g.id);
+        if (m[2] === "lineups") return { game_id: g.id, ...gameLineups(g) };
+        return { items: g.id === "FIX-G2" ? [] : [{ at: iso(60), team_abbr: g.away.abbr, status: "projected", change: "FIXTURE: projection created from the last confirmed five.", source: "FIXTURE projection" }, { at: iso(20), team_abbr: g.home.abbr, status: g.lineup.home.status, change: "FIXTURE: FIXTURE Player F removed after the injury report.", source: "FIXTURE injury feed" }] };
+      }
+      const pm = path.match(/^\/players\/(\d+)\/(averages|game-logs|threshold|splits)$/);
+      if (pm) {
+        const id = pm[1];
+        if (!PLAYERS.some((p) => String(p.id) === id)) return { __status: 404, ...err("not_found", "FIXTURE: player not found.") };
+        if (pm[2] === "averages") return averages(id);
+        if (pm[2] === "threshold") return threshold(id, q);
+        if (pm[2] === "splits") return splits(id);
+        const rows = filterLogs(id, { venue: q.get("venue"), role: q.get("role"), opponent: q.get("opponent") });
+        return { ...page(rows, q), missed: rows.length ? [{ date: shift(TODAY, -8), opp_abbr: "MIA", reason: "FIXTURE: injury (ankle)" }, { date: shift(TODAY, -22), opp_abbr: "CHI", reason: "FIXTURE: rest" }] : [], source: "FIXTURE box scores" };
+      }
+    }
+    if (path === "/player-props") return playerProps(q);
+    if (path === "/player-props/manual") return { items: date === TODAY ? MANUAL : [] };
+    if (path === "/lineups") return { date, games: (GAMES[date] ?? []).map((g) => ({ game: { id: g.id, label: g.label, tipoff_utc: g.tipoff_utc, status: g.status, home: g.home, away: g.away }, ...gameLineups(g) })) };
+    if (path === "/data-health/providers") return { items: PROVIDERS };
+    if (path === "/performance/strategies") return STRATEGIES;
     if (path.startsWith("/games/")) return gameDetail(decodeURIComponent(path.slice(7))) ?? { __status: 404, ...err("not_found", "FIXTURE: game not found.") };
     if (path === "/selections") {
       const eds = EDITIONS[date] ?? [];
@@ -659,6 +870,16 @@ function route(method, path, q, body) {
       return out ?? { __status: 422, ...err("invalid", "FIXTURE: at least two known selection_ids are required.") };
     }
     if (path === "/paper/tickets") { const r = saveTicket(body); return { __status: r.status, ...r.body }; }
+    if (path === "/player-props/manual") return createManual(body);
+    {
+      const m = path.match(/^\/player-props\/manual\/(\d+)\/withdraw$/);
+      if (m) {
+        const e = MANUAL.find((x) => x.id === Number(m[1]));
+        if (!e) return { __status: 404, ...err("not_found", "FIXTURE: manual entry not found.") };
+        e.withdrawn = true;
+        return { ok: true };
+      }
+    }
     if (path === "/operations/pause") { operations.paused = Boolean(body.paused); return { paused: operations.paused }; }
     if (path === "/auth/logout") return { ok: true };
   }

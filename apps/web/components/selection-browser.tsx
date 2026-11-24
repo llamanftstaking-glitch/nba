@@ -66,7 +66,7 @@ export function SelectionBrowser({
           ) : undefined
         }
       />
-      <div className="mb-3 grid grid-cols-2 gap-2 rounded border border-line bg-panel p-2 sm:grid-cols-3 lg:max-w-2xl">
+      <div className="mb-3 grid grid-cols-2 gap-2 rounded-lg bg-card ring-1 ring-inset ring-line/60 p-2 sm:grid-cols-3 lg:max-w-2xl">
         <Field label="Show">
           <Select value={scope} onChange={(e) => setScope(e.target.value as "qualified" | "all")}>
             <option value="qualified">Qualified only</option>

@@ -1,4 +1,16 @@
 import type {
+  AveragesResponse,
+  GameLineups,
+  GameLogsResponse,
+  LineupHistory,
+  LineupsResponse,
+  ManualEntry,
+  ManualEntryBody,
+  PlayerPropsResponse,
+  ProviderInfo,
+  SplitsResponse,
+  StrategiesResponse,
+  Threshold,
   AgentItem,
   AuthResponse,
   BacktestItem,
@@ -145,6 +157,10 @@ export type TicketFilters = {
   offset?: number;
 };
 
+export type GameLogFilters = { season?: string; venue?: string; role?: string; opponent?: string; limit?: number; offset?: number };
+export type ThresholdParams = { stat: string; line: number; window: string; venue?: string; role?: string };
+export type PropFilters = { date?: string; game_id?: string; team?: string; market?: string; q?: string; quoted?: boolean; limit?: number; offset?: number };
+
 export type SaveTicketBody = { combo_uid?: string; selection_ids?: number[]; stake_units?: number };
 
 export const api = {
@@ -193,4 +209,20 @@ export const api = {
   operations: () => get<Operations>("/operations"),
   setPaused: (paused: boolean) => post<{ paused: boolean }>("/operations/pause", { paused }),
   settings: () => get<SettingsResponse>("/settings"),
+
+  // V3 — player intelligence, props, lineups
+  playerAverages: (id: string | number) => get<AveragesResponse>(`/players/${id}/averages`),
+  playerGameLogs: (id: string | number, p: GameLogFilters) => get<GameLogsResponse>(`/players/${id}/game-logs`, p),
+  playerThreshold: (id: string | number, p: ThresholdParams) => get<Threshold>(`/players/${id}/threshold`, p),
+  playerSplits: (id: string | number) => get<SplitsResponse>(`/players/${id}/splits`),
+  playerProps: (p: PropFilters) => get<PlayerPropsResponse>("/player-props", p),
+  gamePlayerProps: (gameId: string) => get<PlayerPropsResponse>(`/games/${encodeURIComponent(gameId)}/player-props`),
+  manualEntries: (date?: string) => get<{ items: ManualEntry[] }>("/player-props/manual", { date }),
+  createManualEntry: (body: ManualEntryBody) => post<{ entry: ManualEntry }>("/player-props/manual", body),
+  withdrawManualEntry: (id: number) => post<{ ok: boolean }>(`/player-props/manual/${id}/withdraw`),
+  lineups: (date?: string) => get<LineupsResponse>("/lineups", { date }),
+  gameLineups: (gameId: string) => get<GameLineups>(`/games/${encodeURIComponent(gameId)}/lineups`),
+  lineupHistory: (gameId: string) => get<LineupHistory>(`/games/${encodeURIComponent(gameId)}/lineup-history`),
+  providers: () => get<{ items: ProviderInfo[] }>("/data-health/providers"),
+  strategies: () => get<StrategiesResponse>("/performance/strategies"),
 };

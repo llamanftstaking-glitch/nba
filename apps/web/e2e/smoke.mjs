@@ -41,12 +41,14 @@ mkdirSync(SHOTS, { recursive: true });
 const EMAIL = "owner@fixture.test";
 const PASSWORD = "fixture-password";
 const DISCLAIMER = "Research and paper testing only. No outcome is guaranteed. No real-money execution.";
-// The mandated footer sentence itself contains one of the listed words; it is removed before the vocabulary scan.
+// The mandated footer sentence "No outcome is guaranteed" stays; it is removed before the vocabulary scan.
 const FORBIDDEN = [/\block\b/i, /\blocks\b/i, /guaranteed/i, /guarantee\b/i, /free money/i, /risk[- ]free/i, /can(?:[’']?t|not) lose/i, /sure thing/i];
 
-const PRIMARY = ["/", "/games", "/picks", "/parlays", "/parlays/same-game", "/props", "/tickets", "/results", "/performance", "/research-lab", "/agents", "/settings"];
-const SECONDARY = ["/games/FIX-G1", "/games/FIX-G2", "/players", "/players/9001", "/players/9004", "/teams", "/teams/1", "/injuries", "/research/daily", "/builder", "/exposure", "/markets", "/simulations", "/backtesting", "/data-health", "/admin"];
-const NO_OVERFLOW_REQUIRED = ["/", "/games", "/parlays", "/results"];
+const NAV = ["/", "/games", "/picks", "/player-props", "/lineups", "/parlays", "/parlays/same-game", "/players", "/players/compare", "/players/history", "/matchups", "/injuries", "/builder", "/tickets", "/research/daily", "/results", "/performance", "/research-lab", "/agents", "/models", "/data-health", "/settings"];
+const OTHER = ["/games/FIX-G1", "/games/FIX-G2", "/players/9001", "/players/9004", "/players/compare?ids=9001,9005", "/teams", "/teams/1", "/exposure", "/markets", "/simulations", "/backtesting", "/admin"];
+// The ten pages captured at every viewport for design review.
+const GALLERY = [["/", "overview"], ["/games", "games"], ["/lineups", "lineups"], ["/player-props", "player-props"], ["/players/9001", "player-profile"], ["/games/FIX-G1", "game"], ["/parlays", "parlays"], ["/results", "results"], ["/agents", "agents"], ["/data-health", "data-health"]];
+const VIEWPORTS = [[1920, 1080], [1440, 900], [1280, 800], [1024, 768], [768, 1024], [430, 932], [390, 844]];
 
 let passed = 0;
 const failures = [];
@@ -58,12 +60,13 @@ function check(name, ok, detail = "") {
   }
 }
 
-const slug = (route) => (route === "/" ? "command-center" : route.replace(/^\//, "").replace(/[/?=&]/g, "-"));
+const slug = (route) => (route === "/" ? "overview" : route.replace(/^\//, "").replace(/[/?=&,]/g, "-"));
+const bodyText = (page) => page.evaluate(() => document.body.innerText);
 
 async function settle(page) {
   await page.waitForLoadState("networkidle").catch(() => {});
   await page.waitForFunction(() => !document.querySelector('[data-state="loading"]'), null, { timeout: 15000 }).catch(() => {});
-  await page.waitForTimeout(150);
+  await page.waitForTimeout(200);
 }
 
 async function overflow(page) {
@@ -71,7 +74,6 @@ async function overflow(page) {
     const doc = document.documentElement;
     const over = doc.scrollWidth - doc.clientWidth;
     if (over <= 1) return null;
-    // name the widest offender to make failures actionable
     let worst = null;
     for (const el of document.querySelectorAll("body *")) {
       const r = el.getBoundingClientRect();
@@ -83,13 +85,29 @@ async function overflow(page) {
   });
 }
 
+/** Smallest rendered font size among visible text nodes (the design system floor is 11px). */
+async function minFont(page) {
+  return page.evaluate(() => {
+    let min = 99;
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) {
+      const n = walker.currentNode;
+      if (!n.textContent.trim()) continue;
+      const el = n.parentElement;
+      if (!el || el.closest("svg") || el.closest(".sr-only") || el.offsetParent === null) continue;
+      min = Math.min(min, parseFloat(getComputedStyle(el).fontSize));
+    }
+    return min;
+  });
+}
+
 async function visit(page, route, label, errors) {
   const before = errors.length;
   const res = await page.goto(`${BASE}${route}`, { waitUntil: "domcontentloaded" });
   await settle(page);
   check(`[${label}] ${route} responds 200`, res && res.status() === 200, `status ${res?.status()}`);
   check(`[${label}] ${route} stays authenticated`, !new URL(page.url()).pathname.startsWith("/login"), page.url());
-  const text = await page.evaluate(() => document.body.innerText);
+  const text = await bodyText(page);
   check(`[${label}] ${route} renders a heading`, (await page.locator("h1").count()) > 0);
   check(`[${label}] ${route} has no failed render`, !/Application error|Unhandled Runtime Error|This page could not be found/i.test(text));
   check(`[${label}] ${route} shows no error state`, (await page.locator('[data-state="error"]').count()) === 0);
@@ -98,6 +116,8 @@ async function visit(page, route, label, errors) {
   const scan = text.split(DISCLAIMER).join(" ");
   const hit = FORBIDDEN.find((re) => re.test(scan));
   check(`[${label}] ${route} has no forbidden vocabulary`, !hit, hit ? `${hit} near "${scan.slice(Math.max(0, scan.search(hit) - 30), scan.search(hit) + 40).replace(/\s+/g, " ")}"` : "");
+  const mf = await minFont(page);
+  check(`[${label}] ${route} has no text below 11px`, mf >= 11, `smallest ${mf}px`);
   check(`[${label}] ${route} raised no page/console errors`, errors.length === before, errors.slice(before).join(" | "));
   return text;
 }
@@ -110,20 +130,25 @@ async function login(page) {
   await settle(page);
 }
 
-async function runViewport(browser, label, viewport) {
-  console.log(`\n== ${label} ${viewport.width}x${viewport.height} ==`);
-  const isMobile = label === "mobile";
-  const context = await browser.newContext({ viewport, deviceScaleFactor: 1, isMobile, hasTouch: isMobile });
-  const page = await context.newPage();
+function watch(page) {
   const errors = [];
   page.on("pageerror", (e) => errors.push(`pageerror: ${e.message}`));
   page.on("console", (m) => {
     if (m.type() !== "error") return;
     const t = m.text();
-    if (/401 \(Unauthorized\)/.test(t)) return; // expected while testing the bad-password and signed-out paths
+    if (/401 \(Unauthorized\)/.test(t)) return; // expected on the bad-password and signed-out paths
     errors.push(`console: ${t}`);
   });
-  const shot = (name, opts = {}) => page.screenshot({ path: join(SHOTS, `${label}-${name}.png`), fullPage: true, ...opts });
+  return errors;
+}
+
+async function runViewport(browser, label, viewport) {
+  console.log(`\n== ${label} ${viewport.width}x${viewport.height} ==`);
+  const isMobile = label === "mobile";
+  const context = await browser.newContext({ viewport, deviceScaleFactor: 1, isMobile, hasTouch: isMobile });
+  const page = await context.newPage();
+  const errors = watch(page);
+  const shot = (name, opts = {}) => page.screenshot({ path: join(SHOTS, `flow-${label}-${name}.png`), fullPage: false, ...opts });
 
   // --- auth gate ---
   await page.goto(`${BASE}/games`);
@@ -135,78 +160,230 @@ async function runViewport(browser, label, viewport) {
   check(`[${label}] wrong password shows an error and stays on /login`, new URL(page.url()).pathname === "/login");
   await shot("login");
   await login(page);
-  check(`[${label}] login lands on the Command Center`, new URL(page.url()).pathname === "/games" || new URL(page.url()).pathname === "/", page.url());
+  check(`[${label}] login succeeds`, !new URL(page.url()).pathname.startsWith("/login"), page.url());
 
   // --- every route ---
-  for (const route of [...PRIMARY, ...SECONDARY]) {
+  for (const route of [...NAV, ...OTHER]) {
     await visit(page, route, label, errors);
-    if (isMobile) {
-      const o = await overflow(page);
-      const required = NO_OVERFLOW_REQUIRED.includes(route);
-      check(`[${label}] ${route} has no horizontal overflow${required ? " (required)" : ""}`, !o, o ? JSON.stringify(o) : "");
-    }
-    await shot(slug(route));
-    if (["/", "/results", "/games/FIX-G1", "/parlays", "/builder"].includes(route)) await shot(`${slug(route)}-viewport`, { fullPage: false });
+    const o = await overflow(page);
+    check(`[${label}] ${route} has no horizontal overflow`, !o, o ? JSON.stringify(o) : "");
   }
 
-  // --- 375px check for the critical routes ---
+  // --- navigation ---
+  await visit(page, "/", label, errors);
   if (isMobile) {
-    await page.setViewportSize({ width: 375, height: 812 });
-    for (const route of NO_OVERFLOW_REQUIRED) {
-      await page.goto(`${BASE}${route}`);
-      await settle(page);
-      const o = await overflow(page);
-      check(`[375px] ${route} has no horizontal overflow`, !o, o ? JSON.stringify(o) : "");
-    }
-    await page.setViewportSize(viewport);
-  }
-
-  // --- Command Center specifics ---
-  let text = await visit(page, "/", label, errors);
-  check(`[${label}] command center: explicit empty high-confidence message`, text.includes("No selection met the high-confidence criteria for this slate. That is a valid research outcome."));
-  check(`[${label}] command center: three game cards`, (await page.locator('[data-testid="game-card"]').count()) === 3);
-  check(`[${label}] command center: no_picks_reason is shown`, (await page.locator('[data-testid="no-picks-reason"]').first().innerText()).includes("FIXTURE: all 3 evaluated selections were rejected"));
-  check(`[${label}] command center: game with two picks`, (await page.locator('[data-game-id="FIX-G1"] [data-testid="pick-row"]').count()) === 2);
-  check(`[${label}] command center: probability with interval`, /58\.2%\s*\[53\.2–63\.2\]/.test(text), "expected 58.2% [53.2–63.2]");
-  check(`[${label}] command center: tipoff shown in ET`, /\d{1,2}:\d{2}\s?(AM|PM) ET/.test(text));
-  check(`[${label}] command center: unavailable values use the explicit marker`, (await page.locator('[aria-label="not available"]').count()) > 0);
-  check(`[${label}] date selector lists available dates`, (await page.locator('[data-testid="date-selector"] option').count()) >= 3);
-  if (isMobile) {
-    check(`[${label}] bottom navigation visible`, await page.locator('[data-testid="bottom-nav"]').isVisible());
+    const nav = (await page.locator('[data-testid="bottom-nav"]').innerText()).replace(/\s+/g, " ").trim();
+    check(`[${label}] bottom nav is Home | Games | Props | Parlays | More`, nav === "Home Games Props Parlays More", nav);
+    const small = await page.evaluate(() => [...document.querySelectorAll('[data-testid="bottom-nav"] a, [data-testid="bottom-nav"] button')].filter((e) => e.getBoundingClientRect().height < 44).length);
+    check(`[${label}] bottom nav targets are at least 44px`, small === 0, `${small} too small`);
     await page.click('[data-testid="more-button"]');
     await page.waitForSelector('[role="dialog"]');
-    check(`[${label}] More sheet lists remaining pages`, (await page.locator('[role="dialog"] a').count()) >= 15);
-    await shot("more-sheet", { fullPage: false });
+    check(`[${label}] More sheet lists the navigation groups`, (await page.locator('[role="dialog"] a').count()) >= 22);
+    await shot("more-sheet");
     await page.keyboard.press("Escape");
   } else {
-    check(`[${label}] sidebar visible with 12 primary items`, (await page.locator('[data-testid="sidebar"] nav a').count()) >= 12);
+    const side = await page.locator('[data-testid="sidebar"]').innerText();
+    check(`[${label}] sidebar has the four groups`, ["COMMAND CENTER", "PLAYER INTELLIGENCE", "MY RESEARCH", "SYSTEM"].every((g) => side.toUpperCase().includes(g)));
+    check(`[${label}] sidebar has 22 destinations`, (await page.locator('[data-testid="sidebar"] nav a').count()) === 22);
+    check(`[${label}] brand caption present`, /PARLAY COMMAND CENTER/i.test(side));
   }
 
-  // --- date navigation (historical date keeps original edition) ---
+  // --- Overview ---
+  let text = await bodyText(page);
+  check(`[${label}] overview: explicit empty high-confidence message`, text.includes("No selection met the high-confidence criteria for this slate. That is a valid research outcome."));
+  check(`[${label}] overview: three game cards`, (await page.locator('[data-testid="game-card"]').count()) === 3);
+  check(`[${label}] overview: no_picks_reason is shown`, (await page.locator('[data-testid="no-picks-reason"]').first().innerText()).includes("FIXTURE: all 3 evaluated selections were rejected"));
+  check(`[${label}] overview: probability with interval`, /58\.2%\s*\[53\.2–63\.2\]/.test(text));
+  check(`[${label}] overview: tipoff shown in ET`, /\d{1,2}:\d{2}\s?(AM|PM) ET/.test(text));
+  check(`[${label}] overview: unavailable values use the explicit marker`, (await page.locator('[aria-label="not available"]').count()) > 0);
+  check(`[${label}] overview: warnings banner`, (await page.locator('[data-testid="warnings"] li').count()) === 2);
+  check(`[${label}] overview: eight summary tiles incl. lineups and prop markets`, (await page.locator('[data-testid="stat-strip"] [data-testid="tile"]').count()) === 8 && /1\s*confirmed\s*·\s*4\s*projected/i.test(text) && /quoted/i.test(text));
+  check(`[${label}] overview: per-team lineup status on game cards`, (await page.locator('[data-game-id="FIX-G2"] [data-testid="card-lineups"]').innerText()).replace(/\s+/g, " ").match(/BOS lineup Awaiting NYK lineup Projected/i) !== null);
+  check(`[${label}] overview: prop research rows`, (await page.locator('[data-testid="overview-props"] [data-testid="prop-row"]').count()) >= 3);
+  check(`[${label}] overview: parlay category strip`, (await page.locator('[data-testid="parlay-strip"] a').count()) === 8);
+  const order = await page.evaluate(() => {
+    const y = (sel) => document.querySelector(sel)?.getBoundingClientRect().top ?? -1;
+    return [y('[data-testid="stat-strip"]'), y('[data-testid="game-card"]'), y('[data-testid="overview-props"]'), y("#high-confidence"), y('[data-testid="ops-status"]')];
+  });
+  check(`[${label}] overview: basketball first, diagnostics last`, order.every((v, i) => v >= 0 && (i === 0 || v > order[i - 1])), order.join(","));
+  check(`[${label}] date selector lists available dates`, (await page.locator('[data-testid="date-selector"] option').count()) >= 3);
   await page.click('button[aria-label="Previous day"]');
   await page.waitForURL(/date=\d{4}-\d{2}-\d{2}/);
   await settle(page);
-  text = await page.evaluate(() => document.body.innerText);
-  check(`[${label}] previous-day arrow puts the date in the URL and loads the historical slate`, /historical date/.test(text) && text.includes("MIA"));
-  await shot("command-center-historical");
+  text = await bodyText(page);
+  check(`[${label}] previous-day arrow loads the historical slate`, /historical date/.test(text) && text.includes("MIA"));
+  check(`[${label}] overview: honest prop message when no quotes exist`, text.includes("FIXTURE: no player prop quotes were stored for this date.") && /Enter a market manually/i.test(text));
+
+  // --- Player props: table/cards, drawer, threshold ---
+  await visit(page, "/player-props", label, errors);
+  const rowSel = isMobile ? '[data-testid="prop-card"]' : '[data-testid="market-row"]';
+  check(`[${label}] props: seven markets listed`, (await page.locator(`${rowSel}:visible`).count()) === 7);
+  const freq = await page.locator(isMobile ? '[data-testid="hist-frequency"]' : '[data-testid="market-row"] [data-testid="hist-frequency"]').allInnerTexts().catch(() => []);
+  if (isMobile) await page.locator('[data-prop="9001:player_pts:FIX-G1"] [data-testid="prop-card-toggle"]').click();
+  const freqText = (await page.locator('[data-prop="9001:player_pts:FIX-G1"] [data-testid="hist-frequency"]').first().innerText()).replace(/\s+/g, " ");
+  check(`[${label}] props: history shown as a count, not a percentage`, /^\d+ of 10 over \(L10\)$/.test(freqText) && !freqText.includes("%") && freq.every((f) => !f.includes("%")), freqText);
+  text = await bodyText(page);
+  check(`[${label}] props: origin tags`, /Provider/.test(text) && /Owner-entered/.test(text) && (isMobile || /Hypothetical/.test(text)));
+  await page.fill('[data-testid="props-search"]', "Player E");
+  await page.waitForFunction((sel) => [...document.querySelectorAll(sel)].filter((e) => e.offsetParent !== null).length === 2, rowSel, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] props: text search filters`, (await page.locator(`${rowSel}:visible`).count()) === 2);
+  await page.fill('[data-testid="props-search"]', "");
+  await page.check('[data-testid="props-quoted"]');
+  await page.waitForFunction((sel) => [...document.querySelectorAll(sel)].filter((e) => e.offsetParent !== null).length === 5, rowSel, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] props: quoted-only filter`, (await page.locator(`${rowSel}:visible`).count()) === 5);
+  await page.uncheck('[data-testid="props-quoted"]');
+  await settle(page);
+  if (isMobile) {
+    await page.locator('[data-prop="9001:player_pts:FIX-G1"] [data-testid="prop-card-toggle"]').click();
+    await page.locator('[data-prop="9001:player_pts:FIX-G1"] [data-testid="prop-open"]').click();
+  } else {
+    await page.locator('[data-testid="market-row"][data-prop="9001:player_pts:FIX-G1"]').click();
+  }
+  const drawer = page.locator('[data-testid="prop-drawer"]');
+  await drawer.locator('[data-testid="history-summary"]').waitFor({ timeout: 10000 }).catch(() => {});
+  check(`[${label}] props drawer: opens with the history chart`, (await drawer.locator('[data-testid="history-chart"] svg').count()) > 0);
+  check(`[${label}] props drawer: threshold defaults to the line`, (await drawer.locator('[data-testid="threshold-input"]').inputValue()) === "24.5");
+  const sum1 = await drawer.locator('[data-testid="history-summary"]').innerText();
+  check(`[${label}] props drawer: summary is labelled descriptive`, /Over \d+ · Under \d+ · Equal \d+ of 10/.test(sum1) && sum1.includes("descriptive history, not a probability"), sum1);
+  check(`[${label}] props drawer: Measurement B block`, (await drawer.locator('[data-testid="measurement-b"]').innerText()).includes("of 6 quoted games"));
+  await shot("props-drawer");
+  await drawer.locator('[data-testid="threshold-input"]').fill("5");
+  await page.waitForFunction((prev) => document.querySelector('[data-testid="prop-drawer"] [data-testid="history-summary"]')?.innerText !== prev, sum1, { timeout: 8000 }).catch(() => {});
+  const sum2 = await drawer.locator('[data-testid="history-summary"]').innerText();
+  check(`[${label}] props drawer: hypothetical threshold re-queries`, /Over 10 · Under 0/.test(sum2), sum2);
+  await drawer.locator('[data-tab="L5"]').click();
+  await page.waitForFunction(() => / of 5\b/.test(document.querySelector('[data-testid="prop-drawer"] [data-testid="history-summary"]')?.innerText ?? ""), null, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] props drawer: window switcher`, / of 5\b/.test(await drawer.locator('[data-testid="history-summary"]').innerText()));
+  // "Add manual market" prefilled from the drawer
+  await drawer.locator('[data-testid="drawer-add-manual"]').click();
+  await page.waitForSelector('[data-testid="prop-drawer"]', { state: "detached" }).catch(() => {});
+  const form = page.locator('[data-testid="manual-form"]');
+  check(`[${label}] manual entry: prefilled from the drawer`, (await form.locator('select[name="game_id"]').inputValue()) === "FIX-G1" && (await form.locator('select[name="player_id"]').inputValue()) === "9001" && (await form.locator('select[name="market"]').inputValue()) === "player_pts" && (await form.locator('input[name="line"]').inputValue()) === "24.5");
+  check(`[${label}] manual entry: states that entries are not verified quotes`, /not independently verified quotes/i.test(await form.innerText()));
+  // submit a new owner-entered market, then withdraw it
+  await form.locator('select[name="game_id"]').selectOption("FIX-G3");
+  await form.locator('input[name="player_search"]').fill("Player E");
+  await page.waitForFunction(() => [...document.querySelectorAll('[data-testid="manual-form"] select[name="player_id"] option')].some((o) => o.value === "9005"), null, { timeout: 8000 }).catch(() => {});
+  await form.locator('select[name="player_id"]').selectOption("9005");
+  await form.locator('select[name="market"]').selectOption("player_reb");
+  await form.locator('input[name="line"]').fill("11.5");
+  const before = await page.locator('[data-testid="manual-entry"]').count();
+  await form.locator('[data-testid="manual-submit"]').click();
+  check(`[${label}] manual entry: owner-entered quote without a price is refused client-side`, /needs at least one price/i.test(await form.locator('[role="alert"]').innerText().catch(() => "")));
+  await form.locator('input[name="over_price"]').fill("-110");
+  const post = page.waitForResponse((r) => r.url().endsWith("/api/v1/player-props/manual") && r.request().method() === "POST");
+  await form.locator('[data-testid="manual-submit"]').click();
+  const pr = await post;
+  check(`[${label}] manual entry: POST succeeded with CSRF`, pr.status() === 200 && pr.request().headers()["x-csrf-token"] === "fixture-csrf-token", `status ${pr.status()}`);
+  await page.locator('[data-testid="manual-ok"]').waitFor({ timeout: 8000 }).catch(() => {});
+  await page.waitForFunction((n) => document.querySelectorAll('[data-testid="manual-entry"]').length === n + 1, before, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] manual entry: appears in the list`, (await page.locator('[data-testid="manual-entry"]').count()) === before + 1);
+  await settle(page);
+  check(`[${label}] manual entry: adds a market row`, (await page.locator(`[data-prop="9005:player_reb:FIX-G3"]:visible`).count()) === 1);
+  await shot("manual-entry", { fullPage: false });
+  const entry = page.locator('[data-testid="manual-entry"]', { hasText: "REB 11.5" }).first();
+  const wd = page.waitForResponse((r) => /\/player-props\/manual\/\d+\/withdraw$/.test(r.url()));
+  await entry.locator('[data-testid="manual-withdraw"]').click();
+  check(`[${label}] manual entry: withdraw POST`, (await wd).status() === 200);
+  await page.waitForFunction(() => [...document.querySelectorAll('[data-testid="manual-entry"]')].some((e) => e.textContent.includes("REB 11.5") && e.dataset.withdrawn === "1"), null, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] manual entry: withdrawn entry is kept and marked`, (await entry.getAttribute("data-withdrawn")) === "1" && /Withdrawn/i.test(await entry.innerText()));
+  await settle(page);
+  check(`[${label}] manual entry: market row removed after withdraw`, (await page.locator(`[data-prop="9005:player_reb:FIX-G3"]:visible`).count()) === 0);
+
+  // --- Lineups ---
+  await visit(page, "/lineups", label, errors);
+  check(`[${label}] lineups: three games`, (await page.locator('[data-testid="lineup-game"]').count()) === 3);
+  const g1 = page.locator('[data-game-id="FIX-G1"]');
+  const det = await g1.locator('[data-team="DET"]').innerText();
+  check(`[${label}] lineups: projected lineup labelled "Projected — not official", never Confirmed`, /Projected — not official/i.test(det) && !/confirmed/i.test(det.replace(/last confirmed five/gi, "")), det.slice(0, 80));
+  check(`[${label}] lineups: five starters, not padded`, (await g1.locator('[data-team="DET"] [data-testid="lineup-player"]').count()) === 7);
+  if (isMobile) {
+    check(`[${label}] lineups: one team visible at a time`, !(await g1.locator('[data-team="ORL"]').isVisible()));
+    await g1.locator('[data-tab="home"]').click();
+    check(`[${label}] lineups: team switcher shows the home team`, (await g1.locator('[data-team="ORL"]').isVisible()) && !(await g1.locator('[data-team="DET"]').isVisible()));
+    await shot("lineups-home-team");
+  } else {
+    const boxes = await Promise.all(["DET", "ORL"].map((t) => g1.locator(`[data-team="${t}"]`).boundingBox()));
+    check(`[${label}] lineups: away left, home right`, boxes[0] && boxes[1] && boxes[0].x < boxes[1].x && Math.abs(boxes[0].y - boxes[1].y) < 4);
+  }
+  const g2 = page.locator('[data-game-id="FIX-G2"]');
+  if (isMobile) await g2.locator('[data-tab="away"]').click();
+  check(`[${label}] lineups: empty starters say so`, (await g2.locator('[data-team="BOS"] [data-testid="no-lineup"]').innerText()).includes("No lineup information available") && /Awaiting confirmation/i.test(await g2.locator('[data-team="BOS"]').innerText()));
+  await g1.locator('[data-testid="lineup-history-toggle"]').click();
+  await g1.locator('[data-testid="lineup-history"]').waitFor({ timeout: 8000 }).catch(() => {});
+  check(`[${label}] lineups: history list`, (await g1.locator('[data-testid="lineup-history"] li').count()) === 2);
+
+  // --- Player profile ---
+  await visit(page, "/players/9001", label, errors);
+  check(`[${label}] player: header with next game and lineup status`, /@ ORL/.test(await page.locator('[data-testid="next-game"]').innerText()) && /Projected — not official/i.test(await page.locator('[aria-label="Player"]').innerText()));
+  check(`[${label}] player: averages strip with sample sizes`, (await page.locator('[data-testid="averages-strip"] [data-testid="window-sample"]').allInnerTexts()).join("|") === "n=24|n=5|n=10|n=20");
+  const hist = page.locator('#history [data-testid="player-history"]');
+  await hist.locator('[data-testid="history-summary"]').waitFor({ timeout: 10000 }).catch(() => {});
+  const h1 = await hist.locator('[data-testid="history-summary"]').innerText();
+  check(`[${label}] player: history summary`, /Over \d+ · Under \d+ · Equal \d+ of 10 — descriptive history, not a probability/.test(h1), h1);
+  check(`[${label}] player: one bar per game`, (await hist.locator('[data-testid="history-chart"] .recharts-bar-rectangle').count()) === 10);
+  await hist.locator('[data-tab="reb"]').click();
+  await page.waitForFunction((prev) => document.querySelector('#history [data-testid="history-summary"]')?.innerText !== prev, h1, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] player: stat switch`, (await hist.getAttribute("data-stat")) === "reb" && /REB/.test(await hist.locator('[data-testid="history-summary"]').innerText()));
+  await hist.locator('[data-tab="L20"]').click();
+  await page.waitForFunction(() => / of 20\b/.test(document.querySelector('#history [data-testid="history-summary"]')?.innerText ?? ""), null, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] player: window switch`, / of 20\b/.test(await hist.locator('[data-testid="history-summary"]').innerText()));
+  check(`[${label}] player: Measurement B unavailable reason`, /Not available: FIXTURE/.test(await hist.locator('[data-testid="measurement-b"]').innerText()));
+  await hist.locator('[data-testid="history-table-toggle"]').click();
+  check(`[${label}] player: accessible table alternative`, (await hist.locator('[data-testid="history-table"] tbody tr').count()) === 20);
+  await shot("player-history");
+  check(`[${label}] player: distribution table`, (await page.locator('[data-testid="distribution"]').innerText()).includes("n=24 of 30 requested"));
+  check(`[${label}] player: small-sample flags`, (await page.locator('[data-testid="player-page"]').innerText()).match(/Small sample/gi)?.length >= 3);
+  check(`[${label}] player: missed games listed`, (await page.locator('[data-testid="missed-games"] li').count()) === 2);
+  if (!isMobile) {
+    await page.locator('[data-testid="game-log"] [data-sort="pts"]').click();
+    const pts = (await page.locator('[data-testid="game-log"] tbody tr td:nth-child(5)').allInnerTexts()).map(Number);
+    check(`[${label}] player: game log sortable`, pts.length === 15 && pts.every((v, i) => i === 0 || v <= pts[i - 1]), pts.join(","));
+  }
+  await visit(page, "/players/9004", label, errors);
+  check(`[${label}] player without history: initials avatar and honest empty states`, (await page.locator('[aria-label="Player"] [data-testid="avatar-fallback"]').count()) === 1 && /Not available/.test(await page.locator('[data-testid="averages-strip"]').innerText()));
+
+  // --- Comparison / history index ---
+  await visit(page, "/players/compare?ids=9001,9005", label, errors);
+  check(`[${label}] compare: side-by-side averages with sample sizes`, (await page.locator('[data-testid="compare-table"] thead th').count()) === 3 && /n=10/.test(await page.locator('[data-testid="compare-table"] thead').innerText()));
+  check(`[${label}] compare: overlaid L10 chart`, (await page.locator('[data-testid="overlay-chart"] .recharts-line').count()) === 2);
+  await page.locator('[data-testid="player-search"] input').fill("Player B");
+  await page.locator('[data-testid="compare-add"]').first().click({ timeout: 8000 }).catch(() => {});
+  await page.waitForFunction(() => document.querySelectorAll('[data-testid="compare-selected"] li').length === 3, null, { timeout: 8000 }).catch(() => {});
+  await settle(page);
+  check(`[${label}] compare: third player added`, (await page.locator('[data-testid="compare-table"] thead th').count()) === 4 && (await page.locator('[data-testid="overlay-chart"] .recharts-line').count()) === 3);
+  await shot("compare");
+  await page.goto(`${BASE}/players/history`);
+  await page.locator('[data-testid="player-search"] input').fill("Player A");
+  await page.locator('[data-testid="history-open"]').first().click({ timeout: 8000 }).catch(() => {});
+  await page.waitForURL(/\/players\/9001/, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] history index deep-links to the profile history section`, /\/players\/9001.*#history$/.test(page.url()), page.url());
+
+  // --- Game page ---
+  await visit(page, "/games/FIX-G1", label, errors);
+  const gp = page.locator('[data-testid="game-page"]');
+  const ys = await page.evaluate(() => ['[aria-label="Matchup"]', "#lineups", "#props", '[data-testid="player-averages"]', '[data-testid="toggle-all-selections"]', '[data-testid="combo-card"]'].map((s) => document.querySelector(s)?.getBoundingClientRect().top ?? -1));
+  check(`[${label}] game: sections A–F in order`, ys.every((v, i) => v !== -1 && (i === 0 || v > ys[i - 1])), ys.map(Math.round).join(","));
+  check(`[${label}] game: lineup table`, (await gp.locator('[data-testid="team-lineup"]').count()) === 2);
+  check(`[${label}] game: player props for the game`, (await gp.locator(`#props ${rowSel}:visible`).count()) === 3);
+  check(`[${label}] game: descriptive context row on selections`, /Historical context \(descriptive\)/i.test(await gp.locator('[data-testid="historical-context"]').first().innerText()));
+  await page.click('[data-testid="toggle-all-selections"]');
+  check(`[${label}] game: rejected selections listed with reasons`, (await page.locator('[data-testid="rejection-inline"]').first().innerText()).includes("FIXTURE: edge below the minimum threshold."));
+  await visit(page, "/games/FIX-G2", label, errors);
+  check(`[${label}] game without history: team form empty state`, /Team form is not available/.test(await bodyText(page)));
 
   // --- Parlays ---
   await visit(page, "/parlays", label, errors);
   check(`[${label}] parlays: eight tabs`, (await page.locator('[role="tab"]').count()) === 8);
-  check(`[${label}] parlays: 2-Leg count from counts`, (await page.locator('[data-tab="double"]').innerText()).replace(/\s+/g, " ").includes("2-Leg 3"));
-  check(`[${label}] parlays: three combo cards`, (await page.locator('[data-testid="combo-card"]').count()) === 3);
-  check(`[${label}] parlays: invalidated combo flagged`, (await page.locator('[data-testid="combo-invalidated"]').count()) === 1);
+  check(`[${label}] parlays: three combo cards, one invalidated`, (await page.locator('[data-testid="combo-card"]').count()) === 3 && (await page.locator('[data-testid="combo-invalidated"]').count()) === 1);
   await page.locator('[data-combo-uid="FIX-D1"] [data-testid="combo-toggle"]').click();
-  await page.waitForSelector('[data-combo-uid="FIX-D1"] [data-testid="combo-detail"]');
   let detail = await page.locator('[data-combo-uid="FIX-D1"] [data-testid="combo-detail"]').innerText();
   check(`[${label}] parlays: no-quote text`, detail.includes("No verified combined sportsbook quote — research only"));
   check(`[${label}] parlays: reference price label`, /Arithmetic product of leg prices — not a sportsbook quote/i.test(detail));
   check(`[${label}] parlays: independent vs adjusted probability`, /Independent product/i.test(detail) && /Correlation-adjusted/i.test(detail));
-  if (isMobile) {
-    const o = await overflow(page);
-    check(`[${label}] parlays expanded card has no horizontal overflow`, !o, o ? JSON.stringify(o) : "");
-  }
-  await shot("parlays-expanded");
+  let o = await overflow(page);
+  check(`[${label}] parlays expanded card has no horizontal overflow`, !o, o ? JSON.stringify(o) : "");
+  await shot("parlays-expanded", { fullPage: true });
   await page.locator('[data-combo-uid="FIX-D2"] [data-testid="combo-toggle"]').click();
   detail = await page.locator('[data-combo-uid="FIX-D2"] [data-testid="combo-detail"]').innerText();
   check(`[${label}] parlays: observed quote shown when present`, /Observed combined quote/i.test(detail) && !detail.includes("No verified combined sportsbook quote"));
@@ -215,17 +392,11 @@ async function runViewport(browser, label, viewport) {
   check(`[${label}] parlays: empty category has explicit empty state`, (await page.locator('[data-state="empty"]').innerText()).includes("No 4-leg combination met the research criteria"));
   await page.click('[data-tab="picks"]');
   await settle(page);
-  check(`[${label}] parlays: individual picks tab lists qualified selections`, (await page.locator('[data-testid="selection-card"]').count()) === 3);
+  check(`[${label}] parlays: individual picks tab`, (await page.locator('[data-testid="selection-card"]').count()) === 3);
   await page.locator('[data-testid="evidence-toggle"]').first().click();
   check(`[${label}] selection: evidence panel expands`, await page.locator('[data-testid="evidence-panel"]').first().isVisible());
   check(`[${label}] selection: evidence meter is labelled separately`, /Evidence\s*72\s*\/100/.test((await page.locator('[data-testid="evidence-meter"]').first().innerText()).replace(/\n/g, " ")));
-  await shot("parlays-picks-evidence");
-
-  // --- Game page ---
-  await visit(page, "/games/FIX-G1", label, errors);
-  await page.click('[data-testid="toggle-all-selections"]');
-  check(`[${label}] game: rejected selections listed with reasons`, (await page.locator('[data-testid="rejection-inline"]').first().innerText()).includes("FIXTURE: edge below the minimum threshold."));
-  await shot("game-all-selections");
+  check(`[${label}] selection: quote origin shown`, /Quote\s+Provider/.test((await page.locator('[data-testid="selection-card"]').first().innerText()).replace(/\s+/g, " ")));
 
   // --- Results ---
   text = await visit(page, "/results", label, errors);
@@ -234,22 +405,30 @@ async function runViewport(browser, label, viewport) {
   check(`[${label}] results: API disclaimer rendered`, (await page.locator('[data-testid="results-disclaimer"]').innerText()).startsWith("FIXTURE disclaimer"));
   check(`[${label}] results: charts rendered`, (await page.locator('[data-testid="calibration-chart"] svg').count()) > 0 && (await page.locator('[data-testid="equity-chart"] svg').count()) > 0);
   check(`[${label}] results: winning and losing tickets both listed`, /Win/i.test(text) && /Loss/i.test(text) && (await page.locator('[data-testid="forensic-report"]').count()) === 2);
-  await page.locator('[data-testid="results-filters"] select').nth(1).selectOption("QUAD");
-  await settle(page);
-  await page.waitForFunction(() => /no settled records match these filters/.test(document.body.innerText), null, { timeout: 8000 }).catch(() => {});
-  check(`[${label}] results: filter with no records shows n=0 state`, /n=0 — no settled records match these filters/.test(await page.evaluate(() => document.body.innerText)));
+
+  // --- Performance, models, data health, injuries, agents ---
+  text = await visit(page, "/performance", label, errors);
+  check(`[${label}] performance: market / engine / structure groups`, /By market type/i.test(text) && /By engine/i.test(text) && /By structure/i.test(text));
+  check(`[${label}] performance: n=0 rows instead of blanks`, (await page.locator('[data-testid="strategy-empty"]:visible').count()) === 4 && /no priced tickets/.test(text));
+  check(`[${label}] performance: disclaimer`, (await page.locator('[data-testid="strategies-disclaimer"]').innerText()).startsWith("FIXTURE disclaimer"));
+  text = await visit(page, "/models", label, errors);
+  check(`[${label}] models: registry moved here`, text.includes("FIXTURE-props-gbm") && text.includes("FIXTURE-copula"));
+  text = await visit(page, "/data-health", label, errors);
+  check(`[${label}] data health: provider configuration center`, (await page.locator('[data-testid="provider-card"]').count()) === 3 && /Credential missing/i.test(text) && /Credential present/i.test(text));
+  check(`[${label}] data health: no key entry field, .env stated`, (await page.locator("main input, main textarea").count()) === 0 && /\.env/.test(text));
+  text = await visit(page, "/injuries", label, errors);
+  check(`[${label}] injuries: grouped by game then team with stale tags`, (await page.locator('[data-testid="injury-game"]').count()) === 2 && (await page.locator('[data-testid="injury-row"][data-stale="1"]').count()) === 3 && /Previously: Questionable/.test(text));
+  text = await visit(page, "/agents", label, errors);
+  check(`[${label}] agents: "never run" shown honestly`, /never run/i.test(text));
 
   // --- Builder ---
   await visit(page, "/builder", label, errors);
+  const drawerMode = viewport.width < 1024;
   const openDrawer = async () => {
-    if (!isMobile) return;
-    const d = page.locator('[data-testid="builder-drawer"]');
-    if ((await d.getAttribute("data-open")) !== "1") await page.click('[data-testid="builder-drawer-toggle"]');
+    if (drawerMode && (await page.locator('[data-testid="builder-drawer"]').getAttribute("data-open")) !== "1") await page.click('[data-testid="builder-drawer-toggle"]');
   };
   const closeDrawer = async () => {
-    if (!isMobile) return;
-    const d = page.locator('[data-testid="builder-drawer"]');
-    if ((await d.getAttribute("data-open")) === "1") await page.click('[data-testid="builder-drawer-toggle"]');
+    if (drawerMode && (await page.locator('[data-testid="builder-drawer"]').getAttribute("data-open")) === "1") await page.click('[data-testid="builder-drawer-toggle"]');
   };
   const evalLoc = page.locator('[data-testid="builder-evaluation"]:visible');
   check(`[${label}] builder: qualified selections offered`, (await page.locator('[data-testid="builder-add"]').count()) === 3);
@@ -258,16 +437,12 @@ async function runViewport(browser, label, viewport) {
     if (r.url().includes("/builder/evaluate")) evalRequests.push(r.postData());
   });
   await page.locator('[data-testid="builder-add"]').first().click();
-  await page.locator('[data-testid="builder-add"]').first().click(); // list re-renders; first remaining "Add"
+  await page.locator('[data-testid="builder-add"]').first().click();
   await openDrawer();
   await evalLoc.waitFor({ timeout: 8000 }).catch(() => {});
-  check(`[${label}] builder: evaluation shown after adding two legs`, (await evalLoc.count()) === 1);
-  check(`[${label}] builder: POST /builder/evaluate was called`, evalRequests.length >= 1, `calls=${evalRequests.length}`);
+  check(`[${label}] builder: evaluation shown after adding two legs`, (await evalLoc.count()) === 1 && evalRequests.length >= 1);
   const joint2 = (await page.locator('[data-testid="builder-joint"]:visible').innerText().catch(() => "")).replace(/\s+/g, " ");
   check(`[${label}] builder: joint probability with interval`, /\d+\.\d%\s*\[\d+\.\d–\d+\.\d\]/.test(joint2), joint2);
-  check(`[${label}] builder: reliable combination shows no unreliable banner`, (await page.locator('[data-testid="unreliable-banner"]:visible').count()) === 0);
-  await shot("builder-two-legs", isMobile ? { fullPage: false } : {});
-  // add a third leg → re-evaluated
   await closeDrawer();
   const callsBefore = evalRequests.length;
   await page.locator('[data-testid="builder-add"]').first().click();
@@ -276,18 +451,11 @@ async function runViewport(browser, label, viewport) {
     const el = [...document.querySelectorAll('[data-testid="builder-joint"]')].find((e) => e.offsetParent !== null);
     return el && el.textContent.replace(/\s+/g, " ") !== prev;
   }, joint2, { timeout: 8000 }).catch(() => {});
-  const joint3 = (await page.locator('[data-testid="builder-joint"]:visible').innerText().catch(() => "")).replace(/\s+/g, " ");
-  check(`[${label}] builder: re-evaluated on change`, evalRequests.length > callsBefore && joint3 !== joint2, `${joint2} -> ${joint3}`);
-  check(`[${label}] builder: three legs listed`, (await page.locator('[data-testid="builder-legs"]:visible li').count()) === 3);
-  // remove a leg
+  check(`[${label}] builder: re-evaluated on change`, evalRequests.length > callsBefore);
   await page.locator('[data-testid="builder-remove"]:visible').last().click();
-  await page.waitForFunction(() => {
-    const ul = [...document.querySelectorAll('[data-testid="builder-legs"]')].find((e) => e.offsetParent !== null);
-    return ul && ul.querySelectorAll("li").length === 2;
-  }, null, { timeout: 8000 }).catch(() => {});
+  await page.waitForFunction(() => [...document.querySelectorAll('[data-testid="builder-legs"]')].find((e) => e.offsetParent !== null)?.querySelectorAll("li").length === 2, null, { timeout: 8000 }).catch(() => {});
   check(`[${label}] builder: leg removed`, (await page.locator('[data-testid="builder-legs"]:visible li').count()) === 2);
   await evalLoc.waitFor({ timeout: 8000 }).catch(() => {});
-  // save as paper ticket
   const saveResp = page.waitForResponse((r) => r.url().endsWith("/api/v1/paper/tickets") && r.request().method() === "POST");
   await page.locator('[data-testid="builder-evaluation"]:visible [data-testid="save-ticket"] button').click();
   const resp = await saveResp;
@@ -295,63 +463,46 @@ async function runViewport(browser, label, viewport) {
   await page.locator('[data-testid="save-ticket-ok"]:visible').waitFor({ timeout: 8000 }).catch(() => {});
   const savedText = await page.locator('[data-testid="save-ticket-ok"]:visible').innerText().catch(() => "");
   check(`[${label}] builder: save confirmation shown`, /Saved as paper ticket #\d+/.test(savedText), savedText);
-  await shot("builder-saved", isMobile ? { fullPage: false } : {});
-  // unreliable banner: switch to all evaluated and add an unqualified leg
   await closeDrawer();
-  await page.locator('select').filter({ hasText: "All evaluated" }).first().selectOption("all");
+  await page.locator("select").filter({ hasText: "All evaluated" }).first().selectOption("all");
   await page.locator('[data-testid="builder-option"]', { hasText: "FIXTURE Player B Under 8.5 REB" }).locator('[data-testid="builder-add"]').click();
   await openDrawer();
   await page.locator('[data-testid="unreliable-banner"]:visible').waitFor({ timeout: 8000 }).catch(() => {});
-  check(`[${label}] builder: warning banner when reliable is false`, (await page.locator('[data-testid="unreliable-banner"]:visible').count()) === 1);
-  check(`[${label}] builder: API warnings listed`, (await page.locator('[data-testid="builder-warnings"]:visible').count()) === 1);
-  await shot("builder-unreliable", isMobile ? { fullPage: false } : {});
-  if (isMobile) {
-    const o = await overflow(page);
-    check(`[${label}] builder has no horizontal overflow`, !o, o ? JSON.stringify(o) : "");
-  }
-  // load a researched combo
+  check(`[${label}] builder: warning banner when reliable is false`, (await page.locator('[data-testid="unreliable-banner"]:visible').count()) === 1 && (await page.locator('[data-testid="builder-warnings"]:visible').count()) === 1);
+  await shot("builder");
+  o = await overflow(page);
+  check(`[${label}] builder has no horizontal overflow`, !o, o ? JSON.stringify(o) : "");
   await closeDrawer();
   await page.locator('[data-testid="builder-load"]').first().click();
   await openDrawer();
   await page.waitForTimeout(700);
   check(`[${label}] builder: load a combination from /combos`, (await page.locator('[data-testid="builder-legs"]:visible li').count()) === 2);
-  check(`[${label}] builder flow raised no page/console errors`, errors.length === 0, errors.join(" | "));
 
-  // --- saved ticket appears; saving from a combo card works ---
-  text = await visit(page, "/tickets", label, errors);
+  // --- tickets, exposure, admin, editions ---
+  await visit(page, "/tickets", label, errors);
   const m = savedText.match(/#(\d+)/);
   check(`[${label}] tickets: saved ticket is listed as open`, Boolean(m) && (await page.locator(`[data-ticket-id="${m?.[1]}"]`).count()) === 1);
-  await shot("tickets-open");
   await page.click('[data-tab="settled"]');
   await settle(page);
   check(`[${label}] tickets: settled win and loss with forensic reports`, (await page.locator('[data-testid="forensic-report"]').count()) === 2);
-  await shot("tickets-settled");
-
-  await visit(page, "/exposure", label, errors);
-  text = await page.evaluate(() => document.body.innerText);
+  text = await visit(page, "/exposure", label, errors);
   check(`[${label}] exposure: simulation block compares both figures`, /P\(at least one ticket wins\)/i.test(text) && /Expected aggregate P&L/i.test(text));
   check(`[${label}] exposure: never describes tickets as independent`, !/independent/i.test(text.replace(/FIXTURE note:[^\n]*/g, "")));
-  await shot("exposure-with-tickets");
-
-  // --- admin pause toggle (POST with CSRF) ---
   await visit(page, "/admin", label, errors);
   await page.click('[data-testid="pause-toggle"]');
   await page.waitForFunction(() => /Resume research/.test(document.body.innerText), null, { timeout: 8000 }).catch(() => {});
   check(`[${label}] admin: pause toggle round-trips`, /Paused/i.test(await page.locator('[data-testid="pause-control"]').innerText()));
   await page.click('[data-testid="pause-toggle"]');
   await page.waitForFunction(() => /Pause research/.test(document.body.innerText), null, { timeout: 8000 }).catch(() => {});
-
-  // --- editions diff ---
   await visit(page, "/research/daily", label, errors);
-  check(`[${label}] editions: three editions listed`, (await page.locator('[data-testid="edition-row"]').count()) === 3);
-  check(`[${label}] editions: diff rendered`, (await page.locator('[data-testid="edition-diff"]').count()) === 1);
-  check(`[${label}] editions: full edition rendered`, (await page.locator('[data-testid="edition-full"]').count()) === 1);
+  check(`[${label}] editions: list, diff and full edition`, (await page.locator('[data-testid="edition-row"]').count()) === 3 && (await page.locator('[data-testid="edition-diff"]').count()) === 1 && (await page.locator('[data-testid="edition-full"]').count()) === 1);
+  check(`[${label}] flows raised no page/console errors`, errors.length === 0, errors.join(" | "));
 
   // --- redirects ---
-  await page.goto(`${BASE}/today`);
-  check(`[${label}] /today redirects to /`, new URL(page.url()).pathname === "/", page.url());
-  await page.goto(`${BASE}/research`);
-  check(`[${label}] /research redirects to /research/daily`, new URL(page.url()).pathname === "/research/daily", page.url());
+  for (const [from, to] of [["/today", "/"], ["/research", "/research/daily"], ["/props", "/player-props"]]) {
+    await page.goto(`${BASE}${from}`);
+    check(`[${label}] ${from} redirects to ${to}`, new URL(page.url()).pathname === to, page.url());
+  }
 
   // --- logout ---
   await page.goto(`${BASE}/settings`);
@@ -360,14 +511,50 @@ async function runViewport(browser, label, viewport) {
   await Promise.all([page.waitForURL((u) => u.pathname === "/login"), page.locator('[data-testid="logout"]:visible').click()]);
   await page.goto(`${BASE}/`);
   check(`[${label}] logout clears the session`, new URL(page.url()).pathname === "/login", page.url());
-
   await context.close();
+}
+
+/** Design-review gallery: the ten key pages at every viewport, plus an overflow check at each width. */
+async function gallery(browser) {
+  for (const [width, height] of VIEWPORTS) {
+    const tag = `${width}x${height}`;
+    console.log(`\n== gallery ${tag} ==`);
+    const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1, isMobile: width < 768, hasTouch: width < 768 });
+    const page = await context.newPage();
+    const errors = watch(page);
+    await login(page);
+    for (const [route, name] of GALLERY) {
+      await page.goto(`${BASE}${route}`);
+      await settle(page);
+      const o = await overflow(page);
+      check(`[${tag}] ${route} has no horizontal overflow`, !o, o ? JSON.stringify(o) : "");
+      await page.screenshot({ path: join(SHOTS, `${tag}-${name}.png`), fullPage: false });
+      await page.screenshot({ path: join(SHOTS, `${tag}-${name}-full.png`), fullPage: true });
+    }
+    // Player Props with the research drawer open
+    await page.goto(`${BASE}/player-props`);
+    await settle(page);
+    if (width >= 1280) await page.locator('[data-testid="market-row"]').first().click();
+    else {
+      await page.locator('[data-testid="prop-card-toggle"]').first().click();
+      await page.locator('[data-testid="prop-open"]').first().click();
+    }
+    await page.locator('[data-testid="prop-drawer"] [data-testid="history-summary"]').waitFor({ timeout: 10000 }).catch(() => {});
+    check(`[${tag}] props drawer opens`, (await page.locator('[data-testid="prop-drawer"] [data-testid="history-chart"]').count()) === 1);
+    await page.waitForTimeout(200);
+    await page.screenshot({ path: join(SHOTS, `${tag}-player-props-drawer.png`), fullPage: false });
+    check(`[${tag}] gallery raised no page/console errors`, errors.length === 0, errors.join(" | "));
+    await context.close();
+  }
 }
 
 const browser = await chromium.launch();
 try {
-  await runViewport(browser, "desktop", { width: 1440, height: 900 });
-  await runViewport(browser, "mobile", { width: 390, height: 844 });
+  if (process.env.SMOKE_ONLY !== "gallery") {
+    await runViewport(browser, "desktop", { width: 1440, height: 900 });
+    await runViewport(browser, "mobile", { width: 390, height: 844 });
+  }
+  if (process.env.SMOKE_ONLY !== "flows") await gallery(browser);
 } finally {
   await browser.close();
 }

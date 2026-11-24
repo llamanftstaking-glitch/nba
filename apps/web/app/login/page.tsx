@@ -37,7 +37,7 @@ function LoginForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-3" data-testid="login-form">
+    <form onSubmit={onSubmit} className="space-y-4" data-testid="login-form">
       <Field label="Email">
         <Input type="email" name="email" autoComplete="username" required value={email} onChange={(e) => setEmail(e.target.value)} className="h-9" />
       </Field>
@@ -53,7 +53,7 @@ function LoginForm() {
         />
       </Field>
       {error && (
-        <p role="alert" className="rounded border border-bad/50 bg-bad-dim/40 px-2 py-1.5 text-xs text-bad">
+        <p role="alert" className="rounded-md bg-bad/10 ring-1 ring-inset ring-bad/40 px-2 py-1.5 text-xs text-bad">
           {error}
         </p>
       )}
@@ -74,7 +74,7 @@ export default function LoginPage() {
           </div>
           <p className="mt-1 text-xs text-muted">Private quantitative research terminal · owner access only</p>
         </div>
-        <div className="rounded border border-line bg-panel p-4">
+        <div className="rounded-lg bg-card ring-1 ring-inset ring-line/60 p-4">
           <Suspense fallback={null}>
             <LoginForm />
           </Suspense>

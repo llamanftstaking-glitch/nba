@@ -4,8 +4,9 @@ import { useState, type ReactNode } from "react";
 import type { Combo, ComboLeg } from "@/lib/types";
 import { ClassificationBadge } from "@/components/classification-badge";
 import { EvidenceMeter, ProbInterval } from "@/components/prob";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { SaveTicketButton } from "@/components/save-ticket-button";
-import { Badge } from "@/components/ui/badge";
+import { linkButton } from "@/components/ui/button";
 import { DataTable, type Column } from "@/components/ui/data-table";
 import { Val } from "@/components/ui/na";
 import { BulletList, Metric } from "@/components/ui/panel";
@@ -35,7 +36,7 @@ const LEG_COLUMNS: Column<ComboLeg>[] = [
 function Sub({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="min-w-0">
-      <h4 className="mb-1 text-2xs font-semibold uppercase tracking-wide text-muted">{title}</h4>
+      <h4 className="mb-1.5 text-2xs font-semibold uppercase tracking-wide text-muted">{title}</h4>
       {children}
     </div>
   );
@@ -43,7 +44,7 @@ function Sub({ title, children }: { title: string; children: ReactNode }) {
 
 export function PricingBlock({ combo }: { combo: Pick<Combo, "observed_quote" | "reference_price"> }) {
   return (
-    <div className="space-y-2 rounded border border-line bg-bg/50 p-2" data-testid="pricing-block">
+    <div className="space-y-2 rounded-md bg-raised/50 p-3" data-testid="pricing-block">
       {combo.observed_quote ? (
         <div>
           <div className="text-2xs uppercase tracking-wide text-muted">Observed combined quote</div>
@@ -55,10 +56,10 @@ export function PricingBlock({ combo }: { combo: Pick<Combo, "observed_quote" | 
           </div>
         </div>
       ) : (
-        <p className="text-xs font-medium text-warn">{NO_QUOTE_TEXT}</p>
+        <p className="text-sm font-medium text-warn">{NO_QUOTE_TEXT}</p>
       )}
       {combo.reference_price ? (
-        <div className="border-t border-line/70 pt-2">
+        <div className="border-t border-line/50 pt-2">
           <div className="text-2xs uppercase tracking-wide text-muted">{REFERENCE_PRICE_LABEL}</div>
           <div className="num text-sm text-soft">
             {fmtAmerican(combo.reference_price.american)} <span className="text-muted">({combo.reference_price.decimal.toFixed(2)} decimal)</span>
@@ -66,7 +67,7 @@ export function PricingBlock({ combo }: { combo: Pick<Combo, "observed_quote" | 
           {combo.reference_price.note && <p className="text-2xs text-muted">{combo.reference_price.note}</p>}
         </div>
       ) : (
-        <p className="border-t border-line/70 pt-2 text-2xs text-muted">Leg-price reference: not available (one or more legs have no price).</p>
+        <p className="border-t border-line/50 pt-2 text-2xs text-muted">Leg-price reference: not available (one or more legs have no price).</p>
       )}
     </div>
   );
@@ -75,17 +76,17 @@ export function PricingBlock({ combo }: { combo: Pick<Combo, "observed_quote" | 
 export function ComboDetail({ combo }: { combo: Combo }) {
   const c = combo.correlation;
   return (
-    <div className="space-y-3 border-t border-line bg-bg/40 p-3" data-testid="combo-detail">
+    <div className="space-y-4 border-t border-line/50 p-4" data-testid="combo-detail">
       {combo.invalidated && (
-        <p className="rounded border border-bad/50 bg-bad-dim/40 px-2 py-1 text-xs text-bad">
+        <p className="rounded-md bg-bad/10 px-3 py-2 text-sm text-bad ring-1 ring-inset ring-bad/40">
           INVALIDATED{combo.invalidation_reason ? ` — ${combo.invalidation_reason}` : ""}
         </p>
       )}
       <DataTable columns={LEG_COLUMNS} rows={combo.legs} rowKey={(l) => l.selection_id} caption={`Legs of ${combo.name}`} dense />
 
-      <div className="grid gap-3 lg:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-3">
         <Sub title="Joint probability">
-          <dl className="grid grid-cols-2 gap-2 rounded border border-line bg-bg/50 p-2">
+          <dl className="grid grid-cols-2 gap-4 rounded-md bg-raised/50 p-3">
             <Metric label="Correlation-adjusted">
               <ProbInterval prob={combo.joint_prob} low={combo.joint_low} high={combo.joint_high} stack />
             </Metric>
@@ -100,7 +101,7 @@ export function ComboDetail({ combo }: { combo: Combo }) {
         </Sub>
 
         <Sub title="Correlation">
-          <div className="space-y-1.5 rounded border border-line bg-bg/50 p-2 text-xs">
+          <div className="space-y-1.5 rounded-md bg-raised/50 p-3 text-xs">
             <p className="text-soft">
               <span className="text-muted">Method </span>
               {c.method}
@@ -110,7 +111,7 @@ export function ComboDetail({ combo }: { combo: Combo }) {
             </p>
             <p className="break-words text-soft">{c.assessment}</p>
             {c.pairwise.length > 0 ? (
-              <ul className="divide-y divide-line/70 border-t border-line/70">
+              <ul className="divide-y divide-line/40 border-t border-line/50">
                 {c.pairwise.map((p, i) => (
                   <li key={i} className="flex items-baseline justify-between gap-2 py-1">
                     <span className="min-w-0 break-words text-muted">
@@ -131,7 +132,7 @@ export function ComboDetail({ combo }: { combo: Combo }) {
         </Sub>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-3">
         <Sub title="Shared risks">
           {c.shared_risks.length ? <BulletList items={c.shared_risks} tone="warn" /> : <p className="text-xs text-muted">None identified.</p>}
         </Sub>
@@ -150,8 +151,8 @@ export function ComboDetail({ combo }: { combo: Combo }) {
       <Sub title="Evidence by leg">
         <div className="grid gap-2 md:grid-cols-2">
           {combo.legs.map((l) => (
-            <div key={l.selection_id} className="rounded border border-line bg-bg/50 p-2">
-              <div className="mb-1 text-xs font-medium text-ink">{l.label}</div>
+            <div key={l.selection_id} className="rounded-md bg-raised/50 p-3">
+              <div className="mb-1.5 text-sm font-medium text-ink">{l.label}</div>
               <div className="grid gap-2 sm:grid-cols-2">
                 <div>
                   <div className="text-2xs uppercase text-muted">Supporting</div>
@@ -173,14 +174,14 @@ export function ComboDetail({ combo }: { combo: Combo }) {
         </Sub>
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line/70 pt-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line/50 pt-2">
         <p className="text-2xs text-muted">
           {titleCase(combo.designation)} · created {fmtDateTimeET(combo.created_at) ?? "—"} · uid <span className="num">{combo.uid}</span>
         </p>
         <div className="flex flex-wrap items-center gap-2">
           <DLink
             href={`/builder?legs=${combo.legs.map((l) => l.selection_id).join(",")}`}
-            className="inline-flex h-7 items-center rounded border border-line-strong px-2 text-xs font-medium text-ink hover:bg-raised"
+            className={linkButton}
           >
             Open in builder
           </DLink>
@@ -197,7 +198,7 @@ export function ComboCard({ combo, defaultOpen = false }: { combo: Combo; defaul
   const summary = combo.legs.map((l) => l.label).join("  +  ");
   return (
     <article
-      className={cn("min-w-0 rounded border bg-panel", combo.invalidated ? "border-bad/50" : "border-line")}
+      className={cn("min-w-0 rounded-lg bg-card ring-1 ring-inset", combo.invalidated ? "ring-bad/40" : "ring-line/60")}
       data-testid="combo-card"
       data-combo-uid={combo.uid}
     >
@@ -205,25 +206,27 @@ export function ComboCard({ combo, defaultOpen = false }: { combo: Combo; defaul
         type="button"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="block w-full p-2.5 text-left transition-colors hover:bg-raised/40"
+        className="block w-full rounded-lg p-4 text-left transition-colors hover:bg-raised/30"
         data-testid="combo-toggle"
       >
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <h3 className="text-sm font-semibold text-ink">{combo.name}</h3>
-          <Badge>{combo.n_legs} legs</Badge>
-          <Badge>{combo.structure}</Badge>
+          <h3 className="font-display text-lg font-semibold uppercase tracking-wide text-ink">{combo.name}</h3>
+          <span className="text-xs text-muted">
+            {combo.n_legs} legs · {combo.structure === "SGP" ? "Same game" : combo.structure === "CROSS" ? "Cross game" : "Mixed"}
+          </span>
           <ClassificationBadge value={combo.classification} invalidated={combo.invalidated} />
-          <span className="ml-auto text-2xs text-muted" aria-hidden>
-            {open ? "Collapse ▴" : "Expand ▾"}
+          <span className="ml-auto inline-flex items-center gap-1 text-xs text-muted" aria-hidden>
+            {open ? "Collapse" : "Expand"}
+            {open ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
           </span>
         </div>
-        <p className="mt-1 break-words text-xs text-soft">{summary}</p>
+        <p className="mt-1 break-words text-sm text-soft">{summary}</p>
         <div className="mt-2 flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
           <div>
-            <div className="text-2xs uppercase tracking-wide text-muted">Joint probability [interval]</div>
-            <ProbInterval prob={combo.joint_prob} low={combo.joint_low} high={combo.joint_high} />
+            <div className="text-2xs font-medium uppercase tracking-wide text-muted">Joint probability [interval]</div>
+            <ProbInterval prob={combo.joint_prob} low={combo.joint_low} high={combo.joint_high} size="lg" />
           </div>
-          <div className="text-2xs">
+          <div className="text-xs">
             {combo.invalidated ? (
               <span className="font-semibold text-bad" data-testid="combo-invalidated">
                 INVALIDATED

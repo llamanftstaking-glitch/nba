@@ -19,3 +19,8 @@ export const useBacktests = () => useQuery({ queryKey: ["backtests"], queryFn: a
 export const useModels = () => useQuery({ queryKey: ["models"], queryFn: api.models });
 export const useTeams = () => useQuery({ queryKey: ["teams"], queryFn: api.teams });
 export const useDataHealth = () => useQuery({ queryKey: ["data-health"], queryFn: api.dataHealth });
+
+export const useLineups = (date?: string) => useQuery({ queryKey: ["lineups", date ?? "today"], queryFn: () => api.lineups(date) });
+export const usePlayerProps = (p: Parameters<typeof api.playerProps>[0]) =>
+  useQuery({ queryKey: ["player-props", p], queryFn: () => api.playerProps(p), placeholderData: (prev) => prev });
+export const useMe = () => useQuery({ queryKey: ["auth", "me"], queryFn: api.me, staleTime: 5 * 60_000 });

@@ -51,7 +51,7 @@ const ROSTER_COLUMNS: Column<Roster>[] = [
 function View({ d }: { d: TeamDetail }) {
   const t = d.team;
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex items-center gap-3">
         <TeamLogo team={t} size={44} />
         <div>
@@ -74,7 +74,7 @@ function View({ d }: { d: TeamDetail }) {
           <Val v={fmtNum(t.pace)} />
         </Tile>
       </div>
-      <div className="grid gap-3 xl:grid-cols-2">
+      <div className="grid gap-4 xl:grid-cols-2">
         <Panel title="Recent games">
           {d.recent.length === 0 ? <EmptyState title="No recent games in the database." /> : <DataTable columns={RECENT_COLUMNS} rows={d.recent} rowKey={(r, i) => `${r.date}-${i}`} caption="Recent games" dense />}
         </Panel>

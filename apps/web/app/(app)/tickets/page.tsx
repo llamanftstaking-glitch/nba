@@ -28,7 +28,7 @@ export default function TicketsPage() {
         title="My Paper Tickets"
         sub="Virtual-unit tickets saved to the paper ledger. Nothing here is placed with a sportsbook."
         right={
-          <DLink href="/exposure" className="inline-flex h-7 items-center rounded border border-line-strong px-2 text-xs font-medium text-ink hover:bg-raised">
+          <DLink href="/exposure" className="inline-flex min-h-[44px] items-center rounded-md bg-raised px-3 text-sm font-medium text-ink ring-1 ring-inset ring-line hover:bg-line/70 md:min-h-0 md:h-8 md:text-xs">
             Shared-risk monitor
           </DLink>
         }
@@ -58,7 +58,7 @@ export default function TicketsPage() {
         >
           {(d) => (
             <>
-              <div className="grid gap-3 xl:grid-cols-2">
+              <div className="grid gap-4 xl:grid-cols-2">
                 {d.items.map((t) => (
                   <TicketCard key={t.id} t={t} />
                 ))}

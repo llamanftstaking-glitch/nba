@@ -12,6 +12,7 @@ const nextConfig = {
     return [
       { source: "/today", destination: "/", permanent: false },
       { source: "/research", destination: "/research/daily", permanent: false },
+      { source: "/props", destination: "/player-props", permanent: false },
     ];
   },
 };
