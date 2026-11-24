@@ -15,7 +15,7 @@ Only checks that were actually executed are listed, with where they ran.
 | Container images build; compose stack start; smoke script | local Docker engine | passed |
 | Migration `0001 → 0002` on an existing database with data | local compose stack | applied; earlier editions preserved |
 | Migration downgrade/upgrade round trip | test suite | passed |
-| GitHub Actions CI | GitHub | green on the pre-V3 commit `d7d972c`; see PROJECT-STATE.md for the V3 run |
+| GitHub Actions CI (tests, lint, typecheck, build, image builds, pip-audit, npm audit, gitleaks) | GitHub | green on V3 commit `78618cc` |
 
 ## What the backend tests cover
 Leakage (future data cannot change earlier features; live and backtest features identical) · distributions,
