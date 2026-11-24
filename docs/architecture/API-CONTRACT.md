@@ -175,3 +175,15 @@ type Summary = { tickets: number; settled: number; wins: number; losses: number;
                 independent_p_at_least_one: number|null } | null;
   notes: string[] }
 ```
+
+### `/games/{id}` detail shapes
+
+```ts
+type TeamForm = { record: string; last_10: string; points_per_game: number; opp_points_per_game: number;
+  off_rating: number|null; def_rating: number|null; pace: number|null; last_10_points_per_game: number;
+  last_10_opp_points_per_game: number; games_in_sample: number } | {};          // {} when no history
+type PlayerProj = { player_id: number; player_name: string; team_abbr: string|null; stat: "pts"|"reb"|"ast"|"fg3m";
+  mean: number; p10: number; p50: number; p90: number; proj_min: number; n_games: number; injury_status: string|null };
+```
+`research_completeness.score` is 0–100. `/combos` `category` defaults to `double`. `POST /builder/evaluate`
+accepts 1–6 selections.

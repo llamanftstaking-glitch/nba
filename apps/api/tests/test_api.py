@@ -170,7 +170,8 @@ def test_remaining_read_endpoints_return_contract_shapes(app):
     gd = c.get(f"/api/v1/games/{gid}").json()
     assert {"game", "team_form", "player_projections", "selections", "sgp", "h2h", "agent_reports", "unresolved"} <= set(gd)
     pp = gd["player_projections"][0]
-    assert pp["stats"]["pts"]["p10"] <= pp["stats"]["pts"]["mean"] <= pp["stats"]["pts"]["p90"] and pp["n_games"] > 0
+    assert pp["stat"] == "pts" and pp["p10"] <= pp["mean"] <= pp["p90"] and pp["n_games"] > 0 and pp["player_name"]
+    assert gd["team_form"]["home"]["record"] and "_season" not in gd["team_form"]["home"]
     assert c.get("/api/v1/games/NOPE").status_code == 404
     res = c.get("/api/v1/results").json()
     assert len(res["by_engine"]) == 6 and res["summary"]["tickets"] >= 2 and res["disclaimer"]

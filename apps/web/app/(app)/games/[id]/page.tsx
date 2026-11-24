@@ -57,32 +57,56 @@ function first(row: PlayerProj, keys: string[]): LooseValue | undefined {
   return undefined;
 }
 
+const PROJ_STATS: [string, string][] = [["pts", "PTS"], ["reb", "REB"], ["ast", "AST"], ["fg3m", "3PM"]];
+
 function PlayerProjections({ rows }: { rows: PlayerProj[] }) {
+  const [all, setAll] = useState(false);
   if (rows.length === 0) return <EmptyState title="No player projections are available for this game." />;
-  const hasLongShape = rows.some((r) => "mean" in r);
-  const columns: Column<PlayerProj>[] = hasLongShape
-    ? [
-        { key: "player", header: "Player", primary: true, cell: (r) => <span className="font-medium text-ink">{loose(first(r, ["player_name", "name", "player"]))}</span> },
-        { key: "team", header: "Team", cell: (r) => loose(first(r, ["team_abbr", "team"])) },
-        { key: "stat", header: "Stat", cell: (r) => { const v = first(r, ["stat", "market"]); return typeof v === "string" ? v.toUpperCase() : loose(v); } },
-        { key: "mean", header: "Mean", align: "right", cell: (r) => <span className="font-semibold text-ink">{loose(r.mean)}</span> },
-        {
-          key: "range",
-          header: "p10–p90",
-          align: "right",
-          cell: (r) =>
-            typeof r.p10 === "number" && typeof r.p90 === "number" ? (
-              <span className="num text-muted">
-                {r.p10.toFixed(1)}–{r.p90.toFixed(1)}
-              </span>
-            ) : (
-              <NA />
-            ),
-        },
-        { key: "p50", header: "Median", align: "right", cell: (r) => loose(r.p50) },
-      ]
-    : Object.keys(rows[0] ?? {}).map((k, i) => ({ key: k, header: titleCase(k), primary: i === 0, cell: (r: PlayerProj) => loose(r[k]) }));
-  return <DataTable columns={columns} rows={rows} rowKey={(_, i) => i} caption="Player projections" dense />;
+  // one compact row per player: projected minutes, sample size and mean with the 80% interval per stat
+  const byPlayer = new Map<string, { name: string; team: string; min: LooseValue | undefined; n: LooseValue | undefined; inj: LooseValue | undefined; stats: Record<string, PlayerProj> }>();
+  for (const r of rows) {
+    const id = String(first(r, ["player_id", "player_name"]));
+    if (!byPlayer.has(id)) byPlayer.set(id, { name: String(first(r, ["player_name", "name"]) ?? "—"), team: String(first(r, ["team_abbr"]) ?? ""), min: r.proj_min, n: r.n_games, inj: r.injury_status, stats: {} });
+    byPlayer.get(id)!.stats[String(r.stat)] = r;
+  }
+  const players = [...byPlayer.values()];
+  const shown = all ? players : players.slice(0, 10);
+  const num = (v: LooseValue | undefined, d = 1) => (typeof v === "number" ? v.toFixed(d) : "—");
+  return (
+    <div>
+      <div className="hidden grid-cols-[minmax(0,2.2fr)_repeat(4,minmax(0,1fr))] gap-x-2 border-b border-line-strong pb-1.5 text-2xs font-semibold uppercase tracking-wide text-muted sm:grid">
+        <span>Player · proj min · sample</span>
+        {PROJ_STATS.map(([, label]) => <span key={label} className="text-right">{label} mean [p10–p90]</span>)}
+      </div>
+      <ul>
+        {shown.map((p) => (
+          <li key={p.name + p.team} className="grid grid-cols-4 gap-x-2 gap-y-1 border-b border-line/70 py-1.5 last:border-0 sm:grid-cols-[minmax(0,2.2fr)_repeat(4,minmax(0,1fr))]">
+            <div className="col-span-4 min-w-0 sm:col-span-1">
+              <span className="font-medium text-ink">{p.name}</span>{" "}
+              <span className="text-xs text-muted">{p.team} · <span className="num">{num(p.min, 0)}</span> min · n=<span className="num">{num(p.n, 0)}</span></span>
+              {typeof p.inj === "string" && p.inj ? <span className="ml-1 text-xs text-warn">{p.inj}</span> : null}
+            </div>
+            {PROJ_STATS.map(([k, label]) => {
+              const s = p.stats[k];
+              return (
+                <div key={k} className="text-left sm:text-right">
+                  <span className="mr-1 text-2xs uppercase text-muted sm:hidden">{label}</span>
+                  <span className="num font-semibold text-ink">{s ? num(s.mean) : "—"}</span>
+                  <span className="num block text-2xs text-muted sm:inline sm:pl-1">{s && typeof s.p10 === "number" && typeof s.p90 === "number" ? `[${s.p10.toFixed(0)}–${s.p90.toFixed(0)}]` : ""}</span>
+                </div>
+              );
+            })}
+          </li>
+        ))}
+      </ul>
+      {players.length > 10 ? (
+        <button type="button" onClick={() => setAll((v) => !v)} className="mt-2 text-xs font-medium text-accent hover:underline">
+          {all ? "Show fewer players" : `Show all ${players.length} players`}
+        </button>
+      ) : null}
+      <p className="mt-2 text-2xs text-muted">Projections are conditional on the player appearing. Intervals are the model&apos;s 80% range.</p>
+    </div>
+  );
 }
 
 const QUOTE_COLUMNS: Column<Quote>[] = [

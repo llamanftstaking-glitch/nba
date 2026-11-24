@@ -89,7 +89,7 @@ services:
       api:
         condition: service_healthy
     ports: ["127.0.0.1:${GIZER_WEB_PORT:-3410}:3000"]
-    networks: [internal]
+    networks: [internal, edge]   # `edge` is a normal bridge so the loopback port can be published
     security_opt: ["no-new-privileges:true"]
     cap_drop: [ALL]
     mem_limit: 768m
@@ -117,6 +117,7 @@ networks:
   internal:
     internal: true   # no route to the internet; database is reachable only from these containers
   egress: {}         # outbound access for provider calls (api/worker/scheduler only)
+  edge: {}           # web only: lets Docker publish 127.0.0.1:${GIZER_WEB_PORT}
 
 volumes:
   pgdata:

@@ -18,6 +18,7 @@ from .db import (AgentExecution, Combo, Edition, Game, Heartbeat, InjurySnapshot
                  OddsSnapshot, PaperSettlement, PaperTicket, Player, PlayerBox, Prediction, ResearchEvent, ResearchFinding, Selection, Team, get_setting, session_scope, set_setting, utcnow)
 from .ledger import ALL_ENGINES, LedgerError, create_ticket, exposure_report, results_report, summarize
 from .research import (ENGINES, MARKET_STAT, QUALIFIED, RISK_POLICY, evaluate_combo, leg_summary)
+from .providers import season_for_date
 from .security import (COOKIE, SECURITY_HEADERS, ApiError, Principal, RateLimiter, audit, client_ip, current_user,
                        login, logout, require_owner)
 from .simulation import seed_for
@@ -376,7 +377,7 @@ def _team_form(s, tid: int, before: date) -> dict:
     rows = s.execute(text(
         "select game_date, home_team_id, away_team_id, home_points, away_points, home_poss, away_poss from games "
         "where status='final' and home_points is not null and (home_team_id=:t or away_team_id=:t) and game_date < :d "
-        "order by game_date desc limit 82"), {"t": tid, "d": before}).all()
+        "and season = :sn order by game_date desc"), {"t": tid, "d": before, "sn": season_for_date(before)}).all()
     def agg(rs):
         if not rs:
             return None
@@ -389,7 +390,15 @@ def _team_form(s, tid: int, before: date) -> dict:
         return {"games": n, "wins": w, "losses": n - w, "ppg": pts / n, "opp_ppg": opp / n,
                 "off_rtg": 100 * pts / poss if poss else None, "def_rtg": 100 * opp / poss if poss else None,
                 "pace": poss / n if poss else None}
-    return {"season": agg(rows), "last10": agg(rows[:10])}
+    sn, l10 = agg(rows) or {}, agg(rows[:10]) or {}
+    r1 = lambda x: None if x is None else round(x, 1)  # noqa: E731
+    if not sn:
+        return {}
+    return {"record": f"{sn['wins']}-{sn['losses']}", "last_10": f"{l10['wins']}-{l10['losses']}",
+            "points_per_game": r1(sn["ppg"]), "opp_points_per_game": r1(sn["opp_ppg"]),
+            "off_rating": r1(sn["off_rtg"]), "def_rating": r1(sn["def_rtg"]), "pace": r1(sn["pace"]),
+            "last_10_points_per_game": r1(l10["ppg"]), "last_10_opp_points_per_game": r1(l10["opp_ppg"]),
+            "games_in_sample": sn["games"], "_season": sn}
 
 
 @api.get("/games/{game_id}")
@@ -404,18 +413,19 @@ def game_detail(game_id: str):
         eid = v.game_edition.get(g.id)
         ek = next((e.key for e in v.editions if e.id == eid), None)
         players = {p.id: p for p in s.scalars(select(Player).where(Player.team_id.in_((g.home_team_id, g.away_team_id))))}
-        proj: dict[int, dict] = {}
+        proj = []
         if ek is None:
             ek = s.scalar(select(Prediction.edition_key).where(Prediction.game_id == g.id).order_by(Prediction.id.desc()).limit(1))
         for p in s.scalars(select(Prediction).where(Prediction.game_id == g.id, Prediction.edition_key == ek,
                                                     Prediction.subject_type == "player")):
             pl = players.get(p.subject_id) or s.get(Player, p.subject_id)
-            row = proj.setdefault(p.subject_id, {
-                "player_id": p.subject_id, "name": pl.name if pl else str(p.subject_id),
-                "team_abbr": v.teams[p.features["team_id"]].abbr if p.features.get("team_id") in v.teams else None,
-                "proj_min": p.features.get("proj_min"), "n_games": p.features.get("n_games"),
-                "injury_status": p.features.get("injury_status"), "stats": {}})
-            row["stats"][p.stat] = {"mean": p.mean, "p10": p.p10, "p50": p.p50, "p90": p.p90}
+            proj.append({"player_id": p.subject_id, "player_name": pl.name if pl else str(p.subject_id),
+                         "team_abbr": v.teams[p.features["team_id"]].abbr if p.features.get("team_id") in v.teams else None,
+                         "stat": p.stat, "mean": round(p.mean, 1), "p10": p.p10, "p50": p.p50, "p90": p.p90,
+                         "proj_min": round(p.features.get("proj_min") or 0, 1), "n_games": p.features.get("n_games"),
+                         "injury_status": p.features.get("injury_status")})
+        order = {s_: i for i, s_ in enumerate(M.PLAYER_STATS)}
+        proj.sort(key=lambda r: (-(r["proj_min"] or 0), r["player_name"], order.get(r["stat"], 9)))
         h2h = s.execute(text(
             "select game_date, home_team_id, away_team_id, home_points, away_points from games where status='final' "
             "and home_points is not null and ((home_team_id=:h and away_team_id=:a) or (home_team_id=:a and away_team_id=:h)) "
@@ -435,8 +445,9 @@ def game_detail(game_id: str):
                 if any(k in i["status"].lower() for k in RISK_POLICY["uncertain_statuses"]):
                     unresolved.append(f"{i['player_name']} ({i['team_abbr']}) is listed {i['status']}.")
         return {"game": card,
-                "team_form": {"home": _team_form(s, g.home_team_id, g.game_date), "away": _team_form(s, g.away_team_id, g.game_date)},
-                "player_projections": sorted(proj.values(), key=lambda r: -(r["proj_min"] or 0)),
+                "team_form": {k: {kk: vv for kk, vv in _team_form(s, tid, g.game_date).items() if kk != "_season"}
+                              for k, tid in (("home", g.home_team_id), ("away", g.away_team_id))},
+                "player_projections": proj,
                 "selections": [v.sel(x) for x in sorted(sels, key=lambda x: (x.rank_in_game or 99, x.market))],
                 "sgp": [v.combo(c) for c in v.current_combos() if c.structure == "SGP" and c.legs[0]["game_id"] == g.id],
                 "h2h": [{"date": r[0], "home_abbr": v.teams[r[1]].abbr, "away_abbr": v.teams[r[2]].abbr,
@@ -737,7 +748,7 @@ def player_detail(player_id: int):
 
 
 def _team_row(s, t: Team) -> dict:
-    form = _team_form(s, t.id, ingestion.today_et() + timedelta(days=1))["season"] or {}
+    form = _team_form(s, t.id, ingestion.today_et() + timedelta(days=1)).get("_season") or {}
     return {**team_ref(t), "games": form.get("games", 0), "wins": form.get("wins", 0), "losses": form.get("losses", 0),
             "off_rtg": form.get("off_rtg"), "def_rtg": form.get("def_rtg"), "pace": form.get("pace")}
 
