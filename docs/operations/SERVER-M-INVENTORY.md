@@ -18,3 +18,14 @@ systemctl list-units --type=service --state=running | grep -Ei 'nginx|caddy|open
 ls /etc/nginx/sites-enabled /etc/caddy 2>/dev/null
 ```
 Record the results here, then proceed with DEPLOYMENT.md.
+
+## Observed during deployment (2026-11-24, via the owner's SSH session)
+* Ubuntu host, Docker with compose plugin; SSH as `root` with key authentication only.
+* Reverse proxy: Caddy in a container named `mon-caddy` (ports 80/443), Caddyfile on the host at `/opt/mon/Caddyfile`,
+  apps reached by container name over the Docker network `mon_web`. No host-level nginx/Caddy service.
+* Other containers present (untouched): btc-edge*, oracle-*, lvlup*, gizer-oil, ojos-de-falcon, creando, oddslens*,
+  killjoy, jrfbelt-api, uptime-kuma, dozzle.
+* GIZER NBA: `/opt/gizer-nba`, compose project `gizer-nba`, web also attached to `mon_web` through
+  `docker-compose.override.yml`; site block between `gizer-nba-begin/end` markers; Caddyfile backup
+  `/opt/mon/Caddyfile.bak-gizer-nba-20261124211344`.
+* Not inspected: CPU, RAM, disk, GPU.

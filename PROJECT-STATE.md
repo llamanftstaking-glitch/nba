@@ -12,7 +12,7 @@ _Last updated: 2026-11-24, end of the V3 build session._
 | V3 premium frontend (design system, 4-group navigation, 27 routes, mobile) | IMPLEMENTED, TESTED against mock and real API |
 | Models | team_game, player_reb, player_ast, player_fg3m, player_stl, player_tov in production; player_pts, player_blk, player_pra, player_pr, player_pa, player_ra are candidates (failed the gate) |
 | Docker Compose stack | TESTED on a local Docker engine (build, migrate 0001→0002 on existing data, smoke, restart recovery, backup + restore) |
-| Deployment to Server M | **BLOCKED** — no access from the build session |
+| Deployment to Server M | **DEPLOYED 2026-11-24** at https://nba.gizergroup.com (owner ran `scripts/deploy.sh` and `scripts/connect-caddy.sh`). VERIFIED from outside: HTTPS, health/readiness (database, worker, scheduler), unauthenticated API rejected, owner sign-in. NOT VERIFIED yet: full smoke script, backup + restore on the server, reboot recovery, history load completion |
 | The Odds API adapter | NOT VERIFIED against the live service |
 | High-confidence tier | Empty by design until ≥200 settled forward paper records exist |
 
@@ -21,7 +21,7 @@ Regular seasons 2025-26 (1,221 games) and 2026-27 (256 games through 2026-11-23)
 starters for 1,444. No playoffs, no historical odds, no play-by-play. See DATA-SOURCES.md.
 
 ## Blockers needing the owner
-1. **Server M access** — run a Claude Code session on the server or follow DEPLOYMENT.md by hand.
+1. **Post-deployment checks** — after the history load finishes: `scripts/smoke.sh`, backup + restore test, one reboot test (DEPLOYMENT.md checklist).
 2. **Prop odds provider key** — decision and possible cost; see docs/operations/PROVIDER-SETUP.md.
 3. **Data licensing review** before any use beyond private research (ESPN endpoint is unofficial).
 
