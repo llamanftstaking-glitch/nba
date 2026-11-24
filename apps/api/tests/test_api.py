@@ -223,10 +223,12 @@ def test_ticket_refused_after_tipoff_and_errors_are_consistent(app):
 def test_no_real_money_surface(app):
     spec = app.openapi()["paths"]
     banned = ("deposit", "withdraw", "wager", "place", "sportsbook", "credential", "fund", "bet/")
-    assert not [p for p in spec if any(b in p.lower() for b in banned)]
+    retract = "/api/v1/player-props/manual/{entry_id}/withdraw"  # retracts an owner-entered research market; no money involved
+    assert not [p for p in spec if p != retract and any(b in p.lower() for b in banned)]
     mutating = sorted(p for p, ops in spec.items() if set(ops) - {"get"})
     assert mutating == ["/api/v1/auth/login", "/api/v1/auth/logout", "/api/v1/builder/evaluate",
-                        "/api/v1/operations/pause", "/api/v1/paper/tickets"]
+                        "/api/v1/operations/pause", "/api/v1/paper/tickets", "/api/v1/player-props/manual",
+                        "/api/v1/player-props/manual/{entry_id}/withdraw"]
     assert all(set(ops) <= {"get", "post"} for ops in spec.values())  # no PUT/PATCH/DELETE anywhere
 
 

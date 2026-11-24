@@ -342,6 +342,25 @@ class EspnProvider(BaseProvider):
             raise ProviderError(f"espn scoreboard: schema validation failed ({type(e).__name__}: {e})") from e
         return games, odds
 
+    def summary_box(self, espn_event_id: str) -> list[dict]:
+        """Per-player rows from a game's box score: confirmed starters, DNPs with the published reason, identity."""
+        data = self.get_json("/summary", {"event": espn_event_id})
+        out = []
+        try:
+            for team in (data.get("boxscore") or {}).get("players") or []:
+                tid = ESPN_ABBR_TO_ID.get(team["team"]["abbreviation"])
+                for block in team.get("statistics") or []:
+                    for a in block.get("athletes") or []:
+                        ath = a["athlete"]
+                        out.append({"espn_id": str(ath["id"]), "name": ath["displayName"], "team_id": tid,
+                                    "starter": bool(a.get("starter")), "dnp": bool(a.get("didNotPlay")),
+                                    "reason": a.get("reason") or None, "jersey": ath.get("jersey"),
+                                    "position": (ath.get("position") or {}).get("abbreviation"),
+                                    "headshot_url": (ath.get("headshot") or {}).get("href")})
+        except (KeyError, TypeError, ValueError) as e:
+            raise ProviderError(f"espn summary {espn_event_id}: schema validation failed ({type(e).__name__}: {e})") from e
+        return out
+
     def injuries(self) -> list[InjuryRec]:
         if not self.settings.espn_enabled:
             raise ProviderDisabled("espn disabled")
@@ -367,8 +386,12 @@ class EspnProvider(BaseProvider):
 
 
 # ---------------------------------------------------------------- The Odds API
+# The Odds API market key -> canonical GIZER market key
 PROP_MARKETS = {"player_points": "player_pts", "player_rebounds": "player_reb", "player_assists": "player_ast",
-                "player_threes": "player_fg3m"}
+                "player_threes": "player_fg3m", "player_steals": "player_stl", "player_blocks": "player_blk",
+                "player_turnovers": "player_tov", "player_points_rebounds_assists": "player_pra",
+                "player_points_rebounds": "player_pr", "player_points_assists": "player_pa",
+                "player_rebounds_assists": "player_ra"}
 
 
 class OddsApiProvider(BaseProvider):

@@ -43,8 +43,12 @@ RISK_POLICY = {
     "uncertain_statuses": ["day-to-day", "questionable", "doubtful", "probable", "gtd"],
     "rotation_minutes": 24,
 }
-MARKET_STAT = {"player_pts": "pts", "player_reb": "reb", "player_ast": "ast", "player_fg3m": "fg3m"}
-STAT_LABEL = {"pts": "PTS", "reb": "REB", "ast": "AST", "fg3m": "3PM"}
+MARKET_STAT = {f"player_{s}": s for s in M.PLAYER_STATS}
+STAT_LABEL = {"pts": "PTS", "reb": "REB", "ast": "AST", "fg3m": "3PM", "stl": "STL", "blk": "BLK", "tov": "TOV",
+              "pra": "PTS+REB+AST", "pr": "PTS+REB", "pa": "PTS+AST", "ra": "REB+AST"}
+STAT_NAME = {"pts": "Points", "reb": "Rebounds", "ast": "Assists", "fg3m": "Three-pointers made", "stl": "Steals",
+             "blk": "Blocks", "tov": "Turnovers", "pra": "Points + Rebounds + Assists", "pr": "Points + Rebounds",
+             "pa": "Points + Assists", "ra": "Rebounds + Assists"}
 
 
 def american_to_decimal(a: int) -> float:
@@ -87,6 +91,17 @@ class SlateContext:
         self.player_feats = M.live_player_features(pf, d) if not pf.empty else pd.DataFrame()
         self.players = {p.id: p for p in s.scalars(select(Player))}
         self.forward = forward_validation(s)
+        self.withdrawn = {int(x) for x in s.scalars(select(ResearchEvent.ref_id).where(ResearchEvent.kind == "manual_withdrawn"))}
+        from .lineups import lineup_status_map
+        self.lineups = lineup_status_map(s, [g.id for g in self.games])
+
+    def lineup_of(self, game_id: str, team_id: int | None, player_id: int | None) -> dict:
+        snap = self.lineups.get((game_id, team_id))
+        if snap is None:
+            return {"lineup_role": None, "lineup_status": "unknown"}
+        role = next((("starter" if p["role"] == "starter" else "bench") for p in snap.players
+                     if p["player_id"] == player_id and p["role"] != "unavailable"), None)
+        return {"lineup_role": role, "lineup_status": snap.status}
 
     def quotes(self, game_id: str) -> list[OddsSnapshot]:
         """Latest snapshot per (market, subject, side, book) at or before now."""
@@ -95,6 +110,8 @@ class SlateContext:
                               .order_by(OddsSnapshot.id.desc())).all()
         seen, out = set(), []
         for r in rows:
+            if r.id in self.withdrawn:
+                continue
             k = (r.market, r.subject_id, r.side, r.book)
             if k not in seen:
                 seen.add(k); out.append(r)
@@ -179,10 +196,22 @@ def guard(ctx: SlateContext, c: dict) -> dict:
         reasons.append(f"Only {n} prior games (minimum {min_n}); estimates are not reliable.")
 
     q = c.get("quote")
-    if q is None or q.price_american is None:
+    origin = getattr(q, "origin", None) or "provider"
+    if q is not None and origin == "hypothetical":
+        reasons.append("Hypothetical research threshold: not a market quote, so it cannot qualify (RULE 05).")
+        hard = True
+        comp("Market quote", 0, 10, "hypothetical threshold")
+    elif q is None or q.price_american is None:
         reasons.append("No verified market quote with a price; price-dependent evaluation unavailable (RULE 05).")
         hard = True
         comp("Market quote", 0, 10, "no quote")
+    elif origin == "owner_entered":
+        age = _hours(ctx.now, q.ingested_at)
+        if age > P["max_quote_age_hours"]:
+            reasons.append(f"Owner-entered quote is {age:.0f}h old (max {P['max_quote_age_hours']}h)."); hard = True
+        comp("Market quote", 5 if age <= P["max_quote_age_hours"] else 0, 10,
+             f"owner-entered quote ({q.book}), not independently verified; entered {age:.1f}h ago")
+        oppose.append("The price was entered by the owner and has not been independently verified against a provider.")
     else:
         checked = ctx.quote_checked_at or q.ingested_at
         age = _hours(ctx.now, max(checked, q.ingested_at))
@@ -240,7 +269,7 @@ def guard(ctx: SlateContext, c: dict) -> dict:
         hc = P["high_confidence"]
         fw_ok = fw["n"] >= hc["min_forward_settled"] and abs(fw["wins"] / fw["n"] - fw["p_sum"] / fw["n"]) <= hc["max_forward_calibration_gap"]
         if (score >= hc["min_evidence"] and edge_low is not None and edge_low >= hc["min_edge_low"] and fw_ok
-                and avail == 10):
+                and avail == 10 and origin == "provider"):
             cls = "high_confidence"
         elif score >= P["standard"]["min_evidence"] and edge_low is not None and edge_low > P["standard"]["min_edge_low"]:
             cls = "standard"
@@ -394,7 +423,15 @@ def evaluate_game(ctx: SlateContext, g: Game, edition_key: str) -> dict:
                                f"(80% interval {p.p10:.0f}–{p.p90:.0f}); last-10 average {getattr(r, f'l10_{stat}'):.1f}.")
                 if (r.min_sd or 0) > 6:
                     oppose.append(f"Minutes have been volatile (sd {r.min_sd:.1f} over the last 10 games).")
+            from .history import player_frame, quick_averages
+            hist = quick_averages(player_frame(s, pid, before=ctx.date), stat, ctx.date)
+            context = {**{k: hist[k] for k in ("l5", "l10", "l20", "season_avg")},
+                       "proj_min": float(pp[2].proj_min) if pp else None,
+                       **ctx.lineup_of(g.id, pp[3].id if pp else (pl.team_id if pl else None), pid)}
+            if context["lineup_status"] == "projected":
+                oppose.append("Starting lineup is projected, not confirmed; minutes assume the usual role.")
             cands.append(dict(
+                context=context,
                 game=g, label=label, market=market, subject_type="player", subject_id=pid,
                 subject_name=pl.name if pl else str(pid), team_id=pp[3].id if pp else (pl.team_id if pl else None),
                 side=q.side, line=q.line, quote=q, prediction=pp[0] if pp and not pp[5] else None,
@@ -617,7 +654,8 @@ def publish_edition(d: date, kind: str = "morning", now: datetime | None = None)
                 v = guard(ctx, c)
                 q = c.get("quote")
                 iv = c.get("interval") or {}
-                v["evidence"].update(market_label=c["market_label"], game_label=r["label"],
+                v["evidence"].update(context=c.get("context"), origin=(q.origin if q else "provider"),
+                                     market_label=c["market_label"], game_label=r["label"],
                                      quote_at=q.ingested_at.isoformat() if q else None,
                                      calibration_n=iv.get("n"), policy=RISK_POLICY["version"])
                 sel = Selection(
@@ -739,14 +777,19 @@ def build_summary(ctx, kind, open_games, results, sels, combos) -> dict:
     if not readiness.get("team_game"):
         limits.append("Team model is not in production; game-market selections are rejected.")
     if not any(r["has_prop_quotes"] for r in results):
-        limits.append("No player-prop quotes are available (no licensed prop odds provider configured); player "
-                      "projections are published without market evaluation.")
-        unresolved.append("Player-prop research requires a prop odds provider key (GIZER_ODDS_API_KEY).")
+        limits.append("No player-prop quotes are available (no prop odds provider configured and no owner-entered "
+                      "markets); player projections are published without market evaluation.")
+        unresolved.append("Player-prop research requires a prop odds provider key (GIZER_ODDS_API_KEY) or owner-entered markets.")
+    lu = [x.status for x in ctx.lineups.values()]
+    if lu and "confirmed" not in lu:
+        limits.append("Starting lineups are projected from the last confirmed starting five and the injury report; "
+                      "they are not official until the box score lists starters.")
+    elif not lu:
+        limits.append("No lineup snapshot exists for this slate yet.")
     if any(not r["has_game_quotes"] for r in results):
         limits.append("At least one game has no game-level quote; its markets could not be evaluated.")
     limits.append("Models are not validated against historical market prices (none are held); probabilities are "
                   "calibrated to outcomes at non-market thresholds only.")
-    limits.append("Starting lineups are not ingested (no authorized provider); availability relies on the injury report.")
     if ctx.corr is None:
         limits.append("No correlation estimate exists; same-game joint probabilities are flagged unreliable.")
     unresolved.append("Does the team model retain any value once conditioned on the market line? Only forward results can answer this.")
@@ -775,6 +818,8 @@ def auto_paper(s, ctx, edition, qualified, combos) -> int:
     n = 0
     if pol["singles"]:
         for x in qualified:
+            if x.evidence.get("origin", "provider") != "provider":
+                continue  # owner-entered prices are never auto-ticketed
             if (x.key,) not in existing:
                 create_ticket(s, [x], source="auto", created_by="system", edition_id=edition.id, now=ctx.now); n += 1
     per: dict[tuple, int] = {}

@@ -19,8 +19,9 @@ def synth_frame(n_players=40, n_games=60, seed=3):
             rows.append(dict(game_id=f"G{g:03d}-{p % 4}", player_id=p, team_id=p % 4, opp_team_id=(p + 1) % 4,
                              game_date=day, season="2025-26", is_home=bool(p % 2), minutes=m,
                              pts=int(rng.poisson(0.5 * m)), reb=int(rng.poisson(0.2 * m)),
-                             ast=int(rng.poisson(0.12 * m)), fg3m=int(rng.poisson(0.05 * m))))
-    return pd.DataFrame(rows).sort_values(["game_date", "game_id", "player_id"]).reset_index(drop=True)
+                             ast=int(rng.poisson(0.12 * m)), fg3m=int(rng.poisson(0.05 * m)),
+                             stl=int(rng.poisson(0.03 * m)), blk=int(rng.poisson(0.02 * m)), tov=int(rng.poisson(0.06 * m))))
+    return M.add_combo_stats(pd.DataFrame(rows).sort_values(["game_date", "game_id", "player_id"]).reset_index(drop=True))
 
 
 def test_no_future_information_in_features():

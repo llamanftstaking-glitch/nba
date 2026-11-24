@@ -23,6 +23,12 @@ from gizer.providers import TEAMS, name_key  # noqa: E402
 assert "test" in os.environ["GIZER_DATABASE_URL"], "tests must never run against a non-test database"
 
 
+def pname(pid: int) -> str:
+    """Unique alphabetic synthetic player name (name matching ignores digits)."""
+    letters = "".join(chr(97 + int(c)) for c in str(pid))
+    return f"Synthetic {letters.capitalize()}"
+
+
 def reset_schema():
     gdb.reset_engine()
     eng = gdb.get_engine()
@@ -54,7 +60,7 @@ def seed_synthetic(n_days: int = 110, seed: int = 11, slate: date = SLATE):
     with gdb.session_scope() as s:
         for t in tids:
             for p in players[t]:
-                s.add(gdb.Player(id=p, name=f"Synthetic Player {p}", name_key=name_key(f"Synthetic Player {p}"), team_id=t))
+                s.add(gdb.Player(id=p, name=pname(p), name_key=name_key(pname(p)), team_id=t))
         gnum = 0
         for d in range(n_days, 0, -1):
             day = slate - timedelta(days=d)
@@ -80,7 +86,8 @@ def seed_synthetic(n_days: int = 110, seed: int = 11, slate: date = SLATE):
                         s.add(gdb.PlayerBox(game_id=gid, player_id=p, team_id=team, opp_team_id=opp, game_date=day,
                                             season="2025-26", is_home=home, minutes=round(m, 1), pts=pts,
                                             reb=int(rng.poisson(0.18 * m)), ast=int(rng.poisson(0.12 * m)),
-                                            fg3m=int(rng.poisson(0.05 * m)), stl=0, blk=0, tov=1, fga=10, fta=2,
+                                            fg3m=int(rng.poisson(0.05 * m)), stl=int(rng.poisson(0.03 * m)),
+                                            blk=int(rng.poisson(0.02 * m)), tov=int(rng.poisson(0.06 * m)), fga=10, fta=2,
                                             provider="synthetic"))
         for p in s.query(gdb.Player):
             p.last_game_date = slate - timedelta(days=1)

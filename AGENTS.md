@@ -16,7 +16,7 @@ and Agent 01 cannot override Agent 16.
 | 02 | NBA Data Engineer | 04:00, 06:00 | results + box scores, duplicate/plausibility checks | stale data → guard rejects |
 | 03 | Player Performance Analyst | 08:00 | form vs long-run averages with sample sizes | recorded; non-blocking |
 | 04 | Injury Intelligence Analyst | 08:00, every edition | sourced, timestamped injury snapshot | stale injuries → guard rejects |
-| 05 | Rotation and Minutes Analyst | 08:00 | role changes, minutes volatility | recorded; non-blocking |
+| 05 | Lineup, Rotation and Minutes Analyst | 08:00, every edition, pregame | projected vs confirmed lineups, change detection, role changes | lineups stay at last snapshot |
 | 06 | Matchup Intelligence Analyst | 08:00 | off/def rating matchups | recorded; non-blocking |
 | 07 | Pace and Game Environment Analyst | 08:00 | pace, total, blowout probability | recorded; non-blocking |
 | 08 | Schedule and Fatigue Analyst | 08:00 | back-to-backs; measured rest effect with SE | recorded; non-blocking |

@@ -6,7 +6,7 @@ succeeded and its payload was parsed by the adapter.
 | Source | Used for | Access | Status | Rights / risk |
 |---|---|---|---|---|
 | PBP Stats API (`api.pbpstats.com`) | Completed games, possessions, per-game player totals | Public, no key | VERIFIED | Public API by the author of `pbpstats`; data derives from NBA play-by-play. No published commercial licence was reviewed. Rate-limited aggressively (HTTP 503 on bursts): the adapter spaces requests and backs off. **Owner review required before any public or commercial use.** |
-| ESPN site API (`site.api.espn.com`) | Schedule, tipoff times, final scores, game-level odds shown by ESPN (book attributed, e.g. DraftKings), injury list | Public, no key, **unofficial** | VERIFIED | Undocumented endpoint with no contract; may change or be withdrawn; terms not reviewed. Acceptable only for private research. Replace with a licensed feed before any external use. |
+| ESPN site API (`site.api.espn.com`) | Schedule, tipoff times, final scores, game-level odds shown by ESPN (book attributed, e.g. DraftKings), injury list, confirmed starters and did-not-play records from box scores, player headshots/jersey/position | Public, no key, **unofficial** | VERIFIED | Undocumented endpoint with no contract; may change or be withdrawn; terms not reviewed. Acceptable only for private research. Replace with a licensed feed before any external use. |
 | The Odds API (`api.the-odds-api.com`) | Player-prop quotes (points, rebounds, assists, threes) | API key (`GIZER_ODDS_API_KEY`) | NOT VERIFIED live — no key available. Adapter + contract test only. | Paid tiers exist; free tier 500 credits/month. A hard monthly cap is enforced in code. **No key has been purchased or configured.** |
 | Official NBA injury report (PDF, `ak-static.cms.nba.com`) | Authoritative injury designations | Public | NOT INTEGRATED — returned HTTP 403 from the sandbox | Preferred source. To be tested from Server M; parser design can follow the MIT-licensed approach noted in the repository audit. |
 | `stats.nba.com` / `cdn.nba.com` | Official stats, play-by-play | Public | BLOCKED from the sandbox (timeout / 403 — datacenter IP filtering) | Do not bypass. Test from Server M; subject to NBA.com Terms of Use. |
@@ -19,7 +19,7 @@ succeeded and its payload was parsed by the adapter.
 * **No historical odds.** Therefore no model here has been validated against market prices, no historical
   betting simulation exists, and no closing-line-value analysis is possible. Backtests are forecasting tests.
   Quote snapshots accumulate from the first day of operation.
-* **No starting lineups, no play-by-play, no tracking data.**
+* Confirmed starters and did-not-play records for 1,444 of 1,477 games (ESPN box scores). **No pre-tipoff confirmed lineups, no play-by-play, no tracking data.**
 * Injuries: ESPN's list (status, body part, comment, publication time), snapshotted on every refresh.
 
 ## Adapter contract

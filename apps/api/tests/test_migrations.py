@@ -22,9 +22,18 @@ def test_alembic_upgrade_builds_full_schema_and_is_idempotent():
     assert set(gdb.Base.metadata.tables) <= tables and "alembic_version" in tables
     with gdb.get_engine().connect() as c:
         trig = {r[0] for r in c.execute(text("select tgname from pg_trigger where not tgisinternal"))}
-        assert c.execute(text("select version_num from alembic_version")).scalar() == "0001_baseline"
+        assert c.execute(text("select version_num from alembic_version")).scalar() == "0002_player_intelligence"
     for t in gdb.IMMUTABLE_TABLES:
         assert f"{t}_immutable" in trig and f"{t}_notruncate" in trig
+    # 0002 is reversible and re-appliable without touching research tables
+    al = lambda *a: subprocess.run([sys.executable, "-m", "alembic", *a], cwd=root, capture_output=True, text=True)  # noqa: E731
+    assert al("downgrade", "0001_baseline").returncode == 0
+    insp = inspect(gdb.get_engine())
+    assert "lineup_snapshots" not in insp.get_table_names() and "predictions" in insp.get_table_names()
+    assert "starter" not in {c["name"] for c in insp.get_columns("player_box")}
+    assert al("upgrade", "head").returncode == 0
+    insp = inspect(gdb.get_engine())
+    assert "lineup_snapshots" in insp.get_table_names() and "starter" in {c["name"] for c in insp.get_columns("player_box")}
     r = subprocess.run([sys.executable, "-m", "alembic", "downgrade", "base"], cwd=root, capture_output=True, text=True)
     assert r.returncode != 0 and "Refusing" in (r.stderr + r.stdout)
     reset_schema()

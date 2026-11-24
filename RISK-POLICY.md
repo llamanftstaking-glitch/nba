@@ -59,6 +59,13 @@ observed price on every leg (the reference price is the arithmetic product of le
 not a sportsbook quote); same-game combinations have no verified combined quote and are `research_only`
 (hit rate is tracked, simulated return is not).
 
+## Quote origin
+
+Provider-sourced quotes are evaluated normally. Owner-entered prices are evaluated but can never reach
+high-confidence, score at most 5/10 on the market-quote component, carry an explicit "not independently verified"
+note, and are never auto-ticketed. Hypothetical thresholds are always rejected as selections (they exist for
+descriptive history only). See `docs/data/PLAYER-PROPS.md`.
+
 ## Paper testing
 
 Fixed virtual units (default 1). No stake scaling by confidence or by previous results, no martingale, no

@@ -97,6 +97,12 @@ class View:
         self.game_edition = {r[0]: r[1] for r in rows}
         self._sels = None
 
+    def lineup_snaps(self) -> dict:
+        if getattr(self, "_lus", None) is None:
+            from .lineups import lineup_status_map
+            self._lus = lineup_status_map(self.s, [g.id for g in self.games])
+        return self._lus
+
     @property
     def latest(self) -> Edition | None:
         return self.editions[-1] if self.editions else None
@@ -129,7 +135,8 @@ class View:
                 "rejection_reasons": x.rejection_reasons or [], "rank_in_game": x.rank_in_game,
                 "model": {"id": m.id, "name": m.name, "version": m.version, "status": m.status} if m else None,
                 "verified_at": x.verified_at, "invalidated": x.id in self.inv_sel,
-                "invalidation_reason": self.inv_sel.get(x.id)}
+                "invalidation_reason": self.inv_sel.get(x.id),
+                "context": ev.get("context"), "origin": ev.get("origin") or "provider"}
 
     def combo(self, c: Combo) -> dict:
         return combo_dict(c, self.inv_combo)
@@ -147,11 +154,13 @@ class View:
         return out
 
 
-def injury_row(i: InjurySnapshot, teams: dict) -> dict:
+def injury_row(i: InjurySnapshot, teams: dict, extra: dict | None = None) -> dict:
     t = teams.get(i.team_id)
+    stale = (utcnow() - i.ingested_at).total_seconds() > RISK_POLICY["max_injury_age_hours"] * 3600
     return {"player_id": i.player_id, "player_name": i.player_name, "team_abbr": t.abbr if t else None,
             "status": i.status, "detail": i.detail, "comment": i.comment, "source": i.provider,
-            "source_published_at": i.source_published_at, "ingested_at": i.ingested_at}
+            "source_published_at": i.source_published_at, "ingested_at": i.ingested_at,
+            "headshot_url": None, "game_label": None, "previous_status": None, "stale": stale, **(extra or {})}
 
 
 def _leg(leg: dict) -> dict:
@@ -193,7 +202,6 @@ def game_card(v: View, g: Game, inj: dict[int, list[dict]], with_picks: bool = T
     picks = sorted([x for x in sels if x.rank_in_game and x.classification in QUALIFIED and x.id not in v.inv_sel],
                    key=lambda x: x.rank_in_game)
     env = ((ed.summary or {}).get("environments") or {}).get(g.id) if ed else None
-    comp = ((ed.summary or {}).get("completeness") or {}).get(g.id, {}) if ed else {}
     qrows = s.scalars(select(OddsSnapshot).where(OddsSnapshot.game_id == g.id, OddsSnapshot.subject_type != "player")
                       .order_by(OddsSnapshot.id.desc())).all()
     seen, quotes = set(), []
@@ -203,15 +211,25 @@ def game_card(v: View, g: Game, inj: dict[int, list[dict]], with_picks: bool = T
             seen.add(k)
             quotes.append({"market": q.market, "side": q.side, "line": q.line, "price_american": q.price_american,
                            "book": q.book, "at": q.ingested_at})
+    lus = v.lineup_snaps()
+    lineup = {side: {"status": (lus[(g.id, tid)].status if (g.id, tid) in lus else "unknown"),
+                     "verified_at": lus[(g.id, tid)].verified_at if (g.id, tid) in lus else None}
+              for side, tid in (("home", g.home_team_id), ("away", g.away_team_id))}
+    n_prop_q = s.scalar(select(func.count(func.distinct(OddsSnapshot.subject_id.op("||")(OddsSnapshot.market)))).where(
+        OddsSnapshot.game_id == g.id, OddsSnapshot.subject_type == "player", OddsSnapshot.origin != "hypothetical")) or 0
+    n_proj = s.scalar(select(func.count(func.distinct(Prediction.subject_id))).where(
+        Prediction.game_id == g.id, Prediction.subject_type == "player")) or 0
     items = [
         {"name": "Schedule", "ok": True, "note": "tipoff time known" if g.tipoff_utc else "tipoff time unknown"},
         {"name": "Research edition", "ok": ed is not None, "note": ed.key if ed else "not evaluated yet"},
         {"name": "Team model", "ok": bool(env and env.get("model_status") == "production"),
          "note": "validated production model" if env and env.get("model_status") == "production" else "no validated model"},
         {"name": "Game quotes", "ok": bool(quotes), "note": f"{len(quotes)} quotes" if quotes else "no verified quote"},
-        {"name": "Player prop quotes", "ok": bool(comp.get("prop_quotes")), "note": "available" if comp.get("prop_quotes") else "no prop odds provider configured"},
+        {"name": "Player prop quotes", "ok": n_prop_q > 0, "note": f"{n_prop_q} quoted player markets" if n_prop_q else "no prop odds provider configured and no owner-entered markets"},
         {"name": "Injury report", "ok": bool(inj), "note": "snapshot available" if inj else "no snapshot"},
-        {"name": "Starting lineups", "ok": False, "note": "no authorized lineup provider"},
+        {"name": "Starting lineups", "ok": lineup["home"]["status"] == "confirmed" and lineup["away"]["status"] == "confirmed",
+         "note": "confirmed by box score" if lineup["home"]["status"] == "confirmed" and lineup["away"]["status"] == "confirmed"
+         else "projected, not official" if "projected" in (lineup["home"]["status"], lineup["away"]["status"]) else "no lineup information"},
     ]
     n_rej = sum(1 for x in sels if x.classification not in QUALIFIED)
     reason = None
@@ -233,7 +251,10 @@ def game_card(v: View, g: Game, inj: dict[int, list[dict]], with_picks: bool = T
             "home": team_ref(v.teams[g.home_team_id]), "away": team_ref(v.teams[g.away_team_id]),
             "home_points": g.home_points, "away_points": g.away_points, "venue": g.venue, "label": v.game_label(g),
             "injuries": {"home": inj.get(g.home_team_id, []), "away": inj.get(g.away_team_id, [])},
-            "lineup_status": "Starting lineups: no authorized provider configured",
+            "lineup_status": ("Starting lineups confirmed" if all(x["status"] == "confirmed" for x in lineup.values()) else
+                              "Starting lineups projected — not official" if any(x["status"] == "projected" for x in lineup.values())
+                              else "Starting lineups: awaiting information"),
+            "lineup": lineup, "props": {"quoted_markets": int(n_prop_q), "players_projected": int(n_proj)},
             "research_completeness": {"score": round(100 * sum(i["ok"] for i in items) / len(items)), "items": items},
             "environment": env, "quotes": quotes, "top_picks": [v.sel(x) for x in picks[:5]],
             "n_evaluated": len(sels), "n_rejected": n_rej, "no_picks_reason": reason}
@@ -361,6 +382,16 @@ def command_center(date: str | None = None):
                        "never_run": sum(a["status"] == "never_run" for a in ag)},
             "findings": [{"finding_uid": f.finding_uid, "hypothesis": f.hypothesis, "status": f.status}
                          for f in s.scalars(select(ResearchFinding).order_by(ResearchFinding.id.desc()).limit(5))],
+            "lineups_summary": {k: sum(1 for c in cards for x in c["lineup"].values() if x["status"] == k)
+                                for k in ("confirmed", "projected", "unknown")},
+            "props_summary": {"provider_configured": bool(cfg.odds_api_key),
+                              "quoted_markets": sum(c["props"]["quoted_markets"] for c in cards),
+                              "manual_entries": int(s.scalar(select(func.count()).select_from(OddsSnapshot).join(
+                                  Game, Game.id == OddsSnapshot.game_id).where(Game.game_date == d, OddsSnapshot.provider == "manual")) or 0),
+                              "players_projected": sum(c["props"]["players_projected"] for c in cards),
+                              "message": ("Prop odds provider configured." if cfg.odds_api_key else
+                                          "No prop odds provider is configured; player lines and prices are unavailable unless "
+                                          "entered manually. Averages, projections and lineups are still shown.")},
             "warnings": _warnings(s, v)}
 
 
@@ -701,7 +732,7 @@ def players(q: str | None = None, team: str | None = None, limit: int = Query(50
         rows = s.execute(stmt.order_by(func.avg(PlayerBox.minutes).desc())).all()
         r1 = lambda x: None if x is None else round(float(x), 1)  # noqa: E731
         return {"items": [{"id": p.id, "name": p.name, "team_abbr": teams[p.team_id].abbr if p.team_id in teams else None,
-                           "position": p.position, "games": n, "min": r1(mn), "pts": r1(pts), "reb": r1(reb),
+                           "position": p.position, "jersey": p.jersey, "headshot_url": p.headshot_url, "games": n, "min": r1(mn), "pts": r1(pts), "reb": r1(reb),
                            "ast": r1(ast), "fg3m": r1(f3), "last_game_date": p.last_game_date}
                           for p, n, mn, pts, reb, ast, f3 in rows[offset:offset + limit]], "total": len(rows)}
 
@@ -734,8 +765,27 @@ def player_detail(player_id: int):
             "join predictions p on p.id=o.prediction_id where p.subject_type='player' and p.subject_id=:p and o.actual is not null "
             "group by 1"), {"p": player_id}).all()
         inj = next((i for i in ingestion.latest_injuries(s) if i.player_id == player_id), None)
+        today = ingestion.today_et()
+        ng = s.scalar(select(Game).where(Game.game_date >= today, Game.status == "scheduled",
+                                         (Game.home_team_id == p.team_id) | (Game.away_team_id == p.team_id))
+                      .order_by(Game.game_date, Game.tipoff_utc).limit(1))
+        next_game, lineup, markets = None, None, []
+        if ng is not None:
+            from .api_v3 import prop_rows
+            from .lineups import lineup_status_map
+            home = ng.home_team_id == p.team_id
+            opp = teams[ng.away_team_id if home else ng.home_team_id]
+            next_game = {"game_id": ng.id, "label": f"{teams[ng.away_team_id].abbr} @ {teams[ng.home_team_id].abbr}",
+                         "date": ng.game_date, "tipoff_utc": ng.tipoff_utc, "opp_abbr": opp.abbr, "is_home": home}
+            snap = lineup_status_map(s, [ng.id]).get((ng.id, p.team_id))
+            if snap is not None:
+                role = next((("starter" if x["role"] == "starter" else "bench") for x in snap.players
+                             if x["player_id"] == p.id and x["role"] != "unavailable"), None)
+                lineup = {"role": role, "status": snap.status}
+            markets = prop_rows(s, View(s, ng.game_date), ng.id, p.id)
         return {"player": {"id": p.id, "name": p.name, "team_abbr": teams[p.team_id].abbr if p.team_id in teams else None,
-                           "position": p.position},
+                           "position": p.position, "jersey": p.jersey, "headshot_url": p.headshot_url},
+                "next_game": next_game, "lineup": lineup, "markets": markets,
                 "sample": {"games": len(rows)}, "splits": splits,
                 "game_log": [{"date": r.game_date, "opp_abbr": teams[r.opp_team_id].abbr if r.opp_team_id in teams else None,
                               "is_home": r.is_home, "min": r.minutes, **{c: getattr(r, c) for c in cols}} for r in rows[:120]],
@@ -801,8 +851,20 @@ def injuries():
                         changes.append({"text": f"{i.player_name}: {pm.get(i.player_name, 'not listed')} → {i.status}", "at": i.ingested_at})
                 now_names = {i.player_name for i in cur}
                 changes += [{"text": f"{n}: {st} → no longer listed", "at": as_of} for n, st in pm.items() if n not in now_names]
+        heads = {p.id: p.headshot_url for p in s.scalars(select(Player).where(Player.id.in_([i.player_id for i in cur if i.player_id])))}
+        today = ingestion.today_et()
+        glabel = {}
+        for g in s.scalars(select(Game).where(Game.game_date >= today, Game.game_date <= today + timedelta(days=1)).order_by(Game.game_date.desc())):
+            lab = f"{teams[g.away_team_id].abbr} @ {teams[g.home_team_id].abbr} · {g.game_date}"
+            glabel[g.home_team_id] = glabel[g.away_team_id] = lab
+        prevm = {}
+        if as_of:
+            for i in ingestion.latest_injuries(s, as_of - timedelta(hours=6)):
+                prevm[i.player_name] = i.status
         return {"as_of": as_of, "source": "ESPN public injuries feed (unofficial); see DATA-SOURCES.md",
-                "items": [injury_row(i, teams) for i in sorted(cur, key=lambda i: (i.team_id or 0, i.player_name))],
+                "items": [injury_row(i, teams, {"headshot_url": heads.get(i.player_id), "game_label": glabel.get(i.team_id),
+                                                "previous_status": prevm.get(i.player_name) if prevm.get(i.player_name) != i.status else None})
+                          for i in sorted(cur, key=lambda i: (glabel.get(i.team_id) is None, glabel.get(i.team_id) or "", i.team_id or 0, i.player_name))],
                 "changes": changes[:60]}
 
 
@@ -902,6 +964,8 @@ def settings_view():
             "providers_configured": {"pbpstats": cfg.pbpstats_enabled, "espn": cfg.espn_enabled, "oddsapi": bool(cfg.odds_api_key)},
             "llm_enabled": bool(cfg.llm_provider), "env": cfg.env}
 
+
+from . import api_v3  # noqa: E402,F401  (registers the V3 routes on `api` before it is mounted)
 
 app.include_router(pub)
 app.include_router(api)

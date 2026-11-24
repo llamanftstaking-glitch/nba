@@ -34,7 +34,7 @@ def render() -> str:
                     f"* **Status:** {mv.status}" + (f" (promoted by {mv.promoted_by})" if mv.promoted_by else " — not promoted; this family produces no qualified selections"),
                     f"* **Author:** {mv.created_by}",
                     f"* **Training / calibration / evaluation periods:** {mv.training_period} / {mv.calibration_period} / {mv.evaluation_period}",
-                    f"* **Applicable markets:** " + ("spread, total, moneyline" if mv.family == "team_game" else f"player {mv.family.split('_')[1]} over/under"),
+                    "* **Applicable markets:** " + ("spread, total, moneyline" if mv.family == "team_game" else f"player {mv.family.split('_')[1]} over/under"),
                     f"* **Parameters:** `{ {k: (round(v, 4) if isinstance(v, float) else v) for k, v in mv.params.items()} }`",
                     f"* **Known limitations:** {mv.limitations}", ""]
             if ev is None:

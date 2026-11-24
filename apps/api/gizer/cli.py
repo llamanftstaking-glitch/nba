@@ -19,6 +19,7 @@ def main(argv=None):
     p = sub.add_parser("ingest-results"); p.add_argument("--season"); p.add_argument("--max-boxes", type=int)
     p = sub.add_parser("ingest-slate"); p.add_argument("--date")
     sub.add_parser("ingest-injuries")
+    p = sub.add_parser("ingest-starters", help="confirmed starters + DNPs from box scores"); p.add_argument("--since", required=True); p.add_argument("--max-games", type=int)
     p = sub.add_parser("backtest", help="walk-forward evaluation of all model families"); p.add_argument("--no-register", action="store_true")
     p = sub.add_parser("edition", help="publish a research edition"); p.add_argument("--date"); p.add_argument("--kind", default="morning")
     p = sub.add_parser("settle"); p.add_argument("--date")
@@ -44,6 +45,8 @@ def main(argv=None):
             _print(ingestion.ingest_results(season, a.max_boxes))
     elif a.cmd == "ingest-slate":
         _print(ingestion.ingest_slate(d(a.date)))
+    elif a.cmd == "ingest-starters":
+        _print(ingestion.ingest_confirmed_starters(date.fromisoformat(a.since), max_games=a.max_games))
     elif a.cmd == "ingest-injuries":
         _print(ingestion.ingest_injuries())
     elif a.cmd == "backtest":

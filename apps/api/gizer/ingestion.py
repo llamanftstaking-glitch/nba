@@ -7,8 +7,8 @@ from datetime import date, datetime, timedelta, timezone
 from sqlalchemy import func, select
 
 from .config import ET, get_settings
-from .db import (Game, InjurySnapshot, OddsSnapshot, Player, PlayerBox, ProviderCall, Season, Team, session_scope,
-                 utcnow)
+from .db import (Game, InjurySnapshot, OddsSnapshot, Player, PlayerAbsence, PlayerBox, ProviderCall, Season, Team,
+                 session_scope, utcnow)
 from .providers import (TEAMS, EspnProvider, GameRec, OddsApiProvider, OddsRec, PbpStatsProvider, ProviderDisabled,
                         ProviderError, name_key)
 
@@ -229,3 +229,56 @@ def provider_status(s) -> list[dict]:
                     "status": "not_configured" if not configured else "never_called" if not last_ok
                     else "degraded" if last_err and last_err > last_ok else "ok"})
     return out
+
+
+def ingest_confirmed_starters(since: date, until: date | None = None, max_games: int | None = None,
+                              provider: EspnProvider | None = None) -> dict:
+    """Confirmed starters, did-not-play records and player identity media from ESPN box scores for final games
+    in [since, until]. Links ESPN event ids first (one scoreboard call per date that needs it). Idempotent."""
+    p = provider or EspnProvider()
+    until = until or today_et()
+    with session_scope() as s:
+        need_link = sorted(set(s.scalars(select(Game.game_date).where(
+            Game.game_date >= since, Game.game_date <= until, Game.status == "final", Game.espn_event_id.is_(None)))))
+    linked = 0
+    for d in need_link:
+        try:
+            ingest_slate(d, provider=p); linked += 1
+        except ProviderError:
+            continue
+    with session_scope() as s:
+        todo = [(g.id, g.espn_event_id, g.game_date) for g in s.scalars(select(Game).where(
+            Game.game_date >= since, Game.game_date <= until, Game.status == "final", Game.box_ingested_at.is_not(None),
+            Game.espn_event_id.is_not(None), Game.lineup_ingested_at.is_(None)).order_by(Game.game_date.desc()))]
+    done, failed, unmatched = 0, 0, 0
+    for gid, eid, gdate in todo[:max_games]:
+        try:
+            rows = p.summary_box(eid)
+        except ProviderError:
+            failed += 1
+            continue
+        if sum(1 for r in rows if r["starter"]) != 10:
+            failed += 1  # an incomplete starter list is not stored as a confirmed lineup
+            continue
+        with session_scope() as s:
+            box = {b.player_id: b for b in s.scalars(select(PlayerBox).where(PlayerBox.game_id == gid))}
+            for r in rows:
+                pl = s.scalar(select(Player).where(Player.espn_id == r["espn_id"]))
+                pid = pl.id if pl else match_player(s, r["name"], [r["team_id"]])
+                if pid is None:
+                    unmatched += 1
+                    continue
+                pl = pl or s.get(Player, pid)
+                pl.espn_id = r["espn_id"]
+                pl.jersey = r["jersey"] or pl.jersey
+                pl.headshot_url = r["headshot_url"] or pl.headshot_url
+                pl.position = r["position"] or pl.position
+                if pid in box:
+                    box[pid].starter = r["starter"]
+                elif r["dnp"] and r["team_id"] and not s.get(PlayerAbsence, (gid, pid)):
+                    s.add(PlayerAbsence(game_id=gid, player_id=pid, team_id=r["team_id"], game_date=gdate,
+                                        reason=(r["reason"] or "Did not play")[:160], provider=p.name))
+            s.get(Game, gid).lineup_ingested_at = utcnow()
+        done += 1
+    return {"dates_linked": linked, "games_done": done, "games_failed": failed, "games_pending": max(0, len(todo) - done - failed),
+            "unmatched_player_rows": unmatched}

@@ -61,8 +61,9 @@ AGENTS = [
     AgentSpec(4, "agent-04-injury-intelligence-analyst", "Injury Intelligence Analyst",
               "Timestamped, sourced injury report snapshots. Never infers medical information.",
               "08:00 ET, every edition and pregame checkpoint", ("rows", "unmatched_players")),
-    AgentSpec(5, "agent-05-rotation-minutes-analyst", "Rotation and Minutes Analyst",
-              "Minutes distributions, volatility and role changes.", "08:00 ET", ("role_changes", "volatile")),
+    AgentSpec(5, "agent-05-rotation-minutes-analyst", "Lineup, Rotation and Minutes Analyst",
+              "Projected vs confirmed starting lineups, lineup change detection, minutes volatility and role changes.",
+              "08:00 ET, every edition and pregame checkpoint", ("role_changes", "volatile", "lineups")),
     AgentSpec(6, "agent-06-matchup-intelligence-analyst", "Matchup Intelligence Analyst",
               "Team offensive/defensive rating matchups with sample sizes.", "08:00 ET", ("games",)),
     AgentSpec(7, "agent-07-pace-environment-analyst", "Pace and Game Environment Analyst",
@@ -147,6 +148,10 @@ def a02_data(season: str | None = None) -> dict:
         bad = s.scalar(select(func.count()).select_from(PlayerBox).where((PlayerBox.minutes > 70) | (PlayerBox.pts < 0)))
         orphan = s.scalar(select(func.count()).select_from(Game).where(Game.status == "final", Game.box_ingested_at.is_(None),
                                                                       Game.game_date < ingestion.today_et() - timedelta(days=2)))
+    try:
+        tot["starters"] = ingestion.ingest_confirmed_starters(ingestion.today_et() - timedelta(days=10), max_games=60)
+    except ProviderError as e:
+        tot["starters"] = {"error": str(e)}
     tot["quality"] = {"duplicate_games": int(dup or 0), "implausible_box_rows": int(bad or 0),
                       "final_games_missing_box_over_2d": int(orphan or 0)}
     return {"summary": f"{tot['boxes_ingested']} box scores ingested; {tot['boxes_pending']} pending; "
@@ -185,8 +190,11 @@ def a05_rotation(d: date) -> dict:
     role = [{"player_id": int(i), "l5_min": round(float(l5[i]), 1), "l20_min": round(float(l20[i]), 1)}
             for i in chg[chg.abs() >= 6].sort_values().index]
     vol = [{"player_id": int(i), "min_sd_l10": round(float(v), 1)} for i, v in sd[act & (n >= 10) & (sd >= 8)].items()]
-    return {"summary": f"{len(role)} players with a ≥6-minute role change (last 5 vs last 20); {len(vol)} with volatile minutes",
-            "data": {"role_changes": role[:60], "volatile": vol[:60]}, "sources": ["pbpstats"]}
+    from .lineups import refresh_lineups
+    lu = refresh_lineups(d)
+    return {"summary": f"lineups: {lu['confirmed']} confirmed, {lu['projected']} projected, {lu['unknown']} unknown, "
+                       f"{len(lu['changes'])} changes; {len(role)} players with a ≥6-minute role change; {len(vol)} with volatile minutes",
+            "data": {"role_changes": role[:60], "volatile": vol[:60], "lineups": lu}, "sources": ["pbpstats", "espn"]}
 
 
 def _today_games(d: date):
@@ -341,7 +349,7 @@ def _refresh_inputs(d: date, job_id):
     """Market + injury refresh. A provider outage is recorded and the edition proceeds on stale data, which the
     risk officer then rejects on freshness grounds (fail safe, never fabricate)."""
     errs = []
-    for num, fn in ((10, lambda: a10_market([d])), (4, lambda: _inj())):
+    for num, fn in ((10, lambda: a10_market([d])), (4, lambda: _inj()), (5, lambda: a05_rotation(d))):
         try:
             run_agent(num, fn, job_id)
         except Exception as e:

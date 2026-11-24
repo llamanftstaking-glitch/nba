@@ -20,6 +20,13 @@ Mode: **research, simulation and paper testing only.** NBA only.
 * Never commit secrets or `.env`. Never claim a test passed or a deployment succeeded unless it was actually run and observed.
 * Forbidden product vocabulary: lock, guaranteed, free money, risk-free, cannot lose, sure thing.
 
+## Permanent product requirements (V3)
+* Follow `docs/design/DESIGN-SYSTEM.md` for every UI change (tokens, typography, components); basketball research first, system diagnostics last.
+* Player props: every quote carries its origin (`provider` / `owner_entered` / `hypothetical`); manual entries never bypass the risk officer (`docs/data/PLAYER-PROPS.md`).
+* Lineups: `confirmed` only from a box score; `projected` is always labelled not official; never pad a starting five (`docs/data/LINEUP-INTELLIGENCE.md`).
+* Player history is descriptive: windows count appearances, a missed game is never a zero, sample sizes are always shown, and a historical frequency is never presented as a probability (`docs/research/PLAYER-HISTORICAL-ANALYSIS.md`).
+* Research completeness is a count of real inputs; never change its calculation to raise the number.
+
 ## Definition of a completed task
 Code + tests executed + docs updated + `PROJECT-STATE.md` updated + `CHANGELOG.md` entry + (if a decision was made) a `docs/DECISIONS.md` entry. Use the status words VERIFIED / IMPLEMENTED / TESTED / DEPLOYED / IN PROGRESS / BLOCKED / NOT VERIFIED precisely.
 
@@ -35,5 +42,5 @@ scripts/smoke.sh https://nba.gizergroup.com                    # production smok
 ```
 
 ## Layout
-`apps/api/gizer/` — one Python package: `providers` → `ingestion` → `modeling` → `simulation` → `research` (guard, combos, editions) → `ledger` → `jobs` (agents, queue, scheduler) → `api`/`security`.
+`apps/api/gizer/` — one Python package: `providers` → `ingestion` → `history` / `lineups` → `modeling` → `simulation` → `research` (guard, combos, editions) → `ledger` → `jobs` (agents, queue, scheduler) → `api` + `api_v3`/`security`.
 `apps/web/` — Next.js parlay-first terminal. `infrastructure/` — proxy, backup. `docs/` — architecture, research, operations.

@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats as sps
 
-PLAYER_STATS = ["pts", "reb", "ast", "fg3m"]
+PLAYER_STATS = ["pts", "reb", "ast", "fg3m", "stl", "blk", "tov", "pra", "pr", "pa", "ra"]
 METHOD = "gaussian_copula_empirical_v1"
 
 

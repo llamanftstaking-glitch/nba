@@ -187,3 +187,109 @@ type PlayerProj = { player_id: number; player_name: string; team_abbr: string|nu
 ```
 `research_completeness.score` is 0–100. `/combos` `category` defaults to `double`. `POST /builder/evaluate`
 accepts 1–6 selections.
+
+---
+
+# V3 additions — player intelligence, props, lineups
+
+Unless stated, fields may be `null` (= not available; render "—", never 0).
+Stat keys used everywhere: `min, pts, reb, ast, fg3m, stl, blk, tov, pra, pr, pa, ra`
+(pra = points+rebounds+assists, pr = points+rebounds, pa = points+assists, ra = rebounds+assists).
+Prop market keys: `player_<stat>` for `pts, reb, ast, fg3m, stl, blk, tov, pra, pr, pa, ra`.
+
+## Changed shapes
+```ts
+// player references now carry identity media
+type PlayerRef = { id: number; name: string; team_abbr: string|null; position: string|null;
+                   jersey: string|null; headshot_url: string|null };
+// Selection gains descriptive context (historical statistics, NOT predictions)
+Selection.context: { l5: number|null; l10: number|null; l20: number|null; season_avg: number|null;
+                     proj_min: number|null; lineup_role: "starter"|"bench"|null;
+                     lineup_status: "confirmed"|"projected"|"unknown"|null } | null;   // null for team/game markets
+Selection.origin: "provider"|"owner_entered"|"hypothetical";
+// GameCard gains
+GameCard.lineup: { home: {status: LineupStatus; verified_at: string|null}; away: {status: LineupStatus; verified_at: string|null} };
+GameCard.props: { quoted_markets: number; players_projected: number };
+// command-center gains
+lineups_summary: { confirmed: number; projected: number; unknown: number };      // team-lineups on the slate
+props_summary: { provider_configured: boolean; quoted_markets: number; manual_entries: number; players_projected: number; message: string };
+// InjuryRow gains
+InjuryRow.headshot_url: string|null; InjuryRow.game_label: string|null; InjuryRow.previous_status: string|null; InjuryRow.stale: boolean;
+type LineupStatus = "confirmed"|"projected"|"unknown";
+```
+
+## New endpoints
+| Method | Path | Returns |
+|---|---|---|
+| GET | `/players/{id}` | existing shape, with `player: PlayerRef`, plus `next_game: {game_id,label,date,tipoff_utc,opp_abbr,is_home}|null`, `lineup: {role:"starter"|"bench"|null, status: LineupStatus}|null`, `markets: PropRow[]` (today's rows for this player) |
+| GET | `/players/{id}/averages` | `{definition: string, windows: Window[]}` |
+| GET | `/players/{id}/game-logs?season=&venue=home\|away&role=starter\|bench&opponent=ABBR&limit=&offset=` | `{items: GameLogRow[], total, missed: {date, opp_abbr, reason}[], source: string}` |
+| GET | `/players/{id}/threshold?stat=&line=&window=L5\|L10\|L15\|L20\|L30\|season&venue=&role=` | `Threshold` |
+| GET | `/players/{id}/splits` | `{splits: SplitRow[], notes: string[]}` |
+| GET | `/player-props?date=&game_id=&team=&market=&q=&quoted=true\|false&limit=&offset=` | `{date, markets: {key,label,stat,operational:boolean,note}[], quote_status: {provider_configured:boolean, message:string}, items: PropRow[], total}` |
+| GET | `/games/{id}/player-props` | same as `/player-props?game_id=` |
+| GET | `/player-props/manual?date=` | `{items: ManualEntry[]}` |
+| POST | `/player-props/manual` (owner) | body below → `{entry: ManualEntry}`; `422` on invalid input |
+| POST | `/player-props/manual/{id}/withdraw` (owner) | `{ok:true}` (appends an audit event; the entry is kept) |
+| GET | `/lineups?date=` | `{date, games: {game:{id,label,tipoff_utc,status,home:TeamRef,away:TeamRef}, home: TeamLineup, away: TeamLineup}[]}` |
+| GET | `/games/{id}/lineups` | `{game_id, home: TeamLineup, away: TeamLineup}` |
+| GET | `/games/{id}/lineup-history` | `{items: {at, team_abbr, status: LineupStatus, change: string, source: string}[]}` |
+| GET | `/data-health/providers` | `{items: ProviderInfo[]}` |
+| GET | `/performance/strategies` | `{groups: ({key, label, kind:"market"|"engine"|"structure"} & Summary)[], forecast: {stat, n, mae, coverage_80}[], disclaimer}` |
+
+```ts
+type StatSummary = { mean: number; median: number; min: number; max: number; sd: number|null; p25: number; p75: number };
+type Window = { key: "L3"|"L5"|"L10"|"L15"|"L20"|"L30"|"season"|"prev_season"|"regular_season"|"playoffs";
+  label: string; requested: number|null;      // e.g. 10 for L10
+  games: number;                              // appearances actually in the window (may be < requested)
+  missed: number|null;                        // team games in the same span the player did not appear in
+  small_sample: boolean; available: boolean; note: string|null;   // e.g. playoffs: "not ingested"
+  stats: Record<string, StatSummary> };
+type GameLogRow = { game_id: string; date: string; opp_abbr: string; is_home: boolean; starter: boolean|null;
+  result: "W"|"L"|null; team_points: number|null; opp_points: number|null;
+  min: number; pts: number; reb: number; ast: number; fg3m: number; stl: number; blk: number; tov: number;
+  pra: number; fga: number; fta: number; usage: number|null };
+type Threshold = { player_id: number; stat: string; line: number; window: string;
+  measurement: "A"; label: string;            // "Historical results versus today's selected threshold (descriptive)"
+  n: number; over: number; under: number; equal: number; frequency_over: number|null; average: number|null;
+  games: { game_id: string; date: string; opp_abbr: string; is_home: boolean; starter: boolean|null; min: number;
+           value: number; outcome: "over"|"under"|"equal" }[];      // oldest → newest
+  market_history: { available: false; reason: string } | { available: true; n: number; over: number; under: number; push: number };  // Measurement B
+  notes: string[] };                          // always includes the "not a probability" caveat
+type SplitRow = { group: string; label: string; games: number; small_sample: boolean;
+  min: number|null; pts: number|null; reb: number|null; ast: number|null; fg3m: number|null; pra: number|null };
+type PropRow = { player_id: number; player_name: string; headshot_url: string|null; team_abbr: string; opp_abbr: string;
+  game_id: string; game_label: string; market: string; stat: string;
+  line: number|null; over_price: number|null; under_price: number|null; book: string|null;
+  origin: "provider"|"owner_entered"|"hypothetical"|null; quote_at: string|null;       // null origin = no quote
+  l5: number|null; l10: number|null; l20: number|null; season_avg: number|null; n_games: number;
+  hist_over: number|null; hist_n: number|null;          // Measurement A over the last 10 appearances at `line`
+  proj_min: number|null; projection: number|null; p10: number|null; p90: number|null;
+  availability: string;                                  // "available" or the injury status text
+  lineup_role: "starter"|"bench"|null; lineup_status: LineupStatus;
+  model_ready: boolean; model_status: string;
+  selection: { id: number; side: string; classification: string; prob: number|null; prob_low: number|null; prob_high: number|null } | null;
+  updated_at: string|null };
+type ManualEntry = { id: number; game_id: string; game_label: string; player_id: number; player_name: string; market: string;
+  line: number; over_price: number|null; under_price: number|null; book: string|null;
+  origin: "owner_entered"|"hypothetical"; observed_at: string|null; source_ref: string|null; note: string|null;
+  created_by: string; created_at: string; withdrawn: boolean };
+// POST /player-props/manual body
+{ game_id: string; player_id: number; market: string; line: number;
+  over_price?: number; under_price?: number; odds_format?: "american"|"decimal";   // prices optional for hypothetical
+  origin: "owner_entered"|"hypothetical"; book?: string; observed_at?: string; source_ref?: string; note?: string }
+type LineupPlayer = { player_id: number|null; name: string; headshot_url: string|null; jersey: string|null; position: string|null;
+  role: "starter"|"bench"; availability: string; injury_detail: string|null;
+  proj_min: number|null; recent_min: number|null; starts_last10: number|null };
+type TeamLineup = { team: TeamRef; status: LineupStatus; source: string; verified_at: string|null; note: string;
+  starters: LineupPlayer[];        // 0 or 5; NEVER padded
+  bench: LineupPlayer[]; unavailable: LineupPlayer[] };
+type ProviderInfo = { provider: string; name: string; categories: string[]; configured: boolean;
+  credential: "present"|"missing"|"not_required"; status: string; last_success_at: string|null; last_error_at: string|null;
+  last_error: string|null; calls_this_month: number; quota_used: number; quota_limit: number|null; monthly_cost_usd: number;
+  limitations: string[]; setup: string };
+```
+
+Lineup semantics: `confirmed` only when the source box score lists starters (at/after tipoff). `projected` is GIZER's
+deterministic projection from each team's most recent confirmed starting five adjusted for the latest injury report —
+it is never an official lineup and must be labelled "Projected". `unknown` when there is no basis.

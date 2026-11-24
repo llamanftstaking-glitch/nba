@@ -17,7 +17,15 @@ from sqlalchemy import select
 
 from .db import Game, ModelEvaluation, ModelVersion, PlayerBox, ResearchEvent, session_scope, utcnow
 
-PLAYER_STATS = ["pts", "reb", "ast", "fg3m"]
+BASE_STATS = ["pts", "reb", "ast", "fg3m", "stl", "blk", "tov"]
+COMBO_STATS = {"pra": ("pts", "reb", "ast"), "pr": ("pts", "reb"), "pa": ("pts", "ast"), "ra": ("reb", "ast")}
+PLAYER_STATS = [*BASE_STATS, *COMBO_STATS]  # every stat has its own model family, evaluation and gate
+
+
+def add_combo_stats(df):
+    for k, parts in COMBO_STATS.items():
+        df[k] = sum(df[p] for p in parts)
+    return df
 DECAY = 0.94          # per-game exponential decay of a player's history
 PRIOR_MINUTES = 60.0  # shrinkage toward the league per-minute rate (pseudo-minutes)
 MIN_PRIOR_GAMES = 5
@@ -39,14 +47,14 @@ GATE = {"min_eval_obs": 1000, "max_mae_ratio_vs_best_baseline": 1.01, "max_cover
 # ---------------------------------------------------------------- data frames
 def load_player_frame(s, before: date | None = None) -> pd.DataFrame:
     q = select(PlayerBox.game_id, PlayerBox.player_id, PlayerBox.team_id, PlayerBox.opp_team_id, PlayerBox.game_date,
-               PlayerBox.season, PlayerBox.is_home, PlayerBox.minutes, PlayerBox.pts, PlayerBox.reb, PlayerBox.ast,
-               PlayerBox.fg3m)
+               PlayerBox.season, PlayerBox.is_home, PlayerBox.minutes, *[getattr(PlayerBox, c) for c in BASE_STATS])
     if before:
         q = q.where(PlayerBox.game_date < before)
     df = pd.DataFrame(s.execute(q).all(), columns=["game_id", "player_id", "team_id", "opp_team_id", "game_date",
-                                                   "season", "is_home", "minutes", *PLAYER_STATS])
+                                                   "season", "is_home", "minutes", *BASE_STATS])
     if df.empty:
         return df
+    add_combo_stats(df)
     df["game_date"] = pd.to_datetime(df["game_date"])
     return df.sort_values(["game_date", "game_id", "player_id"]).reset_index(drop=True)
 

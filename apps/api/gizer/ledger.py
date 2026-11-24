@@ -100,11 +100,12 @@ def grade_leg(s, leg: dict, game: Game | None) -> dict:
         return {**base, "actual": float(actual), "result": "win" if v > 0 else "push" if v == 0 else "loss"}
     if game.box_ingested_at is None:
         return {**base, "result": "unresolved", "note": "box score not ingested yet"}
-    stat = {"player_pts": "pts", "player_reb": "reb", "player_ast": "ast", "player_fg3m": "fg3m"}[m]
+    from .modeling import COMBO_STATS
+    stat = m.removeprefix("player_")
     row = s.get(PlayerBox, (game.id, leg["subject_id"]))
     if row is None:
         return {**base, "result": "void", "note": "player did not play"}
-    actual = float(getattr(row, stat))
+    actual = float(sum(getattr(row, c) for c in COMBO_STATS.get(stat, (stat,))))
     v = actual - line if side == "over" else line - actual
     return {**base, "actual": actual, "minutes": row.minutes, "result": "win" if v > 0 else "push" if v == 0 else "loss"}
 
@@ -236,7 +237,8 @@ def record_prediction_outcomes(s, d: date) -> int:
                 ctx["dnp"] = True
                 pit = None
             else:
-                actual = float(getattr(row, p.stat))
+                from .modeling import COMBO_STATS
+                actual = float(sum(getattr(row, c) for c in COMBO_STATS.get(p.stat, (p.stat,))))
                 ctx = {"minutes": row.minutes, "proj_min": p.features.get("proj_min")}
                 nn, pp = nb_params(p.dist["mu"], p.dist["r"])
                 pit = float(sps.nbinom.cdf(actual, nn, pp))

@@ -59,6 +59,9 @@ class Player(Base):
     team_id: Mapped[int | None] = mapped_column(BigInteger, index=True)  # most recent team seen in a box score
     position: Mapped[str | None] = mapped_column(String(8))
     last_game_date: Mapped[date | None] = mapped_column(Date)
+    espn_id: Mapped[str | None] = mapped_column(String(16), index=True)
+    jersey: Mapped[str | None] = mapped_column(String(4))
+    headshot_url: Mapped[str | None] = mapped_column(String(255))
 
 
 class Game(Base):
@@ -79,6 +82,7 @@ class Game(Base):
     espn_event_id: Mapped[str | None] = mapped_column(String(16), index=True)
     provider: Mapped[str] = mapped_column(String(24))
     box_ingested_at: Mapped[datetime | None] = _ts()
+    lineup_ingested_at: Mapped[datetime | None] = _ts()  # confirmed starters / DNP list ingested
     ingested_at: Mapped[datetime] = _ts(default=utcnow)
     updated_at: Mapped[datetime] = _ts(default=utcnow, onupdate=utcnow)
 
@@ -103,9 +107,37 @@ class PlayerBox(Base):
     fga: Mapped[int] = mapped_column(Integer)
     fta: Mapped[int] = mapped_column(Integer)
     usage: Mapped[float | None] = mapped_column(Float)
+    starter: Mapped[bool | None] = mapped_column(Boolean)  # null = starter status not known
     provider: Mapped[str] = mapped_column(String(24))
     ingested_at: Mapped[datetime] = _ts(default=utcnow)
     __table_args__ = (Index("ix_player_box_player_date", "player_id", "game_date"),)
+
+
+class PlayerAbsence(Base):
+    """A team game in which a rostered player did not appear (never treated as a zero-stat appearance)."""
+    __tablename__ = "player_absences"
+    game_id: Mapped[str] = mapped_column(String(12), primary_key=True)
+    player_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    team_id: Mapped[int] = mapped_column(BigInteger)
+    game_date: Mapped[date] = mapped_column(Date, index=True)
+    reason: Mapped[str | None] = mapped_column(String(160))
+    provider: Mapped[str] = mapped_column(String(24))
+    ingested_at: Mapped[datetime] = _ts(default=utcnow)
+
+
+class LineupSnapshot(Base):
+    """Append-only lineup snapshot for one team in one game. status: confirmed | projected."""
+    __tablename__ = "lineup_snapshots"
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    game_id: Mapped[str] = mapped_column(String(12), index=True)
+    team_id: Mapped[int] = mapped_column(BigInteger)
+    status: Mapped[str] = mapped_column(String(12))
+    source: Mapped[str] = mapped_column(String(160))
+    signature: Mapped[str] = mapped_column(String(64))  # hash of status + ordered starters + availability
+    players: Mapped[list] = mapped_column(JS)
+    change: Mapped[str | None] = mapped_column(Text)  # human-readable difference vs the previous snapshot
+    verified_at: Mapped[datetime] = _ts(default=utcnow)
+    ingested_at: Mapped[datetime] = _ts(default=utcnow, index=True)
 
 
 class RawPayload(Base):
@@ -168,6 +200,11 @@ class OddsSnapshot(Base):
     source_published_at: Mapped[datetime | None] = _ts()
     ingested_at: Mapped[datetime] = _ts(default=utcnow, index=True)
     schema_version: Mapped[int] = mapped_column(Integer, default=SCHEMA_VERSION)
+    # provider = sourced automatically; owner_entered = typed in by the owner; hypothetical = research threshold
+    origin: Mapped[str] = mapped_column(String(16), default="provider", server_default="provider")
+    note: Mapped[str | None] = mapped_column(String(300))
+    source_ref: Mapped[str | None] = mapped_column(String(300))
+    created_by: Mapped[str | None] = mapped_column(String(160))
     __table_args__ = (Index("ix_odds_game_market", "game_id", "market", "ingested_at"),)
 
 
@@ -476,7 +513,7 @@ class AuditLog(Base):
 IMMUTABLE_TABLES = [
     "injury_snapshots", "odds_snapshots", "predictions", "selections", "combos", "editions",
     "research_events", "paper_tickets", "paper_settlements", "prediction_outcomes", "audit_log",
-    "model_evaluations", "raw_payloads",
+    "model_evaluations", "raw_payloads", "lineup_snapshots",
 ]
 
 IMMUTABILITY_SQL = """
