@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { HTMLAttributes, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
 export type Tone = "neutral" | "accent" | "accent-solid" | "warn" | "bad" | "info";
@@ -34,9 +34,9 @@ const DOT: Record<Tone, string> = {
 };
 
 /** Status as a small coloured dot plus a text label (the label always carries the meaning). */
-export function StatusDot({ tone = "neutral", children, className, title }: { tone?: Tone; children: ReactNode; className?: string; title?: string }) {
+export function StatusDot({ tone = "neutral", children, className, ...rest }: { tone?: Tone; children: ReactNode } & Omit<HTMLAttributes<HTMLSpanElement>, "children">) {
   return (
-    <span title={title} className={cn("inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-medium text-soft", className)}>
+    <span {...rest} className={cn("inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-medium text-soft", className)}>
       <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", DOT[tone])} aria-hidden />
       {children}
     </span>
