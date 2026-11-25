@@ -133,6 +133,15 @@ def build_team_lineup(ctx: LineupContext, game: Game, team: Team, provider_rows:
             if fb is not None:
                 return fb
     rows = [ctx.player_row(p, "starter") for p in starters]
+    if provider_rows:
+        # Identity details published with the box score fill gaps for players whose history is not loaded yet.
+        from .providers import name_key
+        by_name = {name_key(r["name"]): r for r in provider_rows if r["team_id"] == team.id}
+        for r in rows:
+            src = by_name.get(name_key(r["name"]))
+            if src:
+                for k in ("position", "jersey", "headshot_url"):
+                    r[k] = r[k] or src.get(k)
     out_rows = [ctx.player_row(p, "bench") for p in roster_ids if p not in starters]
     injured_extra = [i for pid, i in ctx.inj.items() if i.team_id == team.id and pid not in roster_ids and pid not in starters
                      and is_out(i.status.lower())]

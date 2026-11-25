@@ -157,7 +157,8 @@ def test_projected_lineup_replaces_unavailable_starter_and_detects_change():
 def test_projected_never_becomes_confirmed_without_a_box_score_and_confirmed_is_not_downgraded():
     t = ST["teams"]
     home = t[0]
-    live = [{"name": pname(p), "team_id": home, "starter": True} for p in ST["players"][home][1:6]]
+    live = [{"name": pname(p), "team_id": home, "starter": True, "position": "G", "jersey": "7", "headshot_url": "https://example.invalid/h.png"}
+            for p in ST["players"][home][1:6]]
     with gdb.session_scope() as s:
         ctx = LineupContext(s, SLATE, ST["tipoff"] - timedelta(minutes=20))
         g = s.get(gdb.Game, "S0")
@@ -166,6 +167,7 @@ def test_projected_never_becomes_confirmed_without_a_box_score_and_confirmed_is_
         assert four["status"] == "projected"  # an incomplete starter list is not a confirmation
         conf = build_team_lineup(ctx, g, s.get(gdb.Team, home), live)
         assert conf["status"] == "confirmed" and len(conf["starters"]) == 5 and "box score" in conf["source"]
+        assert all(p["position"] == "G" and p["jersey"] == "7" and p["headshot_url"] for p in conf["starters"])  # identity from the box score
 
 
 def test_manual_market_rules_and_props_api():
