@@ -14,19 +14,26 @@ docker compose version >/dev/null 2>&1 || die "The Docker Compose plugin is not 
 docker info >/dev/null 2>&1 || die "Cannot talk to Docker. Run this as a user in the 'docker' group (or with sudo)."
 
 if [ "${1:-}" = "history" ]; then
+  # Validate and publish from whatever history is already loaded. Validation takes seconds, and without it
+  # no model is in production, so every research page stays empty for the hours the load can take.
+  publish_research() {
+    say "Validating models on the history loaded so far (only models that pass the gate are promoted)"
+    docker compose exec -T worker gizer backtest | tail -n 40 || { say "Validation skipped: not enough history yet"; return 0; }
+    say "Running today's intelligence and publishing an edition"
+    docker compose exec -T worker gizer run-job morning_intel || true
+    docker compose exec -T worker gizer run-job edition --args '{"kind":"update"}' || true
+  }
+  publish_research
   say "Loading the current season, newest games first (the data provider throttles requests; this can take hours)"
   docker compose exec -T worker gizer ingest-results --season 2026-27
+  publish_research
   say "Loading confirmed starters for the current season"
   docker compose exec -T worker gizer ingest-starters --since 2026-10-01
   say "Loading the previous season"
   docker compose exec -T worker gizer ingest-results --season 2025-26
   say "Loading confirmed starters and did-not-play records for the previous season"
   docker compose exec -T worker gizer ingest-starters --since 2025-10-01
-  say "Validating models (only models that pass the gate are promoted)"
-  docker compose exec -T worker gizer backtest | tail -n 40
-  say "Running today's intelligence and publishing an edition"
-  docker compose exec -T worker gizer run-job morning_intel
-  docker compose exec -T worker gizer run-job edition --args '{"kind":"morning"}'
+  publish_research
   mkdir -p .auto-update && date -u +%Y-%m-%dT%H:%M:%SZ > .auto-update/history.done
   say "History load finished."
   exit 0

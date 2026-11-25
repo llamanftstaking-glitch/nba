@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.5 — 2026-11-25
+* History load (`scripts/deploy.sh history`): models are validated and an edition is published from whatever
+  history is already loaded, at the start and again after the current season, instead of only once at the very
+  end. Until validation ran no model was in production, so research pages on a fresh server stayed empty for the
+  whole load. Reproduced locally on a partial copy (1,281 games): validation takes seconds; six models pass.
+
 ## 0.4.4 — 2026-11-25 (page audit)
 * Every page audited against a real slate (9 games, ~5,800 evaluated contracts). No page errors, but several were
   unusable at real volume: Daily Editions rendered every selection (1.9M px), Top Picks, Builder, Model Registry,
