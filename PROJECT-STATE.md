@@ -25,7 +25,7 @@ starters for 1,444. No playoffs, no historical odds, no play-by-play. See DATA-S
 
 ## Blockers needing the owner
 1. **Post-deployment checks** — after the history load finishes: `scripts/smoke.sh`, backup + restore test, one reboot test (DEPLOYMENT.md checklist).
-2. **Auto-update installed (owner-reported)**: the server deploys the `production` branch after green checks. After the history load finishes, run `gizer backtest` on the server (the history script does this) so models are validated there; until then model-based picks are rejected.
+2. **Auto-update working**: release `3ed2441` was published to `production` on 2026-11-25 and the owner confirmed the server installed it without manual action (the build session verified only external readiness afterwards). Details: the server deploys the `production` branch after green checks. After the history load finishes, run `gizer backtest` on the server (the history script does this) so models are validated there; until then model-based picks are rejected.
 3. Prop quotes now come from Kalshi (free, public). A sportsbook prop odds key is optional.
 3. **Data licensing review** before any use beyond private research (ESPN endpoint is unofficial).
 
