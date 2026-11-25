@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.4 — 2026-11-25 (page audit)
+* Every page audited against a real slate (9 games, ~5,800 evaluated contracts). No page errors, but several were
+  unusable at real volume: Daily Editions rendered every selection (1.9M px), Top Picks, Builder, Model Registry,
+  Backtesting and Research Lab ran to tens of thousands of pixels; Player Comparison and Historical Performance
+  opened blank; Same-Game Research was empty; prop pages said no provider was configured although Kalshi was.
+* API: `/selections` is paginated and filterable; edition and game detail return bounded lists with counts;
+  one main line per market on game cards; per-game same-game combinations; accurate prop-source messages;
+  schedule ingested seven days ahead.
+* Web: paged and grouped selection lists, collapsed metric details, slate-player defaults on comparison and
+  history, per-game collapsible injury feed. Largest page is now 8,080 px at 1440 wide on the same data.
+* Smoke suite gained a large-slate guardrail (page-height limits, bounded requests): 2,103 checks.
+
 ## 0.4.3 — 2026-11-25
 * Updater: the history load is started as an independent systemd job (it was being stopped when the update job
   ended) and is restarted automatically until it has finished once.

@@ -114,6 +114,18 @@ Game page order: 1 matchup header · 2 game environment · 3 lineups · 4 player
 availability · 6 Kalshi market observations · 7 historical player performance · 8 injury & availability timeline ·
 9 projections (expandable) · 10 research selections · 11 same-game research · 12 sources and limitations.
 
+**Page-audit changes (2026-11-25).** Top Picks uses `GET /selections` server-side: default tab `ranked=true`
+grouped by game (≤ 5 per game), then Qualified / Watchlist / Stale / Insufficient / Rejected tabs paged 25 at a
+time with counts from `counts`, plus `q=` search and a game filter. Builder lists `classification=qualified` only
+(grouped by game in collapsible groups, optional watchlist, `q=` search); researched combinations are collapsed and
+capped. Daily Editions shows the edition list with capped change lists, the diff on the bounded edition data
+(stated), and a full edition view with counts by classification, qualified rows grouped by game, a collapsed
+watchlist, a 20-per-page not-qualified list with the total, and capped combinations. Models, Backtesting and
+Research Lab show one compact card per item with "Details" collapsed. Comparison and History are never blank.
+The injury feed is collapsed per game (slate games open, off-slate teams in one closed group). The game page
+shows qualified and watchlist selections, then "+N more evaluated (not qualified)" from `selection_counts`;
+Kalshi groups lead with each player's main-line contract.
+
 ## 4. Component inventory and 5. Design system
 
 Both are maintained in `docs/design/DESIGN-SYSTEM.md` (tokens, typography, breakpoints, every reusable
@@ -168,3 +180,12 @@ Nothing was invented; where the contract is silent the UI degrades instead.
     required; the phrase is a negation, but it is the one place that wording can appear.
 21. `GET /players/{id}/minutes` returns 404 for an unknown player id (seen on the running backend); the profile
     block then shows the error state with Retry.
+22. `GET /selections` has no "group by game" or per-game cap other than `ranked=true`; the Qualified tab is a flat
+    paged list.
+23. The builder needs both qualified and watchlist rows; `classification` takes one value, so the watchlist is a
+    second request (limit 100). Selections beyond the first 200 qualified are reachable only through search.
+24. `GET /editions/{id}` carries no per-game counts; the "qualified by game" view groups the ≤ 150 returned rows.
+25. Model/backtest metric keys are free-form. Headline numbers are picked from a fixed priority list of known
+    keys (`mae_ratio_vs_best_baseline`, `coverage_80`, `ece`, `brier`, …); an item with none of them shows only
+    its sample size until "Details" is opened.
+26. `InjuryRow.game_label` is matched against `GameCard.label` to decide which feed groups open by default.

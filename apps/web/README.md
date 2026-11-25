@@ -68,7 +68,10 @@ e2e/
   smoke.mjs                      flow tests (1440x900, 390x844) + screenshot gallery at seven viewports
 ```
 
-`SMOKE_ONLY=flows` or `SMOKE_ONLY=gallery` runs one half of the smoke script.
+`SMOKE_ONLY=flows`, `SMOKE_ONLY=large` or `SMOKE_ONLY=gallery` runs one part of the smoke script. The large-slate
+part switches the mock into its large mode (also available as `MOCK_LARGE=1 node e2e/mock-api.mjs`: ~1,600
+selections, 68 combinations, 640 Kalshi contracts, 26 model evaluations) and fails any page taller than 12,000px at
+1440 wide or 15,000px at 390 wide, or any unpaginated `/selections` request.
 
 The application contains no fixture or mock data paths. With no API reachable every view shows its error state.
 

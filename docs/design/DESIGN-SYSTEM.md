@@ -184,6 +184,24 @@ information · Stale (amber) · Invalidated · Rejected.
 Long lists are capped with an explicit "Show all N" control (game-page markets, minutes, history, Kalshi groups;
 splits and distribution cards on phones) because a real slate carries hundreds of contracts per game.
 
+## 9b. Bounded lists (page-audit rules, 2026-11-25)
+
+A production slate carries thousands of evaluated selections and Kalshi contracts. No page may render an
+unbounded list; the smoke suite fails any page taller than 12,000px at 1440 wide (15,000px at 390) on a large
+synthetic slate.
+
+| Pattern | Component | Use |
+|---|---|---|
+| Server-side paging | `Pagination` + `limit`/`offset` | `/picks` tabs, player props, Kalshi watch, minutes, tickets, results. Every `/selections` request carries a `limit` ≤ 1000 |
+| Compact row that expands in place | `SelectionRow`, `SelectionsByGame` (`selection-row.tsx`) | long selection lists: one line per selection (rank, label, classification, model probability + interval, price, edge, evidence); the full `SelectionCard` opens on demand. At most five per game until "Show all" |
+| Disclosure block | `Collapsible` (`ui/collapsible.tsx`) | watchlist, technical model details, per-game injury feed, "load a combination", extra qualified rows |
+| "Show all N" cap | inline button | Kalshi groups, minutes, history, combinations, change lists, correlation pairs, backtests; `DataTable mobileLimit` for stacked cards |
+| Headline + details | `ModelsTable`, `BacktestsTable`, `MetricsDetails` (`registry-tables.tsx`) | one compact card per model/backtest with sample size and up to five headline metrics; everything else behind "Details", where nested metrics render as key/value rows and small tables (calibration as a table), never as JSON |
+| Defaults instead of blank pages | `useQuickPlayers` (`slate-players.tsx`) | comparison preselects the slate's two highest projected-minute players and offers chips; history lists slate players as quick links |
+
+When a list is cut, the cut is stated ("Showing 200 of 590", "N not qualified in total — showing the 200 most
+relevant") and the full set is one click away or on its own paged page.
+
 ## 10. Vocabulary
 
 Never used in UI copy: lock, guaranteed winner, free money, risk-free, can't lose, sure thing; and for market data:
