@@ -27,6 +27,7 @@ if [ "${1:-}" = "history" ]; then
   say "Running today's intelligence and publishing an edition"
   docker compose exec -T worker gizer run-job morning_intel
   docker compose exec -T worker gizer run-job edition --args '{"kind":"morning"}'
+  mkdir -p .auto-update && date -u +%Y-%m-%dT%H:%M:%SZ > .auto-update/history.done
   say "History load finished."
   exit 0
 fi

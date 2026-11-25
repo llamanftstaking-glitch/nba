@@ -50,6 +50,10 @@ bash scripts/install-auto-update.sh off      # switch off
 bash scripts/auto-update.sh status           # deployed commit, last failed release, recent log
 systemctl list-timers gizer-nba-update.timer # next run
 ```
+The updater also keeps the one-off history load alive: until `.auto-update/history.done` exists it starts the
+loader (as its own systemd job, `gizer-nba-history`) whenever it is not running. Progress: `tail -n 5 history.log`;
+state: `systemctl status gizer-nba-history`.
+
 Promoting a release (from a development machine, after verification and green CI): `git push origin main:production`.
 Database migrations are forward-only; a rollback rebuilds the previous code against the newer schema, which is
 safe for the additive migrations used so far. Read the log if a rollback is reported.

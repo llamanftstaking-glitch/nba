@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.3 — 2026-11-25
+* Updater: the history load is started as an independent systemd job (it was being stopped when the update job
+  ended) and is restarted automatically until it has finished once.
+* Confirmed lineups carry position, jersey and photo from the box score.
+
 ## 0.4.2 — 2026-11-25
 * Unattended server updates (`scripts/auto-update.sh`, `scripts/install-auto-update.sh`): deploys the
   `production` branch after its checks pass, with health check and rollback.

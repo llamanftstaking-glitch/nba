@@ -30,11 +30,34 @@ main() {
   exec 9>"$STATE/lock"
   flock -n 9 || { echo "another update is running"; return 0; }
 
+  # The history load must outlive this (oneshot) service: systemd stops a service's child processes when the
+  # service ends, so the loader is started as its own transient unit. nohup alone is not enough here.
+  start_history() {
+    pgrep -f "deploy.sh history" >/dev/null 2>&1 && return 0
+    if command -v systemd-run >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
+      systemctl reset-failed gizer-nba-history.service >/dev/null 2>&1 || true
+      systemd-run --quiet --collect --unit gizer-nba-history --working-directory "$PWD" \
+        /usr/bin/env bash -c 'exec bash scripts/deploy.sh history >> history.log 2>&1' \
+        && log "history load started as its own job (gizer-nba-history)" \
+        || log "could not start the history load (systemd-run failed)"
+    else
+      nohup bash scripts/deploy.sh history >> history.log 2>&1 < /dev/null &
+      log "history load started in the background"
+    fi
+  }
+  # Self-healing: if the history load has not finished and is not running, start it (it resumes).
+  resume_history_if_needed() {
+    [ -f "$STATE/history.done" ] && return 0
+    docker compose ps --status running --services 2>/dev/null | grep -qx worker || return 0
+    start_history
+  }
+
   git fetch -q origin "$BRANCH" 2>/dev/null || { log "fetch failed (network or branch '$BRANCH' missing); nothing done"; return 0; }
   local cur new
   cur="$(git rev-parse HEAD)"; new="$(git rev-parse "origin/$BRANCH")"
-  [ "$cur" = "$new" ] && return 0
-  git merge-base --is-ancestor "$new" "$cur" && return 0          # server is already at or ahead of the release
+  if [ "$cur" = "$new" ] || git merge-base --is-ancestor "$new" "$cur"; then   # already at or ahead of the release
+    resume_history_if_needed; return 0
+  fi
   if ! git merge-base --is-ancestor "$cur" "$new"; then
     log "release ${new:0:7} is not a fast-forward of deployed ${cur:0:7}; refusing (manual action needed)"; return 0
   fi
@@ -70,7 +93,10 @@ else:
   local history_running=no
   pgrep -f "deploy.sh history" >/dev/null 2>&1 && history_running=yes
   log "deploying ${cur:0:7} -> ${new:0:7} ($(git log -1 --format=%s "$new"))"
-  [ "$history_running" = yes ] && { pkill -f "deploy.sh history" || true; }
+  if [ "$history_running" = yes ]; then
+    systemctl stop gizer-nba-history.service >/dev/null 2>&1 || true
+    pkill -f "deploy.sh history" || true
+  fi
   git merge -q --ff-only "$new"
 
   local port; port="$( (grep -E '^GIZER_WEB_PORT=' .env 2>/dev/null || true) | cut -d= -f2)"; port="${port:-3410}"
@@ -96,10 +122,7 @@ else:
       log "ROLLBACK DID NOT BECOME READY — manual attention needed: docker compose ps; docker compose logs --tail 80"
     fi
   fi
-  if [ "$history_running" = yes ]; then
-    nohup bash scripts/deploy.sh history >> history.log 2>&1 < /dev/null &
-    log "history load restarted (it resumes; nothing already loaded is fetched again)"
-  fi
+  resume_history_if_needed   # it resumes; nothing already loaded is fetched again
   # keep the log bounded
   tail -n 2000 "$LOG" > "$LOG.tmp" 2>/dev/null && cat "$LOG.tmp" > "$LOG" && rm -f "$LOG.tmp"
 }
