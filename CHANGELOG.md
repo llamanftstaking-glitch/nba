@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.2 — 2026-11-25
+* Unattended server updates (`scripts/auto-update.sh`, `scripts/install-auto-update.sh`): deploys the
+  `production` branch after its checks pass, with health check and rollback.
+* `scripts/update.sh` for manual updates (the earlier one-line command stopped itself before doing anything).
+
 ## 0.4.1 — 2026-11-24
 * Dashboard: Kalshi Market Watch and market detail, Minutes Intelligence, injury change centre, game-page
   minutes and Kalshi sections, player minutes block and contract ladder.

@@ -35,6 +35,11 @@ Mode: **research, simulation and paper testing only.** NBA only.
 * Minutes tiers and rotation classes are descriptive context, not qualification rules (`docs/research/MINUTES-INTELLIGENCE.md`).
 * Availability and lineup changes create events and a new `update` edition; they never edit existing research.
 
+## Release rule
+`main` receives all work, including in-progress snapshots. **Server M deploys only the `production` branch**
+(`scripts/auto-update.sh`). Promote with `git push origin main:production` only when the commit is verified
+locally and its GitHub checks are green. Never push unverified or WIP commits to `production`, never force-push it.
+
 ## Definition of a completed task
 Code + tests executed + docs updated + `PROJECT-STATE.md` updated + `CHANGELOG.md` entry + (if a decision was made) a `docs/DECISIONS.md` entry. Use the status words VERIFIED / IMPLEMENTED / TESTED / DEPLOYED / IN PROGRESS / BLOCKED / NOT VERIFIED precisely.
 

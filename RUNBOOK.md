@@ -37,6 +37,25 @@ docker compose exec worker gizer backtest --no-register      # evaluate without 
 ```
 Pause/resume all scheduled work: Admin page (owner) or `POST /api/v1/operations/pause`.
 
+## Updates
+
+**Automatic (recommended once installed).** A systemd timer runs `scripts/auto-update.sh` every 5 minutes. It
+deploys the `production` branch — never `main`, which carries work in progress — and only when every GitHub
+check on that exact commit passed. It is fast-forward only, refuses to overwrite local changes, waits for the
+application to report ready, rebuilds the previous version if it does not, and never retries a release that
+failed. It pauses and resumes the history load around a rebuild.
+```bash
+bash scripts/install-auto-update.sh          # switch on (root)
+bash scripts/install-auto-update.sh off      # switch off
+bash scripts/auto-update.sh status           # deployed commit, last failed release, recent log
+systemctl list-timers gizer-nba-update.timer # next run
+```
+Promoting a release (from a development machine, after verification and green CI): `git push origin main:production`.
+Database migrations are forward-only; a rollback rebuilds the previous code against the newer schema, which is
+safe for the additive migrations used so far. Read the log if a rollback is reported.
+
+**Manual.** `git pull && bash scripts/update.sh` — rebuild, wait for ready, fast first pass, resume the history load.
+
 ## Backups
 Daily `pg_dump -Fc` into the `backups` volume, 14-day retention.
 ```bash
