@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.6 — 2026-11-25 (page speed)
+* API: evaluated selections are immutable, so each game's block is read from the database once per process
+  instead of on every request (about 5,800 rows per page request before). Player-prop rows, minutes, exposure and
+  the Kalshi market list are reused until the underlying data changes (`data_stamp`: highest ids of the
+  append-only tables; Kalshi list at most one minute). Measured locally on a real slate, warm: selections
+  0.39 s -> 0.04 s, player props 2.9 s -> 0.04 s, exposure 1.6 s -> 0.01 s, minutes 0.74 s -> 0.01 s,
+  Kalshi markets 0.55 s -> 0.02 s. Not measured on Server M.
+* Web: an open tab reloads itself once when the server has been updated (`/build-id.txt`), so old page code is
+  never left running against a newer API.
+* Updater log states after each deploy whether the history load had finished or is being resumed.
+
 ## 0.4.5 — 2026-11-25
 * History load (`scripts/deploy.sh history`): models are validated and an edition is published from whatever
   history is already loaded, at the start and again after the current season, instead of only once at the very

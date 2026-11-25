@@ -294,3 +294,17 @@ def test_lineup_falls_back_to_last_box_score_when_history_is_not_loaded():
                      at=now - timedelta(minutes=1))
         ctx2 = LineupContext(s, SLATE, now)
         assert _from_last_box(ctx2, s.get(gdb.Team, t3), {"date": date(2026, 3, 18), "rows": rows}) is None
+
+
+def test_read_caches_are_rebuilt_as_soon_as_underlying_data_changes():
+    """Process-level read caches must never serve a result older than the data it was built from."""
+    from gizer.api import data_stamp, stamp_cached
+    calls = []
+    with gdb.session_scope() as s:
+        before = data_stamp(s)
+        assert stamp_cached(s, ("t",), lambda: calls.append(1) or len(calls)) == 1
+        assert stamp_cached(s, ("t",), lambda: calls.append(1) or len(calls)) == 1   # unchanged data: reused
+        s.add(gdb.ResearchEvent(kind="test_event", ref_type=None, ref_id=None, game_date=SLATE, detail={}, actor="test"))
+        s.flush()
+        assert data_stamp(s) != before
+        assert stamp_cached(s, ("t",), lambda: calls.append(1) or len(calls)) == 2   # new row: rebuilt

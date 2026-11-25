@@ -30,6 +30,8 @@ def pname(pid: int) -> str:
 
 
 def reset_schema():
+    from gizer.api import clear_caches
+    clear_caches()
     gdb.reset_engine()
     eng = gdb.get_engine()
     with eng.begin() as c:

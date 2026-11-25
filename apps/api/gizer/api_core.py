@@ -4,15 +4,18 @@ from __future__ import annotations
 from datetime import timedelta
 
 from fastapi import Query
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from . import history as H
 from . import ingestion, kalshi
 from . import modeling as M
-from .api import ApiError, View, _date, api
-from .db import Game, KalshiMarket, LineupSnapshot, Player, Prediction, ResearchEvent, Selection, Team, session_scope, utcnow
+from .api import ApiError, View, _date, api, stamp_cached
+from .db import Game, KalshiMarket, KalshiSnapshot, LineupSnapshot, Player, Prediction, ResearchEvent, Selection, Team, session_scope, utcnow
 from .minutes import slate_minutes
 from .research import QUALIFIED, STAT_NAME
+
+
+_KALSHI_ROWS: dict[tuple, list] = {}
 
 
 def _market_row(mk: KalshiMarket, snaps, teams, games, now) -> dict:
@@ -68,12 +71,22 @@ def kalshi_markets(date: str | None = None, game_id: str | None = None, kind: st
             stmt = stmt.where(KalshiMarket.interpretation == interpretation)
         if player_id:
             stmt = stmt.where(KalshiMarket.player_id == player_id)
-        mks = list(s.scalars(stmt))
-        if q:
-            ql = q.lower()[:60]
-            mks = [m for m in mks if ql in (m.title or "").lower() or ql in (m.player_name or "").lower()]
-        snaps = kalshi.snapshots_for(s, [m.ticker for m in mks])
-        rows = [_market_row(m, snaps[m.ticker], teams, games, now) for m in mks]
+        def build():
+            mks = list(s.scalars(stmt))
+            if q:
+                ql = q.lower()[:60]
+                mks = [m for m in mks if ql in (m.title or "").lower() or ql in (m.player_name or "").lower()]
+            snaps = kalshi.snapshots_for(s, [m.ticker for m in mks])
+            return [_market_row(m, snaps[m.ticker], teams, games, now) for m in mks]
+        # Building every row reads every stored observation for the slate. Reuse it for up to a minute, and only
+        # while no new observation has arrived, so movement windows are never more than a minute old.
+        ck = (d, game_id, kind, market, interpretation, (q or "").lower()[:60], player_id, now.replace(second=0, microsecond=0),
+              s.scalar(select(func.max(KalshiSnapshot.id))), s.scalar(select(func.count()).select_from(KalshiMarket)))
+        if ck not in _KALSHI_ROWS:
+            while len(_KALSHI_ROWS) >= 6:
+                _KALSHI_ROWS.pop(next(iter(_KALSHI_ROWS)), None)
+            _KALSHI_ROWS[ck] = build()
+        rows = list(_KALSHI_ROWS[ck])
         keyf = {"volume": lambda r: -(r["volume"] or 0), "movement": lambda r: -abs(r["change_since_first"] or 0),
                 "player": lambda r: (r["player_name"] or "~", r["stat"] or "", r["threshold"] or 0),
                 "spread": lambda r: (r["spread"] is None, r["spread"] or 0)}.get(sort)
@@ -162,8 +175,8 @@ def minutes_table(date: str | None = None, team: str | None = None, q: str | Non
                   sort: str = "proj_min", order: str = "desc", limit: int = Query(100, ge=1, le=500), offset: int = Query(0, ge=0)):
     d = _date(date)
     with session_scope() as s:
-        data = slate_minutes(s, d)
-        rows = data["items"]
+        data = stamp_cached(s, ("minutes", d), lambda: slate_minutes(s, d))
+        rows = list(data["items"])
         if team:
             rows = [r for r in rows if r["team_abbr"] == team.upper()]
         if q:
@@ -182,7 +195,8 @@ def player_minutes(player_id: int):
     with session_scope() as s:
         if s.get(Player, player_id) is None:
             raise ApiError(404, "not_found", "Player not found.")
-        data = slate_minutes(s, ingestion.today_et(), player_id=player_id)
+        today = ingestion.today_et()
+        data = stamp_cached(s, ("minutes", today, player_id), lambda: slate_minutes(s, today, player_id=player_id))
         return {**{k: v for k, v in data.items() if k != "items"}, "profile": data["items"][0] if data["items"] else None}
 
 

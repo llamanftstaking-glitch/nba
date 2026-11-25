@@ -112,7 +112,23 @@ def market_catalog(s) -> list[dict]:
     return out
 
 
+_PROP_CACHE: dict[tuple, list] = {}
+
+
 def prop_rows(s, v: View, game_id: str | None = None, player_id: int | None = None) -> list[dict]:
+    """Player-prop rows for a date. The result is reused until any underlying table changes (see data_stamp)."""
+    from .api import data_stamp
+    ck = (v.date, game_id, player_id, data_stamp(s))
+    hit = _PROP_CACHE.get(ck)
+    if hit is None:
+        hit = _prop_rows(s, v, game_id, player_id)
+        while len(_PROP_CACHE) >= 24:
+            _PROP_CACHE.pop(next(iter(_PROP_CACHE)), None)
+        _PROP_CACHE[ck] = hit
+    return [dict(r) for r in hit]
+
+
+def _prop_rows(s, v: View, game_id: str | None = None, player_id: int | None = None) -> list[dict]:
     games = [g for g in v.games if (game_id is None or g.id == game_id)]
     if not games:
         return []
@@ -180,12 +196,13 @@ def prop_rows(s, v: View, game_id: str | None = None, player_id: int | None = No
                              if p["player_id"] == pid and p["role"] != "unavailable"), None)
             av = inj[pid].status if pid in inj else "available"
             d = by_p.get(pid, pd.DataFrame())
+            avgs = H.quick_averages_all(d, list(M.PLAYER_STATS), g.game_date) if len(d) else {}
             for stat in M.PLAYER_STATS:
                 market = f"player_{stat}"
                 p, q = preds.get((pid, stat)), quotes.get((pid, market))
                 if p is None and q is None:
                     continue
-                avg = H.quick_averages(d, stat, g.game_date) if len(d) else {"l5": None, "l10": None, "l20": None, "season_avg": None, "n_games": 0}
+                avg = avgs.get(stat) or {"l5": None, "l10": None, "l20": None, "season_avg": None, "n_games": 0}
                 ho = hn = None
                 if q and q["line"] is not None and len(d):
                     last = d.tail(10)[stat]

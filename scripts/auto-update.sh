@@ -122,6 +122,8 @@ else:
       log "ROLLBACK DID NOT BECOME READY — manual attention needed: docker compose ps; docker compose logs --tail 80"
     fi
   fi
+  if [ -f "$STATE/history.done" ]; then log "history load: finished earlier ($(cat "$STATE/history.done"))"
+  else log "history load: not finished; resuming it"; fi
   resume_history_if_needed   # it resumes; nothing already loaded is fetched again
   # keep the log bounded
   tail -n 2000 "$LOG" > "$LOG.tmp" 2>/dev/null && cat "$LOG.tmp" > "$LOG" && rm -f "$LOG.tmp"

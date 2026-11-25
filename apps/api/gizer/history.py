@@ -166,6 +166,16 @@ def quick_averages(df: pd.DataFrame, stat: str, as_of: date) -> dict:
             "season_avg": m(df[df["season"] == season_for_date(as_of)]), "n_games": int(len(df))}
 
 
+def quick_averages_all(df: pd.DataFrame, stats: list[str], as_of: date) -> dict[str, dict]:
+    """quick_averages for several stats at once (one pass per window instead of one per stat and window)."""
+    if df.empty:
+        return {}
+    wins = {"l5": df.tail(5), "l10": df.tail(10), "l20": df.tail(20), "season_avg": df[df["season"] == season_for_date(as_of)]}
+    means = {k: (w[stats].mean() if len(w) else None) for k, w in wins.items()}
+    n = int(len(df))
+    return {st: {**{k: (round(float(m[st]), 1) if m is not None else None) for k, m in means.items()}, "n_games": n} for st in stats}
+
+
 def splits(s, player_id: int, as_of: date, team_abbr: dict, next_opp_id: int | None = None) -> dict:
     df = player_frame(s, player_id)
     out = []

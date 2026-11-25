@@ -78,6 +78,43 @@ def edition_ref(e: Edition | None) -> dict | None:
                                    "published_at": e.published_at}
 
 
+_SEL_CACHE: dict[tuple, list] = {}   # (game id, edition id, edition key) -> immutable selection rows
+
+
+def data_stamp(s) -> tuple:
+    """Cheap fingerprint of everything read-side results depend on. Research tables are append-only, so the
+    highest ids (plus row counts for the few mutable tables) change exactly when a cached result is out of date."""
+    return tuple(s.execute(text(
+        "select (select max(id) from odds_snapshots), (select max(id) from predictions), (select max(id) from selections),"
+        " (select max(id) from research_events), (select max(id) from lineup_snapshots), (select max(id) from injury_snapshots),"
+        " (select count(*) from player_box), (select max(lineup_ingested_at) from games), (select max(id) from editions),"
+        " (select string_agg(id || ':' || status, ',' order by id) from model_versions), (select max(id) from paper_tickets),"
+        " (select max(id) from paper_settlements), (select max(id) from kalshi_snapshots), (select max(id) from combos)")).one())
+
+
+_STAMP_CACHE: dict[tuple, object] = {}
+
+
+def stamp_cached(s, key: tuple, build):
+    """Reuse a deterministic read-side result until the data it was built from changes (see data_stamp).
+    Callers must not mutate the returned value."""
+    ck = (*key, data_stamp(s))
+    if ck not in _STAMP_CACHE:
+        val = build()
+        while len(_STAMP_CACHE) >= 48:
+            _STAMP_CACHE.pop(next(iter(_STAMP_CACHE)), None)
+        _STAMP_CACHE[ck] = val
+    return _STAMP_CACHE[ck]
+
+
+def clear_caches() -> None:
+    """Drop every process-level read cache (tests reset the database and reuse ids)."""
+    import sys
+    v3, core = sys.modules[__package__ + ".api_v3"], sys.modules[__package__ + ".api_core"]
+    for c in (_SEL_CACHE, _STAMP_CACHE, v3._PROP_CACHE, core._KALSHI_ROWS):
+        c.clear()
+
+
 class View:
     """Per-request lookup caches for a date."""
 
@@ -108,10 +145,23 @@ class View:
         return self.editions[-1] if self.editions else None
 
     def selections(self) -> list[Selection]:
+        """Selections of record for the date. Rows are immutable, so each (game, edition) block is loaded once
+        per process and reused read-only (detached from the session) by later requests."""
         if self._sels is None:
+            ekey = {e.id: e.key for e in self.editions}
             out = []
             for gid, eid in self.game_edition.items():
-                out += list(self.s.scalars(select(Selection).where(Selection.game_id == gid, Selection.edition_id == eid)))
+                ck = (gid, eid, ekey.get(eid))
+                rows = _SEL_CACHE.get(ck) if ck[2] else None
+                if rows is None:
+                    rows = list(self.s.scalars(select(Selection).where(Selection.game_id == gid, Selection.edition_id == eid)))
+                    if ck[2]:
+                        for x in rows:
+                            self.s.expunge(x)
+                        while len(_SEL_CACHE) >= 96:
+                            _SEL_CACHE.pop(next(iter(_SEL_CACHE)), None)
+                        _SEL_CACHE[ck] = rows
+                out += rows
             self._sels = out
         return self._sels
 
@@ -759,8 +809,10 @@ def results(date_from: str | None = None, date_to: str | None = None, season: st
 def exposure(date: str | None = None):
     d = _date(date)
     with session_scope() as s:
-        corr, tp = _corr_and_team(s)
-        return exposure_report(s, d, corr, tp)
+        def build():
+            corr, tp = _corr_and_team(s)
+            return exposure_report(s, d, corr, tp)
+        return stamp_cached(s, ("exposure", d), build)
 
 
 # ---------------------------------------------------------------- players, teams, injuries
