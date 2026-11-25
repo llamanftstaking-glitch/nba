@@ -12,8 +12,12 @@ import { PageHeader, Panel } from "@/components/ui/panel";
 import { EmptyState, QueryView } from "@/components/ui/states";
 import { api } from "@/lib/api";
 import { DLink } from "@/lib/date";
+import { Collapsible } from "@/components/ui/collapsible";
+import { useGames } from "@/lib/queries";
 import { fmtDateTimeET } from "@/lib/format";
 import type { InjuryRow } from "@/lib/types";
+
+const OFF_SLATE = "No game on this slate";
 
 function Row({ r }: { r: InjuryRow }) {
   const name = <span className="font-semibold text-ink">{r.player_name}</span>;
@@ -61,7 +65,7 @@ export default function InjuriesPage() {
   const groups = useMemo(() => {
     const byGame = new Map<string, Map<string, InjuryRow[]>>();
     for (const r of q.data?.items ?? []) {
-      const g = r.game_label ?? "No game on this slate";
+      const g = r.game_label ?? OFF_SLATE;
       const t = r.team_abbr ?? "Team not available";
       if (!byGame.has(g)) byGame.set(g, new Map());
       const teams = byGame.get(g)!;
@@ -69,6 +73,8 @@ export default function InjuriesPage() {
     }
     return [...byGame.entries()];
   }, [q.data]);
+  const slate = useGames(date);
+  const slateGames = useMemo(() => new Set((slate.data?.games ?? []).map((g) => g.label)), [slate.data]);
   const staleCount = (q.data?.items ?? []).filter((i) => i.stale).length;
   return (
     <div className="space-y-5">
@@ -131,26 +137,34 @@ export default function InjuriesPage() {
               )}
             </Panel>
             {groups.length === 0 ? (
-              <EmptyState title="No injuries are listed." icon={HeartPulse} />
+              <EmptyState title="No injuries are listed." icon={HeartPulse}>
+                The availability feed returned no rows. It fills when the injury report is next ingested.
+              </EmptyState>
             ) : (
-              groups.map(([game, teams]) => (
-                <Panel key={game} title={game} right={<span className="num">{[...teams.values()].reduce((a, b) => a + b.length, 0)} listed</span>}>
-                  <div className="space-y-4" data-testid="injury-game">
-                    {[...teams.entries()].map(([team, rows]) => (
-                      <div key={team}>
-                        <div className="border-b border-line/50 pb-1 text-2xs font-semibold uppercase tracking-wide text-muted">
-                          {team} · {rows.length}
-                        </div>
-                        <ul className="divide-y divide-line/30">
-                          {rows.map((r, i) => (
-                            <Row key={`${r.player_name}-${i}`} r={r} />
-                          ))}
-                        </ul>
+              <Panel title="Full availability feed" icon={HeartPulse} right={<span className="num">{d.items.length} listed</span>} bodyClassName="space-y-2">
+                {[...groups.filter(([g]) => g !== OFF_SLATE), ...groups.filter(([g]) => g === OFF_SLATE)].map(([game, teams], idx) => {
+                  const n = [...teams.values()].reduce((a, b) => a + b.length, 0);
+                  const offSlate = game === OFF_SLATE;
+                  return (
+                    <Collapsible key={game} title={<span className="font-display text-[15px] font-semibold uppercase tracking-wide">{game}</span>} right={`${n} listed${offSlate ? ` · ${teams.size} teams` : ""}`} defaultOpen={!offSlate && (slateGames.size === 0 ? idx < 2 : slateGames.has(game))} testId="injury-game-group">
+                      <div className="space-y-4" data-testid="injury-game">
+                        {[...teams.entries()].map(([team, rows]) => (
+                          <div key={team}>
+                            <div className="border-b border-line/50 pb-1 text-2xs font-semibold uppercase tracking-wide text-muted">
+                              {team} · {rows.length}
+                            </div>
+                            <ul className="divide-y divide-line/30">
+                              {rows.map((r, i) => (
+                                <Row key={`${r.player_name}-${i}`} r={r} />
+                              ))}
+                            </ul>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </Panel>
-              ))
+                    </Collapsible>
+                  );
+                })}
+              </Panel>
             )}
           </>
         )}

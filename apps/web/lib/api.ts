@@ -193,7 +193,7 @@ export const api = {
   commandCenter: (date?: string) => get<CommandCenter>("/command-center", { date }),
   games: (date?: string) => get<{ date: string; games: GameCard[] }>("/games", { date }),
   game: (id: string) => get<GameDetail>(`/games/${encodeURIComponent(id)}`),
-  selections: (p: { date?: string; classification?: string; market?: string; game_id?: string }) =>
+  selections: (p: { date?: string; classification?: string; market?: string; game_id?: string; ranked?: boolean; q?: string; limit?: number; offset?: number }) =>
     get<SelectionsResponse>("/selections", p),
   combos: (p: { date?: string; category: string }) => get<CombosResponse>("/combos", p),
   editions: (date?: string) => get<{ items: EditionListItem[] }>("/editions", { date }),

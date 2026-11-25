@@ -24,11 +24,11 @@ function Cell({ label, children, className }: { label: string; children: ReactNo
 }
 
 /** Descriptive history shown apart from the model numbers. These are past averages, not predictions. */
-export function HistoricalContext({ c, className }: { c: SelectionContext; className?: string }) {
+export function HistoricalContext({ c, className, compact = false }: { c: SelectionContext; className?: string; compact?: boolean }) {
   return (
     <div className={cn("rounded-md bg-raised/50 px-3 py-2", className)} data-testid="historical-context">
       <div className="mb-1 text-2xs font-semibold uppercase tracking-wide text-muted">Historical context (descriptive)</div>
-      <dl className="grid grid-cols-3 gap-x-3 gap-y-1.5 sm:grid-cols-6">
+      <dl className={cn("grid grid-cols-3 gap-x-3 gap-y-1.5", !compact && "sm:grid-cols-6")}>
         <Cell label="L5 avg">
           <Val v={fmtNum(c.l5)} />
         </Cell>
@@ -191,7 +191,7 @@ export function SelectionCard({
           <EvidenceMeter score={s.evidence_score} />
         </div>
 
-        {s.context && <HistoricalContext c={s.context} className="mt-3" />}
+        {s.context && <HistoricalContext c={s.context} className="mt-3" compact={compact} />}
 
         <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
           <p className="min-w-0 text-xs text-muted">

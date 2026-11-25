@@ -13,6 +13,8 @@ import { LineupHistoryList } from "@/components/lineup-history";
 import { LineupTable } from "@/components/lineup-table";
 import { HistFrequency, MarketTable, PropDrawer, propKey } from "@/components/props";
 import { SelectionList } from "@/components/selection-card";
+import { SelectionRow } from "@/components/selection-row";
+import { Collapsible } from "@/components/ui/collapsible";
 import { TeamFormComparison } from "@/components/team-form";
 import { Button, textLink } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
@@ -22,7 +24,7 @@ import { BulletList, Label, Panel } from "@/components/ui/panel";
 import { EmptyState, QueryView } from "@/components/ui/states";
 import { api } from "@/lib/api";
 import { DLink } from "@/lib/date";
-import { fmtDate, fmtDateTimeET, fmtNum, statLabel } from "@/lib/format";
+import { classLabel, fmtDate, fmtDateTimeET, fmtNum, statLabel } from "@/lib/format";
 import type { GameDetail, PlayerProj, PropRow } from "@/lib/types";
 
 const PROJ_STATS = ["pts", "reb", "ast", "fg3m"] as const;
@@ -229,7 +231,12 @@ function GameView({ d }: { d: GameDetail }) {
   const kalshi = useQuery({ queryKey: ["kalshi-markets", { game_id: g.id }], queryFn: () => api.kalshiMarkets({ game_id: g.id, sort: "volume", limit: 200 }) });
   const changes = useQuery({ queryKey: ["injury-changes", g.date, false], queryFn: () => api.injuryChanges({ date: g.date, limit: 100 }) });
   const pct = completenessPct(g.research_completeness.score);
-  const rejected = d.selections.filter((s) => s.rejection_reasons.length > 0 || s.classification === "rejected").length;
+  const isQ = (c: string) => c === "high_confidence" || c === "standard";
+  const qualifiedSel = d.selections.filter((x) => isQ(x.classification) && !x.invalidated);
+  const watchSel = d.selections.filter((x) => x.classification === "watchlist");
+  const otherSel = d.selections.filter((x) => !(isQ(x.classification) && !x.invalidated) && x.classification !== "watchlist");
+  const sc = d.selection_counts ?? {};
+  const notQualifiedTotal = d.selection_counts ? Object.entries(sc).filter(([k]) => !isQ(k) && k !== "watchlist").reduce((a, [, v]) => a + v, 0) : otherSel.length;
   const limitations = g.research_completeness.items.filter((i) => !i.ok);
   const teamSet = new Set([g.home.abbr, g.away.abbr]);
   const injuries = [...g.injuries.away, ...g.injuries.home];
@@ -329,7 +336,7 @@ function GameView({ d }: { d: GameDetail }) {
           {(k) => (
             <>
               <KalshiSyncStatus sync={k.sync} className="mb-3 text-xs" />
-              <KalshiCompactList rows={k.items} />
+              <KalshiCompactList rows={k.items} perGroup={3} mainLineFirst />
               <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
                 <span>
                   {k.total > k.items.length ? `Showing the ${k.items.length} highest-volume of ${k.total} contracts. ` : ""}Market prices in cents as observed at the last sync. A market price is not a model probability.
@@ -385,24 +392,53 @@ function GameView({ d }: { d: GameDetail }) {
 
       {/* 10 — research selections */}
       <Panel title="Research selections" icon={ListChecks} id="selections" right={<span className="num">{g.n_evaluated} evaluated · {g.n_rejected} rejected</span>}>
-        {g.top_picks.length === 0 ? (
+        {qualifiedSel.length === 0 ? (
           <EmptyState title="No qualified picks for this game.">{g.no_picks_reason ?? "The API did not provide a reason."}</EmptyState>
         ) : (
-          <SelectionList items={g.top_picks.slice(0, 5)} showGame={false} />
+          <>
+            <SelectionList items={qualifiedSel.slice(0, 5)} showGame={false} />
+            {qualifiedSel.length > 5 && (
+              <Collapsible title={`${qualifiedSel.length - 5} more qualified`} className="mt-3" testId="game-more-qualified">
+                <ul className="divide-y divide-line/30">
+                  {qualifiedSel.slice(5).map((x) => (
+                    <SelectionRow key={x.id} s={x} showGame={false} />
+                  ))}
+                </ul>
+              </Collapsible>
+            )}
+          </>
+        )}
+        {watchSel.length > 0 && (
+          <Collapsible title={`Watchlist · ${watchSel.length}`} className="mt-3" testId="game-watchlist">
+            <ul className="divide-y divide-line/30">
+              {watchSel.map((x) => (
+                <SelectionRow key={x.id} s={x} showGame={false} />
+              ))}
+            </ul>
+          </Collapsible>
         )}
         <div className="mt-4 border-t border-line/50 pt-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="num text-xs text-muted">
-              All evaluated selections: {d.selections.length} · {rejected} rejected
+            <span className="num text-sm text-muted" data-testid="game-more-evaluated">
+              +{notQualifiedTotal.toLocaleString("en-US")} more evaluated (not qualified)
+              {otherSel.length < notQualifiedTotal ? ` · ${otherSel.length} of them returned by the API` : ""}
             </span>
-            <Button aria-expanded={showAll} onClick={() => setShowAll((v) => !v)} data-testid="toggle-all-selections" disabled={d.selections.length === 0}>
-              {showAll ? "Hide" : "Show all, including rejected"}
+            <Button aria-expanded={showAll} onClick={() => setShowAll((v) => !v)} data-testid="toggle-all-selections" disabled={otherSel.length === 0}>
+              {showAll ? "Hide" : "Show not-qualified selections"}
             </Button>
           </div>
           {showAll && (
-            <div className="mt-3">
-              <SelectionList items={d.selections} showGame={false} />
-            </div>
+            <ul className="mt-3 divide-y divide-line/30" data-testid="game-other-selections">
+              {otherSel.map((x) => (
+                <li key={x.id} className="grid gap-x-4 py-1.5 text-sm md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1.4fr)] md:items-baseline">
+                  <span className="break-words font-medium text-ink">{x.market_label}</span>
+                  <span className="text-xs text-muted">{classLabel(x.classification)}</span>
+                  <span className="break-words text-xs text-bad" data-testid="rejection-inline">
+                    {x.rejection_reasons.length ? x.rejection_reasons.join("; ") : "No reason recorded"}
+                  </span>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
       </Panel>

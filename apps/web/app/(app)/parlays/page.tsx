@@ -1,9 +1,8 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { isQualified } from "@/components/classification-badge";
 import { ComboCard } from "@/components/combo-card";
-import { SelectionList } from "@/components/selection-card";
+import { SelectionsByGame } from "@/components/selection-row";
 import { PageHeader } from "@/components/ui/panel";
 import { EmptyState, QueryView } from "@/components/ui/states";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
@@ -32,8 +31,9 @@ export default function ParlaysPage() {
   // Any category response carries the counts for all categories; "double" doubles as the counts source.
   const countsQ = useCombos("double", date);
   const combosQ = useCombos(tab.category ?? "double", date, Boolean(tab.category));
-  const selQ = useSelections(date);
-  const qualified = (selQ.data?.items ?? []).filter((s) => isQualified(s.classification, s.invalidated));
+  // Individual picks = the API's ranked view (bounded: at most five per game).
+  const selQ = useSelections({ date, ranked: true, limit: 200 });
+  const qualified = selQ.data?.items ?? [];
 
   const counts = combosQ.data?.counts ?? countsQ.data?.counts;
   const items: TabItem[] = TABS.map((t) => ({
@@ -92,7 +92,7 @@ export default function ParlaysPage() {
             isEmpty={() => qualified.length === 0}
             empty={<EmptyState title="No individual selection qualified for this slate. That is a valid research outcome." />}
           >
-            {() => <SelectionList items={qualified} />}
+            {() => <SelectionsByGame items={qualified} perGame={5} />}
           </QueryView>
         )}
       </div>

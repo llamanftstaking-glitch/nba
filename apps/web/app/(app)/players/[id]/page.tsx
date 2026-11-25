@@ -297,7 +297,7 @@ function View({ d, id }: { d: PlayerDetail; id: string }) {
               </span>
             </DLink>
           ) : (
-            <span className="text-muted">No upcoming game in the schedule</span>
+            <span className="text-muted">No game scheduled in the next 7 days</span>
           )}
         </div>
       </section>

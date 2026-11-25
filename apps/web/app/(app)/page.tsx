@@ -30,7 +30,7 @@ const CATEGORIES = [
 ] as const;
 
 function PropSummary({ date, message, quoted }: { date?: string; message: string; quoted: number }) {
-  const q = usePlayerProps({ date, quoted: true, limit: 5 });
+  const q = usePlayerProps({ date, quoted: true, limit: 6 });
   const rows = q.data?.items ?? [];
   if (quoted > 0 && q.isPending) return <LoadingState rows={3} />;
   if (rows.length === 0) {

@@ -39,7 +39,7 @@ export default function MarketsPage() {
                   </DLink>
                 }
               >
-                {g.quotes.length === 0 ? <EmptyState title="No verified quotes are available for this game." /> : <DataTable columns={COLUMNS} rows={g.quotes} rowKey={(_, i) => i} caption={`Quotes for ${g.label}`} dense />}
+                {g.quotes.length === 0 ? <EmptyState title="No verified quotes are available for this game.">Main-line quotes appear here once a configured provider has listed this game.</EmptyState> : <DataTable columns={COLUMNS} rows={g.quotes} rowKey={(_, i) => i} caption={`Quotes for ${g.label}`} dense mobileLimit={2} />}
               </Panel>
             ))}
           </div>

@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { PenLine, Target } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ManualEntries, ManualEntryForm, MarketTable, PropDrawer, propKey, type ManualPrefill } from "@/components/props";
-import { StatusDot } from "@/components/ui/badge";
 import { Field, Input, Select } from "@/components/ui/field";
 import { Pagination } from "@/components/ui/pagination";
 import { PageHeader, Panel } from "@/components/ui/panel";
@@ -61,9 +60,9 @@ export default function PlayerPropsPage() {
       />
 
       {q.data && (
-        <p className="flex flex-wrap items-center gap-2 text-sm" data-testid="quote-status">
-          <StatusDot tone={q.data.quote_status.provider_configured ? "accent" : "warn"}>{q.data.quote_status.provider_configured ? "Quote provider configured" : "No quote provider configured"}</StatusDot>
-          <span className="text-muted">{q.data.quote_status.message}</span>
+        <p className="flex items-start gap-2 text-sm text-soft" data-testid="quote-status" data-configured={q.data.quote_status.provider_configured ? "1" : "0"}>
+          <span className={q.data.quote_status.provider_configured ? "mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-accent" : "mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-warn"} aria-hidden />
+          <span className="min-w-0 break-words">{q.data.quote_status.message}</span>
         </p>
       )}
 

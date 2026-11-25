@@ -9,8 +9,9 @@ export const useCommandCenter = (date?: string) =>
 
 export const useGames = (date?: string) => useQuery({ queryKey: ["games", date ?? "today"], queryFn: () => api.games(date) });
 
-export const useSelections = (date?: string) =>
-  useQuery({ queryKey: ["selections", date ?? "today"], queryFn: () => api.selections({ date }) });
+/** Bounded selections query. Always pass a limit; a slate carries thousands of evaluated selections. */
+export const useSelections = (p: Parameters<typeof api.selections>[0], enabled = true) =>
+  useQuery({ queryKey: ["selections", p], queryFn: () => api.selections(p), enabled, placeholderData: (prev) => prev });
 
 export const useCombos = (category: string, date?: string, enabled = true) =>
   useQuery({ queryKey: ["combos", date ?? "today", category], queryFn: () => api.combos({ date, category }), enabled });

@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import { StatusBadge } from "@/components/classification-badge";
 import { BacktestsTable } from "@/components/registry-tables";
 import { DataTable, type Column } from "@/components/ui/data-table";
@@ -18,6 +19,23 @@ const PAIR_COLUMNS: Column<Pair>[] = [
   { key: "rho", header: "ρ", align: "right", cell: (r) => <span className="num">{r.rho > 0 ? "+" : ""}{r.rho.toFixed(3)}</span> },
   { key: "n", header: "Sample", align: "right", cell: (r) => <span className="num">n={fmtInt(r.n)}</span> },
 ];
+
+function PairTable({ rows }: { rows: Pair[] }) {
+  const [all, setAll] = useState(false);
+  // strongest relationships first; the full list can run to hundreds of pairs
+  const sorted = useMemo(() => [...rows].sort((a, b) => Math.abs(b.rho) - Math.abs(a.rho)), [rows]);
+  return (
+    <>
+      <DataTable columns={PAIR_COLUMNS} rows={all ? sorted : sorted.slice(0, 15)} rowKey={(_, i) => i} caption="Correlation pairs" dense mobileLimit={6} />
+      {rows.length > 15 && (
+        <button type="button" className="mt-2 inline-flex min-h-[44px] items-center text-sm font-medium text-accent hover:underline md:min-h-0" aria-expanded={all} onClick={() => setAll((v) => !v)}>
+          {all ? "Show the 15 strongest" : `Show all ${rows.length} pairs`}
+        </button>
+      )}
+      <p className="mt-1 text-xs text-muted">Sorted by absolute correlation, strongest first.</p>
+    </>
+  );
+}
 
 function FindingCard({ f }: { f: Finding }) {
   return (
@@ -66,7 +84,7 @@ export default function ResearchLabPage() {
         {(d) => (
           <div className="space-y-4">
             <Panel title="Findings" right={<span className="num">{d.findings.length}</span>} bodyClassName="space-y-2 p-3">
-              {d.findings.length === 0 ? <EmptyState title="No research findings have been recorded." /> : d.findings.map((f) => <FindingCard key={f.finding_uid} f={f} />)}
+              {d.findings.length === 0 ? <EmptyState title="No research findings have been recorded.">Findings are written by the research agents when a hypothesis is opened or tested; none has been filed yet. Experiments and correlation estimates are listed below.</EmptyState> : d.findings.map((f) => <FindingCard key={f.finding_uid} f={f} />)}
             </Panel>
             <Panel title="Experiments" right={<span className="num">{d.experiments.length}</span>}>
               {d.experiments.length === 0 ? <EmptyState title="No experiments have been run." /> : <BacktestsTable rows={d.experiments} caption="Experiments" />}
@@ -79,7 +97,7 @@ export default function ResearchLabPage() {
                   {d.correlation.pairs.length === 0 ? (
                     <EmptyState title="No correlation pairs have been estimated." />
                   ) : (
-                    <DataTable columns={PAIR_COLUMNS} rows={d.correlation.pairs} rowKey={(_, i) => i} caption="Correlation pairs" dense />
+                    <PairTable rows={d.correlation.pairs} />
                   )}
                   {d.correlation.notes.length > 0 && (
                     <div className="mt-2">

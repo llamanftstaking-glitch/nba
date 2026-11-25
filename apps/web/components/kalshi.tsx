@@ -287,7 +287,7 @@ function CompactGroup({ label, list, ladder, perGroup }: { label: string; list: 
  * Compact rows grouped by stat/kind: contract title, market price, move since first observation, volume.
  * Each group shows its first `perGroup` rows (a real slate has hundreds of contracts per game).
  */
-export function KalshiCompactList({ rows, ladder = false, perGroup = 5 }: { rows: KalshiMarketRow[]; ladder?: boolean; perGroup?: number }) {
+export function KalshiCompactList({ rows, ladder = false, perGroup = 5, mainLineFirst = false }: { rows: KalshiMarketRow[]; ladder?: boolean; perGroup?: number; mainLineFirst?: boolean }) {
   const groups = useMemo(() => {
     const m = new Map<string, KalshiMarketRow[]>();
     for (const r of rows) {
@@ -296,8 +296,22 @@ export function KalshiCompactList({ rows, ladder = false, perGroup = 5 }: { rows
     }
     // ladders read by threshold; game lists keep the API order (volume) so the busiest contracts lead
     if (ladder) for (const list of m.values()) list.sort((a, b) => (a.threshold ?? 0) - (b.threshold ?? 0));
+    if (mainLineFirst) {
+      // Per player (or per contract family), the contract priced closest to even leads; the other thresholds follow.
+      for (const [key, list] of m) {
+        const best = new Map<string, KalshiMarketRow>();
+        for (const r of list) {
+          const who = r.player_name ?? r.team_abbr ?? r.title;
+          const cur = best.get(who);
+          if (r.price !== null && (!cur || cur.price === null || Math.abs(r.price - 0.5) < Math.abs(cur.price - 0.5))) best.set(who, r);
+          else if (!cur) best.set(who, r);
+        }
+        const mains = new Set([...best.values()].map((r) => r.ticker));
+        m.set(key, [...list.filter((r) => mains.has(r.ticker)), ...list.filter((r) => !mains.has(r.ticker))]);
+      }
+    }
     return [...m.entries()];
-  }, [rows, ladder]);
+  }, [rows, ladder, mainLineFirst]);
   return (
     <div className="grid gap-x-6 gap-y-4 lg:grid-cols-2" data-testid="kalshi-compact">
       {groups.map(([label, list]) => (
@@ -462,7 +476,9 @@ export function KalshiDetailView({ d }: { d: KalshiMarketDetail }) {
             No model research is shown for a tracked-only contract.
           </p>
         ) : !r ? (
-          <p className="rounded-md bg-raised/40 px-3 py-2.5 text-sm text-muted">No model research is available for this contract.</p>
+          <p className="rounded-md bg-raised/40 px-3 py-2.5 text-sm text-muted" data-testid="kd-no-research">
+            {m.kind === "player" ? "No model research is available for this contract." : "Model research is shown for player contracts only."}
+          </p>
         ) : (
           <>
             <div className="flex flex-wrap items-center gap-3">

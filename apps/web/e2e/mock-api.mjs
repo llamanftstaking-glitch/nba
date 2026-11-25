@@ -631,7 +631,7 @@ function kalshiMarkets(q) {
     notes: ["FIXTURE note: Kalshi contracts are thresholds with their own settlement rules, not sportsbook over/under lines.", "FIXTURE note: a market price is the bid/ask midpoint when both exist, otherwise the last trade."] };
 }
 function kalshiDetail(ticker) {
-  const r = KALSHI.find((x) => x.ticker === ticker);
+  const r = KALSHI.find((x) => x.ticker === ticker) ?? LG.kalshi.find((x) => x.ticker === ticker);
   if (!r) return null;
   const logs = r.player_id ? (LOGS.get(r.player_id) ?? []) : [];
   const hist = (n) => { const rows = n ? logs.slice(0, n) : logs; const vals = rows.map((g) => statOf(g, r.stat)); const over = vals.filter((v) => v > r.threshold).length, equal = vals.filter((v) => v === r.threshold).length; return { n: rows.length, over, under: rows.length - over - equal, equal, frequency_over: rows.length ? +(over / rows.length).toFixed(3) : null, average: avg(rows, r.stat) }; };
@@ -696,6 +696,118 @@ const INJURY_CHANGES = [
   { at: iso(300), player_id: 9001, player_name: "FIXTURE Player A", headshot_url: HEAD[9001], team_abbr: "DET", previous_status: "Probable", current_status: "Available", previous_class: "likely", current_class: "available", material: false, detail: null, game_id: "FIX-G1", game_label: "DET @ ORL", source: "FIXTURE-injury-feed", source_published_at: iso(305), lineup_changes: [], records_to_reassess: 0, qualified_records_affected: 0 },
 ];
 
+
+// ---------- bounded /selections (page-audit contract) ----------
+const CLASS_RANK = { high_confidence: 0, standard: 0, watchlist: 1, stale: 2, insufficient_evidence: 3, rejected: 4, invalidated: 5 };
+const isQual = (x) => (x.classification === "standard" || x.classification === "high_confidence") && !x.invalidated;
+function selectionsPage(all, q) {
+  let items = [...all].sort((a, b) => (CLASS_RANK[a.classification] ?? 9) - (CLASS_RANK[b.classification] ?? 9) || (a.rank_in_game ?? 99) - (b.rank_in_game ?? 99));
+  for (const k of ["market", "game_id"]) if (q.get(k)) items = items.filter((x) => x[k] === q.get(k));
+  if (q.get("q")) items = items.filter((x) => `${x.market_label} ${x.subject_name}`.toLowerCase().includes(q.get("q").toLowerCase()));
+  const counts = { ranked: items.filter((x) => isQual(x) && x.rank_in_game != null && x.rank_in_game <= 5).length };
+  for (const x of items) counts[x.classification] = (counts[x.classification] ?? 0) + 1;
+  const c = q.get("classification");
+  if (c === "qualified") items = items.filter(isQual);
+  else if (c) items = items.filter((x) => x.classification === c);
+  if (q.get("ranked") === "true") items = items.filter((x) => isQual(x) && x.rank_in_game != null && x.rank_in_game <= 5);
+  const limit = Math.max(1, Math.min(1000, Number(q.get("limit") ?? 200)));
+  const offset = Math.max(0, Number(q.get("offset") ?? 0));
+  return { items: items.slice(offset, offset + limit), total: items.length, counts };
+}
+const classCounts = (rows) => rows.reduce((m, x) => ((m[x.classification] = (m[x.classification] ?? 0) + 1), m), {});
+
+// ---------- LARGE SLATE MODE ----------
+// Production carries thousands of rows per slate. `MOCK_LARGE=1`, or POST /api/v1/__mock/large {"on":true}
+// on the mock itself, swaps today's slate for a large synthetic one so the smoke suite can assert that no page
+// renders an unbounded list. Everything is generated deterministically and prefixed FIXTURE.
+let LARGE = process.env.MOCK_LARGE === "1";
+const XT = Object.fromEntries([["ATL", "Atlanta Hawks"], ["BKN", "Brooklyn Nets"], ["CHA", "Charlotte Hornets"], ["CLE", "Cleveland Cavaliers"], ["DAL", "Dallas Mavericks"], ["GSW", "Golden State Warriors"], ["HOU", "Houston Rockets"], ["IND", "Indiana Pacers"], ["LAC", "LA Clippers"], ["MEM", "Memphis Grizzlies"]].map(([abbr, name], i) => [abbr, { id: 20 + i, abbr, name, logo_url: null }]));
+const ALLT = { ...T, ...XT };
+const LPAIRS = [["DET", "ORL"], ["BOS", "NYK"], ["LAL", "DEN"], ["MIA", "CHI"], ["ATL", "BKN"], ["CHA", "CLE"], ["DAL", "GSW"], ["HOU", "IND"], ["LAC", "MEM"]];
+const LG = (() => {
+  const games = LPAIRS.map(([a, h], i) => ({
+    id: `FIX-L${i + 1}`, date: TODAY, tipoff_utc: tip(TODAY, i % 4), status: "scheduled", home: ALLT[h], away: ALLT[a], home_points: null, away_points: null, venue: `FIXTURE Large Arena ${i + 1}`, label: `${a} @ ${h}`,
+    injuries: { home: [inj(`FIXTURE L${i + 1} Injured H`, h, "Out", "FIXTURE ankle")], away: [inj(`FIXTURE L${i + 1} Injured A`, a, "Questionable", "FIXTURE knee")] },
+    lineup_status: "Starting lineups: projected", research_completeness: { score: 80, items: [{ name: "Box scores", ok: true, note: "" }, { name: "Starting lineups", ok: false, note: "FIXTURE: projected only" }] },
+    environment: { proj_home_points: 112, proj_away_points: 109, proj_total: 221, proj_margin: 3, proj_pace: 99, total_p10: 203, total_p90: 239, notes: [] },
+    quotes: quotes(2.5, 221.5), top_picks: [], n_evaluated: 0, n_rejected: 0, no_picks_reason: null,
+    lineup: { home: { status: "projected", verified_at: iso(60) }, away: { status: "projected", verified_at: iso(60) } }, props: { quoted_markets: 70, players_projected: 22 },
+  }));
+  const players = [];
+  const sels = [];
+  const stats = ["pts", "reb", "ast", "fg3m"];
+  games.forEach((g, gi) => {
+    for (let k = 0; k < 20; k++) players.push({ id: 20000 + gi * 100 + k, name: `FIXTURE L${gi + 1} Player ${k + 1}`, team_abbr: k < 10 ? g.away.abbr : g.home.abbr, position: ["G", "G", "F", "F", "C"][k % 5], game: g });
+    for (let n = 0; n < 178; n++) {
+      const pl = players[gi * 20 + (n % 20)], st = stats[n % 4], line = 4.5 + (n % 9) * 3;
+      const classification = n < 20 ? "standard" : n < 105 ? "watchlist" : n < 106 ? "stale" : n < 136 ? "insufficient_evidence" : "rejected";
+      const o = sel({ game_id: g.id, game_label: g.label, edition_id: 500, market: `player_${st}`, market_label: `FIXTURE ${pl.name.replace("FIXTURE ", "")} Over ${line} ${st.toUpperCase()}`, subject_id: pl.id, subject_name: pl.name, team_abbr: pl.team_abbr, side: "over", line, price_american: -110 + (n % 7) * 10, book: "Kalshi", projection: line + 1, prob: 0.5 + (n % 10) / 100, breakeven: 0.52, sample_size: 40 + n, evidence_score: 50 + (n % 50), classification, rank: n < 5 ? n + 1 : n < 20 ? n + 1 : null, rejection_reasons: classification === "rejected" ? ["FIXTURE: no positive expected difference versus the quoted price."] : classification === "insufficient_evidence" ? ["FIXTURE: sample below the minimum."] : [] });
+      sels.push(o);
+    }
+    g.top_picks = sels.filter((x) => x.game_id === g.id && x.rank_in_game != null && x.rank_in_game <= 5);
+    g.n_evaluated = 178; g.n_rejected = 42;
+  });
+  const bigMetrics = (i) => ({ ece: 0.02 + i / 1000, brier: 0.23, log_loss: 0.66, n_eval: 7000 + i, n_train: 13000, n_calibration: 5500, coverage_80: 0.9, coverage_80_expected: 0.907, best_baseline_mae: 1.45, mae_ratio_vs_best_baseline: 0.99 + i / 500, pseudo_line_note: "FIXTURE: pseudo lines are rolling medians because no historical quoted lines are stored; this note is deliberately long.",
+    calibration: Array.from({ length: 20 }, (_, b) => ({ bucket: `${(b * 5)}-${b * 5 + 5}%`, n: 300 + b, predicted: +(b * 0.05 + 0.025).toFixed(3), observed: +(b * 0.05 + 0.03).toFixed(3), ci_low: +(b * 0.05).toFixed(3), ci_high: +(b * 0.05 + 0.06).toFixed(3) })),
+    same_player: Object.fromEntries(Array.from({ length: 66 }, (_, k) => [`s${k % 11}|s${Math.floor(k / 6)}x${k}`, +(Math.sin(k) / 2).toFixed(4)])),
+    validation: { rows: Array.from({ length: 30 }, (_, k) => ({ pair: `FIXTURE pair ${k}`, n: 7000, copula: 0.24, observed: 0.22, independence: 0.21 })), summary_note: "FIXTURE validation note" } });
+  const models = Array.from({ length: 26 }, (_, i) => ({ id: 300 + i, family: `player_${stats[i % 4]}`, name: `FIXTURE-large-model-${i}`, version: "1.0.0", status: i % 3 ? "candidate" : "production", training_period: "2023-10 to 2025-04", calibration_period: "2025-10 to 2026-01", evaluation_period: "2026-01 to 2026-04", limitations: "FIXTURE: synthetic.", promoted_by: null, promoted_at: null, latest_evaluation: { n_obs: 7000 + i, metrics: bigMetrics(i), passed: i % 3 === 0 } }));
+  const backtests = Array.from({ length: 27 }, (_, i) => ({ id: 400 + i, family: `player_${stats[i % 4]}`, model_name: `FIXTURE-large-model-${i} 1.0.0`, kind: i % 2 ? "walk_forward" : "holdout", period: "FIXTURE estimate<2026-03-29; validate>=2026-03-29", n_obs: 2000 + i, metrics: bigMetrics(i), passed: i % 2 === 0, notes: "FIXTURE: large-mode backtest.", created_at: iso(60 * 24 + i) }));
+  const combosOf = (n, k, sgp) => Array.from({ length: n }, (_, i) => {
+    const pick = sgp ? sels.filter((x) => x.game_id === games[i % 9].id).slice(i, i + k) : Array.from({ length: k }, (_, j) => sels[((i + j) % 9) * 178 + i]);
+    return combo(`FIX-LARGE-${sgp ? "SGP" : k}-${i}`, `GIZER ${sgp ? "SGP" : ENGINE[k]} #${i + 1}`, pick);
+  });
+  const combos = { double: combosOf(12, 2), triple: combosOf(12, 3), quad: combosOf(8, 4), five: combosOf(8, 5), six: combosOf(8, 6), sgp: combosOf(18, 2, true), cross: combosOf(30, 2) };
+  const kalshi = [];
+  players.forEach((pl, pi) => { if (pi % 20 < 8) for (let t = 0; t < 9; t++) { const st = stats[t % 4], th = 5 + t * 3; if (kalshi.length < 640) kalshi.push(kRow({ ticker: `KXFIX-L-${pl.id}-${st}-${th}`, game_id: pl.game.id, kind: "player", market: `player_${st}`, stat: st, stat_label: `FIXTURE ${st.toUpperCase()}`, player_id: pl.id, player_name: pl.name, team_abbr: pl.team_abbr, title: `${pl.name}: ${th}+ ${st}`, threshold: th - 0.5, comparator: `>= ${th}`, interpretation: t === 8 ? "unsupported" : "normalized", interpretation_note: t === 8 ? "FIXTURE: escalator contract." : null, series: kSeries([Math.max(0.03, 0.9 - t * 0.1), Math.max(0.03, 0.88 - t * 0.1)], { startMin: 30 }) })); } });
+  for (const k of kalshi) { k.game_label = games.find((g) => g.id === k.game_id)?.label ?? null; }
+  const minutes = players.map((pl, i) => ({ ...minutesRow({ id: 9001, name: "x", team_abbr: "DET", position: pl.position }), player_id: pl.id, player_name: pl.name, headshot_url: null, team_abbr: pl.team_abbr, opp_abbr: pl.game.home.abbr === pl.team_abbr ? pl.game.away.abbr : pl.game.home.abbr, game_id: pl.game.id, proj_min: +(36 - (i % 20) * 1.4).toFixed(1), classification: "secondary", classification_label: "FIXTURE Secondary", classification_reason: "FIXTURE: large-mode row." }));
+  return { games, players, sels, models, backtests, combos, kalshi, minutes };
+})();
+for (const x of LG.sels) SEL_BY_ID.set(x.id, x);
+const LEDITION = { id: 500, key: `FIXTURE-${TODAY}-large-v1`, kind: "update", version: 1, published_at: iso(20) };
+const lcounts = () => ({ ...classCounts(LG.sels), qualified: LG.sels.filter((x) => x.rank_in_game != null && x.rank_in_game <= 5 && isQual(x)).length, combinations: 48, markets_analyzed: LG.sels.length, not_qualified_total: LG.sels.filter((x) => !isQual(x) && x.classification !== "watchlist").length });
+const lchanges = () => Array.from({ length: 200 }, (_, i) => ({ type: i % 2 ? "market_move" : "reclassified", text: `FIXTURE change ${i + 1}: FIXTURE L${(i % 9) + 1} Player ${(i % 20) + 1} line moved.` }));
+function largeRoute(method, path, q) {
+  if (method !== "GET") return undefined;
+  if (path === "/games") return { date: TODAY, games: LG.games };
+  if (path === "/command-center") { const c = commandCenter(TODAY); return { ...c, edition: LEDITION, editions: [LEDITION], slate: { n_games: 9, games: LG.games }, counts: { markets_analyzed: LG.sels.length, qualified_selections: 180, combinations: 48, high_confidence: 0, rejected: 378 }, lineups_summary: { confirmed: 0, projected: 18, unknown: 0 } }; }
+  if (path === "/selections") return { edition: LEDITION, ...selectionsPage(LG.sels, q) };
+  if (path === "/combos") { const cat = q.get("category") || "double"; return { edition: LEDITION, category: cat, counts: Object.fromEntries(Object.entries(LG.combos).map(([k, v]) => [k, v.length])), items: LG.combos[cat] ?? [] }; }
+  if (path === "/editions") return { items: [{ ...LEDITION, counts: lcounts(), changes: lchanges() }] };
+  if (path === "/editions/500") {
+    const bounded = LG.sels.filter((x) => isQual(x) || x.classification === "watchlist").sort((a, b) => (CLASS_RANK[a.classification] - CLASS_RANK[b.classification]) || (a.rank_in_game ?? 99) - (b.rank_in_game ?? 99)).slice(0, 150);
+    return { ...LEDITION, game_date: TODAY, summary: { slate: { n_games: 9 }, narrative: ["FIXTURE narrative for the large slate."], limitations: ["FIXTURE: synthetic large slate."], unresolved: [], rejected: LG.sels.filter((x) => x.classification === "rejected").slice(0, 200).map((x) => ({ label: x.market_label, reasons: x.rejection_reasons })), counts: lcounts() }, changes: lchanges(), content_sha256: "f".repeat(64), selections: bounded, selection_counts: classCounts(LG.sels), combos: Object.values(LG.combos).flat().slice(0, 48) };
+  }
+  const gm = path.match(/^\/games\/(FIX-L\d+)(\/.*)?$/);
+  if (gm) {
+    const g = LG.games.find((x) => x.id === gm[1]);
+    if (!g) return undefined;
+    const mine = LG.sels.filter((x) => x.game_id === g.id);
+    if (!gm[2]) return { game: g, team_form: { home: {}, away: {} }, player_projections: LG.players.filter((p) => p.game === g).flatMap((p) => ["pts", "reb", "ast", "fg3m"].map((stat) => ({ player_id: p.id, player_name: p.name, team_abbr: p.team_abbr, stat, mean: 12, p10: 6, p50: 12, p90: 19, proj_min: 28, n_games: 40, injury_status: null }))), selections: [...mine.filter((x) => isQual(x) || x.classification === "watchlist"), ...mine.filter((x) => !isQual(x) && x.classification !== "watchlist").slice(0, 60)], selection_counts: classCounts(mine), sgp: LG.combos.sgp.filter((c) => c.legs[0]?.game_id === g.id), h2h: [], agent_reports: [], unresolved: [] };
+    if (gm[2] === "/player-props") { const rows = LG.players.filter((p) => p.game === g).flatMap((p) => ["pts", "reb", "ast"].map((st) => ({ ...propRows()[0], player_id: p.id, player_name: p.name, headshot_url: null, team_abbr: p.team_abbr, opp_abbr: "OPP", game_id: g.id, game_label: g.label, market: `player_${st}`, stat: st, book: "Kalshi", selection: null }))); return { date: TODAY, markets: PROP_MARKETS, quote_status: { provider_configured: true, message: "FIXTURE: 640 player contracts quoted on Kalshi for this slate (polled)." }, ...page(rows, q) }; }
+    if (gm[2] === "/lineups") return { game_id: g.id, home: { ...teamLineup("ORL"), team: g.home }, away: { ...teamLineup("DET"), team: g.away } };
+    if (gm[2] === "/lineup-history") return { items: [] };
+    return undefined;
+  }
+  if (path === "/kalshi/markets") {
+    let items = LG.kalshi;
+    for (const k of ["game_id", "kind", "market", "interpretation"]) if (q.get(k)) items = items.filter((r) => r[k] === q.get(k));
+    if (q.get("player_id")) items = items.filter((r) => String(r.player_id) === q.get("player_id"));
+    if (q.get("q")) items = items.filter((r) => r.title.toLowerCase().includes(q.get("q").toLowerCase()));
+    return { date: TODAY, sync: KSYNC, counts: { total: LG.kalshi.length, normalized: LG.kalshi.filter((r) => r.interpretation === "normalized").length, unsupported: LG.kalshi.filter((r) => r.interpretation === "unsupported").length, unmatched: 0 }, events: LG.games.map((g) => ({ game_id: g.id, label: g.label })), ...page(items.map(kPublic), q), notes: ["FIXTURE note: large slate."] };
+  }
+  if (path === "/minutes") { let items = [...PLAYERS.filter((p) => [9001, 9005].includes(p.id)).map(minutesRow).map((r) => ({ ...r, proj_min: 40 })), ...LG.minutes]; if (q.get("team")) items = items.filter((r) => r.team_abbr === q.get("team")); if (q.get("q")) items = items.filter((r) => r.player_name.toLowerCase().includes(q.get("q").toLowerCase())); return { date: TODAY, ...page(items, q), ...MIN_META }; }
+  if (path === "/player-props") { const rows = LG.players.flatMap((p) => ["pts", "reb"].map((st) => ({ ...propRows()[0], player_id: p.id, player_name: p.name, headshot_url: null, team_abbr: p.team_abbr, opp_abbr: "OPP", game_id: p.game.id, game_label: p.game.label, market: `player_${st}`, stat: st, book: "Kalshi", selection: null }))); return { date: TODAY, markets: PROP_MARKETS, quote_status: { provider_configured: true, message: "FIXTURE: 640 player contracts quoted on Kalshi for this slate (polled)." }, ...page(rows, q) }; }
+  if (path === "/lineups") return { date: TODAY, games: LG.games.map((g) => ({ game: { id: g.id, label: g.label, tipoff_utc: g.tipoff_utc, status: g.status, home: g.home, away: g.away }, home: { ...teamLineup("ORL"), team: g.home }, away: { ...teamLineup("DET"), team: g.away } })) };
+  if (path === "/injuries") { const items = [...LG.games.flatMap((g) => [...g.injuries.away, ...g.injuries.home].map((r) => ({ ...r, game_label: g.label }))), ...Array.from({ length: 60 }, (_, i) => ({ ...inj(`FIXTURE Off-slate Player ${i}`, ["PHX", "SAS", "UTA", "WAS", "TOR", "POR"][i % 6], "Out", "FIXTURE"), game_label: null }))]; return { as_of: iso(30), source: "FIXTURE-injury-feed", items, changes: [] }; }
+  if (path === "/injuries/changes") return { date: TODAY, items: Array.from({ length: 30 }, (_, i) => ({ ...INJURY_CHANGES[0], player_name: `FIXTURE L Change ${i}`, game_id: LG.games[i % 9].id, game_label: LG.games[i % 9].label, material: i % 2 === 0 })).filter((c) => q.get("material") !== "true" || c.material), notes: ["FIXTURE note: large slate."] };
+  if (path === "/models") return { items: LG.models };
+  if (path === "/backtests") return { items: LG.backtests };
+  if (path === "/research-lab") return { findings: [], experiments: LG.backtests, correlation: { pairs: Array.from({ length: 199 }, (_, i) => ({ a: `FIXTURE stat ${i % 11}`, b: `FIXTURE stat ${i % 7}`, rho: +(Math.cos(i) / 2).toFixed(3), n: 7000 })), notes: ["FIXTURE note."] } };
+  return undefined;
+}
+
 // ---------- handlers ----------
 const summaryNow = () => SUMMARY;
 
@@ -747,7 +859,7 @@ function gameDetail(id) {
       const mk = (stat, mean) => ({ ...base, stat, mean: +mean.toFixed(1), p10: +(mean * 0.62).toFixed(1), p50: +(mean * 0.98).toFixed(1), p90: +(mean * 1.41).toFixed(1) });
       return [mk(k, s.projection), ...(k === "pts" ? [mk("reb", 5.1), mk("ast", 7.2)] : [])];
     }),
-    selections: sels,
+    selections: sels, selection_counts: classCounts(sels),
     sgp: id === "FIX-G1" ? [C.s1] : [],
     h2h: id === "FIX-G2" ? [] : [
       { date: shift(TODAY, -40), home_abbr: game.away.abbr, away_abbr: game.home.abbr, home_points: 111, away_points: 104 },
@@ -872,6 +984,8 @@ const page = (items, q) => {
 
 function route(method, path, q, body) {
   const date = q.get("date") || TODAY;
+  if (path === "/__mock/large") { if (method === "POST") LARGE = Boolean(body.on); return { large: LARGE }; }
+  if (LARGE && date === TODAY) { const r = largeRoute(method, path, q); if (r !== undefined) return r; }
   if (method === "GET") {
     if (path === "/command-center") return commandCenter(date);
     if (path === "/games") return { date, games: GAMES[date] ?? [] };
@@ -911,9 +1025,7 @@ function route(method, path, q, body) {
     if (path.startsWith("/games/")) return gameDetail(decodeURIComponent(path.slice(7))) ?? { __status: 404, ...err("not_found", "FIXTURE: game not found.") };
     if (path === "/selections") {
       const eds = EDITIONS[date] ?? [];
-      let items = SELECTIONS[date] ?? [];
-      for (const k of ["classification", "market", "game_id"]) if (q.get(k)) items = items.filter((s) => s[k] === q.get(k));
-      return { edition: eds[eds.length - 1] ?? null, items };
+      return { edition: eds[eds.length - 1] ?? null, ...selectionsPage(SELECTIONS[date] ?? [], q) };
     }
     if (path === "/combos") {
       const category = q.get("category") || "double";
@@ -942,11 +1054,11 @@ function route(method, path, q, body) {
           limitations: ["FIXTURE: starting lineups are not available.", "FIXTURE: all text here is synthetic."],
           unresolved: ["FIXTURE: availability of FIXTURE Player G."],
           rejected: sels.filter((s) => s.rejection_reasons.length).map((s) => ({ label: s.market_label, reasons: s.rejection_reasons })),
-          counts: editionCounts(sels.length),
+          counts: { ...editionCounts(sels.length), not_qualified_total: sels.filter((x) => !isQual(x) && x.classification !== "watchlist").length },
         },
         changes: id === 1 || id === 90 ? [] : [{ type: "line_move", text: "FIXTURE: FIXTURE ORL +2.5 moved." }],
         content_sha256: `${String(id).padStart(4, "f")}a9c1e77b05d2f64833ce1b0d9a4e6f7c81b2d3e4f5a6b7c8d9e0f1a2b3c4`.slice(0, 64),
-        selections: sels, combos,
+        selections: sels.filter((x) => isQual(x) || x.classification === "watchlist"), selection_counts: classCounts(sels), combos,
       };
     }
     if (path === "/paper/tickets") {

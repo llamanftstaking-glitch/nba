@@ -2,15 +2,15 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { ClassificationBadge, isQualified } from "@/components/classification-badge";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ClassificationBadge } from "@/components/classification-badge";
 import { PricingBlock } from "@/components/combo-card";
 import { EvidenceMeter, ProbInterval } from "@/components/prob";
 import { SaveTicketButton } from "@/components/save-ticket-button";
 import { SelectionCard } from "@/components/selection-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Field, Select } from "@/components/ui/field";
+import { Field, Input, Select } from "@/components/ui/field";
 import { Val } from "@/components/ui/na";
 import { BulletList, Metric, PageHeader, Panel } from "@/components/ui/panel";
 import { EmptyState, ErrorState, LoadingState, QueryView } from "@/components/ui/states";
@@ -20,7 +20,8 @@ import { useSelectedDate } from "@/lib/date";
 import { fmtAmerican, fmtInt, fmtNum, fmtPct } from "@/lib/format";
 import { useCombos, useSelections } from "@/lib/queries";
 import { useDebounced } from "@/lib/use-debounced";
-import type { BuilderEvaluation, Selection } from "@/lib/types";
+import type { BuilderEvaluation, ComboLeg, Selection } from "@/lib/types";
+import { Collapsible } from "@/components/ui/collapsible";
 
 const CATEGORIES = [
   ["double", "2-leg"],
@@ -34,7 +35,7 @@ const CATEGORIES = [
 
 const MAX_LEGS = 6;
 
-function Evaluation({ ids, legs }: { ids: number[]; legs: Selection[] }) {
+function Evaluation({ ids, legs, onLabels }: { ids: number[]; legs: Leg[]; onLabels: (m: Map<number, ComboLeg>) => void }) {
   const debounced = useDebounced(ids, 350);
   const settled = debounced.length === ids.length && debounced.every((v, i) => v === ids[i]);
   const q = useQuery({
@@ -44,6 +45,11 @@ function Evaluation({ ids, legs }: { ids: number[]; legs: Selection[] }) {
     staleTime: 0,
     gcTime: 60_000,
   });
+
+  const evLegs = q.data?.legs;
+  useEffect(() => {
+    if (evLegs) onLabels(new Map(evLegs.map((l) => [l.selection_id, l])));
+  }, [evLegs, onLabels]);
 
   if (ids.length === 0) {
     return <EmptyState title="No legs yet.">Add selections from the list to evaluate a combination.</EmptyState>;
@@ -127,47 +133,32 @@ function Evaluation({ ids, legs }: { ids: number[]; legs: Selection[] }) {
   );
 }
 
-function CombinationPanel({
-  legs,
-  ids,
-  missing,
-  onRemove,
-  onClear,
-  onFocus,
-}: {
-  legs: Selection[];
-  ids: number[];
-  missing: number;
-  onRemove: (id: number) => void;
-  onClear: () => void;
-  onFocus: (id: number) => void;
-}) {
+type Leg = { id: number; label: string; game_label: string; price: number | null; prob: number | null; invalidated: boolean };
+const legOf = (s: Selection): Leg => ({ id: s.id, label: s.market_label, game_label: s.game_label, price: s.price_american, prob: s.prob, invalidated: s.invalidated });
+
+function CombinationPanel({ legs, onRemove, onClear, onLabels }: { legs: Leg[]; onRemove: (id: number) => void; onClear: () => void; onLabels: (m: Map<number, ComboLeg>) => void }) {
+  const ids = useMemo(() => legs.map((l) => l.id), [legs]);
   return (
     <div className="space-y-4">
-      {missing > 0 && (
-        <p className="rounded-md bg-warn/10 ring-1 ring-inset ring-warn/40 px-2 py-1 text-xs text-warn">
-          {missing} requested leg(s) are not in the latest edition for this date and were skipped.
-        </p>
-      )}
       {legs.length > 0 && (
         <ul className="divide-y divide-line/40 rounded-md bg-raised/40" data-testid="builder-legs">
           {legs.map((l, i) => (
-            <li key={l.id} className="flex items-start gap-2 px-2 py-1.5">
-              <span className="num mt-0.5 text-2xs text-muted">{i + 1}</span>
-              <button type="button" className="min-w-0 flex-1 text-left" onClick={() => onFocus(l.id)}>
-                <span className="block break-words text-xs font-medium text-ink">{l.market_label}</span>
-                <span className="num block text-2xs text-muted">
-                  {l.game_label} · <Val v={fmtAmerican(l.price_american)} /> · <Val v={fmtPct(l.prob)} />
+            <li key={l.id} className="flex items-start gap-2 px-3 py-2">
+              <span className="num mt-0.5 text-xs text-muted">{i + 1}</span>
+              <span className="min-w-0 flex-1">
+                <span className="block break-words text-sm font-medium text-ink">{l.label}</span>
+                <span className="num block text-xs text-muted">
+                  {l.game_label || "—"} · <Val v={fmtAmerican(l.price)} /> · <Val v={fmtPct(l.prob)} />
                 </span>
-              </button>
-              <Button variant="ghost" aria-label={`Remove ${l.market_label}`} onClick={() => onRemove(l.id)} data-testid="builder-remove">
+              </span>
+              <Button variant="ghost" aria-label={`Remove ${l.label}`} onClick={() => onRemove(l.id)} data-testid="builder-remove">
                 Remove
               </Button>
             </li>
           ))}
         </ul>
       )}
-      <Evaluation ids={ids} legs={legs} />
+      <Evaluation ids={ids} legs={legs} onLabels={onLabels} />
       {legs.length > 0 && (
         <Button variant="ghost" onClick={onClear}>
           Clear combination
@@ -177,124 +168,111 @@ function CombinationPanel({
   );
 }
 
+function GameGroup({ label, items, open, children }: { label: string; items: number; open: boolean; children: React.ReactNode }) {
+  return (
+    <Collapsible title={<span className="font-display text-[15px] font-semibold uppercase tracking-wide">{label}</span>} right={`${items} selection(s)`} defaultOpen={open} testId="builder-game-group">
+      {children}
+    </Collapsible>
+  );
+}
+
 export default function BuilderPage() {
   const date = useSelectedDate();
   const sp = useSearchParams();
-  const selQ = useSelections(date);
-  const [ids, setIds] = useState<number[]>([]);
-  const [focusId, setFocusId] = useState<number | null>(null);
-  const [scope, setScope] = useState<"qualified" | "all">("qualified");
+  const [legs, setLegs] = useState<Leg[]>([]);
+  const [focus, setFocus] = useState<Selection | null>(null);
+  const [watch, setWatch] = useState(false);
+  const [text, setText] = useState("");
   const [category, setCategory] = useState<string>("double");
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [loadAll, setLoadAll] = useState(false);
+  const search = useDebounced(text.trim(), 300);
+  // Qualified selections only by default; the watchlist is a separate, opt-in request. Both are bounded.
+  const qualQ = useSelections({ date, classification: "qualified", q: search || undefined, limit: 200 });
+  const watchQ = useSelections({ date, classification: "watchlist", q: search || undefined, limit: 100 }, watch);
   const combosQ = useCombos(category, date);
 
-  // Preload legs from ?legs=1,2,3 ("Open in builder" on a combination card). Applied once.
+  // Preload legs from ?legs=1,2,3 ("Open in builder"). Labels arrive with the first evaluation.
   const seeded = useRef(false);
   useEffect(() => {
     if (seeded.current) return;
     seeded.current = true;
-    const raw = sp.get("legs");
-    if (!raw) return;
-    const parsed = raw
-      .split(",")
-      .map((x) => Number(x))
-      .filter((n) => Number.isInteger(n) && n > 0)
-      .slice(0, MAX_LEGS);
-    if (parsed.length) {
-      setIds([...new Set(parsed)]);
-      setFocusId(parsed[0] ?? null);
-    }
+    const parsed = (sp.get("legs") ?? "").split(",").map(Number).filter((n) => Number.isInteger(n) && n > 0).slice(0, MAX_LEGS);
+    if (parsed.length) setLegs([...new Set(parsed)].map((id) => ({ id, label: `Selection #${id}`, game_label: "", price: null, prob: null, invalidated: false })));
   }, [sp]);
 
-  const all = useMemo(() => selQ.data?.items ?? [], [selQ.data]);
-  const byId = useMemo(() => new Map(all.map((s) => [s.id, s])), [all]);
-  const legs = useMemo(() => ids.map((id) => byId.get(id)).filter((s): s is Selection => Boolean(s)), [ids, byId]);
-  const validIds = useMemo(() => legs.map((l) => l.id), [legs]);
-  const missing = selQ.data ? ids.length - legs.length : 0;
-  // With nothing chosen yet, show the first available selection so the detail column is never blank.
-  const focused = focusId !== null ? byId.get(focusId) : all.find((x) => isQualified(x.classification, x.invalidated)) ?? all[0];
+  const onLabels = useCallback((m: Map<number, ComboLeg>) => {
+    setLegs((cur) => {
+      let changed = false;
+      const next = cur.map((l) => {
+        const e = m.get(l.id);
+        if (!e || (l.label === e.label && l.game_label === e.game_label)) return l;
+        changed = true;
+        return { ...l, label: e.label, game_label: e.game_label, price: e.price_american, prob: e.prob };
+      });
+      return changed ? next : cur;
+    });
+  }, []);
 
-  const visible = useMemo(
-    () => all.filter((s) => scope === "all" || isQualified(s.classification, s.invalidated) || ids.includes(s.id)),
-    [all, scope, ids],
-  );
+  const items = useMemo(() => [...(qualQ.data?.items ?? []), ...(watch ? (watchQ.data?.items ?? []) : [])], [qualQ.data, watchQ.data, watch]);
   const groups = useMemo(() => {
     const m = new Map<string, { label: string; items: Selection[] }>();
-    for (const s of visible) {
+    for (const s of items) {
       const g = m.get(s.game_id) ?? { label: s.game_label, items: [] };
       g.items.push(s);
       m.set(s.game_id, g);
     }
     return [...m.entries()];
-  }, [visible]);
-
-  const add = (id: number) => {
-    setIds((cur) => (cur.includes(id) || cur.length >= MAX_LEGS ? cur : [...cur, id]));
-    setFocusId(id);
+  }, [items]);
+  const ids = legs.map((l) => l.id);
+  const focused = focus ?? items[0] ?? null;
+  const full = legs.length >= MAX_LEGS;
+  const add = (s: Selection) => {
+    setLegs((cur) => (cur.some((l) => l.id === s.id) || cur.length >= MAX_LEGS ? cur : [...cur, legOf(s)]));
+    setFocus(s);
   };
-  const remove = (id: number) => setIds((cur) => cur.filter((x) => x !== id));
-  const full = ids.length >= MAX_LEGS;
+  const remove = (id: number) => setLegs((cur) => cur.filter((l) => l.id !== id));
+  const total = (qualQ.data?.total ?? 0) + (watch ? (watchQ.data?.total ?? 0) : 0);
 
-  const panel = (
-    <CombinationPanel legs={legs} ids={validIds} missing={missing} onRemove={remove} onClear={() => setIds([])} onFocus={setFocusId} />
-  );
+  const panel = <CombinationPanel legs={legs} onRemove={remove} onClear={() => setLegs([])} onLabels={onLabels} />;
+  const combos = combosQ.data?.items ?? [];
 
   return (
     <div data-testid="builder">
-      <PageHeader
-        title="Research Builder"
-        sub="Assemble a combination from evaluated selections. Each change is re-evaluated by the API; nothing is persisted until saved to the paper ledger."
-      />
-      <div className="grid gap-4 lg:grid-cols-[minmax(260px,320px)_minmax(0,1fr)_minmax(280px,340px)]">
-        {/* Left: games and selections */}
+      <PageHeader title="Research Builder" sub="Assemble a combination from qualified research selections. Each change is re-evaluated by the API; nothing is persisted until saved to the paper ledger." />
+      <div className="grid gap-4 lg:grid-cols-[minmax(280px,360px)_minmax(0,1fr)_minmax(280px,340px)]">
+        {/* Left: selections */}
         <div className="min-w-0 space-y-4">
-          <Panel
-            title="Available selections"
-            right={
-              <label className="flex items-center gap-1.5">
-                <span className="sr-only">Selection scope</span>
-                <select
-                  className="h-6 rounded border border-line-strong bg-bg pl-1.5 pr-5 text-2xs text-ink"
-                  value={scope}
-                  onChange={(e) => setScope(e.target.value as "qualified" | "all")}
-                >
-                  <option value="qualified">Qualified</option>
-                  <option value="all">All evaluated</option>
-                </select>
-              </label>
-            }
-            bodyClassName="p-2"
-          >
+          <Panel title="Available selections" right={qualQ.data ? <span className="num">{items.length} of {total}</span> : undefined} bodyClassName="space-y-3">
+            <Field label="Search">
+              <Input type="search" placeholder="Player, team or market" value={text} onChange={(e) => setText(e.target.value)} data-testid="builder-search" />
+            </Field>
+            <label className="flex min-h-[44px] cursor-pointer items-center gap-2 text-sm text-soft md:min-h-0">
+              <input type="checkbox" checked={watch} onChange={(e) => setWatch(e.target.checked)} className="h-4 w-4 accent-[rgb(0,229,160)]" data-testid="builder-watchlist" />
+              Include watchlist
+            </label>
             <QueryView
-              query={selQ}
+              query={qualQ}
               rows={6}
               isEmpty={() => groups.length === 0}
               empty={
-                <EmptyState title={all.length === 0 ? "No selections are available for this date." : "No qualified selections for this date."}>
-                  {all.length > 0 ? 'Switch to "All evaluated" to browse every evaluated selection.' : undefined}
+                <EmptyState title={search ? "No selection matches this search." : "No qualified selections for this date."}>
+                  {search ? undefined : "Tick “Include watchlist” to browse watchlist selections, or pick another date."}
                 </EmptyState>
               }
             >
               {() => (
-                <div className="space-y-4">
-                  {groups.map(([gid, g]) => (
-                    <div key={gid}>
-                      <h3 className="mb-1 border-b border-line pb-1 text-2xs font-semibold uppercase tracking-wide text-soft">{g.label}</h3>
-                      <ul className="space-y-1">
+                <div className="space-y-2">
+                  {groups.map(([gid, g], gi) => (
+                    <GameGroup key={gid} label={g.label} items={g.items.length} open={gi === 0 || groups.length <= 3 || Boolean(search)}>
+                      <ul className="space-y-1.5">
                         {g.items.map((s) => {
                           const inCombo = ids.includes(s.id);
                           return (
-                            <li
-                              key={s.id}
-                              className={cn(
-                                "flex items-start gap-2 rounded border px-2 py-1.5",
-                                focused?.id === s.id ? "border-info/60 bg-raised" : "border-line bg-bg/40",
-                              )}
-                              data-testid="builder-option"
-                            >
-                              <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setFocusId(s.id)}>
-                                <span className="block break-words text-xs font-medium text-ink">{s.market_label}</span>
-                                <span className="num mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-2xs text-muted">
+                            <li key={s.id} className={cn("flex items-start gap-2 rounded-md px-2 py-1.5", focused?.id === s.id ? "bg-raised ring-1 ring-inset ring-info/50" : "bg-bg/40")} data-testid="builder-option">
+                              <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setFocus(s)}>
+                                <span className="block break-words text-sm font-medium text-ink">{s.market_label}</span>
+                                <span className="num mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted">
                                   <Val v={fmtPct(s.prob)} />
                                   <span>
                                     Evidence <Val v={s.evidence_score === null ? null : `${s.evidence_score}/100`} />
@@ -307,13 +285,7 @@ export default function BuilderPage() {
                                   Remove
                                 </Button>
                               ) : (
-                                <Button
-                                  variant="primary"
-                                  disabled={full || s.invalidated}
-                                  onClick={() => add(s.id)}
-                                  aria-label={`Add ${s.market_label} to combination`}
-                                  data-testid="builder-add"
-                                >
+                                <Button variant="primary" disabled={full || s.invalidated} onClick={() => add(s)} aria-label={`Add ${s.market_label} to combination`} data-testid="builder-add">
                                   Add
                                 </Button>
                               )}
@@ -321,51 +293,53 @@ export default function BuilderPage() {
                           );
                         })}
                       </ul>
-                    </div>
+                    </GameGroup>
                   ))}
-                  {full && <p className="text-2xs text-warn">Maximum of {MAX_LEGS} legs reached.</p>}
+                  {total > items.length && <p className="text-xs text-muted">Showing {items.length} of {total}. Use search to narrow the list.</p>}
+                  {full && <p className="text-xs text-warn">Maximum of {MAX_LEGS} legs reached.</p>}
                 </div>
               )}
             </QueryView>
           </Panel>
 
-          <Panel title="Load a researched combination" bodyClassName="p-2">
+          <Collapsible title="Load a researched combination" className="bg-card ring-1 ring-inset ring-line/60" testId="builder-load-panel">
             <Field label="Category">
-              <Select value={category} onChange={(e) => setCategory(e.target.value)}>
+              <Select value={category} onChange={(e) => { setCategory(e.target.value); setLoadAll(false); }}>
                 {CATEGORIES.map(([id, label]) => (
-                  <option key={id} value={id}>
-                    {label}
-                  </option>
+                  <option key={id} value={id}>{label}</option>
                 ))}
               </Select>
             </Field>
             <div className="mt-2">
               <QueryView query={combosQ} rows={2} isEmpty={(d) => d.items.length === 0} empty={<EmptyState title="No combinations in this category for the date." />}>
-                {(d) => (
-                  <ul className="space-y-1">
-                    {d.items.map((c) => (
-                      <li key={c.uid} className="flex items-start gap-2 rounded-md bg-raised/40 px-2 py-1.5">
-                        <div className="min-w-0 flex-1">
-                          <div className="text-xs font-medium text-ink">{c.name}</div>
-                          <div className="break-words text-2xs text-muted">{c.legs.map((l) => l.label).join(" + ")}</div>
-                        </div>
-                        <Button
-                          onClick={() => {
-                            const next = c.legs.map((l) => l.selection_id).slice(0, MAX_LEGS);
-                            setIds(next);
-                            setFocusId(next[0] ?? null);
-                          }}
-                          data-testid="builder-load"
-                        >
-                          Load
-                        </Button>
-                      </li>
-                    ))}
-                  </ul>
+                {() => (
+                  <>
+                    <ul className="space-y-1.5">
+                      {(loadAll ? combos : combos.slice(0, 6)).map((c) => (
+                        <li key={c.uid} className="flex items-start gap-2 rounded-md bg-raised/40 px-2 py-1.5">
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-medium text-ink">{c.name}</div>
+                            <div className="break-words text-xs text-muted">{c.legs.map((l) => l.label).join(" + ")}</div>
+                          </div>
+                          <Button
+                            onClick={() => setLegs(c.legs.slice(0, MAX_LEGS).map((l) => ({ id: l.selection_id, label: l.label, game_label: l.game_label, price: l.price_american, prob: l.prob, invalidated: false })))}
+                            data-testid="builder-load"
+                          >
+                            Load
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                    {combos.length > 6 && (
+                      <Button variant="ghost" className="mt-1" aria-expanded={loadAll} onClick={() => setLoadAll((v) => !v)}>
+                        {loadAll ? "Show fewer" : `Show all ${combos.length}`}
+                      </Button>
+                    )}
+                  </>
                 )}
               </QueryView>
             </div>
-          </Panel>
+          </Collapsible>
         </div>
 
         {/* Center: focused selection */}
@@ -382,7 +356,7 @@ export default function BuilderPage() {
                   ids.includes(focused.id) ? (
                     <Button onClick={() => remove(focused.id)}>Remove from combination</Button>
                   ) : (
-                    <Button variant="primary" disabled={full || focused.invalidated} onClick={() => add(focused.id)}>
+                    <Button variant="primary" disabled={full || focused.invalidated} onClick={() => add(focused)}>
                       Add to combination
                     </Button>
                   )
@@ -396,7 +370,7 @@ export default function BuilderPage() {
 
         {/* Right: current combination (desktop) */}
         <div className="hidden min-w-0 lg:block">
-          <div className="sticky top-14">
+          <div className="sticky top-16">
             <Panel title={`Current combination · ${legs.length} leg(s)`} tone="accent">
               {panel}
             </Panel>
@@ -404,23 +378,13 @@ export default function BuilderPage() {
         </div>
       </div>
 
-      {/* Mobile / tablet: expandable drawer that sits above the bottom navigation */}
-      <div
-        className="fixed inset-x-0 bottom-14 z-30 border-t border-accent/50 bg-panel md:bottom-7 lg:hidden"
-        data-testid="builder-drawer"
-        data-open={drawerOpen ? "1" : "0"}
-      >
-        <button
-          type="button"
-          aria-expanded={drawerOpen}
-          onClick={() => setDrawerOpen((v) => !v)}
-          className="flex h-10 w-full items-center justify-between px-3 text-xs"
-          data-testid="builder-drawer-toggle"
-        >
+      {/* Below lg: expandable drawer that sits above the bottom navigation */}
+      <div className="fixed inset-x-0 bottom-14 z-30 border-t border-accent/50 bg-bg2 lg:hidden" data-testid="builder-drawer" data-open={drawerOpen ? "1" : "0"}>
+        <button type="button" aria-expanded={drawerOpen} onClick={() => setDrawerOpen((v) => !v)} className="flex h-11 w-full items-center justify-between px-3 text-sm" data-testid="builder-drawer-toggle">
           <span className="font-semibold uppercase tracking-wide text-ink">
             Current combination · <span className="num">{legs.length}</span> leg(s)
           </span>
-          <span className="text-muted">{drawerOpen ? "Close ▾" : "Open ▴"}</span>
+          <span className="text-muted">{drawerOpen ? "Close" : "Open"}</span>
         </button>
         {drawerOpen && <div className="max-h-[60vh] overflow-y-auto border-t border-line p-3">{panel}</div>}
       </div>

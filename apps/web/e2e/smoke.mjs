@@ -217,6 +217,7 @@ async function runViewport(browser, label, viewport) {
   // --- Player props: table/cards, drawer, threshold ---
   await visit(page, "/player-props", label, errors);
   const rowSel = isMobile ? '[data-testid="prop-card"]' : '[data-testid="market-row"]';
+  check(`[${label}] props: quote status uses the API message verbatim`, (await page.locator('[data-testid="quote-status"]').innerText()).trim() === "FIXTURE: provider quotes cover DET @ ORL and LAL @ DEN only." && !/No quote provider configured/i.test(await bodyText(page)));
   check(`[${label}] props: seven markets listed`, (await page.locator(`${rowSel}:visible`).count()) === 7);
   const freq = await page.locator(isMobile ? '[data-testid="hist-frequency"]' : '[data-testid="market-row"] [data-testid="hist-frequency"]').allInnerTexts().catch(() => []);
   if (isMobile) await page.locator('[data-prop="9001:player_pts:FIX-G1"] [data-testid="prop-card-toggle"]').click();
@@ -292,6 +293,36 @@ async function runViewport(browser, label, viewport) {
   await settle(page);
   check(`[${label}] manual entry: market row removed after withdraw`, (await page.locator(`[data-prop="9005:player_reb:FIX-G3"]:visible`).count()) === 0);
 
+  // --- Top picks (bounded, server-side paging) ---
+  const selReqs = [];
+  const onSelReq = (r) => {
+    const u = new URL(r.url());
+    if (u.pathname.endsWith("/api/v1/selections")) selReqs.push(u.searchParams);
+  };
+  page.on("request", onSelReq);
+  await visit(page, "/picks", label, errors);
+  check(`[${label}] picks: ranked view grouped by game`, (await page.locator('[data-testid="selection-game-group"]').count()) === 2 && (await page.locator('[data-testid="selection-row"]').count()) === 3);
+  check(`[${label}] picks: tab counts from the API`, (await page.locator('[data-tab="ranked"]').innerText()).replace(/\s+/g, " ") === "Top picks 3" && (await page.locator('[data-tab="rejected"]').innerText()).replace(/\s+/g, " ") === "Rejected 3" && (await page.locator('[data-tab="stale"]').innerText()).replace(/\s+/g, " ") === "Stale 0");
+  await page.click('[data-tab="rejected"]');
+  await page.locator('[data-testid="picks-list"]').waitFor({ timeout: 8000 }).catch(() => {});
+  check(`[${label}] picks: classification tab is a paged list`, (await page.locator('[data-testid="picks-list"] [data-testid="selection-row"]').count()) === 3);
+  await page.click('[data-tab="stale"]');
+  await settle(page);
+  check(`[${label}] picks: empty classification explains itself`, /No selection is stale/.test(await bodyText(page)));
+  await page.click('[data-tab="qualified"]');
+  await page.fill('[data-testid="picks-search"]', "Player E");
+  await page.waitForFunction(() => document.querySelectorAll('[data-testid="picks-list"] [data-testid="selection-row"]').length === 1, null, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] picks: search uses the q parameter`, (await page.locator('[data-testid="picks-list"] [data-testid="selection-row"]').count()) === 1 && selReqs.some((p) => p.get("q") === "Player E"));
+  check(`[${label}] picks: every /selections request is paginated`, selReqs.length >= 3 && selReqs.every((p) => Number(p.get("limit")) > 0 && Number(p.get("limit")) <= 1000), selReqs.map((p) => p.toString()).join(" | "));
+  page.off("request", onSelReq);
+
+  // --- compare / history are not blank on first load ---
+  await visit(page, "/players/compare", label, errors);
+  await page.locator('[data-testid="compare-table"]').waitFor({ timeout: 10000 }).catch(() => {});
+  check(`[${label}] compare: preselects two slate players and offers quick picks`, (await page.locator('[data-testid="compare-selected"] li').count()) === 2 && (await page.locator('[data-testid="compare-table"] thead th').count()) === 3 && (await page.locator('[data-testid="compare-chip"]').count()) >= 2 && /two highest projected-minute players/.test(await page.locator('[data-testid="compare-preselected"]').innerText()));
+  await visit(page, "/players/history", label, errors);
+  check(`[${label}] history: slate players listed as quick links`, (await page.locator('[data-testid="history-quick-link"]').count()) >= 4 && /\/players\/9001.*#history/.test((await page.locator('[data-testid="history-quick-link"]').first().getAttribute("href")) ?? ""));
+
   // --- Kalshi market watch ---
   text = await visit(page, "/kalshi-intelligence", label, errors);
   const kSel = isMobile ? '[data-testid="kalshi-card"]' : '[data-testid="kalshi-row"]';
@@ -353,6 +384,9 @@ async function runViewport(browser, label, viewport) {
   await visit(page, "/kalshi-intelligence/KXFIX-A-DD", label, errors);
   text = await bodyText(page);
   check(`[${label}] kalshi detail page: tracked-only contract shows the note and no model numbers`, (await page.locator('[data-testid="kd-tracked-note"]').innerText()).includes("protected double-double") && (await page.locator('[data-testid="kd-no-model"]').count()) === 1 && (await page.locator('[data-testid="kd-selection"]').count()) === 0 && !/Model probability \[/i.test(text));
+
+  await visit(page, "/kalshi-intelligence/KXFIX-G1-ML", label, errors);
+  check(`[${label}] kalshi detail page: game contract wording`, (await page.locator('[data-testid="kd-no-research"]').innerText()).trim() === "Model research is shown for player contracts only.");
 
   // --- Minutes intelligence ---
   text = await visit(page, "/minutes", label, errors);
@@ -487,6 +521,7 @@ async function runViewport(browser, label, viewport) {
   check(`[${label}] game: lineup table`, (await gp.locator('[data-testid="team-lineup"]').count()) === 2);
   check(`[${label}] game: player props for the game`, (await gp.locator(`#props ${rowSel}:visible`).count()) === 3);
   check(`[${label}] game: descriptive context row on selections`, /Historical context \(descriptive\)/i.test(await gp.locator('[data-testid="historical-context"]').first().innerText()));
+  check(`[${label}] game: "+N more evaluated (not qualified)" from selection_counts`, /\+1 more evaluated \(not qualified\)/.test(await page.locator('[data-testid="game-more-evaluated"]').innerText()) && (await page.locator('[data-testid="game-watchlist"]').count()) === 1);
   await page.click('[data-testid="toggle-all-selections"]');
   check(`[${label}] game: rejected selections listed with reasons`, (await page.locator('[data-testid="rejection-inline"]').first().innerText()).includes("FIXTURE: edge below the minimum threshold."));
   await visit(page, "/games/FIX-G2", label, errors);
@@ -512,7 +547,9 @@ async function runViewport(browser, label, viewport) {
   check(`[${label}] parlays: empty category has explicit empty state`, (await page.locator('[data-state="empty"]').innerText()).includes("No 4-leg combination met the research criteria"));
   await page.click('[data-tab="picks"]');
   await settle(page);
-  check(`[${label}] parlays: individual picks tab`, (await page.locator('[data-testid="selection-card"]').count()) === 3);
+  check(`[${label}] parlays: individual picks tab lists ranked selections as compact rows`, (await page.locator('[data-testid="selection-row"]').count()) === 3 && (await page.locator('[data-testid="selection-card"]').count()) === 0);
+  await page.locator('[data-testid="selection-row"] button').first().click();
+  check(`[${label}] selection row expands to the full card`, (await page.locator('[data-testid="selection-card"]').count()) === 1);
   await page.locator('[data-testid="evidence-toggle"]').first().click();
   check(`[${label}] selection: evidence panel expands`, await page.locator('[data-testid="evidence-panel"]').first().isVisible());
   check(`[${label}] selection: evidence meter is labelled separately`, /Evidence\s*72\s*\/100/.test((await page.locator('[data-testid="evidence-meter"]').first().innerText()).replace(/\n/g, " ")));
@@ -585,7 +622,9 @@ async function runViewport(browser, label, viewport) {
   const savedText = await page.locator('[data-testid="save-ticket-ok"]:visible').innerText().catch(() => "");
   check(`[${label}] builder: save confirmation shown`, /Saved as paper ticket #\d+/.test(savedText), savedText);
   await closeDrawer();
-  await page.locator("select").filter({ hasText: "All evaluated" }).first().selectOption("all");
+  check(`[${label}] builder: qualified only by default`, (await page.locator('[data-testid="builder-option"]').count()) === 3);
+  await page.check('[data-testid="builder-watchlist"]');
+  await page.locator('[data-testid="builder-option"]', { hasText: "FIXTURE Player B Under 8.5 REB" }).waitFor({ timeout: 8000 }).catch(() => {});
   await page.locator('[data-testid="builder-option"]', { hasText: "FIXTURE Player B Under 8.5 REB" }).locator('[data-testid="builder-add"]').click();
   await openDrawer();
   await page.locator('[data-testid="unreliable-banner"]:visible').waitFor({ timeout: 8000 }).catch(() => {});
@@ -594,6 +633,8 @@ async function runViewport(browser, label, viewport) {
   o = await overflow(page);
   check(`[${label}] builder has no horizontal overflow`, !o, o ? JSON.stringify(o) : "");
   await closeDrawer();
+  check(`[${label}] builder: researched combinations are collapsed by default`, !(await page.locator('[data-testid="builder-load"]').first().isVisible()));
+  await page.locator('[data-testid="builder-load-panel"] summary').click();
   await page.locator('[data-testid="builder-load"]').first().click();
   await openDrawer();
   await page.waitForTimeout(700);
@@ -635,6 +676,66 @@ async function runViewport(browser, label, viewport) {
   await context.close();
 }
 
+/**
+ * Large-slate guardrail. The mock swaps today's slate for ~1,600 selections, 68 combinations, 640 Kalshi
+ * contracts and 26 model evaluations with big nested metrics; no page may render an unbounded list.
+ */
+async function largeSlate(browser) {
+  const LIMITS = [[1440, 900, 12000], [390, 844, 15000]];
+  const routes = [...NAV, "/games/FIX-L1", "/players/9001", "/kalshi-intelligence/KXFIX-L-20000-pts-5", "/markets", "/simulations", "/backtesting", "/exposure"];
+  for (const [width, height, maxHeight] of LIMITS) {
+    const tag = `large ${width}`;
+    console.log(`\n== large slate ${width}x${height} ==`);
+    const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1, isMobile: width < 768, hasTouch: width < 768 });
+    const page = await context.newPage();
+    const errors = watch(page);
+    await login(page);
+    const toggle = (on) => page.evaluate((v) => fetch("/api/v1/__mock/large", { method: "POST", credentials: "include", headers: { "Content-Type": "application/json", "X-CSRF-Token": "fixture-csrf-token" }, body: JSON.stringify({ on: v }) }).then((r) => r.json()), on);
+    try {
+      check(`[${tag}] large-slate mode switched on`, (await toggle(true)).large === true);
+      const sel = [];
+      page.on("request", (r) => {
+        const u = new URL(r.url());
+        if (u.pathname.endsWith("/api/v1/selections")) sel.push([new URL(page.url()).pathname, u.searchParams]);
+      });
+      for (const route of routes) {
+        await page.goto(`${BASE}${route}`);
+        await settle(page);
+        const m = await page.evaluate(() => ({ h: document.documentElement.scrollHeight, chars: document.querySelector("main")?.innerText.length ?? 0, err: document.querySelectorAll('[data-state="error"]').length }));
+        check(`[${tag}] ${route} is at most ${maxHeight}px tall`, m.h <= maxHeight, `${m.h}px`);
+        check(`[${tag}] ${route} shows no error state`, m.err === 0);
+        const o = await overflow(page);
+        check(`[${tag}] ${route} has no horizontal overflow`, !o, o ? JSON.stringify(o) : "");
+        if (route === "/players/compare") check(`[${tag}] compare is not blank on first load`, m.chars > 400 && (await page.locator('[data-testid="compare-table"]').count()) === 1, `${m.chars} chars`);
+        if (route === "/players/history") check(`[${tag}] history is not blank on first load`, m.chars > 400 && (await page.locator('[data-testid="history-quick-link"]').count()) >= 10, `${m.chars} chars`);
+        if (route === "/picks") check(`[${tag}] picks renders at most five rows per game`, (await page.locator('[data-testid="selection-row"]').count()) === 45);
+        if (route === "/research/daily") {
+          check(`[${tag}] editions: rejected list is paged 20 at a time with the total stated`, (await page.locator('[data-testid="edition-rejected-row"]').count()) === 20 && /not qualified in total — showing the 200 most relevant/.test(await bodyText(page)));
+          check(`[${tag}] editions: diff/edition view states it works on bounded data`, /at most 150 qualified and watchlist rows/.test(await bodyText(page)));
+        }
+        if (route === "/models") check(`[${tag}] models: details collapsed by default, nested metrics as tables`, (await page.locator('[data-testid="registry-item"]').count()) >= 26 && (await page.locator('[data-testid="registry-details"][open]').count()) === 0);
+        if (route === "/parlays/same-game") check(`[${tag}] same-game: grouped by game`, (await page.locator('[data-testid="combo-card"]').count()) === 18);
+        if (route === "/injuries") check(`[${tag}] injuries: off-slate teams collapsed in one closed group`, (await page.locator('[data-testid="injury-game-group"]:not([open])').count()) === 1 && (await page.locator('[data-testid="injury-game-group"][open]').count()) === 9);
+      }
+      const by = (path) => sel.filter(([p]) => p === path).map(([, q]) => q);
+      for (const path of ["/picks", "/builder"]) {
+        const reqs = by(path);
+        check(`[${tag}] ${path} issues paginated /selections requests`, reqs.length >= 1 && reqs.every((q) => Number(q.get("limit")) > 0 && Number(q.get("limit")) <= 1000), reqs.map((q) => q.toString()).join(" | "));
+      }
+      check(`[${tag}] no page issues an unbounded /selections request (incl. /research/daily)`, sel.every(([, q]) => Number(q.get("limit")) > 0 && Number(q.get("limit")) <= 1000), sel.filter(([, q]) => !q.get("limit")).map(([p]) => p).join(","));
+      // a model's details expand into tables, not a JSON dump
+      await page.goto(`${BASE}/models`);
+      await settle(page);
+      await page.locator('[data-testid="registry-details"] summary').first().click();
+      check(`[${tag}] models: calibration renders as a table`, (await page.locator('[data-testid="registry-details"][open] [data-testid="metrics-table"]').count()) >= 1 && !/\{"/.test(await page.locator('[data-testid="registry-details"][open]').innerText()));
+      check(`[${tag}] large slate raised no page/console errors`, errors.length === 0, errors.slice(0, 3).join(" | "));
+    } finally {
+      await toggle(false).catch(() => {});
+      await context.close();
+    }
+  }
+}
+
 /** Design-review gallery: the ten key pages at every viewport, plus an overflow check at each width. */
 async function gallery(browser) {
   for (const [width, height] of VIEWPORTS) {
@@ -671,11 +772,12 @@ async function gallery(browser) {
 
 const browser = await chromium.launch();
 try {
-  if (process.env.SMOKE_ONLY !== "gallery") {
+  if (!process.env.SMOKE_ONLY || process.env.SMOKE_ONLY === "flows") {
     await runViewport(browser, "desktop", { width: 1440, height: 900 });
     await runViewport(browser, "mobile", { width: 390, height: 844 });
   }
-  if (process.env.SMOKE_ONLY !== "flows") await gallery(browser);
+  if (!process.env.SMOKE_ONLY || process.env.SMOKE_ONLY === "large") await largeSlate(browser);
+  if (!process.env.SMOKE_ONLY || process.env.SMOKE_ONLY === "gallery") await gallery(browser);
 } finally {
   await browser.close();
 }

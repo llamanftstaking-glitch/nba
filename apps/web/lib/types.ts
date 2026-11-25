@@ -215,7 +215,9 @@ export type EditionDetail = EditionRef & {
   };
   changes: EditionChange[];
   content_sha256: string;
+  /** Only high_confidence / standard / watchlist rows (max 150). */
   selections: Selection[];
+  selection_counts: Record<string, number>;
   combos: Combo[];
 };
 
@@ -369,6 +371,8 @@ export type GameDetail = {
   player_projections: PlayerProj[];
   selections: Selection[];
   sgp: Combo[];
+  /** Counts by classification for the whole game; `selections` itself is bounded. */
+  selection_counts: Record<string, number>;
   h2h: { date: string; home_abbr: string; away_abbr: string; home_points: number | null; away_points: number | null }[];
   agent_reports: { agent: string; at: string; summary: string }[];
   unresolved: string[];
@@ -381,7 +385,7 @@ export type CombosResponse = {
   counts: Record<string, number>;
   items: Combo[];
 };
-export type SelectionsResponse = { edition: EditionRef | null; items: Selection[] };
+export type SelectionsResponse = { edition: EditionRef | null; items: Selection[]; total: number; counts: Record<string, number> };
 
 export type PlayerListItem = {
   id: number;

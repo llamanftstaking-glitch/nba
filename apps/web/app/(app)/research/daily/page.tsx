@@ -3,11 +3,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { ComboCard } from "@/components/combo-card";
-import { SelectionList } from "@/components/selection-card";
+import { SelectionsByGame } from "@/components/selection-row";
+import { Collapsible } from "@/components/ui/collapsible";
+import { Pagination } from "@/components/ui/pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field, Select } from "@/components/ui/field";
-import { BulletList, PageHeader, Panel } from "@/components/ui/panel";
+import { BulletList, Label, PageHeader, Panel } from "@/components/ui/panel";
 import { EmptyState, ErrorState, LoadingState, QueryView } from "@/components/ui/states";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/cn";
@@ -75,9 +77,12 @@ function computeDiff(from: EditionDetail, to: EditionDetail): { selections: Diff
   return { selections, combos };
 }
 
-function DiffList({ rows, empty }: { rows: DiffRow[]; empty: string }) {
-  if (rows.length === 0) return <p className="text-xs text-muted">{empty}</p>;
+function DiffList({ rows: allRows, empty }: { rows: DiffRow[]; empty: string }) {
+  const [all, setAll] = useState(false);
+  if (allRows.length === 0) return <p className="text-sm text-muted">{empty}</p>;
+  const rows = all ? allRows : allRows.slice(0, 12);
   return (
+    <>
     <ul className="divide-y divide-line/40">
       {rows.map((r, i) => (
         <li key={i} className="grid grid-cols-[auto_1fr] gap-x-2 py-1.5 text-xs">
@@ -89,6 +94,12 @@ function DiffList({ rows, empty }: { rows: DiffRow[]; empty: string }) {
         </li>
       ))}
     </ul>
+      {allRows.length > 12 && (
+        <button type="button" className="mt-1 inline-flex min-h-[44px] items-center text-xs font-medium text-accent hover:underline md:min-h-0" aria-expanded={all} onClick={() => setAll((v) => !v)}>
+          {all ? "Show fewer" : `Show all ${allRows.length} differences`}
+        </button>
+      )}
+    </>
   );
 }
 
@@ -102,7 +113,11 @@ function Diff({ fromId, toId }: { fromId: number; toId: number }) {
   if (b.isError) return <ErrorState error={b.error} onRetry={() => void b.refetch()} />;
   if (!diff) return null;
   return (
-    <div className="grid gap-4 lg:grid-cols-2" data-testid="edition-diff">
+    <div data-testid="edition-diff">
+      <p className="mb-2 text-xs text-muted" data-testid="edition-diff-note">
+        Compared on the bounded edition data: qualified and watchlist selections (up to 150 per edition) and all combinations. Rejected and insufficient selections are not part of this comparison.
+      </p>
+      <div className="grid gap-4 lg:grid-cols-2">
       <div>
         <h3 className="mb-1 text-2xs font-semibold uppercase tracking-wide text-muted">Selections · {diff.selections.length} difference(s)</h3>
         <DiffList rows={diff.selections} empty="No selection differences between these editions." />
@@ -111,84 +126,164 @@ function Diff({ fromId, toId }: { fromId: number; toId: number }) {
         <h3 className="mb-1 text-2xs font-semibold uppercase tracking-wide text-muted">Combinations · {diff.combos.length} difference(s)</h3>
         <DiffList rows={diff.combos} empty="No combination differences between these editions." />
       </div>
+      </div>
     </div>
   );
 }
 
+function ChangeList({ changes, limit = 5 }: { changes: { type: string; text: string }[]; limit?: number }) {
+  const [all, setAll] = useState(false);
+  const shown = all ? changes : changes.slice(0, limit);
+  return (
+    <>
+      <ul className="space-y-0.5 text-sm" data-testid="edition-changes">
+        {shown.map((c, i) => (
+          <li key={i} className="flex gap-2">
+            <span className="shrink-0 text-2xs font-semibold uppercase leading-5 text-warn">{titleCase(c.type)}</span>
+            <span className="min-w-0 break-words text-soft">{c.text}</span>
+          </li>
+        ))}
+      </ul>
+      {changes.length > limit && (
+        <button type="button" className="mt-1 inline-flex min-h-[44px] items-center text-xs font-medium text-accent hover:underline md:min-h-0" aria-expanded={all} onClick={() => setAll((v) => !v)}>
+          {all ? "Show fewer changes" : `Show all ${changes.length} changes`}
+        </button>
+      )}
+    </>
+  );
+}
+
+const REJECTED_PAGE = 20;
+const CLASS_ORDER = ["high_confidence", "standard", "watchlist", "stale", "insufficient_evidence", "rejected", "invalidated"];
+
 function FullEdition({ id }: { id: number }) {
   const q = useQuery({ queryKey: ["edition", id], queryFn: () => api.edition(id) });
+  const [rejOffset, setRejOffset] = useState(0);
+  const [allCombos, setAllCombos] = useState(false);
+  useEffect(() => setRejOffset(0), [id]);
   return (
     <QueryView query={q} rows={6}>
-      {(e) => (
-        <div className="space-y-4" data-testid="edition-full">
-          <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
-            <Badge tone="info">{titleCase(e.kind)}</Badge>
-            <span className="num">v{e.version}</span>
-            <span>published {fmtDateTimeET(e.published_at) ?? "—"}</span>
-            <span className="num break-all" title="Content hash of the published edition">
-              sha256 {e.content_sha256.slice(0, 16)}…
-            </span>
-          </div>
-          <Counts counts={e.summary.counts} />
-          <div className="grid gap-4 lg:grid-cols-2">
+      {(e) => {
+        const qualified = e.selections.filter((s) => s.classification === "high_confidence" || s.classification === "standard");
+        const watchlist = e.selections.filter((s) => s.classification === "watchlist");
+        const counts = e.selection_counts ?? {};
+        const totalQualified = (counts.high_confidence ?? 0) + (counts.standard ?? 0);
+        const notQualified = e.summary.counts.not_qualified_total;
+        const rejected = e.summary.rejected;
+        return (
+          <div className="space-y-5" data-testid="edition-full">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
+              <Badge tone="info">{titleCase(e.kind)}</Badge>
+              <span className="num">v{e.version}</span>
+              <span>published {fmtDateTimeET(e.published_at) ?? "—"}</span>
+              <span className="num break-all" title="Content hash of the published edition">
+                sha256 {e.content_sha256.slice(0, 16)}…
+              </span>
+            </div>
+
             <div>
-              <h3 className="mb-1 text-2xs font-semibold uppercase tracking-wide text-muted">Narrative</h3>
-              {e.summary.narrative.length ? (
-                <div className="space-y-1.5">
-                  {e.summary.narrative.map((p, i) => (
-                    <p key={i} className="break-words text-sm text-soft">
-                      {p}
-                    </p>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-xs text-muted">No narrative recorded.</p>
-              )}
-            </div>
-            <div className="space-y-4">
-              <div>
-                <h3 className="mb-1 text-2xs font-semibold uppercase tracking-wide text-muted">Limitations</h3>
-                {e.summary.limitations.length ? <BulletList items={e.summary.limitations} tone="warn" /> : <p className="text-xs text-muted">None recorded.</p>}
-              </div>
-              <div>
-                <h3 className="mb-1 text-2xs font-semibold uppercase tracking-wide text-muted">Unresolved</h3>
-                {e.summary.unresolved.length ? <BulletList items={e.summary.unresolved} tone="warn" /> : <p className="text-xs text-muted">None recorded.</p>}
-              </div>
-            </div>
-          </div>
-          <div>
-            <h3 className="mb-1 text-2xs font-semibold uppercase tracking-wide text-muted">Rejected · {e.summary.rejected.length}</h3>
-            {e.summary.rejected.length === 0 ? (
-              <p className="text-xs text-muted">Nothing was rejected in this edition.</p>
-            ) : (
-              <ul className="divide-y divide-line/40 rounded-md bg-raised/40">
-                {e.summary.rejected.map((r, i) => (
-                  <li key={i} className="px-2 py-1.5 text-xs">
-                    <div className="font-medium text-ink">{r.label}</div>
-                    <div className="break-words text-bad">{r.reasons.join("; ") || "No reason recorded"}</div>
+              <Label>Selections by classification</Label>
+              <ul className="flex flex-wrap gap-2" data-testid="edition-class-counts">
+                {CLASS_ORDER.filter((c) => counts[c] !== undefined).map((c) => (
+                  <li key={c} className="rounded-md bg-raised/50 px-3 py-1.5">
+                    <div className="text-2xs font-medium uppercase tracking-wide text-muted">{classLabel(c)}</div>
+                    <div className="num text-base font-semibold text-ink">{(counts[c] ?? 0).toLocaleString("en-US")}</div>
                   </li>
                 ))}
+                <li className="rounded-md bg-raised/50 px-3 py-1.5">
+                  <div className="text-2xs font-medium uppercase tracking-wide text-muted">Combinations</div>
+                  <div className="num text-base font-semibold text-ink">{e.combos.length}</div>
+                </li>
               </ul>
-            )}
-          </div>
-          <div>
-            <h3 className="mb-1 text-2xs font-semibold uppercase tracking-wide text-muted">Selections · {e.selections.length}</h3>
-            {e.selections.length === 0 ? <EmptyState title="This edition contains no selections." /> : <SelectionList items={e.selections} />}
-          </div>
-          <div>
-            <h3 className="mb-1 text-2xs font-semibold uppercase tracking-wide text-muted">Combinations · {e.combos.length}</h3>
-            {e.combos.length === 0 ? (
-              <EmptyState title="This edition contains no combinations." />
-            ) : (
-              <div className="space-y-2">
-                {e.combos.map((c) => (
-                  <ComboCard key={c.uid} combo={c} />
-                ))}
+            </div>
+
+            <div className="grid gap-5 lg:grid-cols-2">
+              <div>
+                <Label>Narrative</Label>
+                {e.summary.narrative.length ? (
+                  <div className="space-y-1.5">
+                    {e.summary.narrative.map((p, i) => (
+                      <p key={i} className="break-words text-sm text-soft">{p}</p>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted">No narrative recorded.</p>
+                )}
               </div>
-            )}
+              <div className="space-y-3">
+                <div>
+                  <Label>Limitations</Label>
+                  {e.summary.limitations.length ? <BulletList items={e.summary.limitations} tone="warn" /> : <p className="text-sm text-muted">None recorded.</p>}
+                </div>
+                <div>
+                  <Label>Unresolved</Label>
+                  {e.summary.unresolved.length ? <BulletList items={e.summary.unresolved.slice(0, 8)} tone="warn" /> : <p className="text-sm text-muted">None recorded.</p>}
+                  {e.summary.unresolved.length > 8 && <p className="mt-1 text-xs text-muted">… and {e.summary.unresolved.length - 8} more.</p>}
+                </div>
+              </div>
+            </div>
+
+            <div data-testid="edition-qualified">
+              <Label>
+                Qualified selections · {qualified.length}
+                {totalQualified > qualified.length ? ` of ${totalQualified}` : ""}
+              </Label>
+              {qualified.length === 0 ? (
+                <EmptyState title="No selection qualified in this edition. That is a valid research outcome." />
+              ) : (
+                <SelectionsByGame items={qualified} perGame={5} />
+              )}
+              {totalQualified > qualified.length && <p className="mt-1 text-xs text-muted">The edition view carries at most 150 qualified and watchlist rows; the Top Picks page pages through all of them.</p>}
+            </div>
+
+            <Collapsible title={`Watchlist · ${watchlist.length} shown of ${(counts.watchlist ?? watchlist.length).toLocaleString("en-US")}`} testId="edition-watchlist">
+              {watchlist.length === 0 ? <p className="text-sm text-muted">No watchlist rows are included in this edition view.</p> : <SelectionsByGame items={watchlist} perGame={3} />}
+            </Collapsible>
+
+            <div data-testid="edition-rejected">
+              <Label>Not qualified</Label>
+              <p className="mb-2 text-sm text-muted">
+                {notQualified !== undefined ? `${notQualified.toLocaleString("en-US")} not qualified in total — showing the ${rejected.length} most relevant.` : `Showing ${rejected.length} not-qualified selections.`}
+              </p>
+              {rejected.length === 0 ? (
+                <p className="text-sm text-muted">Nothing was rejected in this edition.</p>
+              ) : (
+                <>
+                  <ul className="divide-y divide-line/30">
+                    {rejected.slice(rejOffset, rejOffset + REJECTED_PAGE).map((r, i) => (
+                      <li key={`${rejOffset}-${i}`} className="grid gap-x-4 py-1.5 text-sm md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]" data-testid="edition-rejected-row">
+                        <span className="break-words font-medium text-ink">{r.label}</span>
+                        <span className="break-words text-xs text-muted md:text-sm">{r.reasons.join("; ") || "No reason recorded"}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Pagination offset={rejOffset} limit={REJECTED_PAGE} total={rejected.length} onChange={setRejOffset} />
+                </>
+              )}
+            </div>
+
+            <div>
+              <Label>Combinations · {e.combos.length}</Label>
+              {e.combos.length === 0 ? (
+                <EmptyState title="This edition contains no combinations." />
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    {(allCombos ? e.combos : e.combos.slice(0, 5)).map((c) => (
+                      <ComboCard key={c.uid} combo={c} />
+                    ))}
+                  </div>
+                  {e.combos.length > 5 && (
+                    <Button variant="ghost" className="mt-2" aria-expanded={allCombos} onClick={() => setAllCombos((v) => !v)}>
+                      {allCombos ? "Show fewer combinations" : `Show all ${e.combos.length} combinations`}
+                    </Button>
+                  )}
+                </>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      }}
     </QueryView>
   );
 }
@@ -228,16 +323,11 @@ function Editions({ items }: { items: EditionListItem[] }) {
                 <Counts counts={e.counts} />
               </div>
               {e.changes.length > 0 ? (
-                <ul className="mt-1.5 space-y-0.5 border-t border-line/50 pt-1.5 text-xs">
-                  {e.changes.map((c, i) => (
-                    <li key={i} className="flex gap-2">
-                      <span className="shrink-0 text-2xs font-semibold uppercase text-warn">{titleCase(c.type)}</span>
-                      <span className="min-w-0 break-words text-soft">{c.text}</span>
-                    </li>
-                  ))}
-                </ul>
+                <div className="mt-2 border-t border-line/50 pt-2">
+                  <ChangeList changes={e.changes} limit={e.id === latest.id ? 5 : 2} />
+                </div>
               ) : (
-                <p className="mt-1.5 border-t border-line/50 pt-1.5 text-2xs text-muted">No changes recorded against the previous edition.</p>
+                <p className="mt-2 border-t border-line/50 pt-2 text-xs text-muted">No changes recorded against the previous edition.</p>
               )}
             </li>
           ))}

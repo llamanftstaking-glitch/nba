@@ -7,6 +7,7 @@ import { useState } from "react";
 import { OverlayLineChart } from "@/components/charts";
 import { PlayerAvatar } from "@/components/player-avatar";
 import { PlayerSearch } from "@/components/player-search";
+import { useQuickPlayers } from "@/components/slate-players";
 import { Button } from "@/components/ui/button";
 import { Val } from "@/components/ui/na";
 import { Label, PageHeader, Panel } from "@/components/ui/panel";
@@ -24,7 +25,12 @@ export default function ComparePage() {
   const sp = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-  const ids = (sp.get("ids") ?? "").split(",").map(Number).filter((n) => Number.isInteger(n) && n > 0).slice(0, MAX);
+  const hasParam = sp.has("ids");
+  const paramIds = (sp.get("ids") ?? "").split(",").map(Number).filter((n) => Number.isInteger(n) && n > 0).slice(0, MAX);
+  const quick = useQuickPlayers(12);
+  // Nothing chosen yet: start with the slate's two highest projected-minute players so the page is never blank.
+  const ids = hasParam ? paramIds : quick.players.slice(0, 2).map((p) => p.id);
+  const preselected = !hasParam && ids.length > 0;
   const [win, setWin] = useState("L10");
   const [stat, setStat] = useState("pts");
 
@@ -63,6 +69,25 @@ export default function ComparePage() {
               ))}
             </ul>
           )}
+          {preselected && (
+            <p className="mb-3 text-xs text-muted" data-testid="compare-preselected">
+              Started with {quick.source === "slate" ? "the two highest projected-minute players on this slate" : "the first two players in the player list (no games on this slate)"}. Change them below.
+            </p>
+          )}
+          {quick.players.length > 0 && (
+            <div className="mb-3">
+              <div className="mb-1 text-2xs font-semibold uppercase tracking-wide text-muted">{quick.source === "slate" ? "Slate players" : "Players"}</div>
+              <ul className="flex flex-wrap gap-1.5" data-testid="compare-chips">
+                {quick.players.filter((p) => !ids.includes(p.id)).slice(0, 10).map((p) => (
+                  <li key={p.id}>
+                    <button type="button" disabled={ids.length >= MAX} onClick={() => setIds([...ids, p.id])} className="inline-flex min-h-[44px] items-center rounded-md bg-raised/60 px-2.5 text-sm text-soft hover:bg-raised hover:text-ink disabled:cursor-not-allowed disabled:text-faint md:min-h-0 md:h-7 md:text-xs" data-testid="compare-chip">
+                      {p.name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           {ids.length >= MAX ? (
             <p className="text-sm text-muted">Three players selected. Remove one to add another.</p>
           ) : (
@@ -79,8 +104,12 @@ export default function ComparePage() {
         </Panel>
 
         <div className="min-w-0 space-y-4">
-          {ids.length < 2 ? (
-            <EmptyState title="Select at least two players to compare." icon={GitCompare} />
+          {!hasParam && quick.isPending ? (
+            <LoadingState rows={5} />
+          ) : ids.length < 2 ? (
+            <EmptyState title="Select at least two players to compare." icon={GitCompare}>
+              Pick from the slate players on the left or search by name.
+            </EmptyState>
           ) : loading ? (
             <LoadingState rows={5} />
           ) : failed ? (
