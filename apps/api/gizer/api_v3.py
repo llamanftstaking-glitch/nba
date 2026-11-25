@@ -215,12 +215,9 @@ def prop_rows(s, v: View, game_id: str | None = None, player_id: int | None = No
 def _quote_status(rows) -> dict:
     n = sum(1 for r in rows if r["origin"] == "provider")
     m = sum(1 for r in rows if r["origin"] in ("owner_entered", "hypothetical"))
-    if cfg.odds_api_key:
-        msg = f"Prop odds provider configured; {n} provider-quoted markets on this slate."
-    else:
-        msg = ("No prop odds provider is configured (GIZER_ODDS_API_KEY not set). Lines and prices are unavailable unless "
-               "entered manually; averages, projections and lineup context are shown without market evaluation.")
-    return {"provider_configured": bool(cfg.odds_api_key), "message": msg, "provider_quoted": n, "manual": m}
+    from .api import _prop_source_message
+    msg = _prop_source_message(n)
+    return {"provider_configured": bool(cfg.odds_api_key) or cfg.kalshi_enabled, "message": msg, "provider_quoted": n, "manual": m}
 
 
 @api.get("/player-props")

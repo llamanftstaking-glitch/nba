@@ -439,6 +439,11 @@ def job_historical(args: dict, job_id=None) -> dict:
 def job_morning(args: dict, job_id=None) -> dict:
     d = ingestion.today_et()
     out = {}
+    for ahead in range(2, 8):  # schedule for the week ahead (one call per day) so "next game" is always known
+        try:
+            ingestion.ingest_slate(d + timedelta(days=ahead))
+        except ProviderError:
+            pass
     for num, fn in ((10, lambda: a10_market([d, d + timedelta(days=1)])), (4, _inj), (3, lambda: a03_players(d)),
                     (5, lambda: a05_rotation(d)), (6, lambda: a06_matchups(d)), (7, lambda: a07_environment(d)),
                     (8, lambda: a08_schedule(d))):

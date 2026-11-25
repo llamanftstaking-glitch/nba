@@ -348,3 +348,24 @@ type MinutesRow = {
 `/data-health/providers` now also lists provider `kalshi`. `PropRow.book` may be `"Kalshi"`; when Kalshi lists several
 thresholds for one player and stat, `/player-props` shows the row for one of them — use `/kalshi/markets?player_id=`
 for the full ladder.
+
+---
+
+# Page-audit changes (2026-11-25)
+
+A slate now carries thousands of evaluated Kalshi contracts, so list endpoints are bounded.
+
+* `GET /selections?date=&classification=&market=&game_id=&ranked=true|false&q=&limit=(default 200, max 1000)&offset=`
+  → `{edition, items: Selection[], total, counts: Record<classification|"ranked", number>}`. Sorted: qualified first
+  (ranked picks first within a game), then watchlist, stale, insufficient, rejected. `classification=qualified` = high_confidence + standard.
+* `GET /editions/{id}` → `selections` now contains only high_confidence / standard / watchlist rows (max 150) plus
+  `selection_counts: Record<classification, number>`; `summary.rejected` is capped at the 200 most relevant and
+  `summary.counts.not_qualified_total` gives the full number.
+* `GET /games/{id}` → `selections` = all qualified and watchlist for the game plus at most 60 others, with
+  `selection_counts: Record<classification, number>` for the whole game.
+* `GameCard.quotes`: one main line per (market, side, book). Where a book lists several thresholds (Kalshi), it is the
+  threshold priced closest to even, and the two sides of a spread/total refer to the same threshold.
+* `props_summary.provider_configured` / `quote_status.provider_configured` are true when Kalshi is enabled; use the
+  `message` text as given. The `oddsapi` "not configured" warning is no longer emitted while Kalshi is enabled.
+* `/combos?category=sgp` now returns per-game same-game research (uids contain `-SGP-`), built from each game's own ranked selections.
+* `/players/{id}.next_game` looks up to 7 days ahead (schedule is ingested a week ahead each morning).

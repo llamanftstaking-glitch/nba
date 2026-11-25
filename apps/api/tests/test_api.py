@@ -139,6 +139,9 @@ def test_selections_combos_editions_and_builder(app):
     assert len(sel) == 24 and all(x["rejection_reasons"] for x in sel if x["classification"] == "rejected")
     q = c.get(f"/api/v1/selections?date={D}&classification=qualified").json()["items"]
     assert q and all(x["classification"] in ("standard", "high_confidence") for x in q)
+    page = c.get(f"/api/v1/selections?date={D}&limit=5&offset=2").json()
+    assert len(page["items"]) == 5 and page["total"] == 24 and sum(v for k, v in page["counts"].items() if k != "ranked") == 24
+    assert c.get(f"/api/v1/selections?date={D}&ranked=true").json()["total"] == page["counts"]["ranked"]
     cm = c.get(f"/api/v1/combos?date={D}&category=double").json()
     assert set(cm["counts"]) == {"double", "triple", "quad", "five", "six", "sgp", "cross"} and cm["items"]
     for x in cm["items"]:
@@ -149,7 +152,9 @@ def test_selections_combos_editions_and_builder(app):
     eds = c.get(f"/api/v1/editions?date={D}").json()["items"]
     full = c.get(f"/api/v1/editions/{eds[0]['id']}").json()
     assert len(full["content_sha256"]) == 64 and full["summary"]["narrative"] and full["summary"]["limitations"]
-    assert len(full["summary"]["rejected"]) == sum(1 for x in sel if x["classification"] not in ("standard", "high_confidence"))
+    n_notq = sum(1 for x in sel if x["classification"] not in ("standard", "high_confidence"))
+    assert len(full["summary"]["rejected"]) == min(200, n_notq) and full["summary"]["counts"]["not_qualified_total"] == n_notq
+    assert sum(full["selection_counts"].values()) == 24 and all(x["classification"] in ("standard", "high_confidence", "watchlist") for x in full["selections"])
     two = [q[0]["id"], next(x["id"] for x in q if x["game_id"] != q[0]["game_id"])]
     ev = c.post("/api/v1/builder/evaluate", json={"selection_ids": two}).json()
     assert ev["structure"] == "CROSS" and ev["reliable"] and abs(ev["joint_prob"] - ev["independent_prob"]) < 0.02

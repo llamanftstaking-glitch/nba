@@ -204,13 +204,27 @@ def game_card(v: View, g: Game, inj: dict[int, list[dict]], with_picks: bool = T
     env = ((ed.summary or {}).get("environments") or {}).get(g.id) if ed else None
     qrows = s.scalars(select(OddsSnapshot).where(OddsSnapshot.game_id == g.id, OddsSnapshot.subject_type != "player")
                       .order_by(OddsSnapshot.id.desc())).all()
-    seen, quotes = set(), []
+    # Latest quote per (market, side, book, line); then, where a book lists several thresholds (Kalshi), keep the
+    # main line: the threshold whose price is closest to even.
+    latest: dict[tuple, OddsSnapshot] = {}
     for q in qrows:
-        k = (q.market, q.side, q.book)
-        if k not in seen:
-            seen.add(k)
-            quotes.append({"market": q.market, "side": q.side, "line": q.line, "price_american": q.price_american,
-                           "book": q.book, "at": q.ingested_at})
+        latest.setdefault((q.market, q.side, q.book, q.line), q)
+    main: dict[tuple, OddsSnapshot] = {}
+    for (mkt, side, book, _line), q in latest.items():
+        cur = main.get((mkt, side, book))
+        dist = lambda x: abs(abs(x.price_american) - 100) if x.price_american is not None else 10 ** 6  # noqa: E731
+        if cur is None or dist(q) < dist(cur):
+            main[(mkt, side, book)] = q
+    # the two sides of one spread/total must describe the same threshold
+    for mkt, a_side, b_side in (("spread", "home", "away"), ("total", "over", "under")):
+        for book in {k[2] for k in main if k[0] == mkt}:
+            a_q, b_q = main.get((mkt, a_side, book)), main.get((mkt, b_side, book))
+            if a_q is not None and b_q is not None and a_q.line is not None and b_q.line is not None:
+                want = -a_q.line if mkt == "spread" else a_q.line
+                if b_q.line != want and (mkt, b_side, book, want) in latest:
+                    main[(mkt, b_side, book)] = latest[(mkt, b_side, book, want)]
+    quotes = [{"market": q.market, "side": q.side, "line": q.line, "price_american": q.price_american, "book": q.book,
+               "at": q.ingested_at} for q in sorted(main.values(), key=lambda q: (q.book != "Kalshi", q.market, q.side))]
     lus = v.lineup_snaps()
     lineup = {side: {"status": (lus[(g.id, tid)].status if (g.id, tid) in lus else "unknown"),
                      "verified_at": lus[(g.id, tid)].verified_at if (g.id, tid) in lus else None}
@@ -327,9 +341,23 @@ def _model_readiness(s) -> list[dict]:
     return out
 
 
+def _prop_source_message(quoted: int) -> str:
+    if cfg.kalshi_enabled and quoted:
+        return f"{quoted} player contracts quoted on Kalshi for this slate (polled, not real-time)."
+    if cfg.kalshi_enabled:
+        return ("Kalshi is the player-market source, but no player contracts have been observed for this slate yet. "
+                "They usually appear on game day; thresholds can also be entered manually.")
+    if cfg.odds_api_key:
+        return "Prop odds provider configured."
+    return ("No player-market source is enabled; lines and prices are unavailable unless entered manually. "
+            "Averages, projections and lineups are still shown.")
+
+
 def _warnings(s, v: View) -> list[str]:
     w = []
     for p in ingestion.provider_status(s):
+        if p["provider"] == "oddsapi" and cfg.kalshi_enabled:
+            continue  # optional second source; Kalshi already supplies player markets
         if p["status"] == "not_configured":
             w.append(f"Provider '{p['provider']}' is not configured; dependent research is unavailable.")
         elif p["status"] in ("degraded", "never_called"):
@@ -384,14 +412,12 @@ def command_center(date: str | None = None):
                          for f in s.scalars(select(ResearchFinding).order_by(ResearchFinding.id.desc()).limit(5))],
             "lineups_summary": {k: sum(1 for c in cards for x in c["lineup"].values() if x["status"] == k)
                                 for k in ("confirmed", "projected", "unknown")},
-            "props_summary": {"provider_configured": bool(cfg.odds_api_key),
+            "props_summary": {"provider_configured": bool(cfg.odds_api_key) or cfg.kalshi_enabled,
                               "quoted_markets": sum(c["props"]["quoted_markets"] for c in cards),
                               "manual_entries": int(s.scalar(select(func.count()).select_from(OddsSnapshot).join(
                                   Game, Game.id == OddsSnapshot.game_id).where(Game.game_date == d, OddsSnapshot.provider == "manual")) or 0),
                               "players_projected": sum(c["props"]["players_projected"] for c in cards),
-                              "message": ("Prop odds provider configured." if cfg.odds_api_key else
-                                          "No prop odds provider is configured; player lines and prices are unavailable unless "
-                                          "entered manually. Averages, projections and lineups are still shown.")},
+                              "message": _prop_source_message(sum(c["props"]["quoted_markets"] for c in cards))},
             "warnings": _warnings(s, v)}
 
 
@@ -479,7 +505,12 @@ def game_detail(game_id: str):
                 "team_form": {k: {kk: vv for kk, vv in _team_form(s, tid, g.game_date).items() if kk != "_season"}
                               for k, tid in (("home", g.home_team_id), ("away", g.away_team_id))},
                 "player_projections": proj,
-                "selections": [v.sel(x) for x in sorted(sels, key=lambda x: (x.rank_in_game or 99, x.market))],
+                "selections": [v.sel(x) for x in (
+                    sorted([x for x in sels if x.classification in ("high_confidence", "standard", "watchlist")],
+                           key=lambda x: (x.rank_in_game or 99, x.classification, x.market))
+                    + sorted([x for x in sels if x.classification not in ("high_confidence", "standard", "watchlist")],
+                             key=lambda x: -(x.edge if x.edge is not None else -9))[:60])],
+                "selection_counts": {k: sum(1 for x in sels if x.classification == k) for k in {x.classification for x in sels}},
                 "sgp": [v.combo(c) for c in v.current_combos() if c.structure == "SGP" and c.legs[0]["game_id"] == g.id],
                 "h2h": [{"date": r[0], "home_abbr": v.teams[r[1]].abbr, "away_abbr": v.teams[r[2]].abbr,
                          "home_points": r[3], "away_points": r[4]} for r in h2h],
@@ -488,24 +519,37 @@ def game_detail(game_id: str):
 
 @api.get("/selections")
 def selections(date: str | None = None, classification: str | None = None, market: str | None = None,
-               game_id: str | None = None):
+               game_id: str | None = None, ranked: bool | None = None, q: str | None = None,
+               limit: int = Query(200, ge=1, le=1000), offset: int = Query(0, ge=0)):
     d = _date(date)
     with session_scope() as s:
         v = View(s, d)
-        items = [v.sel(x) for x in v.selections()]
+        rows = v.selections()
+        counts: dict[str, int] = {}
+        for x in rows:
+            c = "invalidated" if x.id in v.inv_sel else x.classification
+            counts[c] = counts.get(c, 0) + 1
+        counts["ranked"] = sum(1 for x in rows if x.rank_in_game and x.classification in QUALIFIED and x.id not in v.inv_sel)
         if classification == "qualified":
-            items = [x for x in items if x["classification"] in QUALIFIED]
+            rows = [x for x in rows if x.classification in QUALIFIED and x.id not in v.inv_sel]
         elif classification:
-            items = [x for x in items if x["classification"] == classification]
+            rows = [x for x in rows if ("invalidated" if x.id in v.inv_sel else x.classification) == classification]
+        if ranked:
+            rows = [x for x in rows if x.rank_in_game]
         if market == "player":
-            items = [x for x in items if x["market"] in MARKET_STAT]
+            rows = [x for x in rows if x.market in MARKET_STAT]
         elif market:
-            items = [x for x in items if x["market"] == market]
+            rows = [x for x in rows if x.market == market]
         if game_id:
-            items = [x for x in items if x["game_id"] == game_id]
-        order = {"high_confidence": 0, "standard": 1, "watchlist": 2, "insufficient_evidence": 3, "rejected": 4, "invalidated": 5}
-        items.sort(key=lambda x: (order.get(x["classification"], 9), x["game_id"], x["rank_in_game"] or 99))
-        return {"edition": edition_ref(v.latest), "items": items}
+            rows = [x for x in rows if x.game_id == game_id]
+        if q:
+            ql = q.lower()[:60]
+            rows = [x for x in rows if ql in (x.subject_name or "").lower() or ql in (x.evidence.get("market_label") or "").lower()]
+        order = {"high_confidence": 0, "standard": 1, "watchlist": 2, "stale": 3, "insufficient_evidence": 4, "rejected": 5}
+        rows.sort(key=lambda x: (9 if x.id in v.inv_sel else order.get(x.classification, 8), x.rank_in_game is None,
+                                 x.game_id, x.rank_in_game or 99, -(x.edge if x.edge is not None else -9)))
+        return {"edition": edition_ref(v.latest), "items": [v.sel(x) for x in rows[offset:offset + limit]], "total": len(rows),
+                "counts": counts}
 
 
 CATS = {"double": ("engine", "DOUBLE"), "triple": ("engine", "TRIPLE"), "quad": ("engine", "QUAD"),
@@ -552,7 +596,11 @@ def edition_detail(edition_id: int):
                             "limitations": sm.get("limitations", []), "unresolved": sm.get("unresolved", []),
                             "rejected": sm.get("rejected", []), "counts": _edition_counts(e)},
                 "changes": e.changes or [], "content_sha256": e.content_sha256,
-                "selections": [v.sel(x) for x in s.scalars(select(Selection).where(Selection.edition_id == e.id).order_by(Selection.id))],
+                "selections": [v.sel(x) for x in s.scalars(select(Selection).where(
+                    Selection.edition_id == e.id, Selection.classification.in_(("high_confidence", "standard", "watchlist")))
+                    .order_by(Selection.classification, Selection.game_id, Selection.rank_in_game, Selection.id).limit(150))],
+                "selection_counts": dict(s.execute(select(Selection.classification, func.count()).where(
+                    Selection.edition_id == e.id).group_by(Selection.classification)).all()),
                 "combos": [v.combo(c) for c in s.scalars(select(Combo).where(Combo.edition_id == e.id).order_by(Combo.id))]}
 
 

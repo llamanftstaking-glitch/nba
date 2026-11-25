@@ -218,7 +218,8 @@ def test_manual_market_rules_and_props_api():
         auto = list(s.scalars(select(gdb.PaperTicket).where(gdb.PaperTicket.source == "auto")))
         assert not any(leg["market"].startswith("player_") for t_ in auto for leg in t_.legs)  # never auto-ticketed
     pp = c.get(f"/api/v1/player-props?date={SLATE}&game_id=S0").json()
-    assert pp["quote_status"]["provider_configured"] is False and "manually" in pp["quote_status"]["message"]
+    # Kalshi is the player-market source; with none of its contracts observed for this synthetic slate the message says so
+    assert pp["quote_status"]["provider_configured"] is True and "Kalshi" in pp["quote_status"]["message"] and "manually" in pp["quote_status"]["message"]
     assert {m["key"] for m in pp["markets"]} >= {"player_pts", "player_pra", "double_double", "first_quarter"}
     assert next(m for m in pp["markets"] if m["key"] == "double_double")["operational"] is False
     row = next(r_ for r_ in pp["items"] if r_["player_id"] == star and r_["market"] == "player_pts")
@@ -242,7 +243,8 @@ def test_manual_market_rules_and_props_api():
     assert len(c.get(f"/api/v1/lineups?date={SLATE}").json()["games"]) == 4
     assert c.get("/api/v1/games/S0/lineup-history").json()["items"]
     card = c.get(f"/api/v1/command-center?date={SLATE}").json()
-    assert card["lineups_summary"]["projected"] >= 2 and card["props_summary"]["provider_configured"] is False
+    assert card["lineups_summary"]["projected"] >= 2 and card["props_summary"]["provider_configured"] is True
+    assert not any("oddsapi" in w for w in card["warnings"])  # the optional second source is not a warning
     g0 = next(g for g in card["slate"]["games"] if g["id"] == "S0")
     lineup_item = next(i for i in g0["research_completeness"]["items"] if i["name"] == "Starting lineups")
     assert lineup_item["ok"] is False and "projected" in lineup_item["note"]  # projected does not count as complete

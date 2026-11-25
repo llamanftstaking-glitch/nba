@@ -38,7 +38,7 @@ RISK_POLICY = {
     "watchlist": {"min_evidence": 50, "min_edge": 0.0},
     "high_confidence": {"min_evidence": 85, "min_edge_low": 0.02, "min_forward_settled": 200,
                         "max_forward_calibration_gap": 0.04},
-    "combo": {"pool_size": 10, "max_per_engine": 12, "min_evidence": 60},
+    "combo": {"pool_size": 10, "max_per_engine": 12, "min_evidence": 60, "sgp_per_game_per_size": 2},
     "auto_paper": {"singles": True, "combos_per_engine": 3},
     "unavailable_statuses": ["out", "suspension", "injured reserve"],
     "uncertain_statuses": ["day-to-day", "questionable", "doubtful", "probable", "gtd"],
@@ -583,6 +583,35 @@ def leg_summary(x: Selection) -> dict:
             "supporting": x.evidence.get("supporting", []), "opposing": x.evidence.get("opposing", [])}
 
 
+def _make_combo(edition: Edition, engine: str, n: int, tag: str, combo, ev: dict) -> Combo:
+    P = RISK_POLICY["combo"]
+    jp = ev["joint"]
+    reasons = list(ev["warnings"])
+    if not ev["reliable"]:
+        cls = "insufficient_evidence"
+    elif ev["evidence_score"] < P["min_evidence"]:
+        cls = "watchlist"; reasons.append("Weakest leg evidence is below the combination threshold.")
+    elif n == 6:
+        cls = "watchlist"; reasons.append("Six-leg combinations are experimental; compounding model error is large.")
+    else:
+        cls = "high_confidence" if all(x.classification == "high_confidence" for x in combo) else "standard"
+    priced = ev["reference_price"] is not None
+    return Combo(
+        uid=f"GZ-{edition.game_date:%Y%m%d}-V{edition.version}-{tag}", edition_id=edition.id,
+        game_date=edition.game_date, engine=engine, n_legs=n, structure=ev["structure"],
+        leg_selection_ids=[x.id for x in combo], legs=[leg_summary(x) for x in combo],
+        joint_prob=jp["joint"], joint_low=jp["low"], joint_high=jp["high"], independent_prob=jp["independent"],
+        correlation={"method": jp["method"], "seed": jp["seed"], "draws": jp["draws"], "mc_se": jp["mc_se"],
+                     "assessment": ev["assessment"], "pairwise": ev["pairwise"], "shared_risks": ev["shared_risks"]},
+        observed_quote=None, reference_price=ev["reference_price"], evidence_score=ev["evidence_score"],
+        weakest_assumption=ev["weakest_assumption"], classification=cls,
+        designation="paper_testing" if priced and cls in QUALIFIED else "research_only", rejection_reasons=reasons,
+        invalidation_conditions=["Any leg's player or a rotation player is ruled out or newly listed.",
+                                 "Any leg's market line moves by 1.0 or more, or its quote is withdrawn.",
+                                 "A leg's game is postponed or rescheduled.",
+                                 "A later edition reclassifies any leg below 'standard'."])
+
+
 def build_combos(ctx: SlateContext, edition: Edition, qualified: list[Selection], games: dict) -> list[Combo]:
     P = RISK_POLICY["combo"]
     pool = sorted(qualified, key=_rank_key)[:P["pool_size"]]
@@ -601,33 +630,30 @@ def build_combos(ctx: SlateContext, edition: Edition, qualified: list[Selection]
             cands.append((combo, ev))
         cands.sort(key=lambda c: (-(c[1]["joint"]["low"] if c[1]["joint"]["low"] is not None else -1), -c[1]["joint"]["joint"]))
         for i, (combo, ev) in enumerate(cands[:P["max_per_engine"]], 1):
-            jp = ev["joint"]
-            reasons = list(ev["warnings"])
-            if not ev["reliable"]:
-                cls = "insufficient_evidence"
-            elif ev["evidence_score"] < P["min_evidence"]:
-                cls = "watchlist"; reasons.append("Weakest leg evidence is below the combination threshold.")
-            elif n == 6:
-                cls = "watchlist"; reasons.append("Six-leg combinations are experimental; compounding model error is large.")
-            else:
-                cls = "high_confidence" if all(x.classification == "high_confidence" for x in combo) else "standard"
-            priced = ev["reference_price"] is not None
-            out.append(Combo(
-                uid=f"GZ-{edition.game_date:%Y%m%d}-V{edition.version}-{engine}-{i:02d}", edition_id=edition.id,
-                game_date=edition.game_date, engine=engine, n_legs=n, structure=ev["structure"],
-                leg_selection_ids=[x.id for x in combo], legs=[leg_summary(x) for x in combo],
-                joint_prob=jp["joint"], joint_low=jp["low"], joint_high=jp["high"], independent_prob=jp["independent"],
-                correlation={"method": jp["method"], "seed": jp["seed"], "draws": jp["draws"], "mc_se": jp["mc_se"],
-                             "assessment": ev["assessment"], "pairwise": ev["pairwise"],
-                             "shared_risks": ev["shared_risks"]},
-                observed_quote=None, reference_price=ev["reference_price"], evidence_score=ev["evidence_score"],
-                weakest_assumption=ev["weakest_assumption"], classification=cls,
-                designation="paper_testing" if priced and cls in QUALIFIED else "research_only",
-                rejection_reasons=reasons,
-                invalidation_conditions=["Any leg's player or a rotation player is ruled out or newly listed.",
-                                         "Any leg's market line moves by 1.0 or more, or its quote is withdrawn.",
-                                         "A leg's game is postponed or rescheduled.",
-                                         "A later edition reclassifies any leg below 'standard'."]))
+            out.append(_make_combo(edition, engine, n, f"{engine}-{i:02d}", combo, ev))
+    # Same-game research: built per game from that game's own ranked selections, so it does not depend on which
+    # ten selections happen to lead the whole slate.
+    seen = {frozenset(c.leg_selection_ids) for c in out}
+    by_game: dict[str, list[Selection]] = {}
+    for x in qualified:
+        by_game.setdefault(x.game_id, []).append(x)
+    k = 0
+    for gid, xs in by_game.items():
+        xs = sorted(xs, key=_rank_key)[:5]
+        for n in (2, 3):
+            cands = []
+            for combo in itertools.combinations(xs, n):
+                if frozenset(x.id for x in combo) in seen or any(_conflict(a, b) for a, b in itertools.combinations(combo, 2)):
+                    continue
+                ev = evaluate_combo(list(combo), games, ctx.corr, tm.params if tm else None, draws,
+                                    seed_for(edition.key, "sgp", *sorted(x.key for x in combo)))
+                if ev.get("joint"):
+                    cands.append((combo, ev))
+            cands.sort(key=lambda c: (-(c[1]["joint"]["low"] if c[1]["joint"]["low"] is not None else -1), -c[1]["joint"]["joint"]))
+            for combo, ev in cands[:P["sgp_per_game_per_size"]]:
+                k += 1
+                seen.add(frozenset(x.id for x in combo))
+                out.append(_make_combo(edition, ENGINES[n], n, f"SGP-{k:02d}", combo, ev))
     return out
 
 
@@ -813,8 +839,11 @@ def build_summary(ctx, kind, open_games, results, sels, combos) -> dict:
     if ctx.corr is None:
         limits.append("No correlation estimate exists; same-game joint probabilities are flagged unreliable.")
     unresolved.append("Does the team model retain any value once conditioned on the market line? Only forward results can answer this.")
+    not_q = [x for x in sels if x.classification not in QUALIFIED]
+    order = {"watchlist": 0, "stale": 1, "insufficient_evidence": 2, "rejected": 3}
     rejected = [{"label": f"{x.evidence.get('game_label')} — {x.evidence.get('market_label')}", "reasons": x.rejection_reasons}
-                for x in sels if x.classification not in QUALIFIED]
+                for x in sorted(not_q, key=lambda x: (order.get(x.classification, 9), -(x.edge or -9)))[:200]]
+    counts["not_qualified_total"] = len(not_q)
     return {
         "slate": {"n_games": n_games, "games": [{"id": g.id, "label": f"{ctx.teams[g.away_team_id].abbr} @ {ctx.teams[g.home_team_id].abbr}",
                                                 "tipoff_utc": g.tipoff_utc, "status": g.status} for g in ctx.games],
