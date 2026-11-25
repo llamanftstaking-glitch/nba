@@ -10,7 +10,7 @@ _Last updated: 2026-11-24, after Core Intelligence V1.0._
 | V3 lineups (confirmed from box scores, labelled projections, snapshots, change detection) | IMPLEMENTED, TESTED, VERIFIED on live data (projected); confirmed-at-tipoff path NOT VERIFIED live |
 | V3 player props (11 market types, origin, manual entry, props table) | IMPLEMENTED, TESTED. Provider quotes BLOCKED (no key) |
 | V3 premium frontend (design system, 4-group navigation, 27 routes, mobile) | IMPLEMENTED, TESTED against mock and real API |
-| Core Intelligence V1.0: Kalshi market intelligence (read-only), minutes and rotation intelligence, availability change events, watch jobs, update editions | IMPLEMENTED, TESTED (128 backend tests, 1,781 frontend smoke checks), VERIFIED against live Kalshi data locally. CI green on `89c7d3b`. **Not yet deployed to Server M** (server runs the V3 build until the owner runs the update command) |
+| Core Intelligence V1.0: Kalshi market intelligence (read-only), minutes and rotation intelligence, availability change events, watch jobs, update editions | IMPLEMENTED, TESTED (128 backend tests, 1,781 frontend smoke checks), VERIFIED against live Kalshi data locally. CI green on `89c7d3b`. **DEPLOYED to Server M on 2026-11-25** via `scripts/update.sh` (owner-run; owner reported success). Verified from outside: readiness (database, worker, scheduler), login page, and that the new Kalshi API route exists and requires sign-in. Authenticated pages on the server were not inspected by the build session |
 | Lineup projection without loaded history (last ESPN box score) and `gizer quickstart` | IMPLEMENTED, TESTED, rehearsed on an empty database; not yet run on Server M |
 | Minutes model `minutes_blend 1.0.0` | Candidate — failed its gate (5.40 vs 5.34 minutes MAE for the best baseline) |
 | Models | team_game, player_reb, player_ast, player_fg3m, player_stl, player_tov in production; player_pts, player_blk, player_pra, player_pr, player_pa, player_ra are candidates (failed the gate) |
@@ -25,7 +25,7 @@ starters for 1,444. No playoffs, no historical odds, no play-by-play. See DATA-S
 
 ## Blockers needing the owner
 1. **Post-deployment checks** — after the history load finishes: `scripts/smoke.sh`, backup + restore test, one reboot test (DEPLOYMENT.md checklist).
-2. **Server update pending** — run `git pull && docker compose up -d --build`, then `gizer quickstart`, then restart `scripts/deploy.sh history` (history load on the server is slow: the box-score provider was degraded on 2026-11-24).
+2. **Auto-update installed (owner-reported)**: the server deploys the `production` branch after green checks. After the history load finishes, run `gizer backtest` on the server (the history script does this) so models are validated there; until then model-based picks are rejected.
 3. Prop quotes now come from Kalshi (free, public). A sportsbook prop odds key is optional.
 3. **Data licensing review** before any use beyond private research (ESPN endpoint is unofficial).
 
