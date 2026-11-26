@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.7.0 — 2026-11-26 (GIZER CORTEX)
+* Knowledge library: 20 departments of original basketball knowledge records with sources and verification status,
+  loaded from versioned files; local keyword retrieval with a retrieval log.
+* Player DNA and Team DNA: profiles computed from stored box scores with rule-based archetypes (rule shown) and
+  rotation tendencies; tactical identity and coach identity reported as not available.
+* JARVIS: six CORTEX tools and a reasoning protocol that separates verified records, calculations, model output,
+  interpretation and unknowns.
+* Benchmark: first tranche of questions with deterministic grading, a free retrieval check (`gizer cortex-eval`)
+  and an owner-triggered answer run inside the AI budget (`gizer cortex-benchmark`).
+* Knowledge Center at `/cortex`. Migration `0006_cortex`.
+* Not built: semantic search, possession reconstruction, coach identities, film study (docs/cortex/ARCHITECTURE.md).
+
 ## 0.6.2 — 2026-11-26 (JARVIS analysis depth)
 * New read-only tools: `get_teammate_availability_splits` (minutes, usage and production with and without each main
   teammate, with sample sizes and small-sample flags) and `get_opponent_defensive_context` (what a team allows per game

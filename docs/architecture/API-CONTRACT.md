@@ -523,3 +523,49 @@ Show each leg's line and current value side by side. Do not colour or word a leg
 ### JARVIS
 Live tools exist server-side; in the stream their labels include "Reading the live scoreboard", "Reading the live box score",
 "Reading the play-by-play", "Reading live rotations". Context for the JARVIS panel on a game page is still `{game_id}`.
+
+---
+
+## GIZER CORTEX (knowledge library and profiles) — added 2026-11-26
+
+All `GET`, under `/api/v1`, session required. Everything shown must be a real record: never invent counts.
+
+* `GET /cortex/overview` → `{knowledge_records, records_checked_against_a_source, records_authored_not_checked,
+  departments:[{id (1..20), name, records}], by_kind:{…}, sources_indexed, sources_opened_by_author, player_profiles_available,
+  team_profiles_available, coaching_profiles_available (0), coaching_note, research_findings:{status:count}, unresolved_hypotheses,
+  last_knowledge_update, retrievals_logged, benchmark:{questions, target (500), by_category, by_type, by_split, reviewed_by_a_person, note},
+  benchmark_runs:[{id, kind ("retrieval"|"answers"), split, model, n, score, cost_usd, created_at}], season, not_built:[…]}`
+* `GET /cortex/concepts?q=&department=&kind=&verification=&limit=&offset=` →
+  browse: `{mode:"browse", items:[ConceptShort], total}`; with `q`: `{mode:"search", query, method ("all_words"|"any_word"|"none"), items:[ConceptShort + score], total}`.
+  `ConceptShort` = `{slug, title, department, department_name, kind, summary, ruleset ("NBA"|"FIBA"|"general"), verification
+  ("checked_against_source"|"authored_not_checked"), version, sources:[key]}`.
+  `kind` ∈ `rule|statistic|offense|defense|role|concept|context|market|method|live`.
+* `GET /cortex/concepts/{slug}` → `ConceptShort` + `{body, formula|null, season_note|null, updated_at, limitations:[…], when_not_to_use|null,
+  player_responsibilities|null, common_responses|null, observable_in_our_data:[…], data_gaps:[…], evaluation_questions:[…],
+  related:[{slug, title}], sources:[{key, title, url, note}]}`. `body` is plain prose (paragraphs separated by blank lines).
+* `GET /cortex/sources` → `{items:[{key, title, publisher, url, league, kind, reliability, permission, accessed|null, access_result, records_citing}]}`
+* `GET /cortex/players?q=&limit=` → `{season, items:[{player_id, name, team_abbr, position, headshot_url, games, minutes}]}` (most minutes first)
+* `GET /cortex/players/{id}/dna` → `{identity:{player_id, name, team, team_id, position, jersey, headshot_url, last_game_date, not_held:[…]},
+  season, team_history:[{season, team, games, first, last}], generated_at, method, available}` and, when `available`:
+  `{season_line:{games, minutes_total, mpg, usage, usage_games, pts36, reb36, ast36, fg3m36, stl36, blk36, tov36, fga36, fta36,
+  true_shooting_pct, start_share, starts_known_games, minutes_sd}, recent_10:{games, mpg, pts, reb, ast, usage},
+  archetypes:[{key, label, rule}], archetype_status, teammate_context:[{teammate, games_with, games_without, usage_with, usage_without,
+  small_sample}]|null, tactical_profile:{available:false, reason}, not_available:[…], notes:[…]}`; otherwise `{note}`.
+  Always show each archetype WITH its rule, and the notes. Archetypes are descriptions, never scouting verdicts.
+* `GET /cortex/teams` → `{season, items:[{team_id, abbr, name, profile_available}]}`
+* `GET /cortex/teams/{id}/dna` → `{team_id, abbr, name, season, generated_at, method, available}` and, when available:
+  `{record:{games, wins, losses, home, away, points_per_game, points_allowed_per_game, point_differential},
+  ratings:{games_with_possessions, pace_possessions_per_game, offensive_rating, defensive_rating, net_rating, note}|null,
+  shot_volume:{three_pointers_made_per_game, field_goal_attempts_per_game, free_throw_attempts_per_game, turnovers_per_game}|null,
+  rotation:{games, players_10_plus_minutes_per_game, rotation_length_range:[min,max], games_with_confirmed_starters, starter_minutes_avg,
+  bench_points_per_game, distinct_starting_fives, most_used_starting_fives:[{players:[names], games}], minutes_leaders:[{player_id, name,
+  games, mpg}], first_substitution:{games_observed_live, average_minutes_into_game?, note?}}|null,
+  coach:{identity:null, note}, tactical_identity:{available:false, reason}, not_available:[…], notes:[…]}`.
+  "Coach DNA" in the UI is this team's `rotation` block plus the `coach.note`: label it "Rotation tendencies (coach not identified)".
+* `GET /cortex/research?status=&limit=` → `{items:[{uid, hypothesis, supporting[], contradicting[], sample_size, proposed_experiment, result,
+  limitations, status ("open"|"supported"|"rejected"|"inconclusive"), source}], note}`
+* `GET /cortex/benchmark` (owner) → benchmark summary fields + `{runs:[{…, by_category, misses[]}], recent_retrievals:[{query, returned[], method,
+  ms, caller, at}], sample_questions:[{id, category, type, question, choices}], how_to_run}`. Scores are provisional: show the `note`.
+* JARVIS stream labels added: "Searching the basketball library", "Reading a knowledge record", "Building the player profile",
+  "Building the team profile", "Checking knowledge coverage", "Listing knowledge sources",
+  "Computing with/without-teammate splits", "Loading opponent context".

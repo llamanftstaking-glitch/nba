@@ -346,6 +346,9 @@ function View({ d, id }: { d: PlayerDetail; id: string }) {
             ) : (
               <span className="text-xs text-muted">Lineup role not available</span>
             )}
+            <DLink href={`/cortex?tab=player-dna&player=${p.id}`} className="text-xs font-medium text-accent hover:underline" data-testid="cortex-profile-link">
+              Profile (CORTEX)
+            </DLink>
           </div>
         </div>
         <div className="rounded-md bg-raised/50 px-4 py-2.5 text-sm" data-testid="next-game">

@@ -1,0 +1,879 @@
+[
+ {
+  "slug": "man-to-man-defense",
+  "department": 3,
+  "kind": "defense",
+  "title": "Man-to-man defense",
+  "summary": "Each defender is responsible for one opponent, with team help rules layered on top.",
+  "body": "Man-to-man is the base defence of professional basketball. Every defender has an assigned opponent and follows him around the floor, but the scheme is never five separate duels. Defenders one pass away deny or play the gap, and defenders two passes away sink toward the lane to help on drives, so the ball handler always sees bodies between him and the rim. The rules for screens, post-ups and help define the many coverages that sit inside the man-to-man family. Its advantages are clear accountability, the ability to put the best defender on the best scorer, and natural rebounding matchups. Its weakness is that the offence chooses where the contest takes place: it can hunt the weakest defender with screens or isolate a mismatch. For analysis, man-to-man is the reason an individual defender is thought to affect an individual scorer. That link is weaker than it sounds, because assignments change through switches and help, and because we have no record of who guarded whom.",
+  "formula": null,
+  "player_responsibilities": "On-ball defender: contain the dribble and contest. One pass away: deny or sit in the gap. Two passes away: sink to the lane as a helper and tag cutters. All five: communicate screens and finish the possession with a box-out.",
+  "common_responses": "Screens to force switches or free shooters, isolations against the weakest defender, quick ball reversal to move the helpers, and cuts behind defenders who watch the ball.",
+  "limitations": [
+   "General description; our data cannot confirm which scheme any team uses in a given game.",
+   "Without matchup data, any claim that one defender limited one scorer is unsupported here.",
+   "Assignments change within possessions through switches and help."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "opponent allowed-per-game context"
+  ],
+  "data_gaps": [
+   "no coverage scheme data",
+   "no defensive matchups",
+   "no film or tracking data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "help-defense",
+   "switching-defense",
+   "zone-defense",
+   "point-of-attack-defender",
+   "positional-matchups"
+  ],
+  "evaluation_questions": [
+   "What do defenders two passes from the ball do in a sound man-to-man defence?",
+   "Why is the link between one defender and one scorer weaker than it appears?"
+  ]
+ },
+ {
+  "slug": "zone-defense",
+  "department": 3,
+  "kind": "defense",
+  "title": "Zone defense (2-3 and 3-2)",
+  "summary": "Defenders guard areas of the floor instead of specific opponents.",
+  "body": "In a zone each defender covers a region and whoever enters it. The 2-3 zone puts two defenders across the top and three along the baseline, protecting the paint and the rebounding areas while leaving gaps on the wings, at the foul line and, when the ball moves quickly, in the corners. The 3-2 zone puts three across the perimeter and two inside, which contests outside shots better but exposes the middle and the baseline. Zones keep big defenders near the rim, hide weak individual defenders, slow an opponent's rhythm and can be useful when a key defender is in foul trouble. Their costs are open threes against good ball movement, awkward rebounding because no one has an assigned man to box out, and vulnerability to a skilled passer stationed in the middle. In the NBA the defensive three-second rule limits how long a defender may stand in the lane without guarding someone, so zones there are usually brief changes of pace and not a full-time system.",
+  "formula": null,
+  "player_responsibilities": "Top defenders: pressure the ball and cover the wings. Baseline defenders: cover corners and protect the rim. Middle defender: guard the lane, front or contest the high post. All: move on the pass and find a body when a shot goes up.",
+  "common_responses": "A passer at the foul line, quick ball reversal, overloading one side, shooting over the top, attacking gaps with the dribble to draw two defenders, and crashing the offensive glass.",
+  "limitations": [
+   "General description; our data cannot confirm which scheme any team uses in a given game.",
+   "The defensive three-second rule is mentioned from general knowledge of the rulebook index; its details were not read in the pages opened.",
+   "How often a team plays zone is not in any data we hold."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [],
+  "data_gaps": [
+   "no coverage scheme data",
+   "no defensive matchups",
+   "no film or tracking data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "matchup-zone",
+   "man-to-man-defense",
+   "rim-protection",
+   "defensive-rebounding-and-boxing-out",
+   "spacing"
+  ],
+  "evaluation_questions": [
+   "Where are the soft areas of a 2-3 zone?",
+   "Why is rebounding harder out of a zone?"
+  ]
+ },
+ {
+  "slug": "matchup-zone",
+  "department": 3,
+  "kind": "defense",
+  "title": "Matchup zone",
+  "summary": "A hybrid that starts in zone positions but guards the players in each area with man-to-man principles.",
+  "body": "A matchup zone begins looking like a zone and then behaves like a man-to-man defence within each area. Defenders pick up the offensive player who is in their region, guard him closely while he has the ball, and pass him to the next defender when he cuts through to a different area. The aim is to keep the structural benefits of a zone - size near the rim, protected weak defenders, no chasing around screens - while removing the open perimeter shots that standard zones concede. It also confuses offences, which must work out whether to run their zone attack or their man-to-man sets, and often run neither well. The scheme is demanding to teach. Every cut requires a clean exchange between defenders, and a single missed call leaves a shooter alone. Offences attack it with cutters who drag defenders out of their areas and by overloading one zone with two players. As with every coverage, its use can be recognised on film and not in any statistic we hold.",
+  "formula": null,
+  "player_responsibilities": "Each defender: match up with the attacker in his area, guard him man-to-man on the ball, hand off cutters by voice and touch, and return to zone shape when the ball is reversed.",
+  "common_responses": "Cut through to force exchanges, overload one area, screen the zone's top defenders, and test communication with quick reversals.",
+  "limitations": [
+   "General description; our data cannot confirm which scheme any team uses in a given game.",
+   "Hard to distinguish from switching man-to-man even on film.",
+   "No measurable signature in box scores."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [],
+  "data_gaps": [
+   "no coverage scheme data",
+   "no defensive matchups",
+   "no film or tracking data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "zone-defense",
+   "switching-defense",
+   "man-to-man-defense",
+   "rotations"
+  ],
+  "evaluation_questions": [
+   "How does a matchup zone differ from a standard 2-3 zone?",
+   "What is the main teaching difficulty of a matchup zone?"
+  ]
+ },
+ {
+  "slug": "drop-coverage",
+  "department": 3,
+  "kind": "defense",
+  "title": "Drop coverage",
+  "summary": "Against a pick-and-roll the screener's defender retreats toward the paint while the on-ball defender chases over the screen.",
+  "body": "Drop coverage is the conservative answer to the pick-and-roll. The big defender backs away from the screen and positions himself between the ball and the rim, deep enough to stop a layup and to stay in contact with the roller. The guard fights over the top of the screen and pursues from behind. The scheme keeps two defenders on the two attackers, so the other three can stay with shooters and no rotation is required. It protects the rim and the three-point line at once and concedes the space between them: the pull-up jumper and the floater. Against handlers who shoot well off the dribble, or screeners who pop to the arc, that concession becomes expensive. Drop coverage keeps big men out of long recoveries and away from the perimeter, which suits slow-footed rim protectors and helps defensive rebounding. In general terms it tends to leave the ball handler to score while holding down the assists that come from help rotations.",
+  "formula": null,
+  "player_responsibilities": "Big defender: retreat to the level that stops both the layup and the lob, stay between ball and rim. Guard: fight over the screen and chase to contest from behind. Others: stay attached to shooters.",
+  "common_responses": "Pull-up jumpers and floaters, pick-and-pop with a shooting big, Spain action to screen the dropping big, and re-screening to give the handler a second advantage.",
+  "limitations": [
+   "General description; our data cannot confirm which scheme any team uses in a given game.",
+   "The statistical tendency described is a general expectation, not a measured relationship in our data.",
+   "Teams mix coverages within a game."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [],
+  "data_gaps": [
+   "no coverage scheme data",
+   "no defensive matchups",
+   "no film or tracking data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "pick-and-roll",
+   "pick-and-pop",
+   "rim-protection",
+   "screen-navigation-over-under",
+   "spain-pick-and-roll",
+   "hedge-and-show"
+  ],
+  "evaluation_questions": [
+   "Which shots does drop coverage concede by design?",
+   "Why does drop coverage require no rotation from the other three defenders?"
+  ]
+ },
+ {
+  "slug": "switching-defense",
+  "department": 3,
+  "kind": "defense",
+  "title": "Switching",
+  "summary": "Two defenders exchange assignments when their opponents cross through a screen.",
+  "body": "On a switch the defender guarding the screener takes the ball handler and the handler's defender takes the screener. Nobody is ever behind the play, so the offence gains no momentary advantage, no help is needed and shooters stay covered. Switching is the simplest way to neutralise screening actions and it flattens offences into isolations. The price is mismatches. A small guard may end up on a big man near the basket, or a slow big on a quick guard at the perimeter, and offences deliberately screen with the player whose defender they want to attack. Switching also affects rebounding, since guards finish possessions next to bigs. The scheme works best with lineups of similar size and mobility, which is one reason versatile wings are prized. A switching opponent tends to push a team toward isolation and post-up scoring by whoever holds the mismatch and away from assisted shots. That is a general tendency and cannot be verified for any game from our data.",
+  "formula": null,
+  "player_responsibilities": "Both defenders: call the switch early, stay connected so nobody slips between them, and take the new man physically. Small on big: front and fight for position. Big on small: stay in front without fouling. Others: be ready to help on the mismatch.",
+  "common_responses": "Hunt the weakest defender with repeated screens, slip the screen before the switch, post up the small defender, isolate against the big, and crash the glass on mismatches.",
+  "limitations": [
+   "General description; our data cannot confirm which scheme any team uses in a given game.",
+   "Matchups after a switch are unknown to us.",
+   "Some switches are planned by the offence, so the resulting isolation is intended and not a failure."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [],
+  "data_gaps": [
+   "no coverage scheme data",
+   "no defensive matchups",
+   "no film or tracking data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "isolation",
+   "post-up",
+   "pre-switching-and-scram",
+   "wing-stopper",
+   "man-to-man-defense"
+  ],
+  "evaluation_questions": [
+   "What does switching give up in exchange for staying in front of the ball?",
+   "Why do offences choose which player sets the screen against a switching defence?"
+  ]
+ },
+ {
+  "slug": "hedge-and-show",
+  "department": 3,
+  "kind": "defense",
+  "title": "Hedge and show",
+  "summary": "The screener's defender steps out briefly to slow the ball handler, then recovers to his own man.",
+  "body": "A hedge, or show, sits between dropping and trapping. As the handler comes off the screen, the big defender jumps out to the level of the screen, sometimes above it, and presents his body in the handler's path. The handler has to slow down, retreat or go wide, and that pause gives the guard time to get back in front. The big then sprints back to the roller. A hard hedge is aggressive and nearly a brief double-team; a soft show is only a step and a hand. The coverage takes away the pull-up jumper and disrupts timing, but for a second the roller is unguarded, so a third defender must tag him until the big recovers. That makes the hedge dependent on mobile bigs and on disciplined weak-side help. If the handler splits the two defenders or passes quickly to the roller, the defence is in rotation. Compared with drop coverage it produces more forced turnovers and also more open shots when it fails.",
+  "formula": null,
+  "player_responsibilities": "Big defender: step out at the screen, stop the handler's line, then sprint back to the roller. Guard: get over or under and back in front quickly. Weak-side defender: tag the roller until the big returns.",
+  "common_responses": "Split the hedge, pass early to the roller or slip the screen, reverse the ball to the side the tagger left, and use a popping big to lengthen the recovery.",
+  "limitations": [
+   "General description; our data cannot confirm which scheme any team uses in a given game.",
+   "Described outcomes are general tendencies with no measurement in our data.",
+   "Difference between a hard hedge and a trap is a matter of degree."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [],
+  "data_gaps": [
+   "no coverage scheme data",
+   "no defensive matchups",
+   "no film or tracking data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "drop-coverage",
+   "blitz-and-trap",
+   "weak-side-help-and-tagging",
+   "pick-and-roll",
+   "rotations"
+  ],
+  "evaluation_questions": [
+   "What must a third defender do while the hedging big recovers?",
+   "How does a hedge differ from a trap?"
+  ]
+ },
+ {
+  "slug": "blitz-and-trap",
+  "department": 3,
+  "kind": "defense",
+  "title": "Blitz and trap",
+  "summary": "Both pick-and-roll defenders attack the ball handler to force the ball out of his hands.",
+  "body": "A blitz commits two defenders to the ball as it comes off a screen. The intention is to take the decision away from the opponent's best player: he must give up the ball, usually with a pass over or around two raised sets of arms, and somebody else must beat a defence playing three against four. The scheme is used against elite scorers and against handlers who struggle to pass under pressure. It produces deflections, turnovers and rushed decisions, and it also produces open shots, because the three remaining defenders have to cover four attackers by rotating. The release pass normally goes to the screener in the short roll, and what he does next decides the possession. For statistics, trapping has a recognisable general effect: the trapped star's shot attempts fall and his teammates' attempts and assists rise. An opponent's willingness to trap is therefore relevant to how a star's scoring and a role player's playmaking are distributed in a game, but that willingness is not recorded in any data we have.",
+  "formula": null,
+  "player_responsibilities": "Two trapping defenders: arrive together, hands high, no splitting, no foul. Three behind: one takes the roller, two zone the remaining three attackers and rotate on the pass.",
+  "common_responses": "Quick pass to the short roll, a slip before the trap forms, spacing a shooter one pass away, and letting another player initiate so the star receives the ball off a screen instead.",
+  "limitations": [
+   "General description; our data cannot confirm which scheme any team uses in a given game.",
+   "The redistribution effect is a general expectation and cannot be confirmed game by game here.",
+   "Teams often trap only in selected stretches such as late in close games."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [],
+  "data_gaps": [
+   "no coverage scheme data",
+   "no defensive matchups",
+   "no film or tracking data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "short-roll",
+   "pick-and-roll",
+   "rotations",
+   "primary-creator",
+   "hedge-and-show"
+  ],
+  "evaluation_questions": [
+   "What is the purpose of trapping a star ball handler?",
+   "How might a trap-heavy opponent change the distribution of shots on the other team?"
+  ]
+ },
+ {
+  "slug": "ice-coverage",
+  "department": 3,
+  "kind": "defense",
+  "title": "Ice (down) coverage",
+  "summary": "On a side pick-and-roll the defence forces the ball toward the sideline and baseline, away from the screen.",
+  "body": "Ice, also called down or blue, is a coverage for pick-and-rolls set on the wing. The on-ball defender jumps to the high side of the handler, with his back toward midcourt, so that the handler cannot use the screen to reach the middle of the floor. The big defender waits lower on the same side, between the handler and the basket. Together they steer the ball down the sideline into a shrinking space where the baseline acts as an extra defender. Keeping the ball out of the middle protects against the passes and drives that open up both sides of the floor. The coverage gives up a mid-range pull-up on the side and can be hurt by a screener who pops to the top, since his defender is low and far away. Offences counter by re-angling the screen, having the screener turn and set it facing the sideline, or by flowing into a handoff. Ice is a clear example of a defence choosing the shot it is willing to allow.",
+  "formula": null,
+  "player_responsibilities": "On-ball defender: get above the screen and deny the middle. Big defender: sit low on the ball side and contain the drive. Weak-side defenders: be ready to stunt at the popping screener.",
+  "common_responses": "Flip the screen angle, pop the screener to the top for a shot, reject into a baseline drive with pace, or move the action to the middle of the floor where ice is not possible.",
+  "limitations": [
+   "General description; our data cannot confirm which scheme any team uses in a given game.",
+   "Names for this coverage vary between teams.",
+   "Not observable in any data we hold."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [],
+  "data_gaps": [
+   "no coverage scheme data",
+   "no defensive matchups",
+   "no film or tracking data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "no-middle-defense",
+   "drop-coverage",
+   "pick-and-roll",
+   "pick-and-pop",
+   "screen-navigation-over-under"
+  ],
+  "evaluation_questions": [
+   "Where does ice coverage try to send the ball handler?",
+   "Which offensive counter exploits the low position of the big defender in ice coverage?"
+  ]
+ },
+ {
+  "slug": "help-defense",
+  "department": 3,
+  "kind": "defense",
+  "title": "Help defense",
+  "summary": "A defender leaves or loosens his own assignment to stop a more dangerous threat.",
+  "body": "Help defence is the principle that the ball is guarded by five players. When a driver beats his man or a post player gets deep position, a nearby defender steps over to stop the scoring chance, and the rest of the defence shifts to cover the player he left. Good help is early, comes from the right place, and is followed by recovery. The usual rule is to help from the weaker shooter and from the middle of the floor, not from the strong-side corner. Help can be a full commitment, a stunt - a quick fake toward the ball and back - or a dig at a post player's dribble. Every act of help creates a pass the offence wants, so the quality of a defence often lies in how little help its on-ball defenders need. For individuals, help responsibilities explain why some defenders collect blocks, steals and rebounds away from their own assignment, and why opponent scoring cannot be attributed to a single defender from a box score.",
+  "formula": null,
+  "player_responsibilities": "Helper: see ball and man, step in early with a legal position, then recover or rotate. On-ball defender: stay in the play and contest from behind. Others: shift one position toward the ball to cover the helper's man.",
+  "common_responses": "Drive-and-kick, the extra pass, cuts behind the helper, and placing the best shooter where the help is supposed to come from.",
+  "limitations": [
+   "General description; our data cannot confirm which scheme any team uses in a given game.",
+   "Help positioning is tracking and film information that we do not have.",
+   "Steals and blocks reward only the help that ends in a takeaway."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "steals",
+   "blocks"
+  ],
+  "data_gaps": [
+   "no coverage scheme data",
+   "no defensive matchups",
+   "no film or tracking data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "rotations",
+   "weak-side-help-and-tagging",
+   "closeouts",
+   "drive-and-kick",
+   "rim-protection"
+  ],
+  "evaluation_questions": [
+   "From which player should help ideally come?",
+   "Why does every act of help create a risk for the defence?"
+  ]
+ },
+ {
+  "slug": "rim-protection",
+  "department": 3,
+  "kind": "defense",
+  "title": "Rim protection",
+  "summary": "Deterring, altering and blocking shots near the basket.",
+  "body": "Shots at the rim are the most efficient in basketball, so the ability to lower their number and their accuracy is the most valuable single defensive skill. A rim protector does this in three ways. He blocks some shots. He alters many more by forcing a higher arc or a rushed release. And he deters attempts altogether, so that drivers pull up or pass instead of finishing. Only the first appears in a box score. Rim protection also depends on staying on the floor: contesting vertically without fouling matters as much as size. Schemes are built around the protector. Drop coverage keeps him near the basket; opponents respond by pulling him out with shooting bigs or by attacking him in pick-and-roll to draw fouls. When a team's main rim protector sits or is absent, the general expectation is more opponent attempts in the paint. In live games we see team points in the paint, but historical opponent context in our data is per-game allowed totals, not shot location.",
+  "formula": null,
+  "player_responsibilities": "Rim protector: stay between ball and basket, jump vertically, contest without fouling, then rebound. Perimeter defenders: funnel drivers toward him and box out his man when he leaves to contest.",
+  "common_responses": "Pull him away from the basket with shooting bigs, attack his body to draw fouls, use lobs behind him when he steps up, and run pick-and-pop.",
+  "limitations": [
+   "General description; our data cannot confirm which scheme any team uses in a given game.",
+   "Blocks capture a small part of the skill; deterrence is unmeasured.",
+   "Team points in the paint are available to us for live games only and reflect many factors besides one defender."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "blocks",
+   "team totals including points in the paint and fast-break points (live games only)",
+   "personal fouls (live games only)"
+  ],
+  "data_gaps": [
+   "no shot locations",
+   "no defended-shot data",
+   "no defensive matchups"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "rim-protector",
+   "block",
+   "block-percentage",
+   "drop-coverage",
+   "defensive-identity"
+  ],
+  "evaluation_questions": [
+   "Name the three ways a rim protector reduces scoring at the basket.",
+   "Why do blocks understate rim protection?"
+  ]
+ },
+ {
+  "slug": "closeouts",
+  "department": 3,
+  "kind": "defense",
+  "title": "Closeouts",
+  "summary": "The sprint from a help position out to a perimeter player who is about to catch the ball.",
+  "body": "A closeout is the recovery that follows help. The defender has been sagging toward the lane and must now cover the distance to a shooter while the pass is in the air. He sprints most of the way, then shortens his steps to arrive balanced, with a hand up to contest and his feet ready to slide. The technique is a compromise between two failures. Arrive late or soft and the shooter has an open look. Arrive too fast and upright and the shooter drives past, which puts the defence back in rotation. Scouting changes the closeout: a defender runs a strong shooter off the line and accepts the drive, and stays back against a weak shooter to take away the drive. A long closeout is the offence's goal in most actions, so the number of them a defence has to make is a fair summary of how much it has been broken down. None of this is counted in public box scores, and tracking measures of contests are not in our data.",
+  "formula": null,
+  "player_responsibilities": "Closing defender: sprint, break down with short steps, high hand, take away the shooter's preferred option. Teammates: be ready for the next rotation if the closeout is driven.",
+  "common_responses": "Shot fakes and drives against hard closeouts, the extra pass to the next shooter, and quick-release shooting against late ones.",
+  "limitations": [
+   "General description; our data cannot confirm which scheme any team uses in a given game.",
+   "Contest quality is tracking information we do not hold.",
+   "Opponent three-point accuracy over short spans mostly reflects variance, not closeout quality."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [],
+  "data_gaps": [
+   "no coverage scheme data",
+   "no defensive matchups",
+   "no film or tracking data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "rotations",
+   "help-defense",
+   "catch-and-shoot",
+   "drive-and-kick",
+   "three-point-variance"
+  ],
+  "evaluation_questions": [
+   "What are the two opposite ways to fail on a closeout?",
+   "How should a closeout differ against a strong shooter and a weak one?"
+  ]
+ },
+ {
+  "slug": "rotations",
+  "department": 3,
+  "kind": "defense",
+  "title": "Defensive rotations",
+  "summary": "The chain of movements by which defenders cover for one another after help has been given.",
+  "body": "Once a defender helps, someone is open, and a rotation is the sequence that closes that gap. The typical chain on a drive is: the low helper stops the ball, the next defender drops to take the helper's man near the rim, a third splits two perimeter players, and the beaten defender recovers to whoever is left. Rotations have to happen while the ball is in flight, and each defender must know the pattern without looking. They are judged by whether the final shot is contested and by whom it is taken; a sound rotation leaves the weakest shooter with the longest pass. Offences try to make the chain one link longer than the defence can manage, with the extra pass or a second drive. Rotating teams are exposed on the defensive glass, because players end the possession away from their original men. A defence that rarely needs to rotate, because it contains the ball one-on-one, is usually better than one that rotates brilliantly.",
+  "formula": null,
+  "player_responsibilities": "First helper: stop the ball. Second: sink to cover the rim-side man. Third: split two perimeter players and take the first pass. Beaten defender: sprint to the open man. All: talk and finish with a box-out.",
+  "common_responses": "One more pass than the defence can cover, driving the closeout, cutting behind rotating defenders, and offensive rebounding against scrambled matchups.",
+  "limitations": [
+   "General description; our data cannot confirm which scheme any team uses in a given game.",
+   "Rotation quality cannot be measured from box scores or play-by-play text.",
+   "Opponent assist totals are an imperfect hint at how often a defence was moved."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [],
+  "data_gaps": [
+   "no coverage scheme data",
+   "no defensive matchups",
+   "no film or tracking data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "help-defense",
+   "closeouts",
+   "weak-side-help-and-tagging",
+   "drive-and-kick",
+   "defensive-rebounding-and-boxing-out"
+  ],
+  "evaluation_questions": [
+   "Describe a typical rotation chain after a baseline drive.",
+   "Why are rotating defences vulnerable on the defensive glass?"
+  ]
+ },
+ {
+  "slug": "weak-side-help-and-tagging",
+  "department": 3,
+  "kind": "defense",
+  "title": "Weak-side help and tagging the roller",
+  "summary": "The defender on the side away from the ball steps into the lane to bump the rolling big, then recovers to his own man.",
+  "body": "In most pick-and-roll coverages the screener's defender is occupied with the ball for a moment, and the roller would run to the rim alone unless someone meets him. That job falls to the weak-side defender nearest the lane, usually the one guarding a player on the wing or in the corner. He steps in, makes contact with the roller - the tag - and holds him up until the big defender returns, then closes out to his own man. The tag is the hidden cost of every aggressive coverage. Its length decides whether the offence gets a layup, an open corner three, or nothing. Offences place their best shooter where the tagger must come from, or lift that shooter up the sideline to lengthen the recovery. Defences answer by choosing which attacker to help from and by having the next defender split two players. Tagging well requires anticipation more than athleticism. It leaves no trace in statistics except, occasionally, in a helper's steals and defensive rebounds.",
+  "formula": null,
+  "player_responsibilities": "Tagger: step into the roller's path early, bump legally, then sprint out to the shooter. Next defender: split the two nearest perimeter players. Big defender: recover to the roller quickly to release the tagger.",
+  "common_responses": "Put the best shooter in the tagger's spot, lift the corner player, throw the skip pass early, and have the roller seal the tagger for a lob.",
+  "limitations": [
+   "General description; our data cannot confirm which scheme any team uses in a given game.",
+   "Nothing in our data records who tagged or how long.",
+   "Described from general coaching practice, not from a source opened in this session."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [],
+  "data_gaps": [
+   "no coverage scheme data",
+   "no defensive matchups",
+   "no film or tracking data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "weak-side-action",
+   "help-defense",
+   "pick-and-roll",
+   "short-roll",
+   "rotations"
+  ],
+  "evaluation_questions": [
+   "Who is usually responsible for tagging the roller?",
+   "How do offences make the tag more costly?"
+  ]
+ },
+ {
+  "slug": "transition-defense",
+  "department": 3,
+  "kind": "defense",
+  "title": "Transition defense",
+  "summary": "Getting back and organised before the offence can score in the open floor.",
+  "body": "Transition defence starts while the team still has the ball. A coach decides how many players go to the offensive glass and how many retreat when a shot goes up; that single choice trades second chances for protection against the break. When possession changes, the priorities are in order: protect the basket, stop the ball, then find shooters. Defenders match up with whoever is nearest instead of searching for their assignment, and sort out the mismatches at the next stoppage. Live-ball turnovers are the hardest situations because the offence starts with numbers and momentum. The measure most often quoted is fast-break points allowed, which we have as a team total in live games, but it depends on a scorer's definition and on how often a team's own offence gives the ball away. Poor transition defence and a careless offence are easily confused in the numbers, since both show up as easy points for the opponent early in the clock.",
+  "formula": null,
+  "player_responsibilities": "Designated safeties: retreat on the shot. Nearest defender: stop the ball early. First man back: protect the rim. Others: sprint to the level of the ball, point and call out matchups.",
+  "common_responses": "Quick outlets, sprinting wings to the corners, a rim-running big, and drag screens before the defence is matched up.",
+  "limitations": [
+   "General description; our data cannot confirm which scheme any team uses in a given game.",
+   "Fast-break points allowed mix defensive effort with the offence's turnovers and shot selection.",
+   "Only team totals in live games are available to us."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "team totals including points in the paint and fast-break points (live games only)"
+  ],
+  "data_gaps": [
+   "no per-possession transition data",
+   "no film"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "transition-offense",
+   "crash-versus-get-back",
+   "turnover",
+   "pace",
+   "defensive-identity"
+  ],
+  "evaluation_questions": [
+   "What are the three priorities, in order, of a retreating defence?",
+   "Why can a careless offence be mistaken for poor transition defence?"
+  ]
+ },
+ {
+  "slug": "defensive-rebounding-and-boxing-out",
+  "department": 3,
+  "kind": "defense",
+  "title": "Defensive rebounding and boxing out",
+  "summary": "Ending the opponent's possession by securing the miss, usually by first blocking an opponent's path to the ball.",
+  "body": "A defensive possession is not finished until the rebound is secured. Boxing out means that when the shot goes up, a defender finds an opponent, makes contact, and holds a position between that opponent and the basket before pursuing the ball. The player who boxes out is frequently not the one who gets the rebound: a centre who seals the opposing big lets a guard collect the ball untouched and start the break. This is why individual defensive rebound totals describe team arrangements as much as individual effort. Some teams let a guard take uncontested rebounds deliberately so he can push the pace. Defensive rebounding is also affected by scheme. Switching and heavy rotation leave small defenders matched with big rebounders, and zones leave no assigned man to block out. Team defensive rebounding is best judged as a share of available misses. For a player, the fair question is how his team rebounds with him on the floor, which needs lineup data we hold only for recent live games.",
+  "formula": null,
+  "player_responsibilities": "Every defender: find a body on the shot, make contact, hold position, then go to the ball. Bigs: seal the opposing bigs. Guards: rebound down and collect long misses. Rebounder: secure with two hands and outlet.",
+  "common_responses": "Send extra players to the offensive glass, crash from the perimeter where box-outs are harder, tip balls out to shooters, and attack mismatches created by switches.",
+  "limitations": [
+   "General description; our data cannot confirm which scheme any team uses in a given game.",
+   "Box-outs are hustle data that we do not have.",
+   "Individual defensive rebounds overstate the contribution of players who collect uncontested balls."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "rebounds",
+   "offensive/defensive rebounds (live games only)"
+  ],
+  "data_gaps": [
+   "no box-out data",
+   "no rebound chances",
+   "no lineup data before 2026-11-25"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "defensive-rebound-percentage",
+   "contested-vs-uncontested-rebounds",
+   "offensive-and-defensive-rebound",
+   "crash-versus-get-back",
+   "rebounder"
+  ],
+  "evaluation_questions": [
+   "Why is the player who boxes out often not the one credited with the rebound?",
+   "How can defensive scheme hurt a team's defensive rebounding?"
+  ]
+ },
+ {
+  "slug": "perimeter-containment",
+  "department": 3,
+  "kind": "defense",
+  "title": "Perimeter containment",
+  "summary": "Keeping the ball handler in front so that the defence does not have to help.",
+  "body": "Containment is the ability of an on-ball defender to stay between his man and the basket without assistance. It is the foundation of every scheme, because a defence that holds at the point of attack never has to rotate, and a defence that leaks there is in rotation on every trip. Containment requires lateral quickness, balance, strength to absorb contact, and discipline with the hands to avoid fouls. It also depends on what the defender is asked to take away. Pressing up to deny a shooter's jumper makes a drive easier; backing off concedes the shot. A defender is usually told which hand or direction to force, so that the help knows where the ball will arrive. Containment is nearly invisible in statistics. A defender who simply stays in front produces no steal, no block and no rebound, and the missed shot that results is credited to nobody. That is the main reason box-score defensive numbers are a poor guide to perimeter defence.",
+  "formula": null,
+  "player_responsibilities": "On-ball defender: stay low and balanced, force the agreed direction, keep hands active without reaching, absorb contact with the chest. Teammates: hold gap positions so the handler sees a crowd without anyone leaving a shooter.",
+  "common_responses": "Ball screens to remove the defender, changes of pace and direction, isolations against weaker defenders, and drawing fouls on reach-ins.",
+  "limitations": [
+   "General description; our data cannot confirm which scheme any team uses in a given game.",
+   "No box-score statistic measures containment.",
+   "Opponent scoring allowed is a team outcome and cannot be assigned to one defender from our data."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [],
+  "data_gaps": [
+   "no coverage scheme data",
+   "no defensive matchups",
+   "no film or tracking data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "point-of-attack-defender",
+   "help-defense",
+   "screen-navigation-over-under",
+   "steal",
+   "no-middle-defense"
+  ],
+  "evaluation_questions": [
+   "Why does good containment reduce the need for rotations?",
+   "Why is containment almost invisible in a box score?"
+  ]
+ },
+ {
+  "slug": "screen-navigation-over-under",
+  "department": 3,
+  "kind": "defense",
+  "title": "Screen navigation: over and under",
+  "summary": "The on-ball defender's choice to chase over the top of a screen or cut underneath it.",
+  "body": "When a screen is set on the ball, the defender guarding the dribbler has to get past it. Going over means squeezing between the screener and the handler and staying attached, which takes away the pull-up three but leaves the defender trailing as the handler attacks downhill. Going under means dropping behind the screener and meeting the handler on the other side, which keeps the defender in front and stops the drive but concedes an uncontested jumper for a moment. The choice is a scouting decision about the handler's shooting. Against a dangerous shooter, defenders go over; against a reluctant or poor one, they go under and dare him to shoot. A third option, going through the gap between the screener and his defender, requires the big to step back. Offences punish an under by re-screening lower or simply shooting, and punish an over with a tight angle that pins the defender on the screener's hip. The same logic applies to off-ball screens for shooters.",
+  "formula": null,
+  "player_responsibilities": "On-ball defender: read the screen early, get skinny over the top or drop under on the agreed call, and reconnect quickly. Screener's defender: call the screen and give the room that the chosen route needs.",
+  "common_responses": "Pull-up shooting against the under, re-screens set lower, tighter screening angles against the over, and rejecting the screen when the defender jumps early.",
+  "limitations": [
+   "General description; our data cannot confirm which scheme any team uses in a given game.",
+   "The choice made in a given game is not observable in our data.",
+   "A shooter's recent results may not match the reputation that drives the defence's choice."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [],
+  "data_gaps": [
+   "no coverage scheme data",
+   "no defensive matchups",
+   "no film or tracking data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "drop-coverage",
+   "pick-and-roll",
+   "perimeter-containment",
+   "pin-down-screen",
+   "dribble-handoff"
+  ],
+  "evaluation_questions": [
+   "What does going under a screen concede?",
+   "On what scouting judgement does the over-or-under choice rest?"
+  ]
+ },
+ {
+  "slug": "no-middle-defense",
+  "department": 3,
+  "kind": "defense",
+  "title": "No-middle defense",
+  "summary": "A team rule that forces the ball toward the sideline and baseline and keeps it out of the centre of the floor.",
+  "body": "A no-middle defence treats the centre of the floor as the area to protect above all. From the middle a ball handler can pass to either side and the help has to come from a shooter. From the sideline he can pass only one way, the baseline limits his space, and help can wait for him in a known spot. On-ball defenders therefore position themselves on the handler's inside shoulder and invite him toward the baseline, where a rotating big meets the drive. Ice coverage is the same idea applied to side pick-and-rolls. The scheme makes the defence's rotations predictable to itself, which improves their timing. Its risks are baseline drives that arrive before the help does, and the skip pass to the opposite corner once the help commits, so it demands quick weak-side rotation. Teams that play this way generally accept some corner threes as the price of protecting the paint. Whether an opponent plays no-middle is a film question that our data cannot answer.",
+  "formula": null,
+  "player_responsibilities": "On-ball defender: sit on the inside shoulder and steer the ball to the sideline. Low help defender: meet the baseline drive outside the lane. Weak-side defenders: rotate down and out to cover the skip pass.",
+  "common_responses": "Skip passes to the opposite corner, quick baseline drives before help arrives, middle ball screens that are hard to deny, and cutters flashing to the middle to receive and redistribute.",
+  "limitations": [
+   "General description; our data cannot confirm which scheme any team uses in a given game.",
+   "Shot-location consequences are described in general and cannot be checked without location data.",
+   "Terminology and details vary between teams."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [],
+  "data_gaps": [
+   "no coverage scheme data",
+   "no defensive matchups",
+   "no film or tracking data",
+   "no shot locations"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "ice-coverage",
+   "help-defense",
+   "rotations",
+   "perimeter-containment",
+   "shot-profile-identity"
+  ],
+  "evaluation_questions": [
+   "Why is the middle of the floor more dangerous for a defence than the sideline?",
+   "What pass most often beats a no-middle defence?"
+  ]
+ },
+ {
+  "slug": "pre-switching-and-scram",
+  "department": 3,
+  "kind": "defense",
+  "title": "Pre-switching and scram switching",
+  "summary": "Off-ball exchanges of assignment made before or after a screen to avoid or repair a mismatch.",
+  "body": "Switching defences are attacked by forcing a particular defender into a bad matchup. Two off-ball techniques answer this. In a pre-switch, the defender who is about to be dragged into a screening action swaps assignments with a better-suited teammate before the screen is set, so that the switch on the ball produces an acceptable matchup. In a scram switch, also called a kick-out switch, the mismatch has already happened - typically a small defender on a big in the post - and a bigger teammate runs over to take the big while the small defender sprints out to that teammate's man. The scram has to be done while the ball is in the air or on the opposite side, or it gives up an open shot. Both techniques need constant talk and players who understand the whole scheme. They are the reason a targeted defender is sometimes hard to isolate even against a switching team, and they are far beyond what any statistic we hold can detect.",
+  "formula": null,
+  "player_responsibilities": "Targeted defender: call for the exchange early. Replacement defender: take the screener's man before the action or run to the mismatch after it. Everyone: confirm the new assignments by voice.",
+  "common_responses": "Screen quickly before the pre-switch is completed, pass into the mismatch at once, or attack the moment of exchange with a cut or a shot.",
+  "limitations": [
+   "General description; our data cannot confirm which scheme any team uses in a given game.",
+   "Purely a film concept; no data trace.",
+   "Names differ between coaching staffs."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [],
+  "data_gaps": [
+   "no coverage scheme data",
+   "no defensive matchups",
+   "no film or tracking data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "switching-defense",
+   "isolation",
+   "post-up",
+   "rotations"
+  ],
+  "evaluation_questions": [
+   "What is the difference between a pre-switch and a scram switch?",
+   "When must a scram switch be executed to avoid giving up an open shot?"
+  ]
+ },
+ {
+  "slug": "late-game-fouling-strategy",
+  "department": 3,
+  "kind": "defense",
+  "title": "Late-game fouling strategy",
+  "summary": "Deliberate fouls used near the end of a game to stop the clock, deny a three, or trade free throws for possessions.",
+  "body": "Near the end of close games fouls become tactical. A trailing team fouls to stop the clock and get the ball back, accepting two free throws for the opponent in exchange for a possession. Its targets are the opponent's weaker shooters, and the leading team answers by putting its best free throw shooters on the floor. A team leading by three in the final seconds may foul before a shot goes up so that the opponent can get at most two points from the line. A team with a foul to give before the penalty may use it to disrupt a final play. The rules shape all of this: the penalty, the late-period foul limit, and the away-from-the-play provision. The statistical result is that the last minute can add several free throw attempts and points for a small number of players on the leading side, and can extend real time and possessions. These additions depend on the score being close late, which cannot be known before the game.",
+  "formula": null,
+  "player_responsibilities": "Trailing team: foul the weakest shooter quickly without committing a flagrant or away-from-the-play foul. Leading team: get the ball to strong free throw shooters and avoid turnovers. Coaches: manage timeouts and substitutions for offence-defence changes.",
+  "common_responses": "Insert the best free throw shooters, inbound to them, use timeouts to advance or reorganise, and avoid shooting motions that could become three free throws when leading by three.",
+  "limitations": [
+   "General description; our data cannot confirm which scheme any team uses in a given game.",
+   "Whether a game will be close late cannot be forecast with confidence from our data.",
+   "Late free throws are not separated from others in historical box scores."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "free throw attempts",
+   "play-by-play events with substitutions (live games only)",
+   "personal fouls (live games only)",
+   "score progression (live games only)"
+  ],
+  "data_gaps": [
+   "no end-of-game situation labels in historical data",
+   "no coach identities"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "team-fouls-and-penalty",
+   "away-from-play-foul",
+   "closing-lineups",
+   "free-throws",
+   "free-throw-rate"
+  ],
+  "evaluation_questions": [
+   "Why might a team leading by three foul intentionally in the final seconds?",
+   "Which players on the leading team tend to gain free throw attempts in a late fouling sequence?"
+  ]
+ }
+]

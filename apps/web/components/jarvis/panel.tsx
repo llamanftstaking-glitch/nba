@@ -11,7 +11,7 @@ import { JarvisMark } from "./mark";
 import { JarvisPill } from "./status";
 import { pillState, useJarvisChat, useJarvisState } from "./use-jarvis";
 
-type PanelApi = { open: (extra?: JarvisContextInput) => void; close: () => void; isOpen: boolean };
+type PanelApi = { open: (extra?: JarvisContextInput, draft?: string) => void; close: () => void; isOpen: boolean };
 const Ctx = createContext<PanelApi>({ open: () => {}, close: () => {}, isOpen: false });
 export const useJarvisPanel = () => useContext(Ctx);
 
@@ -26,7 +26,7 @@ function routeContext(pathname: string, date: string | undefined): JarvisContext
   return ctx;
 }
 
-function Panel({ contextInput, conversationId, creating, createError, onConversationId, onClose }: { contextInput: JarvisContextInput; conversationId: number | string | null; creating: boolean; createError: string | null; onConversationId: (id: number | string) => void; onClose: () => void }) {
+function Panel({ contextInput, conversationId, creating, createError, onConversationId, onClose, draft }: { contextInput: JarvisContextInput; draft?: string; conversationId: number | string | null; creating: boolean; createError: string | null; onConversationId: (id: number | string) => void; onClose: () => void }) {
   const state = useJarvisState();
   const chat = useJarvisChat({ conversationId, onConversationId, context: contextInput });
   const pill = pillState(state.data?.state, chat.streaming, chat.error);
@@ -59,6 +59,7 @@ function Panel({ contextInput, conversationId, creating, createError, onConversa
           serverState={state.data?.state}
           serverMessage={state.data?.message}
           contextInput={contextInput}
+          draft={draft}
           onSend={chat.send}
           onStop={chat.stop}
         />
@@ -73,6 +74,7 @@ export function JarvisPanelProvider({ children }: { children: ReactNode }) {
   const date = useSelectedDate();
   const [isOpen, setOpen] = useState(false);
   const [extra, setExtra] = useState<JarvisContextInput>({});
+  const [draft, setDraft] = useState<string | undefined>(undefined);
   const [byKey, setByKey] = useState<Record<string, number | string>>({});
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -82,7 +84,10 @@ export function JarvisPanelProvider({ children }: { children: ReactNode }) {
   const conversationId = byKey[key] ?? null;
 
   // The "Ask JARVIS" context belongs to the page it was asked on.
-  useEffect(() => setExtra({}), [pathname]);
+  useEffect(() => {
+    setExtra({});
+    setDraft(undefined);
+  }, [pathname]);
 
   // One conversation per context: reused while the context is unchanged, a new one when it changes.
   useEffect(() => {
@@ -107,8 +112,9 @@ export function JarvisPanelProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed by the serialised context
   }, [isOpen, key, conversationId]);
 
-  const open = useCallback((x?: JarvisContextInput) => {
+  const open = useCallback((x?: JarvisContextInput, text?: string) => {
     setExtra(x ?? {});
+    setDraft(text);
     setOpen(true);
   }, []);
   const close = useCallback(() => setOpen(false), []);
@@ -128,7 +134,7 @@ export function JarvisPanelProvider({ children }: { children: ReactNode }) {
   return (
     <Ctx.Provider value={api}>
       {children}
-      {isOpen && <Panel key={key} contextInput={contextInput} conversationId={conversationId} creating={creating} createError={createError} onConversationId={(id) => setByKey((m) => ({ ...m, [key]: id }))} onClose={close} />}
+      {isOpen && <Panel key={key} contextInput={contextInput} conversationId={conversationId} creating={creating} createError={createError} onConversationId={(id) => setByKey((m) => ({ ...m, [key]: id }))} onClose={close} draft={draft} />}
     </Ctx.Provider>
   );
 }

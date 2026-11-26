@@ -803,6 +803,73 @@ class LiveMilestone(Base):
 
 LIVE_TABLES = [LiveGame, LivePlayerBox, LivePlay, LiveFollow, LiveMilestone]
 
+# ---------------------------------------------------------------- GIZER CORTEX (basketball knowledge)
+class CortexSource(Base):
+    __tablename__ = "cortex_sources"
+    key: Mapped[str] = mapped_column(String(48), primary_key=True)
+    title: Mapped[str] = mapped_column(String(200))
+    publisher: Mapped[str | None] = mapped_column(Text)
+    url: Mapped[str | None] = mapped_column(String(300))
+    league: Mapped[str | None] = mapped_column(Text)
+    kind: Mapped[str | None] = mapped_column(Text)
+    reliability: Mapped[str | None] = mapped_column(Text)
+    permission: Mapped[str | None] = mapped_column(Text)
+    accessed: Mapped[str | None] = mapped_column(String(16))          # date the author opened it, if they did
+    access_result: Mapped[str | None] = mapped_column(Text)
+    updated_at: Mapped[datetime] = _ts(default=utcnow)
+
+
+class CortexConcept(Base):
+    """One knowledge record. Original text; `verification` says whether it was checked against an opened source."""
+    __tablename__ = "cortex_concepts"
+    slug: Mapped[str] = mapped_column(String(80), primary_key=True)
+    department: Mapped[int] = mapped_column(Integer, index=True)
+    kind: Mapped[str] = mapped_column(String(16), index=True)
+    title: Mapped[str] = mapped_column(String(200))
+    summary: Mapped[str] = mapped_column(Text)
+    body: Mapped[str] = mapped_column(Text)
+    formula: Mapped[str | None] = mapped_column(Text)
+    detail: Mapped[dict] = mapped_column(JS, default=dict)          # the remaining authored fields, as written
+    ruleset: Mapped[str] = mapped_column(String(12), default="general")
+    season_note: Mapped[str | None] = mapped_column(String(200))
+    verification: Mapped[str] = mapped_column(String(32), index=True)
+    source_keys: Mapped[list] = mapped_column(JS, default=list)
+    content_sha: Mapped[str] = mapped_column(String(64))
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    search_text: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = _ts(default=utcnow)
+    updated_at: Mapped[datetime] = _ts(default=utcnow)
+
+
+class CortexRetrievalLog(Base):
+    __tablename__ = "cortex_retrieval_log"
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    query: Mapped[str] = mapped_column(String(300))
+    filters: Mapped[dict] = mapped_column(JS, default=dict)
+    returned: Mapped[list] = mapped_column(JS, default=list)
+    method: Mapped[str] = mapped_column(String(24))
+    duration_ms: Mapped[int] = mapped_column(Integer, default=0)
+    caller: Mapped[str] = mapped_column(String(24), default="api")
+    created_at: Mapped[datetime] = _ts(default=utcnow, index=True)
+
+
+class CortexBenchmarkRun(Base):
+    __tablename__ = "cortex_benchmark_runs"
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    kind: Mapped[str] = mapped_column(String(16))                  # retrieval | answers
+    split: Mapped[str] = mapped_column(String(12))
+    model: Mapped[str | None] = mapped_column(String(48))
+    n: Mapped[int] = mapped_column(Integer)
+    score: Mapped[float | None] = mapped_column(Float)
+    by_category: Mapped[dict] = mapped_column(JS, default=dict)
+    details: Mapped[list] = mapped_column(JS, default=list)
+    cost_usd: Mapped[float | None] = mapped_column(Float)
+    library_version: Mapped[str | None] = mapped_column(String(64))
+    created_at: Mapped[datetime] = _ts(default=utcnow)
+
+
+CORTEX_TABLES = [CortexSource, CortexConcept, CortexRetrievalLog, CortexBenchmarkRun]
+
 JARVIS_TABLES = [AiBudgetPolicy, AiUsage, JarvisConversation, JarvisMessage, JarvisToolCall, JarvisMemory, JarvisBriefing,
                  JarvisEvent]
 

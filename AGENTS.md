@@ -45,3 +45,8 @@ never call a model, and a turn is limited to 6 tool rounds. Its scheduled briefi
 pregame) are built from deterministic facts; a model only words them when the AI budget allows.
 See `docs/jarvis/` for architecture, tool registry, memory, budget, security and operations.
 
+## GIZER CORTEX — shared knowledge, not more agents
+The twenty CORTEX departments are sections of one knowledge library, not running agents. JARVIS and any research
+role consult them through `search_basketball_knowledge` and `get_basketball_concept`, and read evidence-derived
+profiles through `get_player_dna` and `get_team_dna`. See `docs/cortex/`.
+

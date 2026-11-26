@@ -228,7 +228,8 @@ def test_every_read_tool_runs_against_stored_data(app, monkeypatch):
             "get_lineups": {"game_id": "S0"}, "get_lineup_changes": {"game_id": "S0"}, "compare_player_statistics": {"player_ids": [pid, pid + 1]},
             "get_threshold_history": {"player_id": pid, "stat": "pts", "line": 10.5}, "get_kalshi_market": None,
             "inspect_research_validation": None, "remember": None, "request_research_job": None, "evaluate_combination": None,
-            "get_opponent_defensive_context": {"team_id": ST["teams"][0]}}
+            "get_opponent_defensive_context": {"team_id": ST["teams"][0]},
+            "search_basketball_knowledge": {"query": "shot clock"}, "get_basketball_concept": None}
     for t in T.TOOLS:
         f = t.args.model_fields
         a = args.get(t.name, {"game_id": "S0"} if "game_id" in f and f["game_id"].is_required() else

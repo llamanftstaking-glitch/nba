@@ -1,0 +1,998 @@
+[
+ {
+  "slug": "pick-and-roll",
+  "department": 2,
+  "kind": "offense",
+  "title": "Pick-and-roll",
+  "summary": "A ball handler uses a teammate's screen and the screener then dives to the basket, forcing two defenders to guard two threats at once.",
+  "body": "The pick-and-roll is the most common way to create an advantage in modern basketball. A teammate sets a screen on the defender guarding the ball; the handler dribbles off it, and the screener turns and runs to the rim. For a moment the two defenders involved must deal with a dribbler coming downhill and a big man rolling behind them, and whatever they choose concedes something: a pull-up jumper, a lane to the rim, a pass to the roller, or, if a third defender steps in to help, a pass to the shooter that helper left. The action is therefore a decision tree, and its value depends on the handler reading the coverage correctly and on the three teammates being placed where help is costly. The same screen produces very different statistics depending on the defence. Coverages that keep two on the ball push assists and shots to others; coverages that stay home leave the handler to score. That is why a creator's points and assists can swing between opponents without any change in his form.",
+  "formula": null,
+  "player_responsibilities": "Ball handler: set up the defender, use the screen tightly, read the big defender and the helper. Screener: make solid legal contact, then roll hard with hands ready. Other three: space to the corners and wings, be ready to shoot or cut when a defender helps.",
+  "common_responses": "Drop coverage, switching, hedge or show, blitz or trap, ice toward the sideline, going under the screen against a weak shooter, and tagging the roller from the weak side.",
+  "limitations": [
+   "General description of the action; our data cannot confirm how often any team or player runs it.",
+   "Box scores show the result (points, assists) but not that a pick-and-roll produced it.",
+   "The value of the action depends on personnel that changes with injuries and substitutions."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "points",
+   "assists",
+   "field goal attempts",
+   "turnovers"
+  ],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no film or tracking data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "drop-coverage",
+   "switching-defense",
+   "blitz-and-trap",
+   "short-roll",
+   "pick-and-pop",
+   "primary-creator",
+   "rim-runner"
+  ],
+  "evaluation_questions": [
+   "What two threats does a pick-and-roll force the defence to handle together?",
+   "Why might a ball handler's assists rise against a team that traps the screen?"
+  ]
+ },
+ {
+  "slug": "pick-and-pop",
+  "department": 2,
+  "kind": "offense",
+  "title": "Pick-and-pop",
+  "summary": "The screener steps out for a jump shot after the screen instead of rolling to the rim.",
+  "body": "In a pick-and-pop the screener, after making contact, moves away from the basket to an open spot on the perimeter while the handler attacks. It asks a different question of the defence than a roll does. A big defender who sags toward the paint to contain the dribbler is now a long way from a shooter, and recovering in time means a long closeout that can be attacked off the dribble. The action only works if the screener is a credible shooter; against a non-shooter the defence simply ignores the pop. It also changes the geometry of the floor. With the screener outside, no offensive player is near the rim, so the handler has a clearer lane but nobody to finish a lob or take an offensive rebound. Teams with shooting big men mix pops and rolls so the defender cannot decide in advance. In a box score a popping big tends to show three-point attempts and fewer free throws and offensive rebounds than a rolling one.",
+  "formula": null,
+  "player_responsibilities": "Screener: screen, then separate to an open perimeter spot with feet set, ready to shoot or drive the closeout. Ball handler: draw the big defender, deliver an accurate pass on time. Others: keep spacing and avoid bringing a helper toward the popper.",
+  "common_responses": "Switching the screen, having the big defender play higher, rotating a third defender to the popper and recovering behind, or going under and inviting the handler's jumper.",
+  "limitations": [
+   "General description of the action; our data cannot confirm how often any team or player runs it.",
+   "Three-pointers made by a big man do not prove they came from pick-and-pop.",
+   "Shooting ability from distance is noisy in small samples."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "three-pointers made",
+   "field goal attempts"
+  ],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no film or tracking data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "pick-and-roll",
+   "stretch-big",
+   "drop-coverage",
+   "closeouts",
+   "five-out"
+  ],
+  "evaluation_questions": [
+   "Why does drop coverage struggle against a pick-and-pop?",
+   "What does an offence give up when the screener pops instead of rolling?"
+  ]
+ },
+ {
+  "slug": "isolation",
+  "department": 2,
+  "kind": "offense",
+  "title": "Isolation",
+  "summary": "One player attacks his defender alone while teammates clear space.",
+  "body": "An isolation removes screens and movement and asks a single scorer to beat a single defender. Teammates move away, usually to the opposite side, so that help has a long way to travel. Teams use it to attack a favourable matchup - often one created by forcing a switch - to get a dependable shot late in the clock, or to slow the game and limit turnovers at the end of a close contest. Its strengths are control and low turnover risk. Its weaknesses are that it involves one player, tends to produce contested shots, and lets four defenders rest and load toward the ball. Whether it is efficient depends heavily on who is isolating and against whom. A heavy isolation role shows up indirectly in a profile as high usage with a relatively low share of assisted-looking production and a meaningful free throw rate, but these are hints only: without play-type data the same profile can come from pick-and-roll scoring.",
+  "formula": null,
+  "player_responsibilities": "Isolating player: attack decisively, read whether help comes, pass out if two defenders commit. Teammates: clear to the weak side, stay spaced and ready to shoot, cut behind helpers who turn their heads.",
+  "common_responses": "Stay home on shooters and trust the on-ball defender, shade a helper toward the driving lane, send a late double-team, or avoid the switch that created the matchup in the first place.",
+  "limitations": [
+   "General description of the action; our data cannot confirm how often any team or player runs it.",
+   "Usage and free throw rate are indirect hints and cannot identify isolations.",
+   "Efficiency of isolation depends on matchups we cannot observe."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "usage percentage (provider)",
+   "field goal attempts",
+   "free throw attempts"
+  ],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no film or tracking data",
+   "no defensive matchups"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "switching-defense",
+   "primary-creator",
+   "usage-percentage",
+   "spacing",
+   "help-defense"
+  ],
+  "evaluation_questions": [
+   "Why do teams isolate late in the shot clock or late in close games?",
+   "What is the main structural weakness of isolation offence?"
+  ]
+ },
+ {
+  "slug": "post-up",
+  "department": 2,
+  "kind": "offense",
+  "title": "Post-up",
+  "summary": "A player receives the ball with his back to the basket near the lane and scores or passes from there.",
+  "body": "A post-up starts with a player establishing position close to the basket, sealing his defender, and receiving an entry pass. From there he can score with footwork and strength, draw a foul, or pass to cutters and shooters if a second defender comes. Post play is used less as a first option than in earlier eras, but it remains an effective way to punish a size mismatch after a switch, to draw fouls, and to slow the game. It also works as a passing hub: the ball inside pulls defenders' eyes inward, and cuts and relocations behind them produce open shots. The costs are spacing and time. A post-up occupies the lane, the entry pass can be denied or stolen, and the action often uses much of the shot clock. In a box score a post-oriented scorer tends to combine field goal attempts with a healthy free throw rate and offensive rebounds, though the same profile fits a roll man and cannot settle the question.",
+  "formula": null,
+  "player_responsibilities": "Post player: win position early, show a target, read single coverage versus a double. Entry passer: use an angle that avoids the fronting defender. Others: space, then cut or relocate when their defenders turn to help.",
+  "common_responses": "Fronting the post, three-quarter denial, single coverage with a late dig from the nearest guard, a hard double-team from the baseline or top, or pushing the catch farther from the basket.",
+  "limitations": [
+   "General description of the action; our data cannot confirm how often any team or player runs it.",
+   "Post touches are not recorded in our data.",
+   "A profile of free throws and rebounds is consistent with several interior roles."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "field goal attempts",
+   "free throw attempts",
+   "rebounds"
+  ],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no film or tracking data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "interior-scorer",
+   "switching-defense",
+   "help-defense",
+   "four-out-one-in",
+   "free-throw-rate"
+  ],
+  "evaluation_questions": [
+   "Why is a post-up a common answer to a switch?",
+   "How can a post-up create shots for players other than the one in the post?"
+  ]
+ },
+ {
+  "slug": "motion-offense",
+  "department": 2,
+  "kind": "offense",
+  "title": "Motion offense",
+  "summary": "A read-based offence built on continuous passing, cutting and screening instead of fixed set plays.",
+  "body": "Motion offence gives players rules in place of a script: pass and cut, screen away, fill the open spot, replace the cutter. Each player reads his defender and chooses among options the rules allow, so the same alignment can produce a different shot every trip. The benefits are unpredictability, involvement of all five players, and constant work for the defence away from the ball, which leads to breakdowns and open catch-and-shoot chances. The costs are that it needs players who pass, move and decide well, it takes time to teach, and it can drift without producing a good shot if nobody creates an advantage. Statistically, teams that lean on motion tend to spread shots and assists across more players, while teams that lean on one creator concentrate them. That affects how stable individual totals are: in a spread system a given player's shot count depends on where the reads take the ball, so his game-to-game attempts can vary more than those of a clear first option.",
+  "formula": null,
+  "player_responsibilities": "All five: pass and move, screen for a teammate, read the defender before cutting, keep spacing by filling vacated spots. Bigs: screen and act as passing hubs at the elbow or top. Guards and wings: cut hard and shoot on the catch.",
+  "common_responses": "Switching off-ball screens to remove advantages, denying passing lanes, playing physically on cutters, and sagging off weak shooters to clog cutting lanes.",
+  "limitations": [
+   "General description of the action; our data cannot confirm how often any team or player runs it.",
+   "Distribution of shots across a roster hints at style but has other causes, including injuries.",
+   "No measure of passes or cuts exists in our data."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "field goal attempts",
+   "assists"
+  ],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no film or tracking data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "off-ball-scorer",
+   "backdoor-cut",
+   "pin-down-screen",
+   "connector",
+   "shot-volume"
+  ],
+  "evaluation_questions": [
+   "What replaces set plays in a motion offence?",
+   "Why might a player's shot attempts vary more in a motion system?"
+  ]
+ },
+ {
+  "slug": "five-out",
+  "department": 2,
+  "kind": "offense",
+  "title": "Five-out spacing",
+  "summary": "All five offensive players start outside the three-point line, leaving the lane empty.",
+  "body": "In a five-out alignment nobody stands in the paint. Every defender is pulled to the perimeter, so there is no rim protector waiting in the lane unless he abandons his man. Drives and cuts then meet an open basket, and any help must come from a defender leaving a shooter. The alignment requires that all five players, including the centre, be at least a threat to shoot or to make a play from the perimeter; a defender will ignore a big who is neither. It suits offences built on drives, dribble handoffs and backdoor cuts. The trade-offs are on the glass and in transition: with everyone outside, offensive rebounding is weaker, though getting back on defence is easier. For individual statistics, a centre used in five-out sets usually takes more threes and handles the ball more in handoffs, which shows up as three-point attempts and assists, and he tends to collect fewer offensive rebounds than a centre stationed near the rim.",
+  "formula": null,
+  "player_responsibilities": "Centre: operate at the top or elbow extended as a passer, screener and shooter. Wings and guards: hold the corners and slots, drive closeouts, cut backdoor when overplayed. Everyone: keep the lane clear until a cut or drive is made.",
+  "common_responses": "Switching everything, keeping the big defender near the lane by ignoring a non-shooting centre, zone looks, and denying handoffs to disrupt timing.",
+  "limitations": [
+   "General description of the action; our data cannot confirm how often any team or player runs it.",
+   "Positions and alignments are not recorded; a centre's threes and assists only suggest the style.",
+   "Our historical data lacks the offensive/defensive rebound split."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "three-pointers made",
+   "assists",
+   "rebounds"
+  ],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no film or tracking data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "spacing",
+   "stretch-big",
+   "dribble-handoff",
+   "backdoor-cut",
+   "four-out-one-in",
+   "rim-protection"
+  ],
+  "evaluation_questions": [
+   "What defensive resource does five-out spacing try to remove from the lane?",
+   "What does an offence usually give up by placing all five players on the perimeter?"
+  ]
+ },
+ {
+  "slug": "four-out-one-in",
+  "department": 2,
+  "kind": "offense",
+  "title": "Four-out, one-in",
+  "summary": "Four perimeter players surround one interior player who works in the post, dunker spot or as a roller.",
+  "body": "Four-out one-in keeps a single player near the basket and spreads the other four around the arc. It is the most common base alignment because it balances spacing with an interior presence: the inside player screens, rolls, posts up, finishes drop-off passes and rebounds, while four shooters hold their defenders outside. The interior player's exact position matters. Standing in the lane crowds driving lanes; waiting along the baseline behind the defence, in the so-called dunker spot, keeps the lane open while staying one pass from a dunk. Compared with five-out the alignment gives better offensive rebounding and a lob target but leaves one help defender naturally near the rim. Roles are easy to read from it in general terms: the interior player's production leans toward high-percentage attempts, free throws and offensive rebounds, and the perimeter players' toward threes and drives. Which player on a roster fills the inside role can change with substitutions, and with it the distribution of those statistics.",
+  "formula": null,
+  "player_responsibilities": "Interior player: screen and roll, seal in the post, wait in the dunker spot on drives, crash the glass. Perimeter four: space to the three-point line, shoot, drive closeouts, and feed the interior player when his defender helps.",
+  "common_responses": "Keep the interior defender near the rim as a helper, front the post, tag the roller from the weak side, and close out under control to the four shooters.",
+  "limitations": [
+   "General description of the action; our data cannot confirm how often any team or player runs it.",
+   "Alignment cannot be observed; statistical profiles only suggest who plays inside.",
+   "Offensive rebounds by player are available only for live games since 2026-11-25."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "rebounds",
+   "field goal attempts",
+   "three-pointers made",
+   "offensive/defensive rebounds (live games only)"
+  ],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no film or tracking data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "five-out",
+   "pick-and-roll",
+   "post-up",
+   "rim-runner",
+   "spacing"
+  ],
+  "evaluation_questions": [
+   "What is the 'dunker spot' and why is it used?",
+   "How does four-out one-in differ from five-out in its trade-offs?"
+  ]
+ },
+ {
+  "slug": "horns",
+  "department": 2,
+  "kind": "offense",
+  "title": "Horns set",
+  "summary": "A formation with the ball handler at the top, two bigs at the elbows and two shooters in the corners.",
+  "body": "Horns describes a starting formation, not a single play. The point guard brings the ball to the top of the floor, two teammates stand at the elbows or just above them, and two more stand in the corners. From that symmetric shape the offence can go either way: a ball screen from either elbow player, a pass to an elbow followed by a handoff or a cut, a screen by one elbow player for the other, or a quick pass to a corner. Because both sides look identical at the start, the defence cannot load toward one side in advance, and the two elbow defenders are pulled away from the basket, opening the lane. Coaches like the set after timeouts and at the start of quarters because many options flow from one call. It demands bigs who can pass from the elbow and, ideally, shoot. Nothing in a box score identifies a horns set; its results appear as ordinary points and assists.",
+  "formula": null,
+  "player_responsibilities": "Point guard: choose a side and read the coverage. Elbow players: screen, pop, roll, or receive and pass. Corner players: stay spaced, lift or cut when their defender helps.",
+  "common_responses": "Push the elbow catches higher, switch the ball screen, sink a corner defender to tag the roller, or deny the entry to the better passing big.",
+  "limitations": [
+   "General description of the action; our data cannot confirm how often any team or player runs it.",
+   "Formations are invisible in box-score and play-by-play text.",
+   "The set's value depends on the skills of the two elbow players."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no film or tracking data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "pick-and-roll",
+   "dribble-handoff",
+   "after-timeout-plays",
+   "facilitator",
+   "pick-and-pop"
+  ],
+  "evaluation_questions": [
+   "Describe where the five players stand at the start of a horns set.",
+   "Why does the symmetry of horns make it hard to defend in advance?"
+  ]
+ },
+ {
+  "slug": "spain-pick-and-roll",
+  "department": 2,
+  "kind": "offense",
+  "title": "Spain pick-and-roll",
+  "summary": "A pick-and-roll with a third player setting a back screen on the roller's defender before popping out.",
+  "body": "The Spain pick-and-roll, also called a stack pick-and-roll, adds a third attacker to the basic action. As the ball handler comes off the screen and the screener rolls, a guard standing near the foul line sets a back screen on the big defender who is retreating in drop coverage. That defender is the one normally responsible for both containing the dribbler and staying with the roller, and the back screen removes him from the play. The guard then pops to the three-point line. The defence must solve three problems in two seconds: the handler driving, the roller running free to the rim, and a shooter stepping out. Drop coverage is especially vulnerable because the dropping big cannot see the back screen coming. The action needs precise timing, a guard willing to screen a bigger player, and a legal screen. It is a set call more than a continuous action, so it appears a handful of times in a game, often after a timeout.",
+  "formula": null,
+  "player_responsibilities": "Ball handler: use the first screen and read whether the roller or the popping guard is open. Roller: sprint to the rim. Back screener: screen the dropping big legally, then pop to the arc ready to shoot. Others: hold the corners.",
+  "common_responses": "Switch all three defenders, have the back screener's defender take the roller, play the ball screen higher to delay the handler, or pre-switch so a bigger defender guards the back screener.",
+  "limitations": [
+   "General description of the action; our data cannot confirm how often any team or player runs it.",
+   "Timing-dependent; easily disrupted by pressure on the ball.",
+   "Cannot be identified from any data we hold."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no film or tracking data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "pick-and-roll",
+   "drop-coverage",
+   "back-screen",
+   "after-timeout-plays",
+   "switching-defense"
+  ],
+  "evaluation_questions": [
+   "Which defender does the back screen target in a Spain pick-and-roll?",
+   "Why is drop coverage vulnerable to this action?"
+  ]
+ },
+ {
+  "slug": "dribble-handoff",
+  "department": 2,
+  "kind": "offense",
+  "title": "Dribble handoff (DHO)",
+  "summary": "A player dribbles toward a teammate and hands him the ball, acting as a screener at the same moment.",
+  "body": "In a dribble handoff the passer and the screener are the same person. A player, often a big at the top or elbow, dribbles at a teammate's defender and hands the ball off as the teammate runs past his shoulder. The receiver is already moving, so he reaches the action with more speed than in a standing pick-and-roll, and his defender has to fight around a body while trailing. From the handoff the receiver can shoot, turn the corner, or flow into a second action. The passer can also keep the ball and drive if the defence overplays the exchange, or the receiver can cut backdoor when denied. Handoffs are a way to involve bigs who pass well and to get shooters the ball on the move without a guard having to break his man down. Scorers credit an assist on a handoff only if it leads directly to the basket, so a passing big's assist count captures some of these and misses others.",
+  "formula": null,
+  "player_responsibilities": "Handoff big: dribble at the receiver's defender, deliver the ball safely, then roll or pop; keep it and drive if the defence jumps the exchange. Receiver: set up the cut, come off shoulder to shoulder, read shot, drive or pass.",
+  "common_responses": "Chase over the top, switch the exchange, go under against a non-shooter, deny the handoff by overplaying the receiver's path, or have the big's defender step up to slow the receiver.",
+  "limitations": [
+   "General description of the action; our data cannot confirm how often any team or player runs it.",
+   "Handoffs are not labelled in our play-by-play.",
+   "A big man's assist total reflects many kinds of pass, not handoffs alone."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "assists"
+  ],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no film or tracking data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "five-out",
+   "backdoor-cut",
+   "facilitator",
+   "screen-navigation-over-under",
+   "off-ball-scorer"
+  ],
+  "evaluation_questions": [
+   "In a dribble handoff, which player acts as the screener?",
+   "What counter does the receiver have when his defender denies the handoff?"
+  ]
+ },
+ {
+  "slug": "pin-down-screen",
+  "department": 2,
+  "kind": "offense",
+  "title": "Pin-down screen",
+  "summary": "A screen set facing the baseline that frees a teammate to come up from below toward the perimeter for a catch.",
+  "body": "A pin-down is an off-ball screen set by a player who faces the baseline, on the defender of a teammate positioned lower on the floor. The teammate runs up off the screen toward the wing or the top and catches the ball moving away from the basket, ready to shoot. It is the standard way to free a shooter. The cutter reads his defender: if the defender trails, he curls tightly toward the lane; if the defender goes under the screen, he fades or stops for a jump shot; if the defender is caught on top of the screen, he can reject it and cut backdoor. The screener is a second threat, slipping to the basket when his own defender steps out to help. Pin-downs also serve as entries into other actions, bringing a guard to the top to receive a handoff or start a pick-and-roll. The points they create are typically assisted jump shots, which is the usual statistical signature of an off-ball scorer.",
+  "formula": null,
+  "player_responsibilities": "Screener: set a wide, still screen facing the baseline, then slip or pop according to the help. Cutter: set up the defender, read trail, under or overplay, and come off ready to shoot. Passer: deliver on time and on target.",
+  "common_responses": "Trail over the top and contest from behind, shoot the gap under the screen, switch, or overplay the cutter on the high side to deny the screen altogether.",
+  "limitations": [
+   "General description of the action; our data cannot confirm how often any team or player runs it.",
+   "Whether a made three came from a pin-down cannot be known from our data.",
+   "Legal-screen judgement by officials affects how physical the action can be."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "three-pointers made"
+  ],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no film or tracking data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "flare-screen",
+   "back-screen",
+   "off-ball-scorer",
+   "catch-and-shoot",
+   "screen-navigation-over-under"
+  ],
+  "evaluation_questions": [
+   "Which way does the screener face in a pin-down?",
+   "How should the cutter react if his defender trails him over the screen?"
+  ]
+ },
+ {
+  "slug": "flare-screen",
+  "department": 2,
+  "kind": "offense",
+  "title": "Flare screen",
+  "summary": "A screen that lets a shooter drift away from the ball toward the wing or corner for a skip pass.",
+  "body": "A flare screen is set on the defender's inside shoulder so that the offensive player can fade away from the ball, toward the sideline, instead of coming toward it. The pass that follows is usually a lob or a skip over the top of the defence. The action punishes defenders who cheat toward the ball or who try to deny a cut toward it: the more a defender leans to the middle, the easier he is to screen. It often follows another action - a player sets a ball screen and then receives a flare, or passes and fades behind a screen - so the defender involved is already recovering from one job when the next arrives. The shot it creates is a catch-and-shoot three with the shooter's momentum going sideways, which is harder than a stationary look. The pass is long and can be intercepted, so the play needs a passer with the vision and strength to throw it accurately across the floor.",
+  "formula": null,
+  "player_responsibilities": "Screener: screen the defender's inside shoulder, then dive or pop. Shooter: fade to open space with hands ready. Passer: see the screen develop and throw over the top on time.",
+  "common_responses": "Fight over and chase, switch the screen, have the screener's defender step out to contest, or stay attached and refuse to cheat toward the ball.",
+  "limitations": [
+   "General description of the action; our data cannot confirm how often any team or player runs it.",
+   "The skip pass carries turnover risk that is not attributed to the play in any data we hold.",
+   "Cannot be identified from box scores."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "three-pointers made"
+  ],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no film or tracking data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "pin-down-screen",
+   "back-screen",
+   "floor-spacer",
+   "weak-side-action",
+   "catch-and-shoot"
+  ],
+  "evaluation_questions": [
+   "In which direction does a shooter move when using a flare screen?",
+   "What defensive habit does a flare screen punish?"
+  ]
+ },
+ {
+  "slug": "back-screen",
+  "department": 2,
+  "kind": "offense",
+  "title": "Back screen",
+  "summary": "A screen set behind a defender, out of his sight, to free a teammate cutting to the basket.",
+  "body": "A back screen is set on the blind side of a defender who is watching the ball. His man then cuts toward the rim, and the defender runs into a screen he did not see. The result, when it works, is a layup or a lob. Back screens are the main tool for punishing defences that pressure the perimeter and overplay passing lanes, and they are a staple of sets drawn up after timeouts. They also create a second chance: the defender guarding the screener often has to drop and protect the rim, which leaves the screener open as he steps out to the perimeter, an idea sometimes described as screening the screener's own way open. The rules require that a screen set outside a stationary defender's field of vision give him room to take a normal step, which is why illegal-screen calls are common on this action. Communication is the usual defensive failure, since only the screener's defender can see the play coming.",
+  "formula": null,
+  "player_responsibilities": "Screener: arrive quietly on the defender's blind side, give legal space, then step out for the ball. Cutter: wait for the screen, cut hard to the rim with a hand up. Passer: throw the lob or bounce pass early.",
+  "common_responses": "The screener's defender calls the screen and sinks to protect the rim, defenders switch, or the cutter's defender plays lower and gives up perimeter pressure.",
+  "limitations": [
+   "General description of the action; our data cannot confirm how often any team or player runs it.",
+   "The legality standard is summarised from general knowledge of the rules and was not checked against the rulebook pages opened.",
+   "Not identifiable from our data."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no film or tracking data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "backdoor-cut",
+   "spain-pick-and-roll",
+   "pin-down-screen",
+   "help-defense",
+   "after-timeout-plays"
+  ],
+  "evaluation_questions": [
+   "Why is communication the key to defending a back screen?",
+   "Who often becomes open after setting a back screen, and why?"
+  ]
+ },
+ {
+  "slug": "backdoor-cut",
+  "department": 2,
+  "kind": "offense",
+  "title": "Backdoor cut",
+  "summary": "A cut behind an overplaying defender toward the basket for a pass and a layup.",
+  "body": "A backdoor cut is the offence's answer to denial. When a defender steps into the passing lane to prevent a catch on the perimeter, the offensive player plants and cuts behind him toward the basket, and the passer delivers a bounce pass into the space the defender vacated. It needs no screen, only timing and eye contact between cutter and passer. The cut is most effective when the lane is empty, which is why it pairs naturally with five-out alignments and with bigs who handle the ball at the top or the elbow. Even when the pass is not thrown, the threat changes the defence: defenders who have been beaten backdoor play further off, and catches on the perimeter become easier. Backdoor cuts produce high-percentage shots and assists for the passer. They also carry some turnover risk, because a misread between passer and cutter sends the ball out of bounds or into a helper's hands.",
+  "formula": null,
+  "player_responsibilities": "Cutter: sell the catch, plant the outside foot, cut behind the defender with a target hand. Passer: fake if needed and deliver a bounce pass ahead of the cutter. Others: keep the lane clear.",
+  "common_responses": "Play less denial, keep a helper at the rim, see both ball and man, and pressure the passer so the timing pass is harder to make.",
+  "limitations": [
+   "General description of the action; our data cannot confirm how often any team or player runs it.",
+   "Cuts are not recorded in any data we hold.",
+   "The shots it creates are indistinguishable from other layups in a box score."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "assists"
+  ],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no film or tracking data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "back-screen",
+   "five-out",
+   "motion-offense",
+   "help-defense",
+   "connector"
+  ],
+  "evaluation_questions": [
+   "What defensive behaviour makes a backdoor cut available?",
+   "Why does an empty lane make backdoor cuts more effective?"
+  ]
+ },
+ {
+  "slug": "transition-offense",
+  "department": 2,
+  "kind": "offense",
+  "title": "Transition offense",
+  "summary": "Attacking before the defence is set, after a rebound, steal or made basket.",
+  "body": "Transition offence is the attempt to score in the first seconds of a possession, while defenders are still running back and matchups are not established. It begins with a defensive rebound, a steal or a quick inbound, and depends on an immediate outlet pass or push dribble, wings running wide to the corners, and a big running to the rim. Shots taken against an unset defence are generally better than half-court shots, with more layups, open threes and fouls, which is why teams value live-ball turnovers and defensive rebounds as launch points. The cost of running is risk: more turnovers from hurried passes, and less offensive rebounding if players are already heading the other way. Team fast-break points are the usual box-score trace, and they are available to us as a team total in live games. The scorer's definition of a fast break is narrower than the coaching idea of early offence, so the number understates how much a team benefits from playing quickly.",
+  "formula": null,
+  "player_responsibilities": "Rebounder: outlet quickly or push the ball himself. Ball handler: advance fast and attack if numbers favour the offence. Wings: sprint wide to the corners. First big: run to the rim. Trailing big: follow to the top for a trail three or a drag screen.",
+  "common_responses": "Send fewer players to the offensive glass, sprint back and protect the rim first, stop the ball early, match up by proximity instead of assignment, and foul only where the rules do not penalise it heavily.",
+  "limitations": [
+   "General description of the action; our data cannot confirm how often any team or player runs it.",
+   "Fast-break points depend on a scorer's definition and exist in our data as team totals for live games only.",
+   "Individual transition frequency is not available."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "team totals including points in the paint and fast-break points (live games only)",
+   "steals"
+  ],
+  "data_gaps": [
+   "no per-player transition data",
+   "no time-to-shot data",
+   "no film"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "pace-and-early-offense",
+   "transition-defense",
+   "pace",
+   "steal",
+   "clear-path-foul"
+  ],
+  "evaluation_questions": [
+   "Which two defensive events most often start transition offence?",
+   "Why do fast-break points understate the benefit of playing early in the clock?"
+  ]
+ },
+ {
+  "slug": "drive-and-kick",
+  "department": 2,
+  "kind": "offense",
+  "title": "Drive-and-kick",
+  "summary": "A ball handler penetrates to draw help, then passes out to an open shooter.",
+  "body": "Drive-and-kick is the simplest chain reaction in offence. A player beats his defender off the dribble and heads for the lane. A helper must step in to stop the layup, and the driver passes to the teammate that helper left. If the defence rotates to that shooter, he can shoot, drive the closeout himself, or swing the ball one more pass to the next open man. Good offences repeat this until the rotation breaks. The action relies on two things: a player able to get into the paint, and shooters whom the defence is afraid to leave. Where the help comes from decides where the shot goes; help from the strong-side corner gives up the shortest three on the floor. Assists from drive-and-kick depend on teammates making open shots, so a driver's assist totals move with their shooting luck. A player who drives a great deal tends to show free throw attempts, assists and turnovers together.",
+  "formula": null,
+  "player_responsibilities": "Driver: get two feet in the paint, see where help comes from, pass on time and on target. Shooters: hold spacing, relocate into the driver's vision, shoot or attack the closeout. Big: stay out of the driving lane or be ready for a drop-off pass.",
+  "common_responses": "Contain the ball without help, help from the non-shooter, stunt and recover instead of fully committing, close out under control, and rotate behind the first helper.",
+  "limitations": [
+   "General description of the action; our data cannot confirm how often any team or player runs it.",
+   "Drives are tracking data that we do not have.",
+   "Assist totals depend on teammates converting, which is noisy."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "assists",
+   "free throw attempts",
+   "turnovers"
+  ],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no film or tracking data",
+   "no drives or passes data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "help-defense",
+   "closeouts",
+   "rotations",
+   "spacing",
+   "catch-and-shoot",
+   "playmaking-dependence-on-teammate-shooting"
+  ],
+  "evaluation_questions": [
+   "What two ingredients does drive-and-kick rely on?",
+   "Why do a driver's assists fluctuate from game to game even when he plays the same way?"
+  ]
+ },
+ {
+  "slug": "weak-side-action",
+  "department": 2,
+  "kind": "offense",
+  "title": "Weak-side action",
+  "summary": "Screens, cuts and exchanges on the side away from the ball, used to occupy helpers or create a second option.",
+  "body": "The weak side is the half of the floor away from the ball. Defenders there are the helpers: they sag toward the lane to protect against drives and rolls. Weak-side action is any movement designed to keep those defenders busy or to punish them for helping. A simple exchange of positions between the corner and the wing forces helpers to move and talk at the moment they want to watch the ball. A flare or pin-down away from a pick-and-roll means the defender who should tag the roller is being screened. A cut along the baseline behind a helper who has turned his head produces a layup. The best versions are timed with the main action so that the defence cannot attend to both. Standing still on the weak side, by contrast, lets one defender guard two players. The quality of a team's weak-side movement is a large part of why similar-looking plays produce different results, and it is invisible in every data source this platform holds.",
+  "formula": null,
+  "player_responsibilities": "Weak-side players: exchange, screen for each other, lift from the corner or cut baseline according to what their defenders do. Ball-side players: run the primary action and look opposite when a helper commits.",
+  "common_responses": "Switch weak-side exchanges, keep one helper committed to the lane and zone the other two attackers, and communicate early about who has the tag on the roller.",
+  "limitations": [
+   "General description of the action; our data cannot confirm how often any team or player runs it.",
+   "No statistic we hold measures off-ball movement.",
+   "Its effect is confounded with the quality of the primary action."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no film or tracking data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "weak-side-help-and-tagging",
+   "flare-screen",
+   "pin-down-screen",
+   "spacing",
+   "off-ball-scorer"
+  ],
+  "evaluation_questions": [
+   "Why are weak-side defenders the natural target of off-ball movement?",
+   "Give one example of weak-side action timed with a pick-and-roll."
+  ]
+ },
+ {
+  "slug": "catch-and-shoot",
+  "department": 2,
+  "kind": "offense",
+  "title": "Catch-and-shoot",
+  "summary": "A jump shot taken immediately on receiving a pass, without a dribble.",
+  "body": "A catch-and-shoot attempt is a jumper released straight from the catch. It is the end product of most offensive advantages: a drive, a post double-team or a screen bends the defence, and the ball finds a player with his feet set and space in front of him. These shots are usually assisted and, for most players, more accurate than shots off the dribble because the shooter is balanced and often less closely guarded. A role built on them has a clear statistical shape: a high share of points from threes, low usage, few turnovers and few free throws. It also has a clear dependency. The shooter does not create the attempts; teammates and the system do. His volume therefore rises and falls with who is on the floor to create for him and with how the defence chooses to guard them. The tracking definition of a catch-and-shoot attempt belongs to league data we do not hold, so here the term is descriptive only.",
+  "formula": null,
+  "player_responsibilities": "Shooter: be ready before the catch with feet and hands set, relocate to open windows, shoot without hesitation or attack a hard closeout. Creators: draw a second defender and deliver the pass to the shooting pocket.",
+  "common_responses": "Stay attached and refuse to help off strong shooters, close out with a high hand to run them off the line, switch screens, and help instead from weaker shooters.",
+  "limitations": [
+   "General description of the action; our data cannot confirm how often any team or player runs it.",
+   "Catch-and-shoot attempts are tracking data; we see only total attempts and threes made.",
+   "Three-point results in small samples are dominated by variance."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "three-pointers made",
+   "field goal attempts",
+   "usage percentage (provider)",
+   "turnovers",
+   "free throw attempts"
+  ],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no film or tracking data",
+   "no assisted versus unassisted split"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "floor-spacer",
+   "off-ball-scorer",
+   "three-point-variance",
+   "closeouts",
+   "drive-and-kick"
+  ],
+  "evaluation_questions": [
+   "Why is a catch-and-shoot role dependent on teammates?",
+   "What is the typical box-score shape of a catch-and-shoot specialist?"
+  ]
+ },
+ {
+  "slug": "spacing",
+  "department": 2,
+  "kind": "offense",
+  "title": "Spacing",
+  "summary": "The distance between offensive players, which determines how far defenders must travel to help.",
+  "body": "Spacing is the arrangement of the five offensive players so that their defenders are far apart and far from the basket. Good spacing does two things. It lengthens the distance a helper must cover to stop a drive, and it lengthens the distance he must recover to contest a shot afterwards. Shooting ability is what gives spacing force: a defender will stand close to a dangerous shooter and well off a poor one, so the effective spacing of a lineup depends on who is in it, not on where players stand. One non-shooter can let his defender roam and shrink the floor for everyone. Corners matter because the corner three is the shortest and because a corner defender who helps has the longest path back. Spacing is the main reason teammates affect each other's statistics. A driver has more room and a post player sees fewer double-teams when surrounded by shooters, and those effects change when a single shooter is injured or substituted.",
+  "formula": null,
+  "player_responsibilities": "Shooters: stand outside the arc in the corners and slots, and move to stay in the passer's vision. Non-shooters: screen, cut, or occupy the dunker spot where their defender cannot help freely.",
+  "common_responses": "Help off the weakest shooter, shrink the floor and close out late, switch to keep defenders near their men, or play zone to keep size near the basket.",
+  "limitations": [
+   "General description of the action; our data cannot confirm how often any team or player runs it.",
+   "No positional or tracking data; spacing can only be inferred loosely from who shoots threes.",
+   "The shooting reputation that creates spacing is not the same as recent shooting results."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "three-pointers made",
+   "with/without-teammate splits"
+  ],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no film or tracking data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "floor-spacer",
+   "five-out",
+   "help-defense",
+   "complementary-skills",
+   "drive-and-kick"
+  ],
+  "evaluation_questions": [
+   "Why does one non-shooter reduce spacing for the whole lineup?",
+   "Why is the corner an important spot in a spaced offence?"
+  ]
+ },
+ {
+  "slug": "secondary-creation",
+  "department": 2,
+  "kind": "offense",
+  "title": "Secondary creation",
+  "summary": "Shot creation by a player other than the main ball handler, often against a defence that is already moving.",
+  "body": "Secondary creation is what happens after the first action fails to produce a shot. The ball swings to a second player who attacks a closeout, runs another pick-and-roll, or makes the next pass against a rotating defence. Because the defence has already shifted, the second creator often works against a defender who is off balance, which is easier than starting from a standstill. Offences with only one creator stall when he is trapped, tired or on the bench; a credible second creator keeps possessions alive and lets the first play off the ball. The role is common among wings and combo guards who would not be asked to run an offence full time. In numbers it tends to appear as moderate usage with a blend of points and assists. It is also the role most sensitive to availability. When the primary creator sits or is injured, the secondary creator usually inherits the largest share of his possessions, and his usage, assists and turnovers rise together.",
+  "formula": null,
+  "player_responsibilities": "Secondary creator: attack the closeout quickly, run a second-side pick-and-roll, make the extra pass. Primary creator: relocate and space after giving up the ball. Bigs: re-screen on the second side.",
+  "common_responses": "Rotate under control so the second attacker meets a set defender, switch to keep the ball in front, and put a stronger defender on the second creator when the first is off the floor.",
+  "limitations": [
+   "General description of the action; our data cannot confirm how often any team or player runs it.",
+   "Creation is not directly measured; usage and assists are proxies.",
+   "Who inherits possessions in a given absence depends on coaching choices we cannot see in advance."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "usage percentage (provider)",
+   "assists",
+   "turnovers",
+   "with/without-teammate splits"
+  ],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no film or tracking data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "secondary-creator",
+   "primary-creator",
+   "usage-redistribution",
+   "drive-and-kick",
+   "staggering-stars"
+  ],
+  "evaluation_questions": [
+   "Why is creating against a rotating defence easier than creating from a standstill?",
+   "What usually happens to a secondary creator's usage when the primary creator is out?"
+  ]
+ },
+ {
+  "slug": "short-roll",
+  "department": 2,
+  "kind": "offense",
+  "title": "Short roll",
+  "summary": "The screener catches the ball around the foul line after a trap and attacks four-on-three.",
+  "body": "When a defence sends two players at the ball handler in a pick-and-roll, the screener is briefly unguarded. Instead of running all the way to the rim he stops in the space near the foul line, receives a quick pass, and turns to face a defence that has three players guarding four. This is the short roll. From there he can take a floater, drive at the last defender, lob to a teammate at the rim, or pass to a corner shooter whose defender stepped in. The play converts the trap from a weapon into a weakness, but only if the screener can catch on the move and decide well. A big who cannot pass makes trapping safe. Players who are effective in the short roll are therefore valuable against aggressive defences, and their assist numbers can rise sharply in matchups where the opponent traps a star teammate. That link between an opponent's coverage and a role player's assists is real, but our data cannot observe the coverage itself.",
+  "formula": null,
+  "player_responsibilities": "Screener: release early to the foul-line area, catch, face up and read the low defender. Ball handler: draw both defenders and pass quickly over or around the trap. Others: one at the dunker spot, shooters in the corners.",
+  "common_responses": "Rotate a third defender to the roller early, zone the weak side with the remaining two, recover the trapping big quickly, or stop trapping.",
+  "limitations": [
+   "General description of the action; our data cannot confirm how often any team or player runs it.",
+   "Coverage schemes are not in our data, so the cause of an assist spike cannot be confirmed.",
+   "Requires specific decision-making skill that box scores capture poorly."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "assists"
+  ],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no film or tracking data",
+   "no coverage scheme data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "blitz-and-trap",
+   "pick-and-roll",
+   "connector",
+   "facilitator",
+   "weak-side-help-and-tagging"
+  ],
+  "evaluation_questions": [
+   "What numerical advantage does the screener face in a short roll?",
+   "Why does a non-passing big make trapping the ball handler safer?"
+  ]
+ },
+ {
+  "slug": "pace-and-early-offense",
+  "department": 2,
+  "kind": "offense",
+  "title": "Pace and early offense",
+  "summary": "Playing quickly into the first available action before the defence is fully organised.",
+  "body": "Early offence sits between a fast break and a set half-court play. The team brings the ball up quickly and flows straight into an action - a drag screen for the handler, a quick handoff, a post seal by a big who has outrun his man - within the first third of the shot clock. Defenders are back but not yet matched up or in their preferred coverage, so simple actions work better than they would later. Teams that play this way take shots sooner, which raises the number of possessions in a game for both sides. More possessions mean more shots, rebounds and assists to distribute, so counting totals for players on both teams tend to be higher in faster games even when efficiency is unchanged. Pace is a shared product of the two teams and of game situation: a team cannot play fast alone if its opponent walks the ball up and makes it defend for a full clock each trip.",
+  "formula": null,
+  "player_responsibilities": "Ball handler: advance the ball quickly and enter the first action without waiting for a call. Bigs: run to set a drag screen or seal early. Wings: fill the corners at speed.",
+  "common_responses": "Get matched up early, pick up the ball higher, communicate coverage on the run, and make the opponent defend long possessions at the other end to slow the game.",
+  "limitations": [
+   "General description of the action; our data cannot confirm how often any team or player runs it.",
+   "Time-to-shot is not available; pace must be estimated from box-score totals.",
+   "A team's preferred tempo and the tempo of a given game are different things."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "field goal attempts",
+   "team totals including points in the paint and fast-break points (live games only)",
+   "opponent allowed-per-game context"
+  ],
+  "data_gaps": [
+   "no time-to-shot data",
+   "no play-type frequencies"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals cover this topic; pointer only, the manuals were not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "pace",
+   "transition-offense",
+   "pace-identity",
+   "pace-interaction",
+   "shot-clock-24"
+  ],
+  "evaluation_questions": [
+   "How does early offence differ from a fast break?",
+   "Why do faster games tend to raise counting totals for both teams?"
+  ]
+ }
+]

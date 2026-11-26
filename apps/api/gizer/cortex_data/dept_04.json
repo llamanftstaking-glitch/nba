@@ -1,0 +1,660 @@
+[
+ {
+  "slug": "rotation-length",
+  "department": 4,
+  "kind": "concept",
+  "title": "Rotation length",
+  "summary": "The number of players a coach regularly uses in a competitive game.",
+  "body": "Rotation length is how many players receive real minutes while the result is in doubt. A team has 240 player-minutes in regulation, and a shorter rotation concentrates them: the main players carry heavier loads and the last places on the bench get nothing. A longer rotation spreads minutes, lowers individual workloads and makes each reserve's playing time smaller and less certain. Coaches typically shorten the rotation in important or close games and lengthen it when the roster is healthy and the schedule is heavy. For projection the concept matters because a player's minutes are set by his place in the order, not by his talent alone. The eighth and ninth players are the most exposed; their minutes disappear first when a coach tightens up and grow first when a starter is out. We can describe a team's recent rotation from minutes and did-not-play records, but we cannot see the coach's intention for the next game, so any reading is of past behaviour.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Describes past usage; a coach can change the rotation without notice.",
+   "Blowouts lengthen the apparent rotation and must be read with the score in mind.",
+   "Injuries change the count without any change of philosophy."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "minutes",
+   "did-not-play records",
+   "starter flag",
+   "minutes profile and rotation class",
+   "rolling windows (L3..L30, season)"
+  ],
+  "data_gaps": [
+   "no coach identities",
+   "no lineup data before 2026-11-25"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals discuss game management; pointer only, not opened for this record"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "minutes and rotation derivations (MINUTES-INTELLIGENCE.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "substitution-patterns",
+   "rotation-stability",
+   "rotation-reserve",
+   "minutes-as-opportunity",
+   "depth-identity"
+  ],
+  "evaluation_questions": [
+   "Why are the eighth and ninth players the most exposed to changes in rotation length?",
+   "How can a blowout distort a count of rotation players?"
+  ]
+ },
+ {
+  "slug": "staggering-stars",
+  "department": 4,
+  "kind": "concept",
+  "title": "Staggering stars",
+  "summary": "Arranging substitutions so that at least one leading player is on the floor at all times.",
+  "body": "A team with two main creators can rest them together or separately. Staggering means their rest periods do not overlap: one leaves early in a quarter and returns to lead the second unit while the other sits. The aim is to avoid stretches in which the offence has no reliable creator. The cost is that the two play fewer minutes together, and each must carry bench units that offer less spacing and support. Staggering changes individual statistics in a recognisable general way. The player who anchors the bench unit usually has the ball more during those minutes, so his usage and assist opportunities concentrate there, while his efficiency may suffer against a loaded defence. When one of the two is absent, the stagger collapses and the remaining star plays a different pattern entirely. Play-by-play substitutions let us see overlap between two players in recent live games; for earlier games we can only compare box-score totals with and without a teammate.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Overlap minutes are measurable only for live games since 2026-11-25.",
+   "The statistical effect described is a general expectation, not a measured result here.",
+   "Patterns vary by opponent and score."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "derived on-court stints and minutes by quarter (live games only)",
+   "play-by-play events with substitutions (live games only)",
+   "with/without-teammate splits",
+   "usage percentage (provider)"
+  ],
+  "data_gaps": [
+   "no coach identities",
+   "no lineup data before 2026-11-25"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals discuss game management; pointer only, not opened for this record"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "minutes and rotation derivations (MINUTES-INTELLIGENCE.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "stagger-lineup-view",
+   "substitution-patterns",
+   "secondary-creation",
+   "usage-redistribution",
+   "with-without-splits"
+  ],
+  "evaluation_questions": [
+   "What problem is staggering designed to solve?",
+   "How might staggering change the usage of the star who plays with the second unit?"
+  ]
+ },
+ {
+  "slug": "closing-lineups",
+  "department": 4,
+  "kind": "concept",
+  "title": "Closing lineups",
+  "summary": "The five players a coach trusts to finish a close game, which may differ from the starters.",
+  "body": "The starting five and the closing five are separate decisions. Starters set the tone and matchups; closers are chosen for the last minutes of a tight game, when possessions are slower, defences target the weakest link and free throws matter. A coach may finish with a reserve who defends or shoots better than a nominal starter, or remove a poor free throw shooter or a defender the opponent is hunting. Offence-defence substitutions on alternate possessions are common in the final minute. For minutes, closing status is worth several minutes a night in close games and nothing in one-sided ones. A starter who does not close has a lower ceiling on his minutes than his starting role suggests, and a reserve who closes has a higher floor. The pattern can be read from fourth-quarter stints in recent live games. It is a tendency, though, and it shifts with matchups, foul trouble and who has played well that night.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Closing choices depend on the night and on the opponent.",
+   "Only close games reveal the closing group, so samples are small.",
+   "Stint data exist only since 2026-11-25."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "derived on-court stints and minutes by quarter (live games only)",
+   "play-by-play events with substitutions (live games only)",
+   "minutes",
+   "starter flag"
+  ],
+  "data_gaps": [
+   "no coach identities",
+   "no lineup data before 2026-11-25"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals discuss game management; pointer only, not opened for this record"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "minutes and rotation derivations (MINUTES-INTELLIGENCE.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "starter-vs-bench-minutes",
+   "matchup-driven-lineup-changes",
+   "late-game-fouling-strategy",
+   "sixth-man",
+   "away-from-play-foul"
+  ],
+  "evaluation_questions": [
+   "Why can a starter have a lower minutes ceiling than his role suggests?",
+   "What kinds of weakness lead a coach to remove a starter from the closing group?"
+  ]
+ },
+ {
+  "slug": "substitution-patterns",
+  "department": 4,
+  "kind": "concept",
+  "title": "Substitution patterns",
+  "summary": "The recurring timing and groupings a coach uses when resting and returning players.",
+  "body": "Most coaches follow a routine. A starter may play the opening eight or nine minutes, rest across the quarter break and return midway through the second; another may play the whole first quarter and sit to start the second. These habits create stable stints and stable partnerships: which reserves enter together, and which starters they play beside. Patterns are the mechanism behind a player's minutes distribution. A player on a fixed pattern has minutes that cluster tightly, while a player used situationally has a wide spread. Patterns also bend. Foul trouble, a hot or cold stretch, an opponent's run, a timeout that arrives early, or a lopsided score all move the timing. Platoon-style line changes and matchup-based substitutions are variations on the same idea. We can reconstruct patterns from play-by-play substitutions in recent live games. For older games we have only total minutes, which show the result of the pattern and not its shape.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Patterns are habits, not commitments.",
+   "Derived stints depend on the accuracy of play-by-play substitution events.",
+   "A few games are not enough to establish a pattern."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "play-by-play events with substitutions (live games only)",
+   "derived on-court stints and minutes by quarter (live games only)",
+   "minutes",
+   "minutes profile and rotation class"
+  ],
+  "data_gaps": [
+   "no coach identities",
+   "no lineup data before 2026-11-25"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals discuss game management; pointer only, not opened for this record"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "minutes and rotation derivations (MINUTES-INTELLIGENCE.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "substitutions",
+   "rotation-length",
+   "minutes-distribution-and-variance",
+   "staggering-stars",
+   "rotation-stability"
+  ],
+  "evaluation_questions": [
+   "Why do fixed substitution patterns lead to tightly clustered minutes?",
+   "Name three events that commonly bend a coach's usual pattern."
+  ]
+ },
+ {
+  "slug": "foul-trouble-management",
+  "department": 4,
+  "kind": "concept",
+  "title": "Foul-trouble management",
+  "summary": "How coaches ration a player's minutes after early fouls, including the two-fouls-in-the-first-half convention.",
+  "body": "No rule requires a coach to sit a player with fouls short of disqualification, but most follow conventions. The best known is to bench a player who picks up his second foul in the first quarter, or his third before halftime, and to hold him out until the half ends. Similar thinking applies to a fourth foul in the third quarter and a fifth early in the fourth. The purpose is to make sure the player is available at the end of the game. The convention is debated: minutes lost on the bench are lost for certain, while fouling out is only a possibility, and some coaches now let trusted players continue. It remains a coaching choice that varies by person, by player and by game situation. Its effect on statistics is direct. A player who would have played eighteen first-half minutes may play eight, and his full-game line falls short for reasons unrelated to form. We see personal fouls only in live games.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "A convention, not a rule; behaviour differs between coaches and we do not record coach identity.",
+   "Fouls are available only for live games since 2026-11-25.",
+   "The minute figures in the example are illustrative, not measured."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "personal fouls (live games only)",
+   "derived on-court stints and minutes by quarter (live games only)",
+   "play-by-play events with substitutions (live games only)",
+   "minutes"
+  ],
+  "data_gaps": [
+   "no coach identities",
+   "no lineup data before 2026-11-25",
+   "no personal fouls in historical box scores"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals discuss game management; pointer only, not opened for this record"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "minutes and rotation derivations (MINUTES-INTELLIGENCE.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "personal-fouls-and-fouling-out",
+   "foul-trouble-effect-on-minutes",
+   "foul-trouble-thresholds-live",
+   "substitution-patterns"
+  ],
+  "evaluation_questions": [
+   "Is the two-fouls-in-the-first-half benching required by the rules?",
+   "What is the argument against automatically benching a player with two early fouls?"
+  ]
+ },
+ {
+  "slug": "timeout-usage",
+  "department": 4,
+  "kind": "concept",
+  "title": "Timeout usage",
+  "summary": "How coaches spend timeouts to stop runs, rest players, set plays and manage the end of games.",
+  "body": "A coach has a limited number of timeouts and several competing uses for them. Early in games they are spent to halt an opponent's run, to correct a defensive problem or to rest a tiring group; mandatory broadcast timeouts cover some of that need. Late in games they become tools for advancing the ball, drawing up a play and making offence-defence substitutions. A challenge also consumes a timeout unless it succeeds. Some coaches spend freely early, and others save them for the finish. The link to player statistics is indirect but real. Timeouts are substitution windows, so a coach who calls one early may also change the lineup earlier than his usual pattern. After a timeout the offence often runs a set for its best scorer. And in close finishes the stoppages lengthen the game in real time and allow starters to recover and remain on the floor. Our data hold timeout events in live play-by-play but not a running count of those remaining.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Coach tendencies are not stored and cannot be attributed.",
+   "The effect of a timeout on what follows is not measurable from our data.",
+   "Rules on timeout numbers change; see the rule record."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "play-by-play events with substitutions (live games only)",
+   "score progression (live games only)"
+  ],
+  "data_gaps": [
+   "no coach identities",
+   "no lineup data before 2026-11-25"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals discuss game management; pointer only, not opened for this record"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "minutes and rotation derivations (MINUTES-INTELLIGENCE.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "timeouts",
+   "after-timeout-plays",
+   "coachs-challenge",
+   "runs-and-score-progression"
+  ],
+  "evaluation_questions": [
+   "Name three different purposes for which a coach might call a timeout.",
+   "How can an early timeout change a player's stint?"
+  ]
+ },
+ {
+  "slug": "rest-and-load-management",
+  "department": 4,
+  "kind": "concept",
+  "title": "Rest and load management",
+  "summary": "Planned reduction of a player's games or minutes to manage workload across a long season.",
+  "body": "Load management is the practice of resting a healthy or nearly healthy player, or capping his minutes, to reduce accumulated strain. It takes several forms: sitting out one game of a back-to-back, skipping a game after heavy travel, limiting minutes for a stretch, or giving a veteran scheduled nights off. Teams report these absences through the injury report with a stated reason, and the league regulates when and how star players may be rested. From a research point of view the important features are that these absences are decisions, they are announced late compared with the game, and they are not random. They cluster on particular schedule spots and fall mainly on older or previously injured players. We can observe that a player did not play and what designation was reported. We cannot observe the team's plan, and we should not infer a medical condition from a rest designation. A pattern of past rest on back-to-backs is descriptive history, not a prediction for the next one.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "League policies on resting players change and were not checked against a source in this session.",
+   "Past rest patterns do not bind future decisions.",
+   "The reported reason is a label and not a diagnosis."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "did-not-play records",
+   "injuries and lineup status",
+   "splits (home/away, rest, role, opponent)",
+   "minutes"
+  ],
+  "data_gaps": [
+   "no team workload plans",
+   "no medical information beyond the reported label"
+  ],
+  "ruleset": "general",
+  "season_note": "League rules on resting players were not checked against a source; confirm the current policy",
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals discuss game management; pointer only, not opened for this record"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "minutes and rotation derivations (MINUTES-INTELLIGENCE.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "back-to-back-handling",
+   "rest-and-injury-management-designations",
+   "back-to-backs",
+   "minutes-restrictions-coaching",
+   "never-infer-a-diagnosis"
+  ],
+  "evaluation_questions": [
+   "Why are rest absences not random with respect to the schedule?",
+   "What may and may not be concluded from a 'rest' designation?"
+  ]
+ },
+ {
+  "slug": "back-to-back-handling",
+  "department": 4,
+  "kind": "concept",
+  "title": "Back-to-back handling",
+  "summary": "How coaches adjust minutes and availability when a team plays on consecutive days.",
+  "body": "Games on consecutive days leave little recovery time, and coaches respond in different ways. Some hold a veteran out of one of the two games. Some trim starters' minutes in both, especially if the first game is decided early. Some change nothing. The second game is where the adjustments usually fall, but a coach looking ahead may also shorten minutes in the first. Reserves often gain from this: a deeper rotation on the second night means more minutes for the eighth to tenth players. The effects are easy to overstate. Many players show no meaningful difference between rested and unrested games, and those who are rested outright simply have no record for that game - a missing game is not a poor game. Our splits by rest days describe what happened for a player in the past, with sample sizes that are often small. They are a description of history and they do not establish that fatigue caused any difference seen.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Rest-day splits for one player are usually small samples.",
+   "Selection effects: the games a player sits are chosen, so the remaining sample is not random.",
+   "No coach-level tendencies are available."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "splits (home/away, rest, role, opponent)",
+   "did-not-play records",
+   "minutes",
+   "injuries and lineup status"
+  ],
+  "data_gaps": [
+   "no coach identities",
+   "no lineup data before 2026-11-25"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals discuss game management; pointer only, not opened for this record"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "minutes and rotation derivations (MINUTES-INTELLIGENCE.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "back-to-backs",
+   "rest-and-load-management",
+   "rest-days",
+   "fatigue-requires-evidence",
+   "rotation-length"
+  ],
+  "evaluation_questions": [
+   "Which players often gain minutes on the second night of a back-to-back?",
+   "Why is a missed game not evidence of poor performance?"
+  ]
+ },
+ {
+  "slug": "blowout-management",
+  "department": 4,
+  "kind": "concept",
+  "title": "Blowout management",
+  "summary": "How coaches use the bench once a game is decided.",
+  "body": "When the margin becomes large late in a game, coaches remove their main players to avoid injury and fatigue, and the end of the bench finishes. When this happens differs widely. Some coaches pull starters as soon as the lead looks safe in the third quarter; others wait until a few minutes remain, wary of a comeback that would force them to bring starters back cold. The trailing coach makes the same decision from the other side and often concedes earlier. The result for starters is a shortfall of several minutes compared with a normal game, and with it lower counting totals even on an efficient night. For deep reserves it is the main source of playing time. Blowouts cannot be scheduled, but they are more likely when teams are mismatched, so the risk to a starter's minutes is higher for both sides in such games - for the favourite's starters as well as the underdog's. We can identify past blowouts from final margins and recent ones from score progression.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Coaches differ in when they concede and we do not record who coaches.",
+   "Historical data show final margin only, not when the game was decided.",
+   "A large final margin can hide a game that was close until late."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "minutes",
+   "score progression (live games only)",
+   "derived on-court stints and minutes by quarter (live games only)",
+   "did-not-play records"
+  ],
+  "data_gaps": [
+   "no coach identities",
+   "no lineup data before 2026-11-25",
+   "no score-by-time for historical games"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals discuss game management; pointer only, not opened for this record"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "minutes and rotation derivations (MINUTES-INTELLIGENCE.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "garbage-time",
+   "blowout-risk-to-minutes",
+   "blowout-and-garbage-time-matchup",
+   "garbage-time-detection-live",
+   "rotation-reserve"
+  ],
+  "evaluation_questions": [
+   "Why might a coach delay removing starters in a one-sided game?",
+   "Why does blowout risk affect the favourite's starters too?"
+  ]
+ },
+ {
+  "slug": "minutes-restrictions-coaching",
+  "department": 4,
+  "kind": "concept",
+  "title": "Minutes restrictions (coaching side)",
+  "summary": "A cap on a player's minutes, usually after injury, applied through shorter stints and planned rest.",
+  "body": "A minutes restriction is an agreed ceiling on playing time, most often for a player returning from injury or managing a chronic problem. Coaches implement it by shortening each stint, holding the player out of one rotation turn, or ending his night early. The cap may be a fixed number or a looser target, it is usually raised in steps over several games, and it is not always announced. Under a restriction a player's per-minute production may look normal while his totals fall well short of his usual level. It also affects teammates: the minutes he does not play go to someone else. The risks for analysis are on both sides. Assuming a restriction that was never reported invents information; ignoring one that was reported treats old averages as current. What we hold is the reported status, any stated limit captured in injury notes, and the minutes actually played in the games since the return, which show the ramp directly.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Restrictions are often unannounced or vaguely stated.",
+   "The size of a cap must come from a report, never from assumption.",
+   "Coaches exceed stated limits in close games."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "minutes",
+   "injuries and lineup status",
+   "rolling windows (L3..L30, season)",
+   "derived on-court stints and minutes by quarter (live games only)",
+   "projected minutes and stat projections with p10/p90 (models)"
+  ],
+  "data_gaps": [
+   "no team medical plans",
+   "no coach identities"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals discuss game management; pointer only, not opened for this record"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "minutes and rotation derivations (MINUTES-INTELLIGENCE.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "minutes-restriction-reported",
+   "return-from-injury-ramp",
+   "return-to-play-ramp",
+   "projected-minutes-uncertainty"
+  ],
+  "evaluation_questions": [
+   "How do coaches typically implement a minutes cap within a game?",
+   "What are the two opposite analytical errors regarding minutes restrictions?"
+  ]
+ },
+ {
+  "slug": "matchup-driven-lineup-changes",
+  "department": 4,
+  "kind": "concept",
+  "title": "Matchup-driven lineup changes",
+  "summary": "Adjusting who starts or plays according to the opponent's personnel and style.",
+  "body": "Coaches change lineups to fit opponents. Against a team with a dominant interior scorer a coach may start a bigger centre or give his backup extra minutes. Against a small, fast team he may play smaller to keep up on the perimeter, and a traditional big may see his minutes cut. A particular defender may be inserted to guard a star, or a shooter removed because he would be targeted on defence. These choices can be made before the game or as it unfolds. They are a main reason a player's minutes vary from opponent to opponent without any change in his standing. For analysis, the lesson is caution: a role player's low minutes against one opponent may be a matchup decision that will not repeat against the next, and may well repeat against the same or a similar opponent. Our opponent splits record what happened against each team, but with one to four meetings a season the samples are too small to establish a rule.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Per-opponent samples are very small.",
+   "The reason for a minutes change is never recorded.",
+   "Opponent rosters change through injuries, so past meetings may not resemble the next."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "splits (home/away, rest, role, opponent)",
+   "minutes",
+   "starter flag"
+  ],
+  "data_gaps": [
+   "no coach identities",
+   "no lineup data before 2026-11-25",
+   "no positional matchups"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals discuss game management; pointer only, not opened for this record"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "minutes and rotation derivations (MINUTES-INTELLIGENCE.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "closing-lineups",
+   "style-clashes",
+   "small-head-to-head-samples",
+   "positional-matchups",
+   "minutes-distribution-and-variance"
+  ],
+  "evaluation_questions": [
+   "Why might a traditional centre lose minutes against a small, fast opponent?",
+   "Why are opponent splits weak evidence of a matchup effect?"
+  ]
+ },
+ {
+  "slug": "after-timeout-plays",
+  "department": 4,
+  "kind": "concept",
+  "title": "After-timeout plays (ATOs)",
+  "summary": "Set plays drawn up during a stoppage and run on the next possession.",
+  "body": "A timeout gives the coach a chance to choose the exact play, the players and their positions for the next possession. After-timeout plays are usually more intricate than ordinary offence, with misdirection and several screens, because the offence can rehearse it in the huddle and the defence cannot know what is coming. Coaches commonly direct these possessions to their best scorer or shooter, or use the star as a decoy for someone else. They matter most at the end of quarters and games, when a single possession is decisive. Defences respond by switching everything, by fouling when they have one to give, or by calling their own timeout after seeing the formation. In statistical terms after-timeout possessions are a small share of the game, so they do little to a player's season totals. Their interest is tactical. They cannot be identified in our data beyond noting that a possession followed a timeout event in live play-by-play.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Play design is invisible to us; only the timeout event is recorded.",
+   "Too few possessions to measure any player's results with confidence.",
+   "Which player a play was designed for cannot be inferred from who shot."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "play-by-play events with substitutions (live games only)"
+  ],
+  "data_gaps": [
+   "no play-type data",
+   "no film",
+   "no coach identities"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "federation coaching manuals discuss game management; pointer only, not opened for this record"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "minutes and rotation derivations (MINUTES-INTELLIGENCE.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "timeouts",
+   "timeout-usage",
+   "horns",
+   "spain-pick-and-roll",
+   "back-screen"
+  ],
+  "evaluation_questions": [
+   "Why can after-timeout plays be more intricate than normal offence?",
+   "Why do they have little effect on a player's season totals?"
+  ]
+ },
+ {
+  "slug": "two-for-one-and-end-of-quarter",
+  "department": 4,
+  "kind": "concept",
+  "title": "End-of-quarter management and the two-for-one",
+  "summary": "Timing a shot late in a quarter so that the team gets two possessions to the opponent's one.",
+  "body": "As a quarter winds down, the clock itself becomes a resource. If a team shoots with a little more than a full shot clock left in the period, the opponent's possession will end with time still remaining, and the first team gets the ball back for a final attempt: two possessions for one. Coaches and lead guards watch for this, sometimes taking a quicker and slightly worse shot than usual to secure the extra chance. The reverse is also managed: a team holding for the last shot runs the clock down so the opponent has no time to answer. These habits have small but consistent statistical effects. They add a few possessions over a game, concentrate end-of-quarter attempts in the hands of the primary ball handlers, and produce low-percentage heaves that slightly depress shooting numbers for the players who take them. Public studies have examined whether the trade is worth it; we have not reproduced any such result here and make no numerical claim.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "No estimate of the value of a two-for-one is offered here.",
+   "End-of-quarter attempts are not labelled in our historical data.",
+   "Heaves affect percentages by small amounts that cannot be isolated from box scores."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "play-by-play events with substitutions (live games only)",
+   "score progression (live games only)"
+  ],
+  "data_gaps": [
+   "no shot-clock or shot-distance data",
+   "no coach identities"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-data-science",
+    "note": "repository README lists a study of the two-for-one; the study itself was not opened"
+   },
+   {
+    "key": "fiba-wabc",
+    "note": "pointer only; not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "shot-clock-24",
+   "possession",
+   "pace",
+   "primary-creator",
+   "three-point-variance"
+  ],
+  "evaluation_questions": [
+   "What clock condition makes a two-for-one possible?",
+   "Why can end-of-quarter heaves slightly depress a guard's shooting percentages?"
+  ]
+ }
+]

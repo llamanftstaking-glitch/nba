@@ -29,6 +29,7 @@ import {
   Boxes,
   Wallet,
   Radio,
+  LibraryBig,
 } from "lucide-react";
 import type { ComponentType } from "react";
 import { JarvisMark } from "@/components/jarvis/mark";
@@ -43,6 +44,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/live", label: "Live Games", icon: Radio },
       { href: "/jarvis", label: "JARVIS", icon: JarvisMark },
+      { href: "/cortex", label: "CORTEX", icon: LibraryBig },
       { href: "/", label: "Overview", icon: LayoutDashboard },
       { href: "/games", label: "Today's Games", icon: CalendarDays },
       { href: "/picks", label: "Top Picks", icon: ListOrdered },

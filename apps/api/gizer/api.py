@@ -1076,6 +1076,7 @@ from . import api_v3  # noqa: E402,F401  (registers the V3 routes on `api` befor
 from . import api_core  # noqa: E402,F401  (Kalshi intelligence, minutes intelligence, availability events)
 from . import api_jarvis  # noqa: E402,F401  (JARVIS assistant, memory, briefings, AI budget)
 from . import api_live  # noqa: E402,F401  (GIZER LIVE: scoreboard, game centre, watchlist, research tracker)
+from . import api_cortex  # noqa: E402,F401  (GIZER CORTEX: knowledge library, profiles, benchmark)
 
 app.include_router(pub)
 app.include_router(api)

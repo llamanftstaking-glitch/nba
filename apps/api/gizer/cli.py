@@ -29,6 +29,10 @@ def main(argv=None):
     sub.add_parser("scheduler", help="run the scheduler")
     sub.add_parser("bootstrap-owner", help="create/update the owner account from GIZER_OWNER_EMAIL/PASSWORD")
     sub.add_parser("status")
+    sub.add_parser("cortex-load", help="load the CORTEX knowledge files into the database")
+    ce = sub.add_parser("cortex-eval", help="free retrieval check against the benchmark"); ce.add_argument("--split", default="all")
+    cb = sub.add_parser("cortex-benchmark", help="paid answer benchmark (development allocation)")
+    cb.add_argument("--limit", type=int, default=20); cb.add_argument("--split", default="dev"); cb.add_argument("--mode", default="light", choices=["light", "standard"])
     lv = sub.add_parser("live", help="run the live game ingestion loop")
     lv.add_argument("--once", action="store_true")
     jv = sub.add_parser("jarvis-verify")
@@ -45,6 +49,21 @@ def main(argv=None):
         create_all_for_tests(); print("schema ready")
     elif a.cmd == "seed":
         ingestion.seed_reference(); print("seeded")
+        try:        # the knowledge library ships as files; loading is idempotent and never blocks startup
+            from . import cortex
+            r = cortex.load_library()
+            print(f"cortex library: {r['concepts']} records ({r['added']} new, {r['changed']} changed, {r['problem_count']} rejected)")
+        except Exception as e:
+            print(f"cortex library not loaded: {type(e).__name__}")
+    elif a.cmd == "cortex-load":
+        from . import cortex
+        _print(cortex.load_library())
+    elif a.cmd == "cortex-eval":
+        from . import cortex
+        _print(cortex.retrieval_eval(a.split))
+    elif a.cmd == "cortex-benchmark":
+        from . import cortex
+        _print(cortex.run_answers(a.limit, a.split, a.mode))
     elif a.cmd == "ingest-results":
         for season in ([a.season] if a.season else get_settings().season_list):
             _print(ingestion.ingest_results(season, a.max_boxes))

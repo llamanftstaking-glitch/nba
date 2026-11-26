@@ -1,0 +1,1141 @@
+[
+ {
+  "slug": "game-structure-and-regulation",
+  "department": 1,
+  "kind": "rule",
+  "title": "Game structure and regulation time",
+  "summary": "An NBA game is four 12-minute periods; a tie after the fourth period is settled by overtime.",
+  "body": "An NBA game is divided into four periods of 12 minutes each, so regulation contains 48 minutes of game clock and, with five players per side, 240 player-minutes per team. The rulebook sets a 15-minute halftime and shorter breaks between the other periods. The game clock stops on every whistle, and also after made field goals late in periods (the last minute of the first three periods, the last two minutes of the fourth period and of overtime), which is why the final minutes take far longer in real time than the opening ones. For analysis the important consequence is that the supply of minutes is fixed: every minute one player gains is a minute a teammate does not play. Counting statistics accumulate inside that fixed supply, so a projection of points, rebounds or assists is always, implicitly, a projection of minutes first. Other competitions use different period lengths, so totals and per-game figures do not transfer between rule sets without adjustment.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Describes the NBA only; other competitions use different period lengths and the difference should be checked rather than assumed.",
+   "Game clock minutes say nothing about how many possessions were played in them.",
+   "Break lengths differ between local and national broadcasts and are not relevant to statistics."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "minutes",
+   "derived on-court stints and minutes by quarter (live games only)",
+   "score progression (live games only)"
+  ],
+  "data_gaps": [
+   "no record of real elapsed time between events before live ingestion began"
+  ],
+  "ruleset": "NBA",
+  "season_note": "NBA rulebook published for the 2026-27 season (opened 2026-11-26); re-check after rule changes",
+  "sources": [
+   {
+    "key": "nba-official-rulebook",
+    "note": "Rule 5: period length, halftime, when the clock stops; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "overtime-period",
+   "possession",
+   "minutes-as-opportunity",
+   "scoring-values"
+  ],
+  "evaluation_questions": [
+   "How many player-minutes does one team have available in a regulation NBA game?",
+   "Why is a counting-stat projection implicitly a minutes projection?"
+  ]
+ },
+ {
+  "slug": "overtime-period",
+  "department": 1,
+  "kind": "rule",
+  "title": "Overtime",
+  "summary": "A tied NBA game continues with five-minute overtime periods until one team leads at the end of a period.",
+  "body": "If the score is level when the fourth period ends, the teams play an overtime period of five minutes, and they repeat this as many times as needed. Each overtime begins with a jump ball at centre court, the teams do not change baskets, and each team has two timeouts for the period. Personal fouls carry over, so a player with five fouls remains one foul from disqualification, while the team-foul count restarts with a lower limit than in a regulation period. Analytically, overtime adds 25 player-minutes per team that no pregame projection assigned. Those minutes go almost entirely to the closing group, so starters and closers finish with inflated minutes and counting totals compared with their usual workload. A single overtime game inside a short rolling window can therefore raise a player's recent averages without any change in his role. Overtime cannot be forecast for a specific game from the information this platform holds; it is a source of upside variance, not a planned input.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Overtime frequency for a given matchup cannot be estimated from our data.",
+   "Other competitions use different overtime lengths; check the applicable rules.",
+   "Box-score totals do not separate regulation production from overtime production in historical games."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "minutes",
+   "derived on-court stints and minutes by quarter (live games only)",
+   "score progression (live games only)"
+  ],
+  "data_gaps": [
+   "historical box scores do not flag which totals include overtime minutes unless minutes are compared with the regulation maximum"
+  ],
+  "ruleset": "NBA",
+  "season_note": "NBA rulebook published for the 2026-27 season (opened 2026-11-26); re-check after rule changes",
+  "sources": [
+   {
+    "key": "nba-official-rulebook",
+    "note": "Rule 5 (overtime length, timeouts), Rule 6 (jump ball starts overtime), Rule 12 (overtime team fouls); opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "game-structure-and-regulation",
+   "overtime-effect-on-minutes",
+   "jump-ball-and-opening-possession",
+   "team-fouls-and-penalty"
+  ],
+  "evaluation_questions": [
+   "How long is an NBA overtime period and how does it start?",
+   "Why can one overtime game distort a last-five-games average?"
+  ]
+ },
+ {
+  "slug": "scoring-values",
+  "department": 1,
+  "kind": "rule",
+  "title": "Scoring values: two, three and one",
+  "summary": "A field goal is worth two or three points depending on where the shooter stands; a free throw is worth one.",
+  "body": "A made field goal counts two points when the shooter is inside or touching the three-point line and three points when he is entirely behind it at release. A made free throw counts one point. These three values are the whole of scoring, and every efficiency statistic is a way of putting attempts of different value on a common scale. Effective field goal percentage credits a made three as one and a half makes because it is worth one and a half times as many points; true shooting percentage goes further and folds free throws into a single points-per-attempt figure. The values also shape strategy: an attempt worth three needs a lower make rate than an attempt worth two to produce the same points, and a trip to the line for two shots is an efficient outcome for most shooters. A player's point total is therefore the sum of three separate skills and opportunities - two-point scoring, three-point shooting and drawing fouls - and they vary from game to game at different rates.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "The rule gives values, not expected values; shot difficulty matters and is not recorded in a box score.",
+   "Historical box scores in our data give three-pointers made but not all attempt splits."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "points",
+   "three-pointers made",
+   "field goal attempts",
+   "free throw attempts",
+   "makes/attempts for FG, 3PT and FT (live games only)"
+  ],
+  "data_gaps": [
+   "no shot locations, so two-point attempts cannot be separated into rim, paint and mid-range"
+  ],
+  "ruleset": "NBA",
+  "season_note": "NBA rulebook published for the 2026-27 season (opened 2026-11-26); re-check after rule changes",
+  "sources": [
+   {
+    "key": "nba-official-rulebook",
+    "note": "Rule 5: point values of field goals and free throws; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "effective-field-goal-percentage",
+   "true-shooting-percentage",
+   "free-throws",
+   "game-structure-and-regulation"
+  ],
+  "evaluation_questions": [
+   "Why does eFG% weight a made three-pointer as 1.5 makes?",
+   "Name the three components of a player's point total."
+  ]
+ },
+ {
+  "slug": "possession",
+  "department": 1,
+  "kind": "concept",
+  "title": "Possession",
+  "summary": "A possession is one team's continuous period of control of the ball, ending when the other team gains it or a score or period ends it.",
+  "body": "The rulebook says a team is in possession while one of its players holds, dribbles or passes the ball, and that possession ends when the defence gains the ball or the ball hits the offence's own rim. Analysts use a slightly different unit. In the statistical sense a possession runs until the other team gets the ball, so a missed shot followed by an offensive rebound continues the same possession instead of starting a new one. Under that definition both teams finish a game with nearly the same number of possessions, which makes the possession the natural denominator for comparing offences and defences that play at different speeds. Possessions are not printed in a traditional box score. They are either counted from play-by-play or estimated from field goal attempts, free throw attempts, offensive rebounds and turnovers, and the estimates differ a little from the counts. Whenever a per-possession number is quoted, it matters which method produced the denominator.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "The rulebook meaning (resets on a rim hit) and the analytic meaning (continues after an offensive rebound) are different things with the same name.",
+   "Box-score estimates of possessions carry error that is larger for single games than for seasons.",
+   "End-of-period heaves and intentional fouls create possessions that are not typical offence."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "field goal attempts",
+   "free throw attempts",
+   "turnovers",
+   "offensive/defensive rebounds (live games only)",
+   "play-by-play events with substitutions (live games only)"
+  ],
+  "data_gaps": [
+   "no counted possessions for historical games; only estimates are possible from box-score totals"
+  ],
+  "ruleset": "NBA",
+  "season_note": "NBA rulebook published for the 2026-27 season (opened 2026-11-26); re-check after rule changes",
+  "sources": [
+   {
+    "key": "nba-official-rulebook",
+    "note": "Rule 4 definition of team possession; opened 2026-11-26"
+   },
+   {
+    "key": "nba-stats-glossary",
+    "note": "POSS entry: an offensive rebound extends the existing possession; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "possessions-estimate",
+   "pace",
+   "offensive-rating",
+   "shot-clock-24"
+  ],
+  "evaluation_questions": [
+   "Does an offensive rebound start a new possession in the analytic definition?",
+   "Why do both teams end a game with almost the same number of possessions?"
+  ]
+ },
+ {
+  "slug": "shot-clock-24",
+  "department": 1,
+  "kind": "rule",
+  "title": "The 24-second shot clock",
+  "summary": "A team must release a shot that touches the rim within 24 seconds of gaining possession.",
+  "body": "When a team gains new possession of a live ball it has 24 seconds to attempt a field goal. The attempt is legal only if the ball leaves the shooter's hand before the clock expires and then touches the rim; a shot that misses everything does not satisfy the requirement. Failure is a violation and the ball goes to the defence. The clock returns to 24 on a change of possession and in several other situations, for example a foul or violation after which the offence inbounds in its backcourt. Near the end of a period, when less time remains in the period than on a full shot clock, the shot clock is switched off. The clock sets the minimum tempo of the sport: it caps how long any possession can last and so sets a floor on possessions per game. It also shapes shot quality. Possessions that reach the last few seconds usually end in a harder attempt, which is one reason early offence and quick decisions are valued.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Our data does not record how much time was on the shot clock for any shot.",
+   "Reset rules have many special cases; this record summarises the main ones only.",
+   "Other competitions also use a 24-second clock but details of resets should be checked in their own rules."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "play-by-play events with substitutions (live games only)"
+  ],
+  "data_gaps": [
+   "no shot-clock time per attempt",
+   "no shot locations"
+  ],
+  "ruleset": "NBA",
+  "season_note": "NBA rulebook published for the 2026-27 season (opened 2026-11-26); re-check after rule changes",
+  "sources": [
+   {
+    "key": "nba-official-rulebook",
+    "note": "Rule 7: length, legal attempt, resets to 24, violation; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "shot-clock-14-reset",
+   "possession",
+   "pace",
+   "pace-and-early-offense"
+  ],
+  "evaluation_questions": [
+   "What must happen to the ball for an attempt to beat the shot clock?",
+   "Why does the shot clock put a floor under the number of possessions in a game?"
+  ]
+ },
+ {
+  "slug": "shot-clock-14-reset",
+  "department": 1,
+  "kind": "rule",
+  "title": "The 14-second reset",
+  "summary": "After an offensive rebound, and in some frontcourt stoppages, the shot clock is set to 14 seconds instead of 24.",
+  "body": "The shot clock does not always return to 24. When the offence is first to regain the ball after its own missed field goal or free throw has hit the rim, the clock is set to 14 seconds. The same shorter reset applies to certain sequences after such a miss, such as a loose-ball foul on the defence followed by a frontcourt throw-in. A separate group of stoppages - a common defensive foul with a frontcourt throw-in, a defensive three-second violation, a kicked ball by the defence - leaves the clock where it was, or raises it to 14 if less than that remained. The practical effect is that second-chance possessions are short. An offensive rebound usually leads to an immediate putback or a quick kick-out, and a team that rebounds its own misses often adds field goal attempts without adding much clock time. That is why offensive rebounding raises a team's attempts per minute, and why estimates of possessions subtract a share of offensive rebounds instead of treating each new attempt as a new possession.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "The list of 14-second situations is longer than this summary and has changed over the years; check the current rulebook.",
+   "We cannot see which shots followed a 14-second reset in historical games.",
+   "Putback attempts cannot be separated from other attempts in a box score."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "offensive/defensive rebounds (live games only)",
+   "play-by-play events with substitutions (live games only)"
+  ],
+  "data_gaps": [
+   "no second-chance points per player",
+   "no shot-clock data"
+  ],
+  "ruleset": "NBA",
+  "season_note": "NBA rulebook published for the 2026-27 season (opened 2026-11-26); re-check after rule changes",
+  "sources": [
+   {
+    "key": "nba-official-rulebook",
+    "note": "Rule 7: 14-second reset situations; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "shot-clock-24",
+   "offensive-and-defensive-rebound",
+   "offensive-rebound-percentage",
+   "possessions-estimate"
+  ],
+  "evaluation_questions": [
+   "To what value is the shot clock set after an offensive rebound of a shot that hit the rim?",
+   "Why do offensive rebounds add attempts without adding much game time?"
+  ]
+ },
+ {
+  "slug": "personal-fouls-and-fouling-out",
+  "department": 1,
+  "kind": "rule",
+  "title": "Personal fouls and disqualification",
+  "summary": "A personal foul is illegal contact with an opponent; a player's sixth personal foul in an NBA game disqualifies him.",
+  "body": "A personal foul is illegal physical contact with an opponent while the ball is live. Each one is charged to the player and, in most cases, to his team's count for the period. On his sixth personal foul an NBA player is disqualified and cannot return, including in overtime, because the count carries through the whole game. In the rare case that a team has no eligible substitute, the rulebook has the player stay on the floor with an added technical foul against the team for each further foul. For analysis, fouls are a constraint on minutes. Coaches often sit a player who collects fouls early, long before the limit, so the cost of foul trouble is usually paid in lost first-half minutes and not in actual disqualification. Foul rates differ by role: players who defend the rim or guard the main ball handler are exposed to more contact. Other competitions use a different limit, which changes how early foul trouble starts to bind.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Historical box scores in our data do not include personal fouls, so foul-prone players cannot be profiled from history.",
+   "The limit differs by competition; do not carry NBA conventions to other rule sets without checking.",
+   "A foul count does not say why the fouls occurred or how the coach will react."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "personal fouls (live games only)",
+   "play-by-play events with substitutions (live games only)",
+   "minutes"
+  ],
+  "data_gaps": [
+   "no personal fouls before live ingestion began on 2026-11-25",
+   "no record of which defensive assignment produced a foul"
+  ],
+  "ruleset": "NBA",
+  "season_note": "NBA rulebook published for the 2026-27 season (opened 2026-11-26); re-check after rule changes",
+  "sources": [
+   {
+    "key": "nba-official-rulebook",
+    "note": "Rule 3 (disqualification on the sixth personal foul; no eligible substitutes) and Rule 4 (definition of personal foul); opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "team-fouls-and-penalty",
+   "foul-trouble-management",
+   "foul-trouble-effect-on-minutes",
+   "foul-trouble-thresholds-live",
+   "technical-fouls"
+  ],
+  "evaluation_questions": [
+   "On which personal foul is an NBA player disqualified?",
+   "Why is the main cost of foul trouble usually lost minutes and not disqualification?"
+  ]
+ },
+ {
+  "slug": "team-fouls-and-penalty",
+  "department": 1,
+  "kind": "rule",
+  "title": "Team fouls and the penalty (bonus)",
+  "summary": "From a team's fifth foul in a regulation period, each common foul sends the opponent to the line for two free throws.",
+  "body": "Fouls are also counted by team within each period. In a regulation period the first four team fouls that are not shooting fouls result only in a throw-in for the opponent. From the fifth onward the fouled team is in the penalty, often called the bonus: every common defensive foul yields two free throws. Overtime uses a lower limit, with the penalty starting on the fourth team foul. There is also a late-period provision: a team that has stayed under its quota may commit only one foul in the last two minutes before the penalty applies. Offensive fouls are charged to the player but not to the team count. The count restarts each period. The penalty matters for scoring because it converts ordinary contact into free throws. A team that reaches the penalty early in a period gives its opponent an efficient source of points for many minutes, and players who draw contact on drives benefit most. It also explains deliberate fouling late in games, when the trailing side trades free throws for possessions.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Team foul counts by period are visible to us only in live play-by-play, not in historical box scores.",
+   "The penalty threshold and the late-period provision differ by competition and have changed historically.",
+   "Free throws from the penalty cannot be separated from shooting-foul free throws in a box score."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "free throw attempts",
+   "personal fouls (live games only)",
+   "play-by-play events with substitutions (live games only)"
+  ],
+  "data_gaps": [
+   "no team foul counts by period for historical games"
+  ],
+  "ruleset": "NBA",
+  "season_note": "NBA rulebook published for the 2026-27 season (opened 2026-11-26); re-check after rule changes",
+  "sources": [
+   {
+    "key": "nba-official-rulebook",
+    "note": "Rule 12: team foul limits per period, overtime, last two minutes, offensive fouls; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "personal-fouls-and-fouling-out",
+   "free-throws",
+   "free-throw-rate",
+   "late-game-fouling-strategy"
+  ],
+  "evaluation_questions": [
+   "In a regulation NBA period, which team foul puts the opponent in the penalty?",
+   "Does an offensive foul count toward the team total?"
+  ]
+ },
+ {
+  "slug": "substitutions",
+  "department": 1,
+  "kind": "rule",
+  "title": "Substitutions",
+  "summary": "Substitutes report to the scorer and enter during a dead ball when an official beckons them; there is no limit on the number of substitutions.",
+  "body": "Each team plays five at a time, and the rulebook does not allow a team to be reduced below five. A substitute reports to the scorer's table, names the player he replaces, and waits until an official waves him in during a stoppage. He cannot enter while the ball is live, which is why a player sometimes waits at the table for a minute or more when play runs without a whistle. During free throws substitutes normally come in before the final attempt. A free throw shooter can be replaced only in special cases such as injury. Because substitution is unlimited and free of cost, minutes in basketball are entirely a coaching decision bounded by fatigue, fouls and the score. That makes rotation patterns - who enters when, with whom, and for how long - the central structure behind every individual stat line. Substitution events are recorded in play-by-play, and from them on-court stints can be rebuilt, though errors in the event feed occasionally make a stint ambiguous.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Substitution events exist in our data only for live games since 2026-11-25.",
+   "Play-by-play substitution records are sometimes mis-ordered, which can make derived stints slightly wrong.",
+   "The reason for a substitution is never recorded."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "play-by-play events with substitutions (live games only)",
+   "derived on-court stints and minutes by quarter (live games only)",
+   "minutes",
+   "starter flag",
+   "did-not-play records"
+  ],
+  "data_gaps": [
+   "no substitution or lineup data for historical games"
+  ],
+  "ruleset": "NBA",
+  "season_note": "NBA rulebook published for the 2026-27 season (opened 2026-11-26); re-check after rule changes",
+  "sources": [
+   {
+    "key": "nba-official-rulebook",
+    "note": "Rule 3: substitution procedure, five-player minimum, free-throw exceptions; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "substitution-patterns",
+   "rotation-length",
+   "minutes-as-opportunity",
+   "personal-fouls-and-fouling-out"
+  ],
+  "evaluation_questions": [
+   "When may a substitute legally enter the game?",
+   "Why are minutes described as entirely a coaching decision?"
+  ]
+ },
+ {
+  "slug": "timeouts",
+  "department": 1,
+  "kind": "rule",
+  "title": "Timeouts",
+  "summary": "Each NBA team has seven timeouts in regulation, with limits late in the fourth period, and two per overtime.",
+  "body": "A team is charged with at most seven timeouts in regulation. It may use no more than four in the fourth period, and after a set point late in that period it is limited to two. Each overtime period brings two. Only a player in the game or the head coach can ask for one, and only when the ball is dead or the requesting team controls it. Every period also contains two mandatory timeouts for broadcasts, taken at the first dead ball after fixed clock marks if no team has called one. Timeouts have three analytical consequences. They are the main moments for substitution, so rotation changes cluster around them. They let a coach interrupt an opponent's run or set up a specific play. And late in close games they let the offence advance the ball and organise a final possession. A coach's challenge also requires a timeout. The number each team has left is not part of a box score, so it is visible only by following the play-by-play.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Timeout counts and limits have been revised several times; the figures here are for the rulebook edition cited.",
+   "We do not track remaining timeouts as a stored field.",
+   "The effect of a timeout on the next possession cannot be measured from our data."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "play-by-play events with substitutions (live games only)"
+  ],
+  "data_gaps": [
+   "no stored count of timeouts remaining",
+   "no after-timeout play identification"
+  ],
+  "ruleset": "NBA",
+  "season_note": "NBA rulebook published for the 2026-27 season (opened 2026-11-26); re-check after rule changes",
+  "sources": [
+   {
+    "key": "nba-official-rulebook",
+    "note": "Rule 5: number of timeouts, fourth-period and overtime limits, mandatory timeouts, who may request; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "timeout-usage",
+   "after-timeout-plays",
+   "coachs-challenge",
+   "substitution-patterns"
+  ],
+  "evaluation_questions": [
+   "How many timeouts does an NBA team have in regulation and in each overtime?",
+   "Who is allowed to request a timeout?"
+  ]
+ },
+ {
+  "slug": "offensive-and-defensive-rebound",
+  "department": 1,
+  "kind": "rule",
+  "title": "Offensive and defensive rebounds",
+  "summary": "A rebound is credited for gaining the ball after a missed shot: offensive if the shooting team recovers it, defensive if the other team does.",
+  "body": "Every missed field goal or missed final free throw that stays in play ends in a rebound. If a player of the shooting team secures it, he is credited with an offensive rebound and his team's possession continues on a shortened shot clock. If a defender secures it, he gets a defensive rebound and possession changes. When no individual can be credited - the ball goes out of bounds, or a loose-ball foul is called - the rebound is assigned to the team, which is why individual rebounds in a box score do not add up to the number of misses. The two types are different skills and different events. Defensive rebounds are far more common because defenders start closer to the basket, and many are uncontested and could have been taken by any of several teammates. Offensive rebounds are scarcer and create extra attempts. Treating total rebounds as one number hides this. Where the split is available it should be used, and where it is not, a total should be read with the player's role in mind.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Our historical box scores hold total rebounds only; the offensive/defensive split exists for live games since 2026-11-25.",
+   "Crediting a tapped or contested ball involves scorer judgement.",
+   "A rebound total says nothing about how many were contested."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "rebounds",
+   "offensive/defensive rebounds (live games only)"
+  ],
+  "data_gaps": [
+   "no rebound chances or contested-rebound tracking",
+   "no offensive/defensive split in historical box scores"
+  ],
+  "ruleset": "NBA",
+  "season_note": "NBA rulebook published for the 2026-27 season (opened 2026-11-26); re-check after rule changes",
+  "sources": [
+   {
+    "key": "nba-stats-glossary",
+    "note": "REB, OREB, DREB entries; opened 2026-11-26"
+   },
+   {
+    "key": "nba-video-rulebook",
+    "note": "Table Stats index: rebound crediting cases including team rebounds; opened 2026-11-26"
+   },
+   {
+    "key": "nba-official-rulebook",
+    "note": "Rule 7: 14-second reset after an offensive rebound; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "offensive-rebound-percentage",
+   "defensive-rebound-percentage",
+   "shot-clock-14-reset",
+   "contested-vs-uncontested-rebounds",
+   "official-scoring-and-stat-corrections"
+  ],
+  "evaluation_questions": [
+   "Why do individual rebounds not sum to the number of missed shots?",
+   "Why should offensive and defensive rebounds be read separately?"
+  ]
+ },
+ {
+  "slug": "turnover",
+  "department": 1,
+  "kind": "rule",
+  "title": "Turnover",
+  "summary": "A turnover is charged when the offence loses the ball to the defence without attempting a shot.",
+  "body": "A turnover ends a possession with no shot. It is charged to the player responsible - a bad pass, a mishandled dribble, an offensive foul, a travelling or other violation - or to the team when no individual is at fault, as with a shot-clock violation. Turnovers split into live-ball and dead-ball types. A live-ball turnover, usually a steal, lets the opponent run immediately and is more damaging than one that stops play and allows the defence to set. The box score records only the total. Turnovers rise with responsibility: players who handle the ball most and attempt the most difficult passes commit the most, so a raw count mostly measures role. That is why turnovers are best read as a rate against the possessions or plays a player used, or against his assists. For team analysis a turnover costs the full value of the possession, which is why turnover rate is one of the main levers of offensive efficiency alongside shooting, rebounding and free throws.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "A count does not separate live-ball from dead-ball turnovers.",
+   "Assigning a bad pass to the passer or the receiver is a scorer's judgement.",
+   "Raw turnovers punish high-usage creators; use a rate."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "turnovers",
+   "play-by-play events with substitutions (live games only)"
+  ],
+  "data_gaps": [
+   "no live-ball versus dead-ball split in historical box scores",
+   "no touches or time of possession to scale turnovers against"
+  ],
+  "ruleset": "NBA",
+  "season_note": "NBA rulebook published for the 2026-27 season (opened 2026-11-26); re-check after rule changes",
+  "sources": [
+   {
+    "key": "nba-stats-glossary",
+    "note": "TOV entry; opened 2026-11-26"
+   },
+   {
+    "key": "nba-video-rulebook",
+    "note": "Table Stats index: turnover crediting cases; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "turnover-percentage",
+   "steal",
+   "assist-to-turnover-ratio",
+   "possession"
+  ],
+  "evaluation_questions": [
+   "Why is a live-ball turnover usually more costly than a dead-ball turnover?",
+   "Why is a raw turnover count mostly a measure of role?"
+  ]
+ },
+ {
+  "slug": "assist",
+  "department": 1,
+  "kind": "rule",
+  "title": "Assist (official scoring judgement)",
+  "summary": "An assist is credited to the player whose pass leads directly to a teammate's made field goal, as judged by the official scorer.",
+  "body": "The assist is the one common box-score statistic that depends on opinion. The scorer credits the passer when, in his judgement, the pass led directly to the basket. There is no fixed limit on dribbles or seconds in the definition; a pass followed by one move to the rim may count while a pass followed by a long isolation should not. Only one assist can be given per made field goal, and none is given when the shooter is fouled and scores only from the line. Three things follow. First, an assist requires a teammate to make a shot, so a passer's total depends on the shooting of the people around him. Second, standards differ a little between scorers and have shifted over time, which adds noise to comparisons. Third, assists are sometimes changed after the game when the league reviews the scoring. An assist total is solid evidence that a player passed to scorers, and weaker evidence about the quality of the chances he created.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Scorer judgement varies between arenas and across eras.",
+   "Passes that led to missed shots or to free throws are invisible in the assist column.",
+   "Totals can be revised after the game."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "assists",
+   "play-by-play events with substitutions (live games only)"
+  ],
+  "data_gaps": [
+   "no potential assists, secondary assists or passes made",
+   "no record of who assisted whom in historical box scores"
+  ],
+  "ruleset": "NBA",
+  "season_note": "NBA rulebook published for the 2026-27 season (opened 2026-11-26); re-check after rule changes",
+  "sources": [
+   {
+    "key": "nba-stats-glossary",
+    "note": "AST entry: a pass that leads directly to a made basket; opened 2026-11-26"
+   },
+   {
+    "key": "nba-video-rulebook",
+    "note": "Table Stats index: assist credited only when the pass leads directly to the made field goal; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "assist-percentage",
+   "potential-assists",
+   "official-scoring-and-stat-corrections",
+   "playmaking-dependence-on-teammate-shooting",
+   "hockey-assist"
+  ],
+  "evaluation_questions": [
+   "Why does a passer's assist total depend on his teammates?",
+   "Is there a fixed dribble limit in the definition of an assist?"
+  ]
+ },
+ {
+  "slug": "steal",
+  "department": 1,
+  "kind": "rule",
+  "title": "Steal",
+  "summary": "A steal is credited to a defender who takes the ball from an opponent, intercepts a pass or deflects it so that his team gains possession.",
+  "body": "A steal is a defensive action that causes a turnover and gives the stealing team the ball. It can come from stripping a dribbler, picking off a pass, or deflecting the ball to a teammate; in the last case the credit goes to the player who made the deflection, not the one who collected it. Every steal is matched by a turnover on the other side, though not every turnover involves a steal. Steals are valuable because they are live-ball turnovers that often lead to transition chances. As evidence about a defender, though, the number is narrow. It records successful gambles and quick hands and says nothing about the failed attempts that left a teammate exposed, or about sound positional defence that forces a bad shot without a takeaway. Steals are also low-count events: most players record between zero and a few per game, so game-to-game variation is large relative to the average, and short windows are unreliable guides to a player's true rate.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Low counts make single games and short windows very noisy.",
+   "Steals reward risk-taking and do not measure overall defensive quality.",
+   "Credit on deflections involves scorer judgement."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "steals",
+   "play-by-play events with substitutions (live games only)"
+  ],
+  "data_gaps": [
+   "no deflections or failed steal attempts",
+   "no defensive matchups"
+  ],
+  "ruleset": "NBA",
+  "season_note": "NBA rulebook published for the 2026-27 season (opened 2026-11-26); re-check after rule changes",
+  "sources": [
+   {
+    "key": "nba-stats-glossary",
+    "note": "STL entry; opened 2026-11-26"
+   },
+   {
+    "key": "nba-video-rulebook",
+    "note": "Table Stats index: steal crediting cases including deflections; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "steal-percentage",
+   "turnover",
+   "block",
+   "perimeter-containment"
+  ],
+  "evaluation_questions": [
+   "Who gets the steal when one defender deflects a pass and another collects it?",
+   "Why is a steal total weak evidence of overall defensive quality?"
+  ]
+ },
+ {
+  "slug": "block",
+  "department": 1,
+  "kind": "rule",
+  "title": "Blocked shot",
+  "summary": "A block is credited to a defender who legally deflects a field goal attempt and prevents it from scoring.",
+  "body": "A blocked shot is recorded when a defender touches a field goal attempt and that touch stops the shot from going in. The attempt still counts as a missed field goal for the shooter, and the play continues with a rebound unless the ball goes out of bounds. A block is not a change of possession by itself: a ball swatted into the seats goes back to the offence, while one kept in play can start a fast break. If the ball is on its downward flight or above the rim cylinder, touching it is goaltending and the basket counts instead. Blocks are concentrated among tall interior players and a small number of long wings. Like steals they are low-count events with heavy game-to-game variance. They also understate rim protection, because the best deterrents change or prevent shots without touching them, and those effects appear nowhere in a box score. A block total is evidence of length, timing and proximity to the rim, not a complete measure of interior defence.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Deterred and altered shots are not counted.",
+   "Low counts make short samples unreliable.",
+   "A block does not show which team recovered the ball."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "blocks",
+   "play-by-play events with substitutions (live games only)"
+  ],
+  "data_gaps": [
+   "no shots contested or defended-at-rim data",
+   "no shot locations"
+  ],
+  "ruleset": "NBA",
+  "season_note": "NBA rulebook published for the 2026-27 season (opened 2026-11-26); re-check after rule changes",
+  "sources": [
+   {
+    "key": "nba-stats-glossary",
+    "note": "BLK entry; opened 2026-11-26"
+   },
+   {
+    "key": "nba-video-rulebook",
+    "note": "Table Stats index: block crediting cases; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "block-percentage",
+   "rim-protection",
+   "steal",
+   "rim-protector"
+  ],
+  "evaluation_questions": [
+   "Does a blocked shot count as a field goal attempt for the shooter?",
+   "Why do blocks understate a player's rim protection?"
+  ]
+ },
+ {
+  "slug": "coachs-challenge",
+  "department": 1,
+  "kind": "rule",
+  "title": "Coach's challenge",
+  "summary": "A head coach may challenge certain calls once per game, using a timeout; a successful first challenge earns a second.",
+  "body": "Each team has one challenge per game. To use it the head coach must call a timeout immediately after the call and signal the challenge. Three kinds of call can be challenged: a personal foul charged to the challenging team, an out-of-bounds ruling that went against it, and a goaltending or basket-interference violation. Late in the fourth period and in overtime, goaltending and basket-interference reviews are left to the officials. A call is reversed only on clear and conclusive visual evidence. If the first challenge succeeds, the team keeps its timeout and receives a second challenge; an unsuccessful challenge costs the timeout. A team with no timeout left cannot challenge. For statistics the challenge is one of the ways an event that has already been recorded can be removed: a foul taken off a player changes his foul count and can take away free throws that were about to be shot. Live feeds may show the original call for a short time before the correction arrives.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Challenge rules have been amended since the challenge was introduced; re-check each season.",
+   "The list of reviewable and non-reviewable events is summarised, not complete.",
+   "We do not store challenge events as a separate field."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "play-by-play events with substitutions (live games only)"
+  ],
+  "data_gaps": [
+   "no structured record of challenges or their outcomes"
+  ],
+  "ruleset": "NBA",
+  "season_note": "NBA rulebook published for the 2026-27 season (opened 2026-11-26); re-check after rule changes",
+  "sources": [
+   {
+    "key": "nba-official-rulebook",
+    "note": "Rule 14: number of challenges, timeout requirement, reviewable events, standard of evidence; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "instant-replay",
+   "timeouts",
+   "official-scoring-and-stat-corrections",
+   "personal-fouls-and-fouling-out"
+  ],
+  "evaluation_questions": [
+   "What does a team receive if its first challenge is successful?",
+   "Which three kinds of call can be challenged?"
+  ]
+ },
+ {
+  "slug": "instant-replay",
+  "department": 1,
+  "kind": "rule",
+  "title": "Instant replay review",
+  "summary": "Officials and the league's replay centre review defined categories of plays, such as shot value, end-of-period shots and flagrant fouls.",
+  "body": "Replay in the NBA is limited to listed situations. They include whether a shot or foul came before a period expired, whether a made basket was a two or a three, whether a shot beat the shot clock, whether a foul meets the flagrant criteria, clear-path and off-ball foul questions, altercations, and identifying the correct free throw shooter. Some further matters, such as goaltending, are reviewable only in the last two minutes of the fourth period or overtime. The on-court crew triggers a review when it is not reasonably certain, and the replay centre triggers certain shot-value and shot-clock reviews itself. Shot-value reviews earlier in the game can be settled at a later stoppage, which is why a team's score sometimes changes by a point minutes after the basket. For anyone reading live data this is the key point: a score or a player's point total can be revised after it was first reported, and a careful reader treats the most recent values as provisional until the game is final.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "The categories and timing rules are detailed and change between seasons; this is a summary.",
+   "The rulebook pages read did not state one general standard for overturning in replay; do not assume one.",
+   "Our live feed shows the corrected value but not always that a review occurred."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "play-by-play events with substitutions (live games only)",
+   "score progression (live games only)"
+  ],
+  "data_gaps": [
+   "no structured record of replay reviews"
+  ],
+  "ruleset": "NBA",
+  "season_note": "NBA rulebook published for the 2026-27 season (opened 2026-11-26); re-check after rule changes",
+  "sources": [
+   {
+    "key": "nba-official-rulebook",
+    "note": "Rule 13: triggers, who initiates, timing of shot-value reviews; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "coachs-challenge",
+   "official-scoring-and-stat-corrections",
+   "flagrant-fouls",
+   "why-live-data-is-delayed"
+  ],
+  "evaluation_questions": [
+   "Why can a team's score change by one point several minutes after a made basket?",
+   "Who can trigger a replay review?"
+  ]
+ },
+ {
+  "slug": "official-scoring-and-stat-corrections",
+  "department": 1,
+  "kind": "concept",
+  "title": "Official scoring and stat corrections",
+  "summary": "Box-score statistics are recorded by scorers in real time and can be corrected after the game.",
+  "body": "Statistics are entered by a crew at the arena while the game is played. Points and fouls follow from officials' rulings, but rebounds, assists, steals, blocks and turnovers require the scorer to decide who should be credited. After the game the league may review the scoring and issue changes: an assist removed, a rebound moved from one player to another, a block added. Most games see no change or a small one, but a single correction can move a player's line across a round-number threshold. Three working rules follow for research. The final box score, not the live feed, is the record to evaluate against. A value that was captured during or just after a game should be re-read later before it is treated as settled. And any contract or paper test that settles on a statistic settles on the official figure as defined by the rules of that contract, which may specify the source and the time at which it is read.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "We have not verified the league's review timetable from a source; treat timing as unknown.",
+   "Our stored box scores reflect the provider's value at ingestion and later re-ingestion, not a log of each correction.",
+   "The frequency of corrections cannot be stated from our data."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "points",
+   "rebounds",
+   "assists",
+   "steals",
+   "blocks",
+   "turnovers",
+   "play-by-play events with substitutions (live games only)"
+  ],
+  "data_gaps": [
+   "no correction log for historical box scores before live ingestion",
+   "no scorer identity"
+  ],
+  "ruleset": "NBA",
+  "season_note": "League review procedures were not checked against a source; confirm before relying on timing",
+  "sources": [
+   {
+    "key": "nba-video-rulebook",
+    "note": "Table Stats section shows the crediting cases scorers face; pointer only"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "live corrections keep history (LIVE-VALIDATION.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "assist",
+   "offensive-and-defensive-rebound",
+   "stat-corrections-after-the-game",
+   "settlement-rules-and-wording",
+   "instant-replay"
+  ],
+  "evaluation_questions": [
+   "Which box-score statistics depend on scorer judgement?",
+   "Why should a stat line captured at the final buzzer be re-read before evaluation?"
+  ]
+ },
+ {
+  "slug": "technical-fouls",
+  "department": 1,
+  "kind": "rule",
+  "title": "Technical fouls",
+  "summary": "A technical foul penalises unsportsmanlike conduct or certain procedural violations with one free throw; two unsportsmanlike technicals bring ejection.",
+  "body": "A technical foul is not about contact during play. It is charged for unsportsmanlike conduct by players, coaches or bench personnel, and for some procedural infractions such as an excessive timeout. The penalty is one free throw, which may be taken by any player who was in the game when the foul was called, after which play resumes where it stopped with the same team in possession. Technicals on both teams in the same dead ball cancel with no shots. A player or coach must be ejected after two unsportsmanlike technicals in a game and may be ejected after one. Technical fouls are not personal fouls and do not move a player toward the six-foul limit. Their statistical footprint is small but real: the free throw is usually given to a team's best shooter, adding an attempt that did not come from his own offence, and an ejection removes a player's remaining minutes with no warning. Neither can be anticipated in a projection; both are reasons a single game can depart from expectation.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Ejections are rare and cannot be forecast from our data.",
+   "Technical free throws are not separated from other free throws in a box score.",
+   "Some technicals are non-unsportsmanlike and do not count toward ejection; the distinction is not in our data."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "free throw attempts",
+   "play-by-play events with substitutions (live games only)"
+  ],
+  "data_gaps": [
+   "no technical foul records in historical box scores"
+  ],
+  "ruleset": "NBA",
+  "season_note": "NBA rulebook published for the 2026-27 season (opened 2026-11-26); re-check after rule changes",
+  "sources": [
+   {
+    "key": "nba-official-rulebook",
+    "note": "Rule 12: technical foul penalty, shooter, double technicals, ejection; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "flagrant-fouls",
+   "personal-fouls-and-fouling-out",
+   "free-throws",
+   "timeouts"
+  ],
+  "evaluation_questions": [
+   "Who may shoot the free throw awarded for a technical foul?",
+   "Does a technical foul count toward a player's six personal fouls?"
+  ]
+ },
+ {
+  "slug": "flagrant-fouls",
+  "department": 1,
+  "kind": "rule",
+  "title": "Flagrant fouls",
+  "summary": "A flagrant foul is unnecessary contact (penalty 1) or unnecessary and excessive contact (penalty 2); both give two free throws and the ball.",
+  "body": "The rulebook separates hard contact into two grades. A flagrant foul penalty 1 is contact judged unnecessary. A flagrant foul penalty 2 is contact judged unnecessary and excessive. In both cases the offended team receives two free throws and then keeps possession, the foul is charged as a personal and a team foul, and the call is confirmed by replay. A penalty 2 brings immediate ejection; a second penalty 1 by the same player in a game also brings ejection. A flagrant can be called whether the ball is live or dead. Because the offended team shoots and retains the ball, a flagrant is among the most expensive single events in a game. For research the relevance is mostly as a source of unplanned outcomes: an ejected player loses the rest of his minutes, a teammate inherits them, and the injured party may also leave. Reviews can upgrade or downgrade a foul during the game, so the first description in a live feed may not be the final ruling.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Flagrant calls depend on officials' judgement of intent and force.",
+   "The league can reclassify fouls after the game; such changes are outside our data.",
+   "Rare events: no rate can be estimated per player."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "play-by-play events with substitutions (live games only)",
+   "personal fouls (live games only)"
+  ],
+  "data_gaps": [
+   "no flagrant foul history per player"
+  ],
+  "ruleset": "NBA",
+  "season_note": "NBA rulebook published for the 2026-27 season (opened 2026-11-26); re-check after rule changes",
+  "sources": [
+   {
+    "key": "nba-official-rulebook",
+    "note": "Rule 12 and Rule 4: definitions and penalties for flagrant fouls; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "technical-fouls",
+   "instant-replay",
+   "personal-fouls-and-fouling-out",
+   "free-throws"
+  ],
+  "evaluation_questions": [
+   "What is the difference between flagrant penalty 1 and penalty 2?",
+   "What does the offended team receive after a flagrant foul?"
+  ]
+ },
+ {
+  "slug": "free-throws",
+  "department": 1,
+  "kind": "rule",
+  "title": "Free throws",
+  "summary": "A free throw is an unguarded one-point attempt from the foul line, awarded mainly for shooting fouls and penalty fouls.",
+  "body": "Free throws are awarded when a player is fouled in the act of shooting, when the opponent is in the penalty, and for technical, flagrant and certain other fouls. The fouled player shoots his own free throws except in defined cases such as injury. He has ten seconds to release each attempt, and players along the lane must hold their positions until the release. A violation by the shooter's side cancels the point; a violation by the defence gives a replacement attempt if the shot missed. Free throws are the most efficient routine source of points for most players, and they are earned by style: drivers, post scorers and players who attack closeouts draw far more than stationary shooters. The number of attempts in a game is volatile, since it depends on officiating and on when the opponent reaches the penalty. Not every free throw attempt ends a possession, which is why efficiency formulas apply a coefficient below one half to free throw attempts when converting them to shooting possessions.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Historical box scores in our data give free throw attempts but not makes.",
+   "The reason for each trip (shooting foul, penalty, technical) is not separated.",
+   "The coefficient used to convert attempts to possessions is an approximation that varies by source."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "free throw attempts",
+   "makes/attempts for FG, 3PT and FT (live games only)"
+  ],
+  "data_gaps": [
+   "no free throw makes in historical box scores",
+   "no shooting-foul versus penalty split"
+  ],
+  "ruleset": "NBA",
+  "season_note": "NBA rulebook published for the 2026-27 season (opened 2026-11-26); re-check after rule changes",
+  "sources": [
+   {
+    "key": "nba-official-rulebook",
+    "note": "Rule 9 and Rule 4: who shoots, ten-second limit, lane rules, violations; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "free-throw-rate",
+   "true-shooting-percentage",
+   "team-fouls-and-penalty",
+   "technical-fouls",
+   "scoring-values"
+  ],
+  "evaluation_questions": [
+   "How long does a shooter have to attempt a free throw?",
+   "Why do efficiency formulas multiply free throw attempts by a coefficient below 0.5?"
+  ]
+ },
+ {
+  "slug": "jump-ball-and-opening-possession",
+  "department": 1,
+  "kind": "rule",
+  "title": "Jump balls and opening possession",
+  "summary": "The NBA starts the game and each overtime with a jump ball and uses jump balls, not an alternating arrow, for held balls.",
+  "body": "The game begins with a jump ball at centre court between any two opponents. The team that gains that first possession also inbounds to start the fourth period, while the other team inbounds to start the second and third. Each overtime begins with a new jump ball. During play, a held ball - two opponents with firm hands on the ball - is resolved by a jump between the two players involved at the nearest circle. This differs from competitions that use an alternating-possession arrow after the opening tip, so the handling of held balls should be checked for whichever rule set applies. The opening tip decides one possession and the order of period-starting possessions, which is a small edge over a full game. It matters more as a data event: it marks the start of the game clock, and play-by-play feeds use it as the first event, so a missing or late tip record is an early sign that a live feed has not begun delivering.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "The effect of winning the tip on game outcome is small and is not estimated here.",
+   "FIBA and other rule sets handle held balls differently; confirm before applying.",
+   "We do not store who won the opening tip as a field."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "play-by-play events with substitutions (live games only)"
+  ],
+  "data_gaps": [
+   "no jump-ball outcome field"
+  ],
+  "ruleset": "NBA",
+  "season_note": "NBA rulebook published for the 2026-27 season (opened 2026-11-26); re-check after rule changes",
+  "sources": [
+   {
+    "key": "nba-official-rulebook",
+    "note": "Rule 6: jump ball at start of game and overtime, period-opening possessions, held balls; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "overtime-period",
+   "possession",
+   "game-structure-and-regulation",
+   "why-live-data-is-delayed"
+  ],
+  "evaluation_questions": [
+   "Which team inbounds to start the second and third periods?",
+   "How is a held ball resolved in the NBA?"
+  ]
+ },
+ {
+  "slug": "clear-path-foul",
+  "department": 1,
+  "kind": "rule",
+  "title": "Clear-path foul",
+  "summary": "A clear-path foul is a defensive foul that takes away a transition scoring chance with no defender ahead; it brings two free throws and the ball.",
+  "body": "The clear-path rule protects fast breaks. It applies when a defender fouls during the offence's transition scoring opportunity, the ball is ahead of the tip of the backcourt circle, no defender is positioned ahead of the offensive player, that player has the ball or a pass to him has been released, and the foul removes the chance to score. The offended team gets two free throws and keeps the ball on the sideline. It does not apply when the player is fouled in the act of shooting or when the defender was making a play to intercept the pass. The call is reviewable. The rule exists to remove the incentive to stop a break with a deliberate foul, and it sits beside the separate provision that penalises fouls used to stop a fast-break advantage away from the ball. For the reader of a box score it is one more route by which a player collects free throw attempts that did not come from a half-court shooting foul.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "The conditions are judged in real time and often settled by replay.",
+   "Our data does not label clear-path fouls separately in historical games.",
+   "Related transition-foul provisions have changed in recent seasons and should be re-checked."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "play-by-play events with substitutions (live games only)",
+   "free throw attempts"
+  ],
+  "data_gaps": [
+   "no foul-type labels in historical box scores"
+  ],
+  "ruleset": "NBA",
+  "season_note": "NBA rulebook published for the 2026-27 season (opened 2026-11-26); re-check after rule changes",
+  "sources": [
+   {
+    "key": "nba-official-rulebook",
+    "note": "Rule 12: clear-path foul conditions and penalty; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "transition-offense",
+   "free-throws",
+   "instant-replay",
+   "team-fouls-and-penalty"
+  ],
+  "evaluation_questions": [
+   "What does the offended team receive for a clear-path foul?",
+   "Name two conditions that must hold for a clear-path foul."
+  ]
+ },
+ {
+  "slug": "away-from-play-foul",
+  "department": 1,
+  "kind": "rule",
+  "title": "Away-from-the-play foul",
+  "summary": "A deliberate defensive foul away from the ball in the last two minutes, or before a throw-in is released, gives one free throw and possession.",
+  "body": "Teams once fouled poor free throw shooters who were nowhere near the ball in order to send them to the line. The rulebook restricts this late in periods. A deliberate foul by the defence away from the immediate action during the last two minutes of a period or of overtime, or before the ball is released on a throw-in at any time, is an away-from-the-play foul. It is charged as a personal and a team foul, the offended team is awarded one free throw that any player in the game may shoot, and that team then keeps the ball. Outside those windows, deliberately fouling a weak shooter off the ball is treated as an ordinary foul, so the tactic can still appear earlier in periods when the fouling team is in the penalty. For projections the relevance is narrow: a notably poor free throw shooter can see his attempts jump in a particular game for tactical reasons, and can be removed by his coach to avoid it, costing him minutes.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "How often the tactic is used against a given player cannot be measured from our data.",
+   "The window in which the rule applies has been widened over time; check the current text.",
+   "Foul intent is a judgement by officials."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "play-by-play events with substitutions (live games only)",
+   "free throw attempts"
+  ],
+  "data_gaps": [
+   "no label for intentional or off-ball fouls"
+  ],
+  "ruleset": "NBA",
+  "season_note": "NBA rulebook published for the 2026-27 season (opened 2026-11-26); re-check after rule changes",
+  "sources": [
+   {
+    "key": "nba-official-rulebook",
+    "note": "Rule 4 definition and Rule 12 penalty for away-from-the-play fouls; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "late-game-fouling-strategy",
+   "free-throws",
+   "team-fouls-and-penalty",
+   "closing-lineups"
+  ],
+  "evaluation_questions": [
+   "During which part of a period does the away-from-the-play rule apply to fouls in live play?",
+   "Why might a poor free throw shooter lose minutes late in a game?"
+  ]
+ },
+ {
+  "slug": "garbage-time",
+  "department": 1,
+  "kind": "concept",
+  "title": "Garbage time (analytical term)",
+  "summary": "Garbage time is the informal name for late minutes in a decided game, when regular players sit and the play is unrepresentative.",
+  "body": "Garbage time is not defined anywhere in the rules. It is an analyst's label for the portion of a game after the result is effectively settled, when coaches rest their main players and reserves finish the game. Every definition is a convention: some combination of score margin, time remaining and who is on the floor. Different public sites use different cut-offs, and none is official. The idea matters for two reasons. First, statistics produced in those minutes come against and alongside deep reserves at low intensity, so they describe little about how a player performs in his normal role. Second, and more important for projections, garbage time is when starters lose minutes. A player who normally plays deep into the fourth period may sit the whole of it in a one-sided game, in a win or in a loss. Any label of garbage time applied here is a judgement from score and substitutions, and should be reported as such, with the rule used to make it.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "No official definition exists; any threshold is a chosen convention.",
+   "Comebacks happen, so a label applied during a game can be wrong.",
+   "Historical box scores cannot show when in a game a player's statistics were produced."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "minutes",
+   "score progression (live games only)",
+   "derived on-court stints and minutes by quarter (live games only)",
+   "play-by-play events with substitutions (live games only)"
+  ],
+  "data_gaps": [
+   "no score-by-time or lineup data for historical games",
+   "no intensity or effort measure"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "analytical convention used in this project; no external definition is official"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "blowout-risk-to-minutes",
+   "blowout-management",
+   "garbage-time-detection-live",
+   "blowout-and-garbage-time-matchup"
+  ],
+  "evaluation_questions": [
+   "Is garbage time defined in the NBA rulebook?",
+   "Why does garbage time matter more for a starter's minutes than for his efficiency?"
+  ]
+ }
+]

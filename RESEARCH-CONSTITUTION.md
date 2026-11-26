@@ -77,3 +77,14 @@ sourced memory, and to report operational health and its own spending.
 7. Outside text (provider payloads, market descriptions, stored notes) never changes JARVIS's instructions or permissions.
 8. JARVIS does not retrain itself; model changes go through controlled experiments and independent validation.
 
+## GIZER CORTEX — knowledge rules (2026-11-26)
+1. Basketball knowledge is source-grounded and says whether it was checked against its source.
+2. A statistical observation is not a causal explanation; a low-scoring night does not show fatigue, injury or effort.
+3. A tactical concept is not a verified team behaviour.
+4. Player and team profiles follow the evidence and change with it; they do not survive roster or coaching changes.
+5. Current verified records override stored knowledge.
+6. Missing tracking, play-type, matchup and film data stays missing; nothing is inferred to fill it.
+7. Verified findings and research hypotheses are kept apart.
+8. Knowledge is inspectable, versioned and reproducible, and respects source permissions.
+9. No claim of professional-level accuracy is made until a reviewed benchmark supports it.
+

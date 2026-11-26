@@ -157,6 +157,7 @@ export function JarvisConversationView({
   onStop,
   compact = false,
   extraSuggestions = [],
+  draft,
 }: {
   messages: JarvisMessage[];
   live: LiveTurn | null;
@@ -172,8 +173,13 @@ export function JarvisConversationView({
   compact?: boolean;
   /** Page-specific question chips shown before the API's suggestions. */
   extraSuggestions?: string[];
+  /** Text placed in the composer when the view opens (the owner still decides whether to send it). */
+  draft?: string;
 }) {
-  const [text, setText] = useState("");
+  const [text, setText] = useState(draft ?? "");
+  useEffect(() => {
+    if (draft) setText(draft);
+  }, [draft]);
   const [deep, setDeep] = useState(false);
   const [attachments, setAttachments] = useState<PreparedImage[]>([]);
   const [attachError, setAttachError] = useState<string | null>(null);

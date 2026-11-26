@@ -772,6 +772,60 @@ def t_paper_progress(a: DateArg, ctx):
     return live_research_tracker(a.date, limit=25)
 
 
+# ------------------------------------------------------------------ GIZER CORTEX (basketball knowledge and profiles)
+class KnowledgeSearch(Args):
+    query: str = Field(min_length=2, max_length=200, description="Basketball term or question, e.g. 'drop coverage', 'true shooting'.")
+    department: int | None = Field(None, ge=1, le=20)
+    kind: Literal["rule", "statistic", "offense", "defense", "role", "concept", "context", "market", "method", "live"] | None = None
+    limit: int = Field(5, ge=1, le=8)
+
+
+def t_knowledge_search(a: KnowledgeSearch, ctx):
+    from . import cortex
+    return cortex.search(a.query, a.department, a.kind, a.limit, caller="jarvis")
+
+
+class ConceptArg(Args):
+    slug: str = Field(min_length=2, max_length=80, description="Record slug from search_basketball_knowledge.")
+
+
+def t_concept(a: ConceptArg, ctx):
+    from . import cortex
+    c = cortex.get_concept(a.slug)
+    if c is None:
+        raise ToolError("no knowledge record with that slug; use search_basketball_knowledge first")
+    return c
+
+
+def t_player_dna(a: PlayerArg, ctx):
+    from . import cortex
+    d = cortex.player_dna(a.player_id)
+    if d is None:
+        raise ToolError("player not found")
+    return d
+
+
+def t_team_dna(a: TeamArg, ctx):
+    from . import cortex
+    d = cortex.team_dna(a.team_id)
+    if d is None:
+        raise ToolError("team not found")
+    return d
+
+
+def t_knowledge_coverage(a: NoArgs, ctx):
+    from . import cortex
+    return cortex.coverage()
+
+
+def t_knowledge_sources(a: NoArgs, ctx):
+    from .db import CortexSource
+    with session_scope() as s:
+        return {"sources": [{"key": x.key, "title": x.title, "publisher": x.publisher, "url": x.url, "league": x.league,
+                             "reliability": x.reliability, "permission": x.permission, "accessed": x.accessed,
+                             "access_result": x.access_result} for x in s.scalars(select(CortexSource).order_by(CortexSource.key))]}
+
+
 def memory_dict(m: JarvisMemory) -> dict:
     return {"id": m.id, "category": m.category, "status": m.status, "subject_type": m.subject_type, "subject_id": m.subject_id,
             "text": m.text, "sources": m.sources, "observed_on": m.observed_on, "created_by": m.created_by, "created_at": m.created_at}
@@ -840,6 +894,12 @@ TOOLS: list[Tool] = [
     _t("get_followed_players", "Loading followed players", "Same watchlist as get_followed_games; use when the question is about followed players and their live lines.", DateArg, t_followed, "live"),
     _t("get_pregame_projection_comparison", "Comparing with pregame projections", "Per player: pregame projected minutes/points/rebounds/assists beside what has been observed so far.", LiveGameArg, t_pregame_comparison, "live"),
     _t("get_paper_research_progress", "Reading paper research progress", "Paper tickets for a date with each leg's line beside its observed statistic and settlement status. Observation only.", DateArg, t_paper_progress, "live"),
+    _t("search_basketball_knowledge", "Searching the basketball library", "Search the CORTEX knowledge library (rules, offensive and defensive concepts, roles, statistics and formulas, market literacy, research methods). Returns short records with slugs. Use before explaining a concept, a statistic or a rule.", KnowledgeSearch, t_knowledge_search, "cortex"),
+    _t("get_basketball_concept", "Reading a knowledge record", "One full knowledge record by slug: explanation, formula, limitations, what our data can and cannot observe for it, sources and whether the text was checked against a source.", ConceptArg, t_concept, "cortex"),
+    _t("get_player_dna", "Building the player profile", "Evidence-derived player profile: identity, team history, season rates per 36, usage, true shooting, start share, minutes spread, rule-based archetypes with the rule shown, teammate context, and what is not available.", PlayerArg, t_player_dna, "cortex"),
+    _t("get_team_dna", "Building the team profile", "Evidence-derived team profile for the season: record, scoring, pace and ratings where possessions exist, shot volume, rotation length, starter minutes, starting-five stability, minutes leaders, first-substitution timing from live games. Includes the rotation tendencies (coach identity is not held).", TeamArg, t_team_dna, "cortex"),
+    _t("get_knowledge_coverage", "Checking knowledge coverage", "What CORTEX holds: knowledge records by department and verification status, sources, profile counts, benchmark size and latest results, and what is not built.", NoArgs, t_knowledge_coverage, "cortex"),
+    _t("get_knowledge_sources", "Listing knowledge sources", "The source registry with publisher, permission note and whether each source was actually opened by the author.", NoArgs, t_knowledge_sources, "cortex"),
     _t("get_agent_status", "Checking the research agents", "The 18 agent roles with last run, status, last report and errors.", NoArgs, t_agent_status, "operations"),
     _t("get_data_provider_health", "Checking data providers", "Provider status, data freshness, coverage and warnings.", NoArgs, t_data_health, "operations"),
     _t("get_system_health", "Checking system health", "Worker/scheduler heartbeats, schedule, recent jobs and pause state.", NoArgs, t_system_status, "operations"),
