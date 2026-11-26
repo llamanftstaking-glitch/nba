@@ -437,3 +437,16 @@ role may start conversations, send messages, edit memory, run briefings or view/
 * `GET /admin/ai-budget/requests?limit=` → `{items:[{id, at, status (reserved|settled|released|assumed), bucket, model,
   task, reserved_usd, actual_usd, input_tokens, output_tokens, cache_read_tokens, cache_write_tokens, attempt, routing,
   error, conversation_id}]}`
+
+### JARVIS image attachments (added 2026-11-26)
+* `POST /jarvis/conversations/{id}/messages` body gains `images: [{media_type, data}]` (0 to 3). `media_type` is one of
+  `image/png`, `image/jpeg`, `image/webp`, `image/gif`; `data` is base64 without a `data:` prefix, at most about 1.5 MB of
+  image each (2,100,000 base64 characters). `text` may be empty when at least one image is attached. Slash commands
+  are ignored when an image is attached (the message goes to the model).
+* Terminal `error` code `invalid_image` carries a message to show verbatim (wrong type, too large, unreadable, too many).
+  A body over the limits is a `422` JSON error before any stream starts.
+* Message objects gain `images: <count>`. The bytes are served by `GET /jarvis/messages/{message_id}/images/{index}`
+  (owner's own conversations only; `index` from 0), suitable for an `<img src>`.
+* The client must downscale before upload: longest side at most 1568 px, re-encoded as JPEG (quality about 0.85) unless the
+  original is already small, so each image is well under the limit.
+* New tool label that can appear in the stream: "Evaluating the combination" (`evaluate_combination`).

@@ -10,7 +10,7 @@ characters by shortening lists (never by cutting a value in half) and marked whe
 | Opportunity | get_projected_minutes, get_minutes_table, get_player_opportunity_profile (usage, shot volume, per-36, true shooting), get_teammate_availability_splits (reports "not available") |
 | Availability | get_current_injury_report, get_availability_changes, get_lineups, get_lineup_changes |
 | Kalshi | get_available_kalshi_markets, get_kalshi_market (rules, snapshot, price/volume history, timeline) |
-| Quantitative | get_player_markets (projection, p10/p90, readiness), get_model_readiness, get_existing_research_candidates, get_existing_parlay_research, inspect_research_validation (audit mode), get_correlation_research, get_research_edition |
+| Quantitative | get_player_markets (projection, p10/p90, readiness), get_model_readiness, get_existing_research_candidates, get_existing_parlay_research, inspect_research_validation (audit mode), evaluate_combination (joint probability for 2 to 6 evaluated selections; read-only), get_correlation_research, get_research_edition |
 | Learning | get_model_error_history, get_paper_testing_results, get_settled_research_records |
 | Operations | get_agent_status, get_data_provider_health, get_system_health, get_ai_budget_status, get_recent_events, get_briefings |
 | Memory | recall_memory, remember *(write: its own memory only)* |

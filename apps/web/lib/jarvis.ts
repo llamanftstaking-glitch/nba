@@ -32,6 +32,8 @@ export type JarvisMessage = {
   cost_usd: number | null;
   created_at: string;
   tool_calls: { name: string; input: unknown }[];
+  /** Number of images attached to this message; bytes at GET /jarvis/messages/{id}/images/{index}. */
+  images?: number;
 };
 export type JarvisToolActivity = { tool: string; label: string; args: Record<string, unknown> | null; ok: boolean; error: string | null; ms: number | null; truncated: boolean; at: string };
 export type JarvisConversationRef = { id: number | string; title: string | null; context: JarvisContext | null; created_at: string; updated_at: string };
@@ -136,7 +138,7 @@ export const jarvis = {
  */
 export async function streamMessage(
   conversationId: number | string,
-  body: { text: string; mode: "standard" | "deep"; context?: JarvisContextInput },
+  body: { text: string; mode: "standard" | "deep"; context?: JarvisContextInput; images?: { media_type: string; data: string }[] },
   onEvent: (e: JarvisStreamEvent) => void,
   signal: AbortSignal,
 ): Promise<"done" | "lost" | "aborted"> {
@@ -202,3 +204,5 @@ export async function streamMessage(
   }
   return terminal ? "done" : signal.aborted ? "aborted" : "lost";
 }
+
+export const messageImageUrl = (messageId: number | string, index: number) => `${API_BASE}/jarvis/messages/${messageId}/images/${index}`;

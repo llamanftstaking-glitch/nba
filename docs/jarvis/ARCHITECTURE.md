@@ -14,7 +14,7 @@ gizer/jarvis.py          routing → budget reservation → Claude Messages API 
    │        ▲
    │        └── gizer/ai_budget.py   reserve / settle / release / assume, limits, checkpoints   (ai_usage, ai_budget_policy)
    ▼
-gizer/jarvis_tools.py    39 typed, bounded tools = the assistant's entire capability
+gizer/jarvis_tools.py    40 typed, bounded tools = the assistant's entire capability
    ▼
 existing services        the same functions that serve the dashboard (api.py, api_v3.py, api_core.py, history, minutes,
                          lineups, kalshi, ledger, jobs)

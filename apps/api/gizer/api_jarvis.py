@@ -32,8 +32,14 @@ class NewConversation(BaseModel):
     context: ContextBody | None = None
 
 
+class ImageIn(BaseModel):
+    media_type: Literal["image/png", "image/jpeg", "image/webp", "image/gif"]
+    data: str = Field(min_length=16, max_length=2_100_000)      # base64; about 1.5 MB of image
+
+
 class SendBody(BaseModel):
-    text: str = Field(min_length=1, max_length=8000)
+    text: str = Field("", max_length=8000)
+    images: list[ImageIn] = Field(default_factory=list, max_length=3)
     mode: Literal["standard", "deep"] = "standard"
     context: ContextBody | None = None
 
@@ -120,6 +126,25 @@ def jarvis_conversation(conversation_id: int, p: Principal = Depends(current_use
         return {**jarvis.conversation_dict(c), "messages": shown, "tool_activity": calls}
 
 
+@api.get("/jarvis/messages/{message_id}/images/{index}")
+def jarvis_message_image(message_id: int, index: int, p: Principal = Depends(current_user)):
+    """An image the owner attached to one of their own messages (for showing it again in the conversation)."""
+    import base64
+
+    from fastapi import Response
+    with session_scope() as s:
+        m = s.get(JarvisMessage, message_id)
+        if m is None:
+            raise ApiError(404, "not_found", "Image not found.")
+        _conv(s, m.conversation_id, p)
+        imgs = [b for b in (m.content or []) if isinstance(b, dict) and b.get("type") == "image"]
+        if not 0 <= index < len(imgs):
+            raise ApiError(404, "not_found", "Image not found.")
+        src = imgs[index]["source"]
+        return Response(content=base64.b64decode(src["data"]), media_type=src["media_type"],
+                        headers={"Cache-Control": "private, max-age=3600", "X-Content-Type-Options": "nosniff"})
+
+
 @api.post("/jarvis/conversations/{conversation_id}/delete")
 def jarvis_delete_conversation(conversation_id: int, request: Request, p: Principal = Depends(require_owner)):
     with session_scope() as s:
@@ -139,7 +164,7 @@ def jarvis_send(conversation_id: int, body: SendBody, request: Request, p: Princ
 
     def gen():
         try:
-            for ev in jarvis.send(conversation_id, p.email, body.text, body.mode, ctx):
+            for ev in jarvis.send(conversation_id, p.email, body.text, body.mode, ctx, [i.model_dump() for i in body.images]):
                 yield f"data: {json.dumps(ev, default=str)}\n\n"
         except Exception as e:  # never leak a traceback into the stream
             yield f"data: {json.dumps({'type': 'error', 'code': 'error', 'message': f'Unexpected failure ({type(e).__name__}).'})}\n\n"

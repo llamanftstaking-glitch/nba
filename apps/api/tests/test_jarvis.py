@@ -225,7 +225,7 @@ def test_every_read_tool_runs_against_stored_data(app):
     args = {"get_game_details": {"game_id": "S0"}, "get_team_profile": {"team_id": ST["teams"][0]}, "find_player": {"query": "Syn"},
             "get_lineups": {"game_id": "S0"}, "get_lineup_changes": {"game_id": "S0"}, "compare_player_statistics": {"player_ids": [pid, pid + 1]},
             "get_threshold_history": {"player_id": pid, "stat": "pts", "line": 10.5}, "get_kalshi_market": None,
-            "inspect_research_validation": None, "remember": None, "request_research_job": None}
+            "inspect_research_validation": None, "remember": None, "request_research_job": None, "evaluate_combination": None}
     for t in T.TOOLS:
         a = args.get(t.name, {"player_id": pid} if "player_id" in t.args.model_fields else {})
         if a is None:
@@ -412,3 +412,55 @@ def test_access_control_csrf_and_prompt_boundaries(fake, app):
         assert needle in p
     listing = login(app).get("/api/v1/jarvis/tools").json()
     assert listing["total"] == len(T.TOOLS) and "ANTHROPIC" not in json.dumps(listing) and "sk-ant" not in json.dumps(jarvis.state())
+
+
+PNG = __import__("base64").b64encode(b"\x89PNG\r\n\x1a\n" + b"\x00" * 600).decode()
+
+
+def test_image_attachments_are_validated_reserved_flat_and_replayed(fake, app):
+    c = login(app)
+    cid = c.post("/api/v1/jarvis/conversations", json={}).json()["id"]
+    url = f"/api/v1/jarvis/conversations/{cid}/messages"
+    bad = events(c.post(url, json={"text": "x", "images": [{"media_type": "image/jpeg", "data": PNG}]}))        # PNG bytes claimed as JPEG
+    assert bad[-1]["code"] == "invalid_image" and fake.requests == []
+    assert events(c.post(url, json={"text": "", "images": []}))[-1]["code"] == "empty"
+    assert c.post(url, json={"text": "x", "images": [{"media_type": "image/png", "data": PNG}] * 4}).status_code == 422
+    assert c.post(url, json={"text": "x", "images": [{"media_type": "application/pdf", "data": PNG}]}).status_code == 422
+    fake.script = [resp([tool_use("find_player", {"query": "Syn"})], stop="tool_use"), resp([text_block("Two legs read.")])]
+    ev = events(c.post(url, json={"text": "", "images": [{"media_type": "image/png", "data": PNG}]}))             # image only: allowed
+    assert ev[-1]["type"] == "done" and ev[0]["routing"]["reason"] == "message with image (vision)"
+    content = fake.requests[0]["messages"][0]["content"]
+    assert content[0] == {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": PNG}} and content[1]["type"] == "text"
+    with gdb.session_scope() as s:
+        first = s.scalar(select(gdb.AiUsage).order_by(gdb.AiUsage.id))
+    text_only = ai_budget.max_cost(SONNET, jarvis._estimate({"system": jarvis.SYSTEM_PROMPT, "tools": T.tool_definitions(),
+                                                             "messages": [{"role": "user", "content": [content[1]]}]}), 6000)
+    assert first.reserved_usd == pytest.approx(text_only + jarvis.IMAGE_TOKENS * 2.5 / 1e6, abs=2e-4)           # flat, not by base64 size
+    conv = c.get(f"/api/v1/jarvis/conversations/{cid}").json()
+    owner_msg = [m for m in conv["messages"] if m["role"] == "user"][-1]
+    assert owner_msg["images"] == 1 and PNG not in json.dumps(conv)                                             # bytes are not in the listing
+    img = c.get(f"/api/v1/jarvis/messages/{owner_msg['id']}/images/0")
+    assert img.status_code == 200 and img.headers["content-type"] == "image/png" and img.content.startswith(b"\x89PNG")
+    assert c.get(f"/api/v1/jarvis/messages/{owner_msg['id']}/images/5").status_code == 404
+    assert login(app, "viewer@test.local", "viewer password 123").get(f"/api/v1/jarvis/messages/{owner_msg['id']}/images/0").status_code == 404
+    fake.script = [resp([text_block("Same slip.")])]
+    ask(c, "anything else?", cid=cid)
+    assert fake.requests[-1]["messages"][0]["content"][0]["type"] == "image"                                    # history replays the image
+    fake.script = [resp([text_block("Read.")])]
+    events(c.post(url, json={"text": "/budget", "images": [{"media_type": "image/png", "data": PNG}]}))        # image present: goes to the model
+    assert fake.requests[-1]["messages"][-1]["content"][0]["type"] == "image"
+
+
+def test_combination_tool_uses_the_simulation_engine_and_stores_nothing(app):
+    with gdb.session_scope() as s:
+        ids = list(s.scalars(select(gdb.Selection.id).where(gdb.Selection.prob.is_not(None)).order_by(gdb.Selection.id.desc()).limit(2)))
+        n0 = s.scalar(select(func.count()).select_from(gdb.Combo))
+    r = T.execute("evaluate_combination", {"selection_ids": ids}, {})
+    assert r["ok"], r["error"]
+    out = json.loads(r["content"])
+    assert out["n_legs"] == 2 and "joint_prob" in out and "simulation engine" in out["note"]
+    assert T.execute("evaluate_combination", {"selection_ids": ids[:1]}, {})["ok"] is False                      # needs at least two legs
+    assert T.execute("evaluate_combination", {"selection_ids": [ids[0], 10 ** 9]}, {})["ok"] is False            # unknown record
+    with gdb.session_scope() as s:
+        assert s.scalar(select(func.count()).select_from(gdb.Combo)) == n0
+    assert "image" in jarvis.SYSTEM_PROMPT.lower() and "never multiply leg probabilities" in jarvis.SYSTEM_PROMPT.lower()

@@ -385,6 +385,18 @@ def t_inspect_research(a: Inspect, ctx):
                         "leg probabilities. No exchange price exists for this combination; it is paper research only."}
 
 
+class EvaluateCombo(Args):
+    selection_ids: list[int] = Field(min_length=2, max_length=6, description="Ids of evaluated selections (from get_existing_research_candidates).")
+
+
+def t_evaluate_combination(a: EvaluateCombo, ctx):
+    from .api import BuilderBody, builder_evaluate
+    out = builder_evaluate(BuilderBody(selection_ids=a.selection_ids))
+    out["note"] = ("Computed by the platform's simulation engine with estimated dependence between legs, for these exact evaluated "
+                   "selections. Nothing is stored and no exchange price exists for the combination. Paper research only.")
+    return out
+
+
 def t_research_lab(a: NoArgs, ctx):
     from .api import research_lab
     return research_lab()
@@ -600,6 +612,7 @@ TOOLS: list[Tool] = [
     _t("get_existing_research_candidates", "Loading research selections", "Evaluated selections from the latest edition, filterable by classification, game or text.", Selections, t_research_selections, "quant"),
     _t("get_existing_parlay_research", "Loading combination research", "Hypothetical combinations of a category with joint probability, method and legs. Paper research only.", Parlays, t_parlay_research, "quant"),
     _t("inspect_research_validation", "Auditing a research record", "Audit one selection or combination: model and its current status, quote origin and time, changes since verification, invalidation, assumptions.", Inspect, t_inspect_research, "quant"),
+    _t("evaluate_combination", "Evaluating the combination", "Joint probability for 2 to 6 already-evaluated selections, from the simulation engine (dependence between legs included). Use for a parlay the owner describes or shares, only with selection ids of matching evaluated records. Read-only; nothing is stored.", EvaluateCombo, t_evaluate_combination, "quant"),
     _t("get_correlation_research", "Loading research lab", "Research lab: findings, experiments and estimated correlation pairs with sample sizes.", NoArgs, t_research_lab, "quant"),
     _t("get_research_edition", "Loading research edition", "A published edition (latest for a date by default) with counts and change list.", EditionArg, t_edition, "quant"),
     _t("get_model_error_history", "Loading backtests", "Backtest runs and forecast-error metrics per model.", NoArgs, t_backtests, "learning"),

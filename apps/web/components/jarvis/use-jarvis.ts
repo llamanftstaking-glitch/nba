@@ -7,7 +7,8 @@ import { jarvis, streamMessage, type JarvisContextInput, type JarvisServerState 
 
 export type LiveTool = { id: string; tool: string; label: string; status: "running" | "ok" | "error"; ms?: number; error?: string };
 /** The turn in flight. Everything in it comes from the stream; nothing is invented client-side. */
-export type LiveTurn = { userText: string; text: string; tools: LiveTool[]; model: string | null; cost: number | null };
+export type LiveTurn = { userText: string; images: string[]; text: string; tools: LiveTool[]; model: string | null; cost: number | null };
+export type OutgoingImage = { media_type: string; data: string; url: string };
 export type TurnError = { code: string; message: string; state?: string };
 export type PillState = JarvisServerState | "processing" | "error";
 
@@ -40,14 +41,15 @@ export function useJarvisChat({ conversationId, onConversationId, context }: { c
   useEffect(() => () => abortRef.current?.abort(), []);
 
   const send = useCallback(
-    async (text: string, deep: boolean) => {
+    async (text: string, deep: boolean, images: OutgoingImage[] = []): Promise<boolean> => {
       const trimmed = text.trim();
-      if (!trimmed || abortRef.current) return;
+      if ((!trimmed && images.length === 0) || abortRef.current) return false;
+      let ok = false;
       const ac = new AbortController();
       abortRef.current = ac;
       setError(null);
       setLastTools([]);
-      setLive({ userText: trimmed, text: "", tools: [], model: null, cost: null });
+      setLive({ userText: trimmed, images: images.map((i) => i.url), text: "", tools: [], model: null, cost: null });
       let id = conversationId;
       let tools: LiveTool[] = [];
       try {
@@ -60,7 +62,7 @@ export function useJarvisChat({ conversationId, onConversationId, context }: { c
         }
         const outcome = await streamMessage(
           id,
-          { text: trimmed, mode: deep ? "deep" : "standard", context },
+          { text: trimmed, mode: deep ? "deep" : "standard", context, ...(images.length ? { images: images.map((i) => ({ media_type: i.media_type, data: i.data })) } : {}) },
           (e) => {
             if (e.type === "tool_start") tools = [...tools, { id: String(e.id), tool: e.tool, label: e.label, status: "running" }];
             else if (e.type === "tool_end") tools = tools.map((t) => (t.id === String(e.id) ? { ...t, status: e.ok ? "ok" : "error", ms: e.ms, error: e.error } : t));
@@ -74,6 +76,7 @@ export function useJarvisChat({ conversationId, onConversationId, context }: { c
               return cur;
             });
             if (e.type === "error") setError({ code: e.code, message: e.message, state: e.state });
+            if (e.type === "done") ok = true;
           },
           ac.signal,
         );
@@ -89,6 +92,7 @@ export function useJarvisChat({ conversationId, onConversationId, context }: { c
         abortRef.current = null;
         setLive(null);
       }
+      return ok;
     },
     [conversationId, context, onConversationId, qc],
   );
