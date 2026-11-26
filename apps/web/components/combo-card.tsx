@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import type { Combo, ComboLeg } from "@/lib/types";
 import { ClassificationBadge } from "@/components/classification-badge";
+import { AskJarvisButton } from "@/components/jarvis/panel";
 import { EvidenceMeter, ProbInterval } from "@/components/prob";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { SaveTicketButton } from "@/components/save-ticket-button";
@@ -185,6 +186,7 @@ export function ComboDetail({ combo }: { combo: Combo }) {
           >
             Open in builder
           </DLink>
+          <AskJarvisButton context={{ combo_id: combo.uid }} />
           <SaveTicketButton body={{ combo_uid: combo.uid }} disabled={combo.invalidated} />
         </div>
       </div>

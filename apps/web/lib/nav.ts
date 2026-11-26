@@ -27,16 +27,20 @@ import {
   Wrench,
   Bot,
   Boxes,
-  type LucideIcon,
+  Wallet,
 } from "lucide-react";
+import type { ComponentType } from "react";
+import { JarvisMark } from "@/components/jarvis/mark";
 
-export type NavItem = { href: string; label: string; icon: LucideIcon; short?: string };
+export type NavIcon = ComponentType<{ className?: string }>;
+export type NavItem = { href: string; label: string; icon: NavIcon; short?: string };
 export type NavGroup = { title: string; items: NavItem[] };
 
 export const NAV_GROUPS: NavGroup[] = [
   {
     title: "Command Center",
     items: [
+      { href: "/jarvis", label: "JARVIS", icon: JarvisMark },
       { href: "/", label: "Overview", icon: LayoutDashboard },
       { href: "/games", label: "Today's Games", icon: CalendarDays },
       { href: "/picks", label: "Top Picks", icon: ListOrdered },
@@ -83,6 +87,7 @@ export const NAV_GROUPS: NavGroup[] = [
 /** Reachable from within System / Research pages (Settings lists them), not from the sidebar. */
 export const EXTRA_PAGES: NavItem[] = [
   { href: "/admin", label: "Operations Admin", icon: Activity },
+  { href: "/admin/ai-budget", label: "AI Budget", icon: Wallet },
   { href: "/exposure", label: "Shared-Risk Monitor", icon: Network },
   { href: "/markets", label: "Markets", icon: BarChart3 },
   { href: "/simulations", label: "Simulations", icon: ClipboardList },

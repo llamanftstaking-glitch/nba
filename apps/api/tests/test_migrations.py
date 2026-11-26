@@ -22,7 +22,7 @@ def test_alembic_upgrade_builds_full_schema_and_is_idempotent():
     assert set(gdb.Base.metadata.tables) <= tables and "alembic_version" in tables
     with gdb.get_engine().connect() as c:
         trig = {r[0] for r in c.execute(text("select tgname from pg_trigger where not tgisinternal"))}
-        assert c.execute(text("select version_num from alembic_version")).scalar() == "0003_kalshi"
+        assert c.execute(text("select version_num from alembic_version")).scalar() == "0004_jarvis"
     for t in gdb.IMMUTABLE_TABLES:
         assert f"{t}_immutable" in trig and f"{t}_notruncate" in trig
     # 0002 is reversible and re-appliable without touching research tables

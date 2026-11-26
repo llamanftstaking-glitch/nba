@@ -231,7 +231,13 @@ def test_no_real_money_surface(app):
     retract = "/api/v1/player-props/manual/{entry_id}/withdraw"  # retracts an owner-entered research market; no money involved
     assert not [p for p in spec if p != retract and any(b in p.lower() for b in banned)]
     mutating = sorted(p for p, ops in spec.items() if set(ops) - {"get"})
-    assert mutating == ["/api/v1/auth/login", "/api/v1/auth/logout", "/api/v1/builder/evaluate",
+    # Every state-changing route is listed here on purpose: adding one must be a reviewed decision.
+    # The JARVIS routes write only its own conversations, memory, briefings and the (downward-only) AI budget policy.
+    assert mutating == ["/api/v1/admin/ai-budget", "/api/v1/auth/login", "/api/v1/auth/logout", "/api/v1/builder/evaluate",
+                        "/api/v1/jarvis/briefings/run", "/api/v1/jarvis/conversations",
+                        "/api/v1/jarvis/conversations/{conversation_id}/delete",
+                        "/api/v1/jarvis/conversations/{conversation_id}/messages", "/api/v1/jarvis/memory",
+                        "/api/v1/jarvis/memory/{memory_id}/delete",
                         "/api/v1/operations/pause", "/api/v1/paper/tickets", "/api/v1/player-props/manual",
                         "/api/v1/player-props/manual/{entry_id}/withdraw"]
     assert all(set(ops) <= {"get", "post"} for ops in spec.values())  # no PUT/PATCH/DELETE anywhere

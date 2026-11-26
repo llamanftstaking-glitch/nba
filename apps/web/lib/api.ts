@@ -139,6 +139,18 @@ async function post<T>(path: string, body?: unknown): Promise<T> {
   return request<T>("POST", path, body);
 }
 
+/** Restores the CSRF token after a hard reload and returns it (used by mutations and the JARVIS stream). */
+export async function ensureCsrf(): Promise<string> {
+  if (!csrfToken) {
+    const me = await request<AuthResponse>("GET", "/auth/me");
+    csrfToken = me.csrf;
+  }
+  return csrfToken;
+}
+
+export const http = { get, post };
+export const API_BASE = BASE;
+
 export type ResultsFilters = {
   date_from?: string;
   date_to?: string;

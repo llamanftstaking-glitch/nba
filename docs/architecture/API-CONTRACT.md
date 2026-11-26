@@ -369,3 +369,71 @@ A slate now carries thousands of evaluated Kalshi contracts, so list endpoints a
   `message` text as given. The `oddsapi` "not configured" warning is no longer emitted while Kalshi is enabled.
 * `/combos?category=sgp` now returns per-game same-game research (uids contain `-SGP-`), built from each game's own ranked selections.
 * `/players/{id}.next_game` looks up to 7 days ahead (schedule is ingested a week ahead each morning).
+
+---
+
+## JARVIS (assistant, memory, briefings, AI budget) — added 2026-11-26
+
+All routes are under `/api/v1`, need a session, and state-changing ones need `X-CSRF-Token`. Only the `owner`
+role may start conversations, send messages, edit memory, run briefings or view/change the AI budget.
+
+### State and discovery
+* `GET /jarvis/state` → `{state, message, models:{standard,deep,light}, models_verified, budget:{spent_usd, remaining_usd,
+  usable_usd, today_usd, state}, daily_cap_usd, lifetime_cap_usd}`. `state` is one of `ready`, `provider_unavailable`
+  (no key / provider down), `budget_limited`, `paused`. "processing" and "error" are per-request states the UI derives
+  from the stream. Never show the assistant as thinking unless a request is in flight.
+* `GET /jarvis/suggestions?game_id&player_id&ticker&selection_id&combo_id` → `{context, items:[{label, text}]}`
+  (context-specific suggestions first). Texts starting with `/` are answered from stored data without a model.
+* `GET /jarvis/tools` → `{items:[{name, label, group, description, writes}], total, note}`.
+
+### Conversations
+* `GET /jarvis/conversations?limit=` → `{items:[{id, title, context, created_at, updated_at}]}` newest first.
+* `POST /jarvis/conversations` body `{context?}` → conversation. `context` = `{game_id?, player_id?, ticker?,
+  selection_id?, combo_id?, date?, page?}`; unknown ids are dropped server-side. The stored/echoed context is resolved:
+  `{game:{game_id,label,date}, player:{player_id,name,team}, kalshi_market:{ticker,title}, selection:{record_id},
+  combination:{record_id}, date, page}`.
+* `GET /jarvis/conversations/{id}` → conversation + `messages:[{id, role, text, model, stop_reason, sources:[{tool,label,args}],
+  cost_usd, created_at, tool_calls:[{name,input}]}]` + `tool_activity:[{tool,label,args,ok,error,ms,truncated,at}]`.
+  Assistant `text` is Markdown (headings, bullets, tables, bold).
+* `POST /jarvis/conversations/{id}/delete` → `{deleted:true}`. (The API uses GET and POST only.)
+* `POST /jarvis/conversations/{id}/messages` body `{text (1..8000), mode: "standard"|"deep", context?}` →
+  **`text/event-stream`**. It is a POST, so read it with `fetch` + `ReadableStream` (not `EventSource`). Each event is one
+  line `data: {json}` followed by a blank line. Event `type`s, in order of appearance:
+  * `status` `{state:"processing", routing:{handler, mode?, tool?, reason}, model?}`
+  * `tool_start` `{id, tool, label, args}` — a real tool call began. Show `label` (e.g. "Inspecting the injury report").
+  * `tool_end` `{id, tool, ok, ms, error?, truncated?}`
+  * `text` `{delta}` — append to the answer.
+  * `usage` `{cost_usd, total_cost_usd, input_tokens, output_tokens, cache_read_tokens}` — once per model request.
+  * `done` `{message_id, model, cost_usd, sources:[{tool,label,args}], stop_reason}` — terminal.
+  * `error` `{code, message, state?, message_id?, cost_usd?}` — terminal. Codes include `not_configured`, `lifetime_cap`,
+    `daily_cap`, `allocation`, `request_too_large`, `paused`, `provider_unavailable`, `auth`, `conversation_too_long`.
+    Show `message` verbatim; set the status indicator from `state`.
+  `model` is a model id, or `"deterministic"` for slash commands. `mode:"deep"` uses the Opus allocation; make it an
+  explicit owner toggle, off by default, labelled as costing more.
+
+### Memory
+* `GET /jarvis/memory?category=&q=&limit=` → `{items:[{id, category (research|operational|preference|conversation),
+  status (verified|hypothesis|preference), subject_type, subject_id, text, sources[], observed_on, created_by, created_at}]}`
+* `POST /jarvis/memory` body `{category, text, status?, subject_type?, subject_id?}` → item. `POST /jarvis/memory/{id}/delete` → `{deleted:true}`.
+
+### Briefings and events
+* `GET /jarvis/briefings?kind=&limit=` → `{items:[{id, kind (overnight|morning|midday|pregame|postgame), date, text,
+  generator ("deterministic" or a model id), cost_usd, created_at}]}`
+* `POST /jarvis/briefings/run` body `{kind}` → `{created, id?, generator?, cost_usd?, reason?}`
+* `GET /jarvis/events?kind=&limit=` → `{items:[{id, kind, severity (info|notice|alert), title, detail, game_date, occurred_at}]}`
+
+### AI budget (owner)
+* `GET /admin/ai-budget` → `{policy:{lifetime_cap_usd, suspend_at_usd, daily_cap_usd, allocations:{sonnet,haiku,opus,dev},
+  per_request_cap_usd:{...}, paused, buffer_released, notifications, updated_at, updated_by}, spent_usd, pending_usd,
+  remaining_usd, usable_usd, today_usd, month_usd, state (ok|budget_limited|paused), checkpoints:[{pct, usd, reached}],
+  buckets:[{bucket, allocation_usd, used_usd}], by_model:[{key, requests, usd, input_tokens, output_tokens,
+  cache_read_tokens, cache_write_tokens}], by_task:[…], by_agent:[…], requests, input_tokens, output_tokens,
+  cache_read_tokens, cache_write_tokens, cache_savings_usd, avg_usd_per_day, est_days_remaining,
+  daily:[{date, requests, usd}], prices:{model:{in,out,cache_read,cache_write}}, notes:[…], assistant:{…/jarvis/state}}`
+* `POST /admin/ai-budget` body: any of `{lifetime_cap_usd, suspend_at_usd, daily_cap_usd, allocations, per_request_cap_usd,
+  paused, buffer_released, notifications}` → policy. `422` if the lifetime cap would exceed the authorised $100 or the
+  allocations exceed it. `paused:true` is the emergency AI pause; `notifications:false` stops proactive briefings while
+  data collection continues.
+* `GET /admin/ai-budget/requests?limit=` → `{items:[{id, at, status (reserved|settled|released|assumed), bucket, model,
+  task, reserved_usd, actual_usd, input_tokens, output_tokens, cache_read_tokens, cache_write_tokens, attempt, routing,
+  error, conversation_id}]}`

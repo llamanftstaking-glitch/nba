@@ -542,7 +542,14 @@ def job_availability_watch(args: dict, job_id=None) -> dict:
     return {"injury_changes": inj.get("changes", 0), "material_changes": material, "edition_queued": queued}
 
 
-HANDLERS = {"market_watch": job_market_watch, "availability_watch": job_availability_watch, "edition": job_edition, "settlement": job_settlement, "historical_research": job_historical,
+def job_jarvis_briefing(args: dict, job_id=None) -> dict:
+    """Scheduled intelligence briefing. Deterministic facts; a model only words them, within the AI budget."""
+    from . import jarvis
+    d = date.fromisoformat(args["date"]) if args.get("date") else None
+    return jarvis.run_briefing(args.get("kind", "morning"), d)
+
+
+HANDLERS = {"jarvis_briefing": job_jarvis_briefing, "market_watch": job_market_watch, "availability_watch": job_availability_watch, "edition": job_edition, "settlement": job_settlement, "historical_research": job_historical,
             "morning_intel": job_morning, "live_status": job_live_status, "weekly_evaluation": job_weekly,
             "monthly_review": job_monthly}
 
@@ -554,6 +561,9 @@ SCHEDULE = [
     ("edition", 10, 0, None, None, {"kind": "morning"}, "Initial research edition"),
     ("edition", 12, 0, None, None, {"kind": "midday"}, "Midday research refresh"),
     ("edition", 15, 0, None, None, {"kind": "afternoon"}, "Afternoon research review"),
+    ("jarvis_briefing", 6, 0, None, None, {"kind": "overnight"}, "JARVIS overnight research report"),
+    ("jarvis_briefing", 9, 0, None, None, {"kind": "morning"}, "JARVIS morning intelligence briefing"),
+    ("jarvis_briefing", 13, 0, None, None, {"kind": "midday"}, "JARVIS midday intelligence update"),
     ("weekly_evaluation", 5, 0, 0, None, {}, "Weekly chronological model evaluation, drift and audits"),
     ("monthly_review", 5, 30, None, 1, {}, "Monthly architecture, cost and licensing review"),
 ]
@@ -637,6 +647,14 @@ def scheduler_tick(now: datetime | None = None) -> list[str]:
         key = f"edition:pregame:{bucket:%Y%m%dT%H%M}"
         if enqueue("edition", {"kind": "pregame", "date": bucket.date().isoformat()}, key):
             queued.append(key)
+        hour = now.astimezone(ET).replace(minute=0, second=0, microsecond=0)      # at most one pregame briefing an hour
+        if enqueue("jarvis_briefing", {"kind": "pregame", "date": hour.date().isoformat()}, f"jarvis_briefing:pregame:{hour:%Y%m%dT%H}"):
+            queued.append("jarvis_briefing:pregame")
+    try:        # turn new research/operations records into assistant events; never let this stop scheduling
+        from . import jarvis
+        jarvis.collect_events()
+    except Exception:
+        pass
     cfgs = get_settings()
     with session_scope() as s:
         upcoming = s.scalar(select(func.count()).select_from(Game).where(

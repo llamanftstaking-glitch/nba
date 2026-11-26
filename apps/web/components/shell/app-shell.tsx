@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { SlashMark } from "@/components/ui/panel";
 import { Sheet } from "@/components/ui/sheet";
 import { Brand } from "./brand";
+import { JarvisLauncher, JarvisPanelProvider } from "@/components/jarvis/panel";
 import { DateSelector } from "./date-selector";
 import { DisclaimerText } from "./disclaimer";
 
@@ -82,6 +83,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const moreActive = !MOBILE_NAV.some((n) => mobileActive(n.href));
 
   return (
+    <JarvisPanelProvider>
     <div className="flex min-h-screen">
       {/* Desktop sidebar */}
       <aside className={cn("sticky top-0 hidden h-screen shrink-0 flex-col border-r border-line/60 bg-bg2 lg:flex", collapsed ? "w-[60px]" : "w-[252px]")} data-testid="sidebar">
@@ -126,6 +128,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <Brand compact />
             </DLink>
             <DateSelector />
+            <JarvisLauncher />
             <div className="hidden items-center gap-3 lg:flex">
               <span className="max-w-[240px] truncate text-sm text-muted" title={me.data?.user.email}>
                 {me.data ? `${me.data.user.email} · ${me.data.user.role}` : ""}
@@ -216,5 +219,6 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </Sheet>
     </div>
+    </JarvisPanelProvider>
   );
 }

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.0 — 2026-11-26 (JARVIS)
+* JARVIS assistant: `/jarvis` conversations with streaming answers, 39 typed read-only tools over the existing
+  research services, page-context awareness, sourced memory, deterministic events and scheduled briefings.
+* AI budget controller: USD 100 cumulative lifetime cap enforced by reserve-before-spend, $95 suspend line, daily
+  ceiling, per-model allocations, per-request caps, emergency pause, checkpoints; `/admin/ai-budget`.
+* Player opportunity profile (usage, shot volume, per-36 production, true shooting) from stored box scores.
+* Migration `0004_jarvis` (reversible). New dependency: official `anthropic` SDK 2.14.0.
+* `gizer jarvis-verify [--ping]` checks the key, the model ids and (optionally) one accounted paid request.
+* The real Claude API has NOT been exercised from the build environment (no key); see docs/jarvis/VALIDATION-REPORT.md.
+
 ## 0.4.6 — 2026-11-25 (page speed)
 * API: evaluated selections are immutable, so each game's block is read from the database once per process
   instead of on every request (about 5,800 rows per page request before). Player-prop rows, minutes, exposure and

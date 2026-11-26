@@ -4,6 +4,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import type { Selection, SelectionContext } from "@/lib/types";
 import { ClassificationBadge } from "@/components/classification-badge";
+import { AskJarvisButton } from "@/components/jarvis/panel";
 import { EvidenceMeter, ProbabilityDisplay } from "@/components/prob";
 import { SaveTicketButton } from "@/components/save-ticket-button";
 import { LineupStatusLabel, OriginTag } from "@/components/status";
@@ -217,6 +218,7 @@ export function SelectionCard({
           </p>
           <div className="flex flex-wrap items-center gap-2">
             {actions}
+            <AskJarvisButton context={{ selection_id: s.id }} />
             {showSave && <SaveTicketButton body={{ selection_ids: [s.id] }} disabled={s.invalidated} />}
             <Button variant="ghost" aria-expanded={open} onClick={() => setOpen((v) => !v)} data-testid="evidence-toggle">
               {open ? "Hide evidence" : "Evidence"}

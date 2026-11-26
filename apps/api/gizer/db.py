@@ -560,6 +560,136 @@ class AuditLog(Base):
 
 
 # Tables on which UPDATE and DELETE are rejected by database triggers.
+# ---------------------------------------------------------------- JARVIS (assistant, memory, AI budget)
+class AiBudgetPolicy(Base):
+    """One row (id=1): the owner-authorised spending policy. Enforced in code, never by a prompt."""
+    __tablename__ = "ai_budget_policy"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    lifetime_cap_usd: Mapped[float] = mapped_column(Float)          # cumulative, not monthly
+    suspend_at_usd: Mapped[float] = mapped_column(Float)            # ordinary requests stop here
+    daily_cap_usd: Mapped[float] = mapped_column(Float)
+    allocations: Mapped[dict] = mapped_column(JS)                   # bucket -> usd limit
+    per_request_cap_usd: Mapped[dict] = mapped_column(JS)           # bucket -> max reserved usd for one request
+    paused: Mapped[bool] = mapped_column(Boolean, default=False)    # emergency AI pause
+    buffer_released: Mapped[bool] = mapped_column(Boolean, default=False)  # owner explicitly allowed the last buffer
+    notifications: Mapped[bool] = mapped_column(Boolean, default=True)
+    updated_at: Mapped[datetime] = _ts(default=utcnow)
+    updated_by: Mapped[str] = mapped_column(String(64), default="system")
+
+
+class AiUsage(Base):
+    """One row per paid API request: reservation first, then reconciled with the provider-reported usage."""
+    __tablename__ = "ai_usage"
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    created_at: Mapped[datetime] = _ts(default=utcnow, index=True)
+    settled_at: Mapped[datetime | None] = _ts()
+    status: Mapped[str] = mapped_column(String(12), index=True)     # reserved|settled|released|assumed
+    bucket: Mapped[str] = mapped_column(String(16), index=True)     # sonnet|haiku|opus|dev
+    model: Mapped[str] = mapped_column(String(48))
+    task: Mapped[str] = mapped_column(String(32), index=True)       # chat|briefing|title|verify|audit
+    agent: Mapped[str] = mapped_column(String(32), default="jarvis")
+    conversation_id: Mapped[int | None] = mapped_column(BigInteger, index=True)
+    attempt: Mapped[int] = mapped_column(Integer, default=1)
+    reserved_usd: Mapped[float] = mapped_column(Float)
+    actual_usd: Mapped[float | None] = mapped_column(Float)
+    input_tokens: Mapped[int | None] = mapped_column(Integer)
+    output_tokens: Mapped[int | None] = mapped_column(Integer)
+    cache_read_tokens: Mapped[int | None] = mapped_column(Integer)
+    cache_write_tokens: Mapped[int | None] = mapped_column(Integer)
+    request_id: Mapped[str | None] = mapped_column(String(64))
+    routing: Mapped[dict] = mapped_column(JS, default=dict)         # why this model was chosen
+    error: Mapped[str | None] = mapped_column(String(200))
+
+
+class JarvisConversation(Base):
+    __tablename__ = "jarvis_conversations"
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    owner: Mapped[str] = mapped_column(String(120), index=True)
+    title: Mapped[str] = mapped_column(String(160), default="New conversation")
+    context: Mapped[dict] = mapped_column(JS, default=dict)         # validated page context identifiers
+    summary: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = _ts(default=utcnow)
+    updated_at: Mapped[datetime] = _ts(default=utcnow, index=True)
+    deleted_at: Mapped[datetime | None] = _ts()
+
+
+class JarvisMessage(Base):
+    __tablename__ = "jarvis_messages"
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    conversation_id: Mapped[int] = mapped_column(BigInteger, index=True)
+    role: Mapped[str] = mapped_column(String(12))                   # user|assistant
+    content: Mapped[list] = mapped_column(JS)                       # API content blocks, replayed unchanged
+    text: Mapped[str] = mapped_column(Text, default="")             # visible text only
+    model: Mapped[str | None] = mapped_column(String(48))
+    stop_reason: Mapped[str | None] = mapped_column(String(24))
+    sources: Mapped[list] = mapped_column(JS, default=list)         # tool-derived references shown to the owner
+    cost_usd: Mapped[float | None] = mapped_column(Float)
+    created_at: Mapped[datetime] = _ts(default=utcnow)
+
+
+class JarvisToolCall(Base):
+    __tablename__ = "jarvis_tool_calls"
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    conversation_id: Mapped[int | None] = mapped_column(BigInteger, index=True)
+    message_id: Mapped[int | None] = mapped_column(BigInteger, index=True)
+    tool: Mapped[str] = mapped_column(String(48), index=True)
+    args: Mapped[dict] = mapped_column(JS)
+    ok: Mapped[bool] = mapped_column(Boolean)
+    error: Mapped[str | None] = mapped_column(String(240))
+    result_chars: Mapped[int] = mapped_column(Integer, default=0)
+    truncated: Mapped[bool] = mapped_column(Boolean, default=False)
+    duration_ms: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = _ts(default=utcnow)
+
+
+class JarvisMemory(Base):
+    """Structured long-term memory. Facts keep their sources and observation date; hypotheses stay hypotheses."""
+    __tablename__ = "jarvis_memory"
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    category: Mapped[str] = mapped_column(String(16), index=True)   # research|operational|preference|conversation
+    status: Mapped[str] = mapped_column(String(12), default="hypothesis")  # verified|hypothesis|preference
+    subject_type: Mapped[str | None] = mapped_column(String(16), index=True)  # player|team|game|market|model|system
+    subject_id: Mapped[str | None] = mapped_column(String(64), index=True)
+    text: Mapped[str] = mapped_column(Text)
+    sources: Mapped[list] = mapped_column(JS, default=list)
+    observed_on: Mapped[date | None] = mapped_column(Date)
+    created_by: Mapped[str] = mapped_column(String(64))             # owner email or "jarvis"
+    conversation_id: Mapped[int | None] = mapped_column(BigInteger)
+    created_at: Mapped[datetime] = _ts(default=utcnow)
+    deleted_at: Mapped[datetime | None] = _ts()
+
+
+class JarvisBriefing(Base):
+    __tablename__ = "jarvis_briefings"
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    kind: Mapped[str] = mapped_column(String(16), index=True)       # overnight|morning|midday|pregame|postgame
+    game_date: Mapped[date] = mapped_column(Date, index=True)
+    digest_hash: Mapped[str] = mapped_column(String(64))            # of the facts; unchanged facts -> no new briefing
+    facts: Mapped[dict] = mapped_column(JS)                         # deterministic digest the text was written from
+    text: Mapped[str] = mapped_column(Text)
+    generator: Mapped[str] = mapped_column(String(48))              # "deterministic" or a model id
+    cost_usd: Mapped[float | None] = mapped_column(Float)
+    created_at: Mapped[datetime] = _ts(default=utcnow)
+    __table_args__ = (UniqueConstraint("kind", "game_date", "digest_hash", name="uq_briefing_digest"),)
+
+
+class JarvisEvent(Base):
+    """Deduplicated operational/research events for the assistant. Written by ordinary workers, no LLM involved."""
+    __tablename__ = "jarvis_events"
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    kind: Mapped[str] = mapped_column(String(32), index=True)
+    dedupe_key: Mapped[str] = mapped_column(String(160), unique=True)
+    game_date: Mapped[date | None] = mapped_column(Date, index=True)
+    severity: Mapped[str] = mapped_column(String(8), default="info")  # info|notice|alert
+    title: Mapped[str] = mapped_column(String(200))
+    detail: Mapped[dict] = mapped_column(JS, default=dict)
+    occurred_at: Mapped[datetime] = _ts(default=utcnow, index=True)
+    acknowledged_at: Mapped[datetime | None] = _ts()
+
+
+JARVIS_TABLES = [AiBudgetPolicy, AiUsage, JarvisConversation, JarvisMessage, JarvisToolCall, JarvisMemory, JarvisBriefing,
+                 JarvisEvent]
+
 IMMUTABLE_TABLES = [
     "injury_snapshots", "odds_snapshots", "predictions", "selections", "combos", "editions",
     "research_events", "paper_tickets", "paper_settlements", "prediction_outcomes", "audit_log",

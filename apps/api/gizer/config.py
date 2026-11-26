@@ -39,6 +39,18 @@ class Settings(BaseSettings):
     llm_provider: str = ""
     llm_monthly_budget_usd: float = 0.0
 
+    # JARVIS. The API key is read from ANTHROPIC_API_KEY by the SDK itself and never stored or logged here.
+    jarvis_enabled: bool = True
+    jarvis_lifetime_cap_usd: float = 100.0      # owner-authorised cumulative budget (D-024); not a monthly figure
+    jarvis_suspend_at_usd: float = 95.0
+    jarvis_daily_cap_usd: float = 2.0
+    jarvis_model_sonnet: str = "claude-sonnet-5-5"
+    jarvis_model_haiku: str = "claude-haiku-5-5"
+    jarvis_model_opus: str = "claude-opus-5-5"
+    jarvis_max_tool_rounds: int = 6
+    jarvis_request_timeout_s: float = 120.0
+    jarvis_briefings_use_llm: bool = True
+
     # research
     paper_unit: float = 1.0
     sim_draws: int = 20000

@@ -29,6 +29,8 @@ def main(argv=None):
     sub.add_parser("scheduler", help="run the scheduler")
     sub.add_parser("bootstrap-owner", help="create/update the owner account from GIZER_OWNER_EMAIL/PASSWORD")
     sub.add_parser("status")
+    jv = sub.add_parser("jarvis-verify")
+    jv.add_argument("--ping", action="store_true")
     sub.add_parser("model-cards", help="render MODEL-CARDS.md content from the registry")
     a = ap.parse_args(argv)
 
@@ -89,6 +91,30 @@ def main(argv=None):
     elif a.cmd == "status":
         from .jobs import operations_status
         _print(operations_status())
+    elif a.cmd == "jarvis-verify":
+        # Free check of the key and the configured model ids. --ping also sends one tiny paid request (well under
+        # one cent, taken from the development allocation) to prove a real answer comes back and is accounted for.
+        from . import ai_budget, jarvis
+        if not jarvis.configured():
+            print("ANTHROPIC_API_KEY is not set in this environment. Nothing was called.")
+            return 1
+        out = {"models": jarvis.verify_models(force=True)}
+        if a.ping and out["models"]["ok"]:
+            model = out["models"]["models"]["light"]
+            uid = ai_budget.reserve("dev", model, "verify", 200, 64)
+            try:
+                with jarvis.client().messages.stream(model=model, max_tokens=64, output_config={"effort": "low"},
+                                                     messages=[{"role": "user", "content": "Reply with the single word: ready"}]) as st:
+                    msg = st.get_final_message()
+                cost = ai_budget.settle(uid, msg.usage, getattr(msg, "_request_id", None))
+                out["ping"] = {"reply": "".join(b.text for b in msg.content if b.type == "text")[:40], "stop_reason": msg.stop_reason,
+                               "cost_usd": cost, "input_tokens": msg.usage.input_tokens, "output_tokens": msg.usage.output_tokens}
+            except Exception as e:
+                ai_budget.assume(uid, type(e).__name__)
+                out["ping"] = {"error": type(e).__name__}
+        out["budget"] = {k: v for k, v in ai_budget.status().items() if k in ("spent_usd", "remaining_usd", "usable_usd", "state")}
+        _print(out)
+        return 0 if out["models"]["ok"] and "error" not in out.get("ping", {}) else 1
     return 0
 
 

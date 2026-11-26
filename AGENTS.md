@@ -36,3 +36,12 @@ quantitative engine (`research.build_combos` + `simulation`), each with its own 
 statistics in the ledger (`paper_tickets.engine` / `.structure`). GIZER GUARD is Agent 16.
 
 For AI coding agents working in this repository: follow `CLAUDE.md`.
+
+## JARVIS — the assistant above the 18 roles
+JARVIS (`gizer/jarvis.py`) is not a nineteenth research agent and does not replace any of them. It reads their
+status and last reports (`get_agent_status`), the records they produce, and explains or audits them for the owner.
+It may queue only `availability_watch` and `market_watch`. It cannot delegate to itself or to another model: tools
+never call a model, and a turn is limited to 6 tool rounds. Its scheduled briefings (06:00, 09:00, 13:00 ET and
+pregame) are built from deterministic facts; a model only words them when the AI budget allows.
+See `docs/jarvis/` for architecture, tool registry, memory, budget, security and operations.
+
