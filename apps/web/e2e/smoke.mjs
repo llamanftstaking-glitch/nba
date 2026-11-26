@@ -769,6 +769,109 @@ async function runViewport(browser, label, viewport) {
   await settle(page);
   check(`[${label}] jarvis events: listed with severity`, (await page.locator('[data-testid="event-item"]').count()) === 3 && /Alert/i.test(await page.locator('[data-testid="event-item"]').first().innerText()));
 
+  // --- JARVIS image attachments ---
+  await page.goto(`${BASE}/jarvis`);
+  await settle(page);
+  const pngB64 = await page.evaluate(() => {
+    const c = document.createElement("canvas");
+    c.width = 2400;
+    c.height = 1200;
+    const g = c.getContext("2d");
+    g.fillStyle = "#123";
+    g.fillRect(0, 0, 2400, 1200);
+    g.fillStyle = "#fff";
+    g.font = "64px sans-serif";
+    g.fillText("FIXTURE PARLAY SLIP", 80, 200);
+    return c.toDataURL("image/png").split(",")[1];
+  });
+  const png = (name) => ({ name, mimeType: "image/png", buffer: Buffer.from(pngB64, "base64") });
+  const attCount = (root, n) => page.waitForFunction(([sel, k]) => document.querySelectorAll(`${sel} [data-testid="jarvis-attachment"]`).length === k, [root, n], { timeout: 10000 }).then(() => true).catch(() => false);
+  check(`[${label}] attachments: hint, attach button and a multi-image picker without capture`, /Attach a parlay or pick slip screenshot/.test(await page.locator(`${P} [data-testid="jarvis-attach-hint"]`).innerText()) && (await page.locator(`${P} [data-testid="jarvis-file"]`).getAttribute("accept")) === "image/png,image/jpeg,image/webp,image/gif" && (await page.locator(`${P} [data-testid="jarvis-file"]`).getAttribute("multiple")) !== null && (await page.locator(`${P} [data-testid="jarvis-file"]`).getAttribute("capture")) === null);
+  const [chooser] = await Promise.all([page.waitForEvent("filechooser", { timeout: 8000 }).catch(() => null), page.click('[data-testid="jarvis-suggest-image"]')]);
+  check(`[${label}] attachments: "Analyse a parlay screenshot" chip opens the file picker and focuses the composer`, chooser !== null && (await page.evaluate(() => document.activeElement?.getAttribute("data-testid"))) === "jarvis-input");
+  await page.locator(`${P} [data-testid="jarvis-file"]`).setInputFiles([png("slip-1.png")]);
+  check(`[${label}] attachments: thumbnail appears with an accessible remove button`, (await attCount(P, 1)) && (await page.locator(`${P} [data-testid="jarvis-attachment-remove"]`).getAttribute("aria-label")) === "Remove attachment 1: slip-1.png");
+  await page.locator(`${P} [data-testid="jarvis-attachment-remove"]`).click();
+  check(`[${label}] attachments: remove works`, await attCount(P, 0));
+  await page.locator(`${P} [data-testid="jarvis-file"]`).setInputFiles([{ name: "notes.txt", mimeType: "text/plain", buffer: Buffer.from("FIXTURE text") }]);
+  await page.locator(`${P} [data-testid="jarvis-attach-error"]`).waitFor({ timeout: 8000 }).catch(() => {});
+  check(`[${label}] attachments: a non-image is refused inline`, /notes\.txt is not an image/.test(await page.locator(`${P} [data-testid="jarvis-attach-error"]`).innerText().catch(() => "")) && (await attCount(P, 0)));
+  await page.locator(`${P} [data-testid="jarvis-file"]`).setInputFiles([png("a.png"), png("b.png"), png("c.png"), png("d.png")]);
+  check(`[${label}] attachments: a fourth image is refused with a clear message`, (await attCount(P, 3)) && /at most 3 images/.test(await page.locator(`${P} [data-testid="jarvis-attach-error"]`).innerText().catch(() => "")));
+  const ao = await overflow(page);
+  check(`[${label}] attachments: composer with three thumbnails has no horizontal overflow`, !ao, ao ? JSON.stringify(ao) : "");
+  await shot("jarvis-attachments");
+  for (let k = 0; k < 2; k++) await page.locator(`${P} [data-testid="jarvis-attachment-remove"]`).first().click();
+  await attCount(P, 1);
+  // failed sends keep the attachment
+  const imgReqs = [];
+  const onImgReq = (r) => {
+    if (/\/jarvis\/conversations\/\d+\/messages$/.test(r.url())) imgReqs.push(JSON.parse(r.postData() ?? "{}"));
+  };
+  page.on("request", onImgReq);
+  await sendJ(P, "trigger-422 please");
+  await page.locator(`${P} [data-testid="jarvis-error"]`).waitFor({ timeout: 8000 }).catch(() => {});
+  check(`[${label}] attachments: a 422 is shown verbatim and the attachment is kept for a retry`, (await page.locator(`${P} [data-testid="jarvis-error"]`).innerText().catch(() => "")).trim() === "FIXTURE: the message body exceeds the allowed size." && (await attCount(P, 1)));
+  await page.locator(`${P} [data-testid="jarvis-input"]`).fill("trigger-invalid-image");
+  await page.locator(`${P} [data-testid="jarvis-input"]`).press("Enter");
+  await page.waitForFunction(() => document.querySelector('[data-testid="jarvis-error"]')?.getAttribute("data-code") === "invalid_image", null, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] attachments: invalid_image is shown verbatim and the attachment is kept`, (await page.locator(`${P} [data-testid="jarvis-error"]`).innerText().catch(() => "")).trim() === "FIXTURE: the attached image could not be read. Attach a PNG, JPEG, WebP or GIF under 1.5 MB." && (await attCount(P, 1)));
+  // send with an image and no text
+  await page.locator(`${P} [data-testid="jarvis-input"]`).fill("");
+  check(`[${label}] attachments: sending is allowed with an image and no text`, await page.locator(`${P} [data-testid="jarvis-send"]`).isEnabled());
+  await page.locator(`${P} [data-testid="jarvis-send"]`).click();
+  await page.locator(`${P} [data-testid="jarvis-live"] [data-testid="jarvis-tool"]`).first().waitFor({ timeout: 8000 }).catch(() => {});
+  await page.waitForFunction(() => !document.querySelector('[data-testid="jarvis-page"] [data-testid="jarvis-live"]') && document.querySelectorAll('[data-testid="jarvis-page"] [data-testid="jarvis-message-image"]').length >= 1, null, { timeout: 15000 }).catch(() => {});
+  const last = imgReqs[imgReqs.length - 1] ?? {};
+  const sentImg = last.images?.[0] ?? {};
+  const dims = await page.evaluate(async (b64) => {
+    const im = new Image();
+    im.src = `data:image/jpeg;base64,${b64}`;
+    await im.decode();
+    return [im.naturalWidth, im.naturalHeight];
+  }, sentImg.data ?? "");
+  check(`[${label}] attachments: uploaded as downscaled JPEG base64 without a data: prefix (longest side 1568)`, last.text === "" && last.images?.length === 1 && sentImg.media_type === "image/jpeg" && typeof sentImg.data === "string" && !sentImg.data.startsWith("data:") && sentImg.data.startsWith("/9j/") && dims[0] === 1568 && dims[1] === 784, JSON.stringify(dims));
+  const slipAns = (await page.locator(`${P} [data-testid="jarvis-answer"]`).last().innerText()).replace(/\s+/g, " ");
+  check(`[${label}] attachments: the answer's first table lists the legs read from the slip`, /FIXTURE Player A Over PTS/.test(await page.locator(`${P} [data-testid="jarvis-answer"]`).last().locator('[data-testid="md-table"]').first().innerText()) && /Sources \(3\)/.test(slipAns));
+  if (!isMobile) check(`[${label}] attachments: stream showed the lookup, projection and combination tool labels`, ["Looking up the player", "Loading model projections", "Evaluating the combination"].every(async () => true) && (await page.locator('[data-testid="jarvis-right"] [data-testid="jarvis-tool"]').allInnerTexts()).join("|").match(/Looking up the player.*Loading model projections.*Evaluating the combination/s) !== null);
+  check(`[${label}] attachments: composer is cleared after a successful send`, await attCount(P, 0));
+  const loaded = () => page.evaluate(() => [...document.querySelectorAll('[data-testid="jarvis-page"] [data-testid="jarvis-message-image"] img')].map((i) => [i.getAttribute("src"), i.complete && i.naturalWidth > 0]));
+  await page.reload();
+  await settle(page);
+  await page.waitForFunction(() => [...document.querySelectorAll('[data-testid="jarvis-page"] [data-testid="jarvis-message-image"] img')].some((i) => i.complete && i.naturalWidth > 0), null, { timeout: 10000 }).catch(() => {});
+  const afterReload = await loaded();
+  check(`[${label}] attachments: the image survives a reload, served by the message image route`, afterReload.length === 1 && /\/api\/v1\/jarvis\/messages\/\d+\/images\/0$/.test(afterReload[0][0]) && afterReload[0][1] === true, JSON.stringify(afterReload));
+  await page.locator(`${P} [data-testid="jarvis-message-image"]`).first().click();
+  check(`[${label}] attachments: clicking a thumbnail opens it larger`, (await page.locator('[data-testid="image-overlay"] img').count()) === 1);
+  await page.keyboard.press("Escape");
+  check(`[${label}] attachments: Esc closes the overlay and focus returns to the thumbnail`, (await page.locator('[data-testid="image-overlay"]').count()) === 0 && (await page.evaluate(() => document.activeElement?.getAttribute("data-testid"))) === "jarvis-message-image");
+  // paste path
+  await page.evaluate((b64) => {
+    const bytes = Uint8Array.from(atob(b64), (ch) => ch.charCodeAt(0));
+    const dt = new DataTransfer();
+    dt.items.add(new File([bytes], "pasted.png", { type: "image/png" }));
+    const ta = document.querySelector('[data-testid="jarvis-page"] [data-testid="jarvis-input"]');
+    ta.focus();
+    ta.dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true }));
+  }, pngB64);
+  check(`[${label}] attachments: pasting a screenshot into the textarea attaches it`, await attCount(P, 1));
+  // drop target state
+  await page.evaluate(() => {
+    const dt = new DataTransfer();
+    dt.items.add(new File(["x"], "drag.png", { type: "image/png" }));
+    document.querySelector('[data-testid="jarvis-page"] [data-testid="jarvis-conversation"]').dispatchEvent(new DragEvent("dragover", { dataTransfer: dt, bubbles: true, cancelable: true }));
+  });
+  check(`[${label}] attachments: dragging files shows a visible drop target`, (await page.locator(`${P} [data-testid="jarvis-drop-target"]`).count()) === 1);
+  await page.evaluate((b64) => {
+    const bytes = Uint8Array.from(atob(b64), (ch) => ch.charCodeAt(0));
+    const dt = new DataTransfer();
+    dt.items.add(new File([bytes], "dropped.png", { type: "image/png" }));
+    document.querySelector('[data-testid="jarvis-page"] [data-testid="jarvis-conversation"]').dispatchEvent(new DragEvent("drop", { dataTransfer: dt, bubbles: true, cancelable: true }));
+  }, pngB64);
+  check(`[${label}] attachments: dropping an image attaches it and clears the drop state`, (await attCount(P, 2)) && (await page.locator(`${P} [data-testid="jarvis-drop-target"]`).count()) === 0);
+  page.off("request", onImgReq);
+  errors.length = 0; // the 422 above logs an expected console error
+
   // --- JARVIS panel: launcher, context chip, Ctrl+J, Ask JARVIS ---
   const PN = '[data-testid="jarvis-panel"]';
   await page.goto(`${BASE}/games/FIX-G1`);
@@ -778,6 +881,7 @@ async function runViewport(browser, label, viewport) {
   check(`[${label}] panel: opens from a game page with the game context chip`, /DET @ ORL/.test(await page.locator(`${PN} [data-testid="ctx-game"]`).innerText().catch(() => "")) && /\/games\/FIX-G1/.test(await page.locator(`${PN} [data-testid="ctx-page"]`).innerText().catch(() => "")));
   const box = await page.locator(PN).boundingBox();
   check(`[${label}] panel: ${isMobile ? "full-screen drawer on mobile" : "about 420px side panel on desktop"}`, box && (isMobile ? Math.round(box.width) === viewport.width && Math.round(box.height) === viewport.height : Math.round(box.width) === 420 && Math.round(box.x + box.width) === viewport.width), JSON.stringify(box));
+  check(`[${label}] panel: composer also accepts image attachments`, (await page.locator(`${PN} [data-testid="jarvis-attach"]`).count()) === 1 && (await page.locator(`${PN} [data-testid="jarvis-suggest-image"]`).count()) === 0);
   check(`[${label}] panel: context-specific suggestion first`, /What matters in DET @ ORL/.test(await page.locator(`${PN} [data-testid="jarvis-suggestion"]`).first().innerText().catch(() => "")));
   await sendJ(PN, "Summarise this game");
   check(`[${label}] panel: answers in place`, (await answered(PN, 1)) && (await page.locator(`${PN} [data-testid="md-table"]`).count()) === 1);

@@ -902,17 +902,40 @@ function jarvisRoute(method, path, q, body, role) {
   }
   return undefined;
 }
+const IMAGE_STORE = new Map(); // message id → [{type, bytes}]
+const IMAGE_MEDIA = ["image/png", "image/jpeg", "image/webp", "image/gif"];
+const looksLikeImage = (b) => b.length > 8 && ((b[0] === 0xff && b[1] === 0xd8) || (b[0] === 0x89 && b[1] === 0x50) || b.subarray(0, 3).toString() === "GIF" || b.subarray(8, 12).toString() === "WEBP");
 /** Streaming reply for POST /jarvis/conversations/{id}/messages (text/event-stream). */
 function jarvisStream(res, conv, body) {
   res.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-store, no-transform", Connection: "keep-alive", "X-Accel-Buffering": "no" });
   const text = String(body.text ?? "");
   const now = () => new Date().toISOString();
-  conv.messages.push({ id: ++J.msgId, role: "user", text, model: null, stop_reason: null, sources: [], cost_usd: null, created_at: now(), tool_calls: [] });
+  const images = Array.isArray(body.images) ? body.images : [];
+  const userMsg = { id: ++J.msgId, role: "user", text, model: null, stop_reason: null, sources: [], cost_usd: null, created_at: now(), tool_calls: [], images: images.length };
+  conv.messages.push(userMsg);
+  if (images.length) IMAGE_STORE.set(String(userMsg.id), images.map((im) => ({ type: im.media_type, bytes: Buffer.from(String(im.data), "base64") })));
   if (!conv.title) conv.title = text.slice(0, 60);
   conv.updated_at = now();
   const emit = (e) => res.write(`data: ${JSON.stringify(e)}\n\n`);
   const finish = (model, answer, cost, sources) => { const m = { id: ++J.msgId, role: "assistant", text: answer, model, stop_reason: "end_turn", sources, cost_usd: cost, created_at: now(), tool_calls: [] }; conv.messages.push(m); conv.updated_at = now(); emit({ type: "done", message_id: m.id, model, cost_usd: cost, sources, stop_reason: "end_turn" }); res.end(); };
-  const slash = text.trim().startsWith("/");
+  const slash = text.trim().startsWith("/") && images.length === 0; // slash commands are ignored when an image is attached
+  const bad = images.find((im) => !IMAGE_MEDIA.includes(im.media_type) || !looksLikeImage(Buffer.from(String(im.data ?? ""), "base64")));
+  if (bad || text.includes("trigger-invalid-image")) {
+    conv.messages.pop(); // a rejected turn is not stored
+    IMAGE_STORE.delete(String(userMsg.id));
+    emit({ type: "status", state: "processing", routing: { handler: "model", reason: "FIXTURE" }, model: J_MODELS.standard });
+    return setTimeout(() => { emit({ type: "error", code: "invalid_image", message: "FIXTURE: the attached image could not be read. Attach a PNG, JPEG, WebP or GIF under 1.5 MB.", cost_usd: 0 }); res.end(); }, 120);
+  }
+  if (images.length) {
+    const model = J_MODELS.standard, cost = 0.0584;
+    const labels = [["read_image", "FIXTURE: Reading the attached slip"], ["find_player", "Looking up the player"], ["get_projections", "Loading model projections"], ["evaluate_combination", "Evaluating the combination"]];
+    const sources = labels.slice(1).map(([tool, label]) => ({ tool, label, args: { source: "attached image" } }));
+    const answer = `## FIXTURE slip analysis\n\nLegs read from the attached slip (${images.length} image${images.length === 1 ? "" : "s"}):\n\n| Leg | Line | Model probability |\n|---|---|---|\n| FIXTURE Player A Over PTS | 24.5 | 56.1% |\n| FIXTURE Player E Under PTS | 27.5 | 57.3% |\n\n- Joint estimate comes from the combination evaluator\n- Nothing here is a recommendation`;
+    const seq = [() => emit({ type: "status", state: "processing", routing: { handler: "model", mode: "standard", reason: "FIXTURE: image attached" }, model }), ...labels.flatMap(([tool, label], k) => [() => emit({ type: "tool_start", id: `i${k}`, tool, label, args: {} }), () => emit({ type: "tool_end", id: `i${k}`, tool, ok: true, ms: 30 + k * 11 })]), () => emit({ type: "text", delta: answer.slice(0, 90) }), () => emit({ type: "text", delta: answer.slice(90) }), () => emit({ type: "usage", cost_usd: cost, total_cost_usd: cost, input_tokens: 6100, output_tokens: 280, cache_read_tokens: 0 }), () => { SPEND.spent += cost; SPEND.today += cost; finish(model, answer, cost, sources); }];
+    let k = 0;
+    const step = () => { if (res.destroyed) return; seq[k++](); if (k < seq.length) setTimeout(step, 70); };
+    return step();
+  }
   if (text.includes("trigger-budget-error")) {
     emit({ type: "status", state: "processing", routing: { handler: "model", mode: "standard", reason: "FIXTURE" }, model: J_MODELS.standard });
     return setTimeout(() => { J.state = "budget_limited"; emit({ type: "error", code: "lifetime_cap", message: "FIXTURE: the lifetime AI budget cap has been reached; no model request was sent.", state: "budget_limited", cost_usd: 0 }); res.end(); }, 150);
@@ -1292,7 +1315,19 @@ const server = http.createServer((req, res) => {
       if (role !== "owner") return send(res, 403, err("forbidden", "FIXTURE: this area is available to the owner account only."));
       const conv = CONVS.find((c) => String(c.id) === sm[1]);
       if (!conv) return send(res, 404, err("not_found", "FIXTURE: conversation not found."));
+      const imgs = Array.isArray(body.images) ? body.images : [];
+      if (imgs.length > 3) return send(res, 422, err("invalid", "FIXTURE: at most 3 images can be attached to one message."));
+      if (imgs.some((im) => String(im.data ?? "").length > 2_100_000)) return send(res, 422, err("invalid", "FIXTURE: an attached image is larger than the 1.5 MB limit."));
+      if (String(body.text ?? "").includes("trigger-422")) return send(res, 422, err("invalid", "FIXTURE: the message body exceeds the allowed size."));
+      if (!String(body.text ?? "").trim() && imgs.length === 0) return send(res, 422, err("invalid", "FIXTURE: text is required when no image is attached."));
       return jarvisStream(res, conv, body);
+    }
+    const im = method === "GET" ? path.match(/^\/jarvis\/messages\/(\d+)\/images\/(\d+)$/) : null;
+    if (im) {
+      const img = role === "owner" ? IMAGE_STORE.get(im[1])?.[Number(im[2])] : null;
+      if (!img) return send(res, 404, err("not_found", "FIXTURE: image not found."));
+      res.writeHead(200, { "Content-Type": img.type, "Cache-Control": "private, max-age=3600", "Content-Length": img.bytes.length });
+      return res.end(img.bytes);
     }
     if (path.startsWith("/jarvis/") || path.startsWith("/admin/ai-budget") || path === "/__mock/jarvis") {
       const jr = jarvisRoute(method, path, url.searchParams, body, role);
