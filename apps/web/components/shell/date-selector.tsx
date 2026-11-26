@@ -28,7 +28,7 @@ export function DateSelector() {
         <span className="sr-only">Slate date</span>
         <CalendarDays className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" aria-hidden />
         <select
-          className="num h-11 min-w-0 max-w-[206px] rounded-md bg-raised pl-8 pr-7 text-sm font-medium text-ink ring-1 ring-inset ring-line md:h-9"
+          className="num h-11 min-w-0 max-w-[150px] sm:max-w-[206px] rounded-md bg-raised pl-8 pr-7 text-sm font-medium text-ink ring-1 ring-inset ring-line md:h-9"
           value={current ?? ""}
           disabled={!current}
           onChange={(e) => setDate(e.target.value || undefined)}

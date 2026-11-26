@@ -917,7 +917,7 @@ function jarvisStream(res, conv, body) {
     emit({ type: "status", state: "processing", routing: { handler: "model", mode: "standard", reason: "FIXTURE" }, model: J_MODELS.standard });
     return setTimeout(() => { J.state = "budget_limited"; emit({ type: "error", code: "lifetime_cap", message: "FIXTURE: the lifetime AI budget cap has been reached; no model request was sent.", state: "budget_limited", cost_usd: 0 }); res.end(); }, 150);
   }
-  if (text.includes("trigger-drop")) { emit({ type: "status", state: "processing", routing: { handler: "model" }, model: J_MODELS.standard }); emit({ type: "text", delta: "FIXTURE partial " }); return setTimeout(() => res.destroy(), 150); }
+  if (text.includes("trigger-drop")) { emit({ type: "status", state: "processing", routing: { handler: "model" }, model: J_MODELS.standard }); emit({ type: "text", delta: "FIXTURE partial " }); return setTimeout(() => res.end(), 150); } // the stream ends without a terminal event
   if (slash) {
     emit({ type: "status", state: "processing", routing: { handler: "command", tool: "budget_status", reason: "FIXTURE: slash command" }, model: "deterministic" });
     emit({ type: "tool_start", id: "t1", tool: "budget_status", label: "FIXTURE: Reading the AI budget ledger", args: {} });

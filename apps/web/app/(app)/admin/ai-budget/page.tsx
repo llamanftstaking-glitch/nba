@@ -89,7 +89,7 @@ const REQ_COLUMNS: Column<BudgetRequest>[] = [
   { key: "task", header: "Task", cell: (r) => <span className="break-words">{r.task}</span> },
   { key: "res", header: "Reserved", align: "right", cell: (r) => <Val v={usd(r.reserved_usd, 4)} /> },
   { key: "act", header: "Actual", align: "right", cell: (r) => <Val v={usd(r.actual_usd, 4)} /> },
-  { key: "tok", header: "Tokens in / out / cached", align: "right", cell: (r) => <span className="num whitespace-nowrap">{fmtInt(r.input_tokens) ?? "—"} / {fmtInt(r.output_tokens) ?? "—"} / {fmtInt(r.cache_read_tokens) ?? "—"}</span> },
+  { key: "tok", header: "Tokens in / out / cached", align: "right", cell: (r) => <span className="num">{fmtInt(r.input_tokens) ?? "—"} / {fmtInt(r.output_tokens) ?? "—"} / {fmtInt(r.cache_read_tokens) ?? "—"}</span> },
   { key: "err", header: "Error", cell: (r) => (r.error ? <span className="break-words text-xs text-bad">{r.error}</span> : <span className="text-muted">none</span>) },
 ];
 

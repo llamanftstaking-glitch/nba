@@ -6,7 +6,7 @@ export function Brand({ compact = false, className }: { compact?: boolean; class
   return (
     <span className={cn("inline-flex items-center gap-2", className)} aria-label="GIZER NBA — Parlay Command Center">
       <SlashMark className={compact ? "h-5 w-6" : "h-7 w-8"} />
-      <span className="flex flex-col leading-none">
+      <span className={cn("flex-col leading-none", compact ? "hidden min-[480px]:flex" : "flex")}>
         <span className={cn("font-display font-bold uppercase italic tracking-wide text-ink", compact ? "text-xl" : "text-[26px]")}>
           GIZER <span className="text-accent">NBA</span>
         </span>
