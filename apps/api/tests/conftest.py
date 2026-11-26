@@ -23,6 +23,19 @@ from gizer.providers import TEAMS, name_key  # noqa: E402
 assert "test" in os.environ["GIZER_DATABASE_URL"], "tests must never run against a non-test database"
 
 
+@pytest.fixture(scope="session", autouse=True)
+def _synthetic_league_top_pick_floor():
+    """The synthetic league prices everything near even money, where no selection can reach the production
+    top-pick floor (65% model probability) and still pass the plausible-edge gate. Pipeline mechanics (ranking,
+    combinations, tickets, immutability) are tested with the floor at 50%; the production value and its effect are
+    tested explicitly in test_governance.py and test_statistical.py."""
+    from gizer import research as R
+    old = R.RISK_POLICY["top_picks"]["min_prob"]
+    R.RISK_POLICY["top_picks"]["min_prob"] = 0.5
+    yield
+    R.RISK_POLICY["top_picks"]["min_prob"] = old
+
+
 def pname(pid: int) -> str:
     """Unique alphabetic synthetic player name (name matching ignores digits)."""
     letters = "".join(chr(97 + int(c)) for c in str(pid))

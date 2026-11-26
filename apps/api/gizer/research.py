@@ -28,7 +28,10 @@ FORBIDDEN_PHRASES = ("guaranteed", "free money", "risk-free", "risk free", "cann
 
 # Version-controlled risk policy. Changing it requires a commit; no agent or LLM can alter it at runtime.
 RISK_POLICY = {
-    "version": "gizer-risk-1.1",
+    "version": "gizer-risk-1.2",
+    # Owner decision D-037: the ranked "top picks" (and everything built from them: combinations, automatic paper
+    # tickets) contain only selections the model gives at least this probability. Every other gate still applies.
+    "top_picks": {"min_prob": 0.65, "max_per_game": 5},
     "qualifying_price_band": [0.15, 0.85],  # break-even outside this band cannot rise above watchlist
     "max_quote_age_hours": 12, "fresh_quote_hours": 3,
     "max_injury_age_hours": 8, "max_box_staleness_days": 3,
@@ -473,8 +476,15 @@ def selection_key(g: Game, c: dict) -> str:
 
 
 def _rank_key(sel: Selection):
+    """Most likely first: the conservative end of the model's probability interval, then the margin over the
+    price, then evidence. (Before 1.2 this ranked by margin alone, which pushed long shots to the top.)"""
     order = {"high_confidence": 0, "standard": 1}
-    return (order.get(sel.classification, 9), -(sel.prob_low - sel.breakeven), -(sel.evidence_score or 0))
+    return (order.get(sel.classification, 9), -(sel.prob_low if sel.prob_low is not None else sel.prob or 0),
+            -((sel.prob_low or 0) - (sel.breakeven or 0)), -(sel.evidence_score or 0))
+
+
+def top_pick_eligible(sel: Selection) -> bool:
+    return sel.classification in QUALIFIED and sel.prob is not None and sel.prob >= RISK_POLICY["top_picks"]["min_prob"]
 
 
 # ---------------------------------------------------------------- combination engines
@@ -713,14 +723,14 @@ def publish_edition(d: date, kind: str = "morning", now: datetime | None = None)
                     evidence=v["evidence"], classification=v["classification"],
                     rejection_reasons=v["rejection_reasons"], verified_at=ctx.now)
                 per_game.append(sel)
-            ranked = sorted([x for x in per_game if x.classification in QUALIFIED], key=_rank_key)
+            ranked = sorted([x for x in per_game if top_pick_eligible(x)], key=_rank_key)
             # one side per market per game in the ranked list, at most five
             seen, rank = set(), 0
             for x in ranked:
                 # spread and moneyline are the same underlying view of the margin: one slot between them
                 mk = ("margin" if x.market in ("spread", "moneyline") else x.market,
                       x.subject_id if x.subject_type == "player" else None)
-                if mk in seen or rank >= 5:
+                if mk in seen or rank >= RISK_POLICY["top_picks"]["max_per_game"]:
                     continue
                 seen.add(mk); rank += 1; x.rank_in_game = rank
             sel_rows.extend(per_game)

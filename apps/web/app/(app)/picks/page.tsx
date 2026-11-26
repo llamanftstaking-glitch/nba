@@ -47,7 +47,7 @@ export default function PicksPage() {
     <div className="space-y-4">
       <PageHeader
         title="Top Picks"
-        sub="Ranked research selections from the latest edition, at most five per game. Other tabs page through every evaluated selection by classification."
+        sub="Qualified selections the model puts at 65% or higher, most likely first, at most five per game. A model probability is an estimate, not an observed hit rate. Other tabs page through every evaluated selection."
         right={
           q.data?.edition ? (
             <span className="text-xs text-muted">

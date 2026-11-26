@@ -1,4 +1,4 @@
-# Risk Policy — `gizer-risk-1.1`
+# Risk Policy — `gizer-risk-1.2`
 
 The policy is the constant `RISK_POLICY` in `apps/api/gizer/research.py`, applied by `guard()` (Agent 16,
 "GIZER GUARD"). It is version-controlled; there is no runtime switch, API or prompt that changes it.
@@ -85,3 +85,17 @@ player did-not-play → void; exact line → push; a pushed/void leg drops out o
 
 Real-money wagering, sportsbook credentials, account funding, automated bet submission — none of these exist
 in the codebase, and adding any of them requires explicit owner approval and a constitution change.
+
+## 1.2 — top picks by probability (owner decision D-037, 2026-11-26)
+* The ranked "top picks" list contains only qualified selections whose **model probability is at least 65%**
+  (`top_picks.min_prob`), at most five per game, one side per market. Combinations and automatic paper tickets are
+  built only from that list.
+* Order is most likely first: the lower end of the model's probability interval, then the margin over the price,
+  then evidence. Before 1.2 the order was margin over the price alone, which put long shots at the top.
+* Every other gate is unchanged and still applies: evidence score, a positive margin at the lower end of the interval,
+  the maximum plausible edge of 10 points, the 15% to 85% break-even band, freshness, and candidate models staying research-only.
+* Consequence of the unchanged gates: a 65%+ selection qualifies only when the market prices it at roughly 55% to 85%
+  (favourite-priced contracts). The list is shorter, and a slate can have none.
+* A model probability of 65% is the model's estimate, not an observed hit rate. The models are not yet validated
+  against market prices; the forward paper record is what will show whether 65% means 65%.
+

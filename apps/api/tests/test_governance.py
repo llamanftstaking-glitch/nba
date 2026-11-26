@@ -47,3 +47,30 @@ def test_product_source_has_no_certainty_marketing():
             if fn.endswith((".tsx", ".ts")):
                 with open(os.path.join(base, fn), encoding="utf-8") as f:
                     assert not banned.search(f.read()), fn
+
+
+def test_top_picks_require_sixty_five_percent_and_rank_most_likely_first(monkeypatch):
+    """Owner decision D-037. The shipped constant is 65%; a selection below it is never ranked, whatever its margin."""
+    import inspect
+    from types import SimpleNamespace as NS
+
+    from gizer import research as R
+    assert '"top_picks": {"min_prob": 0.65, "max_per_game": 5}' in inspect.getsource(R)        # the production value
+    monkeypatch.setitem(R.RISK_POLICY["top_picks"], "min_prob", 0.65)
+
+    def sel(prob, low, be, cls="standard", ev=90):
+        return NS(prob=prob, prob_low=low, breakeven=be, classification=cls, evidence_score=ev)
+    long_shot = sel(0.30, 0.27, 0.18)            # big margin over the price, unlikely to happen
+    coin_flip = sel(0.58, 0.55, 0.50)
+    likely = sel(0.72, 0.68, 0.64)
+    very_likely = sel(0.81, 0.77, 0.74)
+    rejected = sel(0.90, 0.88, 0.80, cls="rejected")
+    watch = sel(0.75, 0.70, 0.72, cls="watchlist")
+    assert [R.top_pick_eligible(x) for x in (long_shot, coin_flip, likely, very_likely, rejected, watch)] == [False, False, True, True, False, False]
+    ranked = sorted([x for x in (long_shot, coin_flip, likely, very_likely) if R.top_pick_eligible(x)], key=R._rank_key)
+    assert ranked == [very_likely, likely]                                                      # most likely first
+    old_order = sorted([long_shot, likely, very_likely], key=lambda x: -(x.prob_low - x.breakeven))
+    assert old_order[0] is long_shot                                                            # what 1.1 would have put on top
+    assert R.RISK_POLICY["standard"]["min_edge_low"] == 0.0 and R.RISK_POLICY["max_plausible_edge"] == 0.10   # other gates untouched
+    assert R.RISK_POLICY["qualifying_price_band"] == [0.15, 0.85]
+

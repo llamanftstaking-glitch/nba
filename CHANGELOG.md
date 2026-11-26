@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.2 — 2026-11-26 (risk policy 1.2: top picks by probability)
+* Top picks now require a model probability of at least 65% and are ordered most likely first (was: ordered by margin
+  over the price, which favoured long shots). Combinations and automatic paper tickets are built only from them.
+* Unchanged: evidence score, positive margin at the low end of the interval, 10-point plausible-edge cap, 15% to 85%
+  break-even band, freshness, candidate models research-only.
+* On the 2026-11-25 slate (development database): 45 ranked picks averaging 42% under 1.1; 14 qualified selections at
+  65%+ averaging 75.5% across 7 games under 1.2, mostly favourite-priced totals and spreads.
+* Not shown by this change: that 65% model probability means a 65% hit rate. That needs the forward paper record.
+
 ## 0.7.1 — 2026-11-26 (JARVIS cost)
 * "Quick answers" switch in the JARVIS composer (remembered per browser): ordinary questions go to the Haiku model
   with the same tools; Deep review still overrides it for one message.
