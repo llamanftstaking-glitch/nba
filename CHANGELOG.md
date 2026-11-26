@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.2 — 2026-11-26 (JARVIS analysis depth)
+* New read-only tools: `get_teammate_availability_splits` (minutes, usage and production with and without each main
+  teammate, with sample sizes and small-sample flags) and `get_opponent_defensive_context` (what a team allows per game
+  with league rank). Both are descriptive and are not model inputs.
+* JARVIS's instructions gain an analyst framework: opportunity before production, distributions around a threshold,
+  shared dependence between legs, regression toward the longer record.
+* First real answers from the Claude API confirmed by the owner on Server M (2026-11-26).
+
 ## 0.6.1 — 2026-11-26 (releases without building on the server)
 * CI: the `images` check builds both images with Buildx and, on pushes to `main`, publishes them to the GitHub
   Container Registry tagged with the full commit id (layer cache, source and revision labels). Pull requests build only.

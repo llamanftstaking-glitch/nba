@@ -220,12 +220,15 @@ def test_registry_is_bounded_typed_and_has_no_dangerous_capability(app):
     assert truncated and len(big) <= T.MAX_RESULT_CHARS and json.loads(big)["rows"][-1].get("_omitted_items")
 
 
-def test_every_read_tool_runs_against_stored_data(app):
+def test_every_read_tool_runs_against_stored_data(app, monkeypatch):
+    from gizer import ingestion
+    monkeypatch.setattr(ingestion, "today_et", lambda: SLATE)       # the synthetic league lives in its own season
     pid = ST["players"][ST["teams"][0]][0]
     args = {"get_game_details": {"game_id": "S0"}, "get_team_profile": {"team_id": ST["teams"][0]}, "find_player": {"query": "Syn"},
             "get_lineups": {"game_id": "S0"}, "get_lineup_changes": {"game_id": "S0"}, "compare_player_statistics": {"player_ids": [pid, pid + 1]},
             "get_threshold_history": {"player_id": pid, "stat": "pts", "line": 10.5}, "get_kalshi_market": None,
-            "inspect_research_validation": None, "remember": None, "request_research_job": None, "evaluate_combination": None}
+            "inspect_research_validation": None, "remember": None, "request_research_job": None, "evaluate_combination": None,
+            "get_opponent_defensive_context": {"team_id": ST["teams"][0]}}
     for t in T.TOOLS:
         f = t.args.model_fields
         a = args.get(t.name, {"game_id": "S0"} if "game_id" in f and f["game_id"].is_required() else
@@ -242,7 +245,18 @@ def test_every_read_tool_runs_against_stored_data(app):
     if cid:
         assert T.execute("inspect_research_validation", {"kind": "combo", "record_id": cid}, {})["ok"]
     opp = json.loads(T.execute("get_player_opportunity_profile", {"player_id": pid}, {})["content"])
-    assert opp["available"] and "teammate-availability splits" in opp["not_available"]   # missing data stays visible
+    assert opp["available"] and "touches" in opp["not_available"]                         # missing data stays visible
+    tm = json.loads(T.execute("get_teammate_availability_splits", {"player_id": pid}, {})["content"])
+    assert tm["available"] and tm["overall"]["n"] >= 4 and tm["teammates"]
+    for row in tm["teammates"]:
+        assert row["with"]["n"] + (row["without"]["n"] if row["without"] else 0) == tm["overall"]["n"]   # every appearance on one side
+        assert row["without"] is None or isinstance(row["small_sample"], bool)
+    assert any("not model inputs" in n for n in tm["notes"])
+    oc = json.loads(T.execute("get_opponent_defensive_context", {"team_id": ST["teams"][1]}, {})["content"])
+    pts = next(i for i in oc["allowed"] if i["stat"] == "points")
+    assert oc["available"] and 1 <= pts["rank_fewest_allowed"] <= pts["of_teams"] and oc["games"] > 0
+    assert any("not adjusted for pace" in n for n in oc["notes"])
+    assert T.execute("get_opponent_defensive_context", {"team_id": 999999}, {})["ok"] is False
 
 
 # ------------------------------------------------------------------ conversation loop

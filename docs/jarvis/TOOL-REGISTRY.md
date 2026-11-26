@@ -6,8 +6,8 @@ characters by shortening lists (never by cutting a value in half) and marked whe
 
 | Group | Tools |
 |---|---|
-| NBA | get_daily_slate, get_game_details, get_team_profile, find_player, get_player_profile, get_player_game_logs, get_player_rolling_averages, get_player_historical_splits, get_threshold_history, compare_player_statistics |
-| Opportunity | get_projected_minutes, get_minutes_table, get_player_opportunity_profile (usage, shot volume, per-36, true shooting), get_teammate_availability_splits (reports "not available") |
+| NBA | get_daily_slate, get_game_details, get_team_profile, find_player, get_player_profile, get_player_game_logs, get_player_rolling_averages, get_player_historical_splits, get_threshold_history, compare_player_statistics, get_opponent_defensive_context |
+| Opportunity | get_projected_minutes, get_minutes_table, get_player_opportunity_profile (usage, shot volume, per-36, true shooting), get_teammate_availability_splits (with/without each main teammate) |
 | Availability | get_current_injury_report, get_availability_changes, get_lineups, get_lineup_changes |
 | Kalshi | get_available_kalshi_markets, get_kalshi_market (rules, snapshot, price/volume history, timeline) |
 | Quantitative | get_player_markets (projection, p10/p90, readiness), get_model_readiness, get_existing_research_candidates, get_existing_parlay_research, inspect_research_validation (audit mode), evaluate_combination (joint probability for 2 to 6 evaluated selections; read-only), get_correlation_research, get_research_edition |
@@ -34,4 +34,4 @@ agent latest report → `get_agent_status`; postgame analysis/findings/experimen
 
 ## Not available yet (reported as unavailable, never estimated)
 Three-point attempts, touches, potential assists, rebound chances, per-possession rates, a validated usage
-projection, teammate-availability splits.
+projection, positional defence splits.

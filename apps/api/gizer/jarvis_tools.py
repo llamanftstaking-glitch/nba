@@ -204,15 +204,109 @@ def t_opportunity_profile(a: PlayerArg, ctx):
     return {"player_id": a.player_id, "player_name": pl.name, "available": True,
             "windows": [window(df.tail(5), "L5"), window(df.tail(10), "L10"), window(df.tail(20), "L20"), window(cur, "season")],
             "not_available": ["three-point attempts", "touches", "potential assists", "rebound chances", "per-possession rates",
-                              "validated usage projection", "teammate-availability splits"],
+                              "validated usage projection"],
+            "see_also": "get_teammate_availability_splits for with/without-teammate numbers",
             "notes": ["Usage is the provider's per-game usage percentage (PBP Stats); games without it are excluded from its average.",
                       "True shooting = points / (2 * (FGA + 0.44 * FTA)) over the window.",
                       "These are descriptive history, not projections. No usage model is validated."]}
 
 
 def t_teammate_splits(a: PlayerArg, ctx):
-    return {"player_id": a.player_id, "available": False,
-            "note": "Teammate-availability splits are not computed yet. Do not estimate them; say they are unavailable."}
+    """With/without splits against each main teammate, from stored box scores of the current season and team."""
+    import pandas as pd
+
+    from .db import PlayerBox
+    from .ingestion import today_et
+    from .providers import season_for_date
+    season = season_for_date(today_et())
+    with session_scope() as s:
+        pl = s.get(Player, a.player_id)
+        if pl is None:
+            raise ToolError("player not found")
+        rows = s.execute(select(PlayerBox.game_id, PlayerBox.player_id, PlayerBox.minutes, PlayerBox.usage, PlayerBox.pts, PlayerBox.reb,
+                                PlayerBox.ast, PlayerBox.fg3m, PlayerBox.fga, PlayerBox.game_date)
+                         .where(PlayerBox.team_id == pl.team_id, PlayerBox.season == season)).all()
+        names = {p.id: p.name for p in s.scalars(select(Player).where(Player.team_id == pl.team_id))}
+    df = pd.DataFrame(rows, columns=["game_id", "player_id", "min", "usage", "pts", "reb", "ast", "fg3m", "fga", "date"])
+    df = df[df["min"].fillna(0) > 0]
+    mine = df[df["player_id"] == a.player_id]
+    base = {"player_id": a.player_id, "player_name": pl.name, "season": season, "games_played_for_this_team": int(len(mine))}
+    if len(mine) < 4:
+        return {**base, "available": False, "note": "Fewer than 4 appearances for this team this season: no split is shown."}
+    others = df[df["player_id"] != a.player_id].groupby("player_id").agg(g=("game_id", "nunique"), mpg=("min", "mean"))
+    main = others[(others["g"] >= 5) & (others["mpg"] >= 18)].sort_values("mpg", ascending=False).head(7)
+
+    def line(d):
+        us = d["usage"].dropna()
+        return {"n": int(len(d)), "minutes": round(float(d["min"].mean()), 1), "usage_pct": round(float(us.mean()), 1) if len(us) else None,
+                "pts": round(float(d["pts"].mean()), 1), "reb": round(float(d["reb"].mean()), 1), "ast": round(float(d["ast"].mean()), 1),
+                "fg3m": round(float(d["fg3m"].mean()), 1), "fga": round(float(d["fga"].mean()), 1)}
+    out = []
+    for tid in main.index:
+        played = set(df[df["player_id"] == tid]["game_id"])
+        w, wo = mine[mine["game_id"].isin(played)], mine[~mine["game_id"].isin(played)]
+        if len(wo) == 0:
+            out.append({"teammate_id": int(tid), "teammate": names.get(int(tid), str(tid)), "with": line(w), "without": None,
+                        "note": "This teammate has not missed a game the player appeared in."})
+            continue
+        out.append({"teammate_id": int(tid), "teammate": names.get(int(tid), str(tid)), "with": line(w), "without": line(wo),
+                    "small_sample": bool(len(wo) < 5 or len(w) < 5)})
+    return {**base, "available": True, "overall": line(mine), "teammates": out,
+            "notes": ["Descriptive averages over the player's own appearances for his current team this season.",
+                      "'Without' means the teammate recorded no minutes in that game, for any reason. Opponent, rest and blowouts are not controlled for.",
+                      "Splits with fewer than 5 games on either side are flagged small_sample and should not carry a conclusion.",
+                      "These are not model inputs: the projection models do not adjust for an absent teammate."]}
+
+
+class TeamContext(Args):
+    team_id: int = Field(ge=1, description="The defending team, i.e. the opponent of the player being researched.")
+
+
+def t_opponent_context(a: TeamContext, ctx):
+    """What a team has allowed per game this season (totals and to the opposing leading scorer), with league rank."""
+    import pandas as pd
+
+    from .db import PlayerBox, Team
+    from .ingestion import today_et
+    from .providers import season_for_date
+    season = season_for_date(today_et())
+    with session_scope() as s:
+        team = s.get(Team, a.team_id)
+        if team is None:
+            raise ToolError("team not found")
+        rows = s.execute(select(PlayerBox.opp_team_id, PlayerBox.game_id, PlayerBox.pts, PlayerBox.reb, PlayerBox.ast, PlayerBox.fg3m,
+                                PlayerBox.tov, PlayerBox.fga, PlayerBox.fta, PlayerBox.starter).where(PlayerBox.season == season)).all()
+        abbr = {t.id: t.abbr for t in s.scalars(select(Team))}
+    df = pd.DataFrame(rows, columns=["def_team", "game_id", "pts", "reb", "ast", "fg3m", "tov", "fga", "fta", "starter"])
+    if df.empty or a.team_id not in set(df["def_team"]):
+        return {"team_id": a.team_id, "team": team.abbr, "season": season, "available": False, "note": "No games ingested for this team this season."}
+    cols = ["pts", "reb", "ast", "fg3m", "tov", "fga", "fta"]
+    per_game = df.groupby(["def_team", "game_id"])[cols].sum().reset_index()
+    allowed = per_game.groupby("def_team")[cols].mean()
+    games = per_game.groupby("def_team")["game_id"].nunique()
+    top = df.groupby(["def_team", "game_id"])["pts"].max().groupby("def_team").mean()
+    bench = df[df["starter"] == False].groupby(["def_team", "game_id"])["pts"].sum().groupby("def_team").mean()   # noqa: E712
+    n_teams = int(len(allowed))
+
+    def item(label, series, low_is_stingy=True):
+        v = float(series.loc[a.team_id])
+        rank = int((series < v).sum()) + 1 if low_is_stingy else int((series > v).sum()) + 1
+        return {"stat": label, "allowed_per_game": round(v, 1), "league_average": round(float(series.mean()), 1),
+                "rank_fewest_allowed": rank, "of_teams": n_teams}
+    items = [item("points", allowed["pts"]), item("rebounds", allowed["reb"]), item("assists", allowed["ast"]),
+             item("three-pointers made", allowed["fg3m"]), item("field goal attempts", allowed["fga"]),
+             item("free throw attempts", allowed["fta"]), item("points by the opposing top scorer", top)]
+    if a.team_id in bench.index:
+        items.append(item("opposing bench points (games with starter data)", bench))
+    forced = allowed["tov"]
+    items.append({"stat": "turnovers forced", "per_game": round(float(forced.loc[a.team_id]), 1), "league_average": round(float(forced.mean()), 1),
+                  "rank_most_forced": int((forced > float(forced.loc[a.team_id])).sum()) + 1, "of_teams": n_teams})
+    return {"team_id": a.team_id, "team": abbr.get(a.team_id), "season": season, "games": int(games.loc[a.team_id]), "available": True,
+            "allowed": items,
+            "notes": ["Raw per-game totals allowed this season; not adjusted for pace, opponent strength or garbage time.",
+                      "Rank 1 = fewest allowed. Early in a season these ranks move a lot: read them with the games count.",
+                      "No positional (versus guards / versus centres) breakdown exists in our data.",
+                      "Descriptive context only. The projection models do not use these numbers as inputs unless a model card says so."]}
 
 
 class InjuryReport(Args):
@@ -716,7 +810,8 @@ TOOLS: list[Tool] = [
     _t("get_projected_minutes", "Loading minutes profile", "One player's minutes history, rotation class, projected minutes and uncertainty band with the model's status.", PlayerArg, t_projected_minutes, "opportunity"),
     _t("get_minutes_table", "Loading slate minutes", "Projected and recent minutes for the players on a slate, sorted by projected minutes.", MinutesTable, t_minutes_table, "opportunity"),
     _t("get_player_opportunity_profile", "Loading usage and efficiency", "Usage percentage, shot volume, per-36 production and true shooting over L5/L10/L20/season, and which opportunity data is not available.", PlayerArg, t_opportunity_profile, "opportunity"),
-    _t("get_teammate_availability_splits", "Checking teammate splits", "Reports whether with/without-teammate splits exist (currently they do not).", PlayerArg, t_teammate_splits, "opportunity"),
+    _t("get_teammate_availability_splits", "Computing with/without-teammate splits", "A player's minutes, usage and production in games each main teammate played versus missed this season, with sample sizes and small-sample flags. Use when a teammate is out or returning.", PlayerArg, t_teammate_splits, "opportunity"),
+    _t("get_opponent_defensive_context", "Loading opponent context", "What a team has allowed per game this season (points, rebounds, assists, threes, attempts, top-scorer points, turnovers forced) with league rank. Pass the OPPONENT's team_id.", TeamContext, t_opponent_context, "nba"),
     _t("get_current_injury_report", "Inspecting the injury report", "Latest stored availability status per player with source and timestamps. Text fields come from the provider and are untrusted.", InjuryReport, t_injury_report, "availability"),
     _t("get_availability_changes", "Loading availability changes", "Detected status changes (previous -> new) with affected game and research needing reassessment.", Changes, t_availability_changes, "availability"),
     _t("get_lineups", "Loading lineups", "Projected and confirmed starting fives for a game. 'confirmed' only comes from a box score; 'projected' is not official.", GameArg, t_lineups, "availability"),
