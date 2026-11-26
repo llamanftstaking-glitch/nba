@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.6.1 — 2026-11-26 (releases without building on the server)
+* CI: the `images` check builds both images with Buildx and, on pushes to `main`, publishes them to the GitHub
+  Container Registry tagged with the full commit id (layer cache, source and revision labels). Pull requests build only.
+* `scripts/auto-update.sh` pulls the two images for the commit it deploys and starts without a build; if they cannot
+  be pulled it logs why and builds on the server as before. Rollback does the same for the previous commit. Old
+  release tags of this project are removed (current and previous kept). `status` shows whether pulls work and which
+  image the api container runs. The release gate is unchanged.
+* `scripts/update.sh` uses the same pull-or-build logic (new shared file `scripts/lib-images.sh`); `scripts/deploy.sh`
+  still builds. `docker-compose.yml` image names can be overridden (`GIZER_API_IMAGE`, `GIZER_WEB_IMAGE`); defaults unchanged.
+* `scripts/test-auto-update.sh`: rehearsal with a pretend docker (80 checks). Decision D-032.
+* NOT VERIFIED on Server M, with a real Docker engine or against the real registry. The first release that carries
+  this change is still built on the server (the updater running at that moment is the old one).
+
 ## 0.6.0 — 2026-11-26 (GIZER LIVE)
 * Live game data: a dedicated `live` service polls scoreboard, box score and play-by-play (about every 15 s during
   games) and stores observations with timestamps, corrections and freshness.

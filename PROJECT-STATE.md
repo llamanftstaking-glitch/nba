@@ -22,6 +22,7 @@ _Last updated: 2026-11-26, after GIZER LIVE (0.6.0)._
 | Models | team_game, player_reb, player_ast, player_fg3m, player_stl, player_tov in production; player_pts, player_blk, player_pra, player_pr, player_pa, player_ra are candidates (failed the gate) |
 | Docker Compose stack | TESTED on a local Docker engine (build, migrate 0001→0002 on existing data, smoke, restart recovery, backup + restore) |
 | Deployment to Server M | **DEPLOYED 2026-11-24** at https://nba.gizergroup.com (owner ran `scripts/deploy.sh` and `scripts/connect-caddy.sh`). VERIFIED from outside: HTTPS, health/readiness (database, worker, scheduler), unauthenticated API rejected, owner sign-in. NOT VERIFIED yet: full smoke script, backup + restore on the server, reboot recovery, history load completion |
+| Releases from registry images (0.6.1, D-032): CI publishes images to GHCR, updater pulls them with fallback to a local build, cleanup, `status` | IMPLEMENTED, TESTED with stubs (`scripts/test-auto-update.sh`, 80 checks; pretend docker, real git). NOT VERIFIED: the workflow has not run on GitHub, nothing was pushed to the registry, no real Docker engine, Server M |
 | The Odds API adapter | NOT VERIFIED against the live service |
 | High-confidence tier | Empty by design until ≥200 settled forward paper records exist |
 
@@ -33,6 +34,7 @@ starters for 1,444. No playoffs, no historical odds, no play-by-play. See DATA-S
 1. **Post-deployment checks** — after the history load finishes: `scripts/smoke.sh`, backup + restore test, one reboot test (DEPLOYMENT.md checklist).
 2. **Auto-update working**: release `3ed2441` was published to `production` on 2026-11-25 and the owner confirmed the server installed it without manual action (the build session verified only external readiness afterwards). Details: the server deploys the `production` branch after green checks. After the history load finishes, run `gizer backtest` on the server (the history script does this) so models are validated there; until then model-based picks are rejected.
 3. Prop quotes now come from Kalshi (free, public). A sportsbook prop odds key is optional.
+4. **Registry sign-in on Server M (optional, one time)** — only if `bash scripts/auto-update.sh status` shows `registry pulls : NOT working` after the first 0.6.1+ release: `docker login ghcr.io` as root with a `read:packages` token (DEPLOYMENT.md, "Updates"). Until then releases keep building on the server.
 3. **Data licensing review** before any use beyond private research (ESPN endpoint is unofficial).
 
 ## Known limitations (see MODEL-CARDS.md, docs/operations/P0-ISSUE-REGISTER.md)

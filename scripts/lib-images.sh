@@ -92,44 +92,44 @@ gi_obtain() {
     gi_verify "$ref" "$sha" || return 1
     GI_FETCHED=$((GI_FETCHED + 1))
   done
+  GI_REASON=""
   return 0
 }
 
 # The image names docker compose will start: line 1 = api family, line 2 = web. Honours .env and the
-# server's docker-compose.override.yml. Fails (GI_REASON) if they cannot be re-pointed safely.
+# server's docker-compose.override.yml. Prints nothing and fails if they cannot be read.
 gi_targets() {
-  local out prefix; prefix="$(gi_prefix)"
-  out="$(docker compose config --format json 2>/dev/null | python3 -c '
+  docker compose config --format json 2>/dev/null | python3 -c '
 import json, sys
 s = json.load(sys.stdin)["services"]
 api = {s[n]["image"] for n in ("migrate", "api", "worker", "research-worker", "scheduler", "live") if n in s}
 if len(api) != 1 or not s["web"]["image"]:
     raise SystemExit(1)
-print(api.pop()); print(s["web"]["image"])' 2>/dev/null)" \
-    || { GI_REASON="could not read the image names from docker compose"; return 1; }
-  case "$out" in
-    *"$prefix-api:"*|*"$prefix-web:"*)
-      GI_REASON="docker compose is pinned to a registry tag (GIZER_API_IMAGE / GIZER_WEB_IMAGE are set on this machine)"
-      return 1 ;;
-  esac
-  printf '%s\n' "$out"
+print(api.pop()); print(s["web"]["image"])' 2>/dev/null
 }
 
 # Start the stack on <sha>: registry images when possible, otherwise build here. Compose output goes to
 # $GI_OUT (default: the terminal). Returns the exit code of `docker compose up`.
 gi_up() {
-  local sha="$1" out="${GI_OUT:-/dev/stdout}" targets api_t web_t
-  GI_PATH=built
-  if gi_obtain "$sha" && targets="$(gi_targets)"; then
+  local sha="$1" out="${GI_OUT:-/dev/stdout}" targets api_t web_t prefix
+  GI_PATH=built; prefix="$(gi_prefix)"
+  if gi_obtain "$sha"; then
+    targets="$(gi_targets)" || targets=""
     api_t="$(printf '%s\n' "$targets" | sed -n 1p)"; web_t="$(printf '%s\n' "$targets" | sed -n 2p)"
-    if docker tag "$(gi_ref api "$sha")" "$api_t" && docker tag "$(gi_ref web "$sha")" "$web_t"; then
+    if [ -z "$api_t" ] || [ -z "$web_t" ]; then
+      GI_REASON="could not read the image names from docker compose"
+    elif [ "${api_t%:*}" = "$prefix-api" ] || [ "${web_t%:*}" = "$prefix-web" ]; then
+      # Someone pinned compose to a registry tag; giving that tag another commit's image would be a lie.
+      GI_REASON="docker compose is pinned to a registry tag on this machine (GIZER_API_IMAGE / GIZER_WEB_IMAGE are set)"
+    elif docker tag "$(gi_ref api "$sha")" "$api_t" && docker tag "$(gi_ref web "$sha")" "$web_t"; then
       GI_PATH=pulled
       if [ "$GI_FETCHED" -gt 0 ]; then log "pulled images for ${sha:0:7}; starting without a build"
       else log "registry images for ${sha:0:7} already on this machine; starting without a build"; fi
       docker compose up -d --no-build >> "$out" 2>&1
       return $?
+    else
+      GI_REASON="could not tag the pulled images"
     fi
-    GI_REASON="could not tag the pulled images"
   fi
   log "registry images unavailable (${GI_REASON:-unknown reason}); building on this machine"
   docker compose up -d --build >> "$out" 2>&1
@@ -138,7 +138,8 @@ gi_up() {
 # Remove old release tags of THIS project's two registry repositories only; keep the commits given.
 # Never touches other repositories, other projects, the compose image names, or untagged images.
 gi_cleanup() {
-  local part repo line tag k keep removed=0
+  local part repo line tag k keep removed=0 targets
+  targets="$(gi_targets)" || targets=""
   for part in api web; do
     repo="$(gi_prefix)-$part"
     while IFS= read -r line; do
@@ -147,6 +148,7 @@ gi_cleanup() {
       [ -n "$tag" ] && [ "$tag" != "<none>" ] || continue
       keep=no
       for k in "$@"; do [ "$tag" = "$k" ] && keep=yes; done
+      printf '%s\n' "$targets" | grep -qxF -- "$line" && keep=yes     # a name docker compose starts
       [ "$keep" = yes ] && continue
       docker image rm "$line" >/dev/null 2>&1 && removed=$((removed + 1))
     done < <(docker image ls --format '{{.Repository}}:{{.Tag}}' "$repo" 2>/dev/null || true)

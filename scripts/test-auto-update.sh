@@ -54,7 +54,7 @@ case "${1:-} ${2:-}" in
   "image ls") repo="${*: -1}"; awk -v p="$repo:" 'index($1,p)==1{print $1}' "$S/local" ;;
   "image rm") lookup "$3" >/dev/null || exit 1; unset_ref "$3" ;;
   "manifest inspect") grep -q "^$3 " "$S/registry" || { echo "denied" >&2; exit 1; } ;;
-  "inspect "*) echo "gizer-nba-api:local (sha256:stub)" ;;
+  "inspect "*) case "$3" in *Config.Image*) echo "gizer-nba-api:local (sha256:stub)" ;; *) sed -n 1p "$S/targets" ;; esac ;;
   "compose config")
     printf '{"services":{' ; for n in migrate api worker research-worker scheduler live; do printf '"%s":{"image":"%s"},' "$n" "$(sed -n 1p "$S/targets")"; done
     printf '"web":{"image":"%s"},"postgres":{"image":"postgres:16.6-alpine"}}}\n' "$(sed -n 2p "$S/targets")" ;;
@@ -70,7 +70,8 @@ case "${1:-} ${2:-}" in
         lookup "$web_t" >/dev/null || { echo "no such image: $web_t" >&2; exit 1; }
         set -- $line; echo "${2#reg-}" | sed 's/^built-//' > "$S/running" ;;
     esac ;;
-  "compose ps"|"compose exec") : ;;
+  "compose ps") case " $* " in *" -q "*) echo stubcontainer ;; esac ;;
+  "compose exec") : ;;
   *) echo "docker stub: unhandled: $*" >&2; exit 97 ;;
 esac
 STUB
@@ -88,7 +89,7 @@ for c in pkill systemctl systemd-run nohup; do printf '#!/usr/bin/env bash\nexit
 chmod +x "$T/bin/"*
 
 g() { git -c user.name=test -c user.email=test@example.invalid -c init.defaultBranch=main -c commit.gpgsign=false "$@"; }
-commit() { ( cd "$T/work" && echo "$1" > version.txt && g add -A && g commit -qm "$1" && g push -q origin HEAD:production && git rev-parse HEAD ); }
+commit() { ( cd "$T/work" && echo "$1" > version.txt && g add -A && g commit -qm "$1" && g -c push.negotiate=false push -q origin HEAD:production 2>/dev/null && git rev-parse HEAD ); }
 
 # A fresh origin, a "server" clone deployed at commit A, and release B waiting on origin/production.
 setup() {
@@ -217,7 +218,7 @@ check "checks failed: release remembered" [ "$(cat "$T/server/.auto-update/faile
 setup; publish "$B"; echo 'local edit' >> "$T/server/version.txt"; run auto-update.sh
 check "local changes on the server: refuses" logged "refusing to update over them"
 check "local changes on the server: no docker pull or up" no called "docker (pull|compose up|tag)"
-setup; publish "$B"; ( cd "$T/work" && g checkout -q --orphan other && g commit -qm unrelated && g push -qf origin HEAD:production ); run auto-update.sh
+setup; publish "$B"; ( cd "$T/work" && g checkout -q --orphan other && g commit -qm unrelated && g -c push.negotiate=false push -qf origin HEAD:production 2>/dev/null ); run auto-update.sh
 check "not a fast-forward: refuses" logged "is not a fast-forward"
 check "not a fast-forward: no docker pull or up" no called "docker (pull|compose up|tag)"
 
@@ -231,6 +232,8 @@ echo "12. compose pinned to a registry tag in .env -> updater does not re-point 
 setup; publish "$B"; printf '%s-api:pinned\n%s-web:pinned\n' "$PFX" "$PFX" > "$T/state/targets"; run auto-update.sh; show_log
 check "built instead of re-tagging" called "docker compose up -d --build"
 check "no docker tag" no called "docker tag"
+check "reason logged" logged "docker compose is pinned to a registry tag"
+check "the pinned names survive cleanup" has_img "$PFX-api:pinned"
 
 echo "13. slow registry -> bounded by the timeout, then build"
 setup; publish "$B"; echo slow > "$T/state/pull_mode"; EXTRA_ENV="GIZER_AU_PULL_TIMEOUT=1" run auto-update.sh; show_log
@@ -242,7 +245,8 @@ echo "14. status"
 setup; publish "$B"; run auto-update.sh; run auto-update.sh status; sed 's/^/      | /' "$T/state/out.txt"
 check "status reports working pulls" grep -q "registry pulls  : working" "$T/state/out.txt"
 check "status reports how the last deploy got its images" grep -q "last deploy used: pulled ${B:0:7}" "$T/state/out.txt"
-check "status shows the api container image" grep -q "api container" "$T/state/out.txt"
+check "status shows the api container image" grep -q "api container   : gizer-nba-api:local" "$T/state/out.txt"
+check "status shows the commit that image was built from" grep -q "built by GitHub Actions from commit ${B:0:7}" "$T/state/out.txt"
 : > "$T/state/registry"; run auto-update.sh status
 check "status reports pulls not working" grep -q "registry pulls  : NOT working" "$T/state/out.txt"
 

@@ -40,11 +40,57 @@ docker compose exec backup sh /scripts/backup-once.sh && docker compose exec bac
 Remove `GIZER_OWNER_PASSWORD` from `.env` after the first successful sign-in if you prefer; re-add it only to reset.
 
 ## Updates
+Releases are installed by the unattended updater (RUNBOOK.md, "Updates"). Since 0.6.1 the server no longer has
+to compile the application (D-032):
+
+1. Every push to `main` runs the `images` check on GitHub. It builds both images and pushes them to the GitHub
+   Container Registry as `ghcr.io/llamanftstaking-glitch/nba-api:<full commit id>` and `...nba-web:<full commit id>`.
+2. Promotion is unchanged: `git push origin <commit>:production` for a verified commit whose checks are green.
+3. The updater on the server waits for every check on that commit (which includes `images`), then pulls those
+   two images, checks they are labelled with that commit and built for the server's processor type, gives them
+   the names `docker-compose.yml` uses (`gizer-nba-api:local`, `gizer-nba-web:local`) and runs
+   `docker compose up -d --no-build`. Health check and rollback are as before; a rollback pulls the previous
+   commit's images when they exist.
+4. If the images cannot be pulled for any reason, the updater logs the reason and runs
+   `docker compose up -d --build` as it did before 0.6.1. Nothing needs the owner for releases to keep working.
+
+Status: IMPLEMENTED, TESTED with stubs (`bash scripts/test-auto-update.sh`). NOT VERIFIED on Server M, against a
+real Docker engine, or against the real registry.
+
+### One-time owner step: let the server read the images
+Only needed if `bash scripts/auto-update.sh status` reports `registry pulls : NOT working`. Images pushed by
+GitHub Actions can be private; a private image needs a sign-in on the server. Until then every release still
+installs, by building on the server.
+
+1. On github.com: Settings → Developer settings → Personal access tokens → **Tokens (classic)** → Generate new
+   token. Tick **only** `read:packages`. Set an expiry you will remember to renew. (The container registry is
+   expected to need a classic token; fine-grained tokens were not usable for packages when this was written —
+   NOT VERIFIED.) The token can read packages and nothing else: it cannot push code, images or settings.
+2. On Server M, as root (the updater runs as root, and the sign-in is stored per user):
 ```bash
-git pull && docker compose up -d --build     # migrations run automatically before services start
+sudo -i
+read -rsp "GitHub token (read:packages only): " GHCR_TOKEN; echo
+printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u <github-username-that-owns-the-token> --password-stdin
+unset GHCR_TOKEN
+chmod 600 /root/.docker/config.json
+cd /opt/gizer-nba && bash scripts/auto-update.sh status     # expect: registry pulls : working
 ```
-Rollback: `git checkout <previous tag> && docker compose up -d --build`. The baseline migration has no
-destructive downgrade; schema rollbacks are restore-from-backup operations.
+   The token is typed at a hidden prompt, so it is not in the shell history or the process list. Docker keeps it
+   in `/root/.docker/config.json` (encoded, not encrypted) — keep that file readable by root only. Never put the
+   token in `.env`, the repository or a chat.
+3. Nothing else: the next release is pulled. To stop using the token: `docker logout ghcr.io` (releases build on
+   the server again) and delete the token on github.com.
+
+Do not make the packages or the repository public to avoid this step without an owner decision.
+
+### Manual update and rollback
+```bash
+git pull && bash scripts/update.sh           # pulls the images for the checked-out commit, or builds if it cannot
+git pull && docker compose up -d --build     # always builds here; needs no registry access
+```
+Rollback: `git checkout <previous commit> && bash scripts/update.sh` (or `docker compose up -d --build`). The
+baseline migration has no destructive downgrade; schema rollbacks are restore-from-backup operations.
+`scripts/deploy.sh` (first deployment) always builds on the machine.
 
 ## Isolation guarantees
 Project name `gizer-nba` namespaces containers, networks and volumes. No host ports except
