@@ -138,7 +138,7 @@ export const jarvis = {
  */
 export async function streamMessage(
   conversationId: number | string,
-  body: { text: string; mode: "standard" | "deep"; context?: JarvisContextInput; images?: { media_type: string; data: string }[] },
+  body: { text: string; mode: "quick" | "standard" | "deep"; context?: JarvisContextInput; images?: { media_type: string; data: string }[] },
   onEvent: (e: JarvisStreamEvent) => void,
   signal: AbortSignal,
 ): Promise<"done" | "lost" | "aborted"> {

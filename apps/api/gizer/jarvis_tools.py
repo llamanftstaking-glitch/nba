@@ -19,7 +19,7 @@ from . import ai_budget
 from .db import (Combo, InjurySnapshot, JarvisBriefing, JarvisEvent, JarvisMemory, JarvisToolCall, ModelVersion, Player,
                  ResearchEvent, Selection, session_scope, utcnow)
 
-MAX_RESULT_CHARS = 14_000
+MAX_RESULT_CHARS = 9_000      # each tool result is re-sent on every later step of the turn: size is cost
 STATS = Literal["pts", "reb", "ast", "fg3m", "stl", "blk", "tov", "pra", "pr", "pa", "ra"]
 
 

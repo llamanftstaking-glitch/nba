@@ -95,6 +95,7 @@ MODES = {
     "standard": ("sonnet", "jarvis_model_sonnet", 6000, "medium"),
     "deep": ("opus", "jarvis_model_opus", 12000, "high"),
     "light": ("haiku", "jarvis_model_haiku", 1500, "low"),
+    "quick": ("haiku", "jarvis_model_haiku", 3000, "medium"),      # owner-selected economy mode: same tools, cheapest model
 }
 MAX_HISTORY_TOKENS = 110_000
 _client_factory = None        # tests install a fake; production builds the official SDK client
@@ -297,6 +298,8 @@ def route(text: str, mode: str) -> dict:
         return {"handler": "deterministic", "tool": DETERMINISTIC[cmd], "reason": "slash command answered from stored data without a model"}
     if mode == "deep":
         return {"handler": "model", "mode": "deep", "reason": "owner selected deep review (Opus allocation)"}
+    if mode == "quick":
+        return {"handler": "model", "mode": "quick", "reason": "owner selected quick answers (Haiku allocation)"}
     return {"handler": "model", "mode": "standard", "reason": "interactive conversation (Sonnet)"}
 
 

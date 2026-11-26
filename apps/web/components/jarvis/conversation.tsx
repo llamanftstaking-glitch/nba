@@ -10,6 +10,7 @@ import { DLink } from "@/lib/date";
 import { jarvis, messageImageUrl, type JarvisContext, type JarvisContextInput, type JarvisMessage, type JarvisServerState, type JarvisSource } from "@/lib/jarvis";
 import { JarvisMark } from "./mark";
 import { Markdown } from "./markdown";
+import { QUICK_KEY } from "./use-jarvis";
 import type { LiveTool, LiveTurn, OutgoingImage, TurnError } from "./use-jarvis";
 
 const modelLabel = (model: string | null) => (model === "deterministic" ? "Answered from stored data, no model" : model ? model : "Model not recorded");
@@ -181,6 +182,23 @@ export function JarvisConversationView({
     if (draft) setText(draft);
   }, [draft]);
   const [deep, setDeep] = useState(false);
+  // Remembered per browser: use the cheapest model for ordinary questions. Deep review overrides it for one message.
+  const [quick, setQuick] = useState(false);
+  useEffect(() => {
+    try {
+      setQuick(window.localStorage.getItem(QUICK_KEY) === "1");
+    } catch {
+      /* storage unavailable: stay on the standard model */
+    }
+  }, []);
+  const saveQuick = (on: boolean) => {
+    setQuick(on);
+    try {
+      window.localStorage.setItem(QUICK_KEY, on ? "1" : "0");
+    } catch {
+      /* not remembered */
+    }
+  };
   const [attachments, setAttachments] = useState<PreparedImage[]>([]);
   const [attachError, setAttachError] = useState<string | null>(null);
   const [preparing, setPreparing] = useState(false);
@@ -441,6 +459,10 @@ export function JarvisConversationView({
           <label className="flex min-h-[44px] cursor-pointer items-center gap-2 md:min-h-0">
             <input type="checkbox" checked={deep} disabled={streaming} onChange={(e) => setDeep(e.target.checked)} className="h-4 w-4 accent-[rgb(0,229,160)]" data-testid="jarvis-deep" />
             Deep review (Opus, costs more)
+          </label>
+          <label className="flex min-h-[44px] cursor-pointer items-center gap-2 md:min-h-0">
+            <input type="checkbox" checked={quick} disabled={streaming || deep} onChange={(e) => saveQuick(e.target.checked)} className="h-4 w-4 accent-[rgb(0,229,160)]" data-testid="jarvis-quick" />
+            Quick answers (Haiku, lowest cost)
           </label>
           <span className="ml-auto hidden text-faint sm:inline">Enter to send · Shift+Enter for a new line</span>
         </div>

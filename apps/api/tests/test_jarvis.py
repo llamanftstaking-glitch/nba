@@ -311,6 +311,11 @@ def test_deep_mode_uses_the_opus_allocation_and_tool_rounds_are_bounded(fake, ap
     assert ev[-1]["model"] == "claude-opus-5-5" and fake.requests[0]["output_config"] == {"effort": "high"}
     with gdb.session_scope() as s:
         assert s.scalar(select(gdb.AiUsage.bucket).order_by(gdb.AiUsage.id.desc())) == "opus"
+    fake.script = [resp([text_block("Quick.")])]
+    _, ev = ask(c, "Who plays tonight?", mode="quick")
+    assert ev[-1]["model"] == HAIKU and len(fake.requests[-1]["tools"]) == len(T.TOOLS)                # same tools, cheapest model
+    with gdb.session_scope() as s:
+        assert s.scalar(select(gdb.AiUsage.bucket).order_by(gdb.AiUsage.id.desc())) == "haiku"
     # a model that never stops asking for tools is cut off: bounded rounds, bounded spend, valid history
     fake.script = [resp([tool_use("get_ai_budget_status", {}, f"tu_{i}")], stop="tool_use") for i in range(12)]
     n0 = len(fake.requests)

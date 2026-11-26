@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.1 — 2026-11-26 (JARVIS cost)
+* "Quick answers" switch in the JARVIS composer (remembered per browser): ordinary questions go to the Haiku model
+  with the same tools; Deep review still overrides it for one message.
+* Tool results are bounded at 9,000 characters (was 14,000): each result is re-sent on every later step of a turn.
+* First real cost observation: one heavy analytical question cost USD 0.11 on Sonnet (owner report, 2026-11-26).
+
 ## 0.7.0 — 2026-11-26 (GIZER CORTEX)
 * Knowledge library: 20 departments of original basketball knowledge records with sources and verification status,
   loaded from versioned files; local keyword retrieval with a retrieval log.

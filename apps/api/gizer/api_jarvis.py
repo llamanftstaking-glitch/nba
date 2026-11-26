@@ -40,7 +40,7 @@ class ImageIn(BaseModel):
 class SendBody(BaseModel):
     text: str = Field("", max_length=8000)
     images: list[ImageIn] = Field(default_factory=list, max_length=3)
-    mode: Literal["standard", "deep"] = "standard"
+    mode: Literal["quick", "standard", "deep"] = "standard"
     context: ContextBody | None = None
 
 

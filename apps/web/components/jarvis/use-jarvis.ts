@@ -5,6 +5,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError } from "@/lib/api";
 import { jarvis, streamMessage, type JarvisContextInput, type JarvisServerState } from "@/lib/jarvis";
 
+/** The owner's saved preference for cheaper answers (per browser). Deep review overrides it for one message. */
+export const QUICK_KEY = "gizer-jarvis-quick";
+function quickPreferred(): boolean {
+  try {
+    return window.localStorage.getItem(QUICK_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
 export type LiveTool = { id: string; tool: string; label: string; status: "running" | "ok" | "error"; ms?: number; error?: string };
 /** The turn in flight. Everything in it comes from the stream; nothing is invented client-side. */
 export type LiveTurn = { userText: string; images: string[]; text: string; tools: LiveTool[]; model: string | null; cost: number | null };
@@ -62,7 +72,7 @@ export function useJarvisChat({ conversationId, onConversationId, context }: { c
         }
         const outcome = await streamMessage(
           id,
-          { text: trimmed, mode: deep ? "deep" : "standard", context, ...(images.length ? { images: images.map((i) => ({ media_type: i.media_type, data: i.data })) } : {}) },
+          { text: trimmed, mode: deep ? "deep" : quickPreferred() ? "quick" : "standard", context, ...(images.length ? { images: images.map((i) => ({ media_type: i.media_type, data: i.data })) } : {}) },
           (e) => {
             if (e.type === "tool_start") tools = [...tools, { id: String(e.id), tool: e.tool, label: e.label, status: "running" }];
             else if (e.type === "tool_end") tools = tools.map((t) => (t.id === String(e.id) ? { ...t, status: e.ok ? "ok" : "error", ms: e.ms, error: e.error } : t));
