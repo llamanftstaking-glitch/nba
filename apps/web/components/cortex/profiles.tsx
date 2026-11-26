@@ -64,11 +64,13 @@ function PlayerProfile({ d }: { d: PlayerDna }) {
               {[id.team, id.position, id.jersey ? `#${id.jersey}` : null].filter(Boolean).join(" · ") || "Team not recorded"}
               {id.last_game_date ? ` · last game ${fmtDate(id.last_game_date, { year: true })}` : ""}
             </p>
-            <ProfileMeta method={d.method} generated={d.generated_at} season={d.season} />
           </div>
-          <DLink href={`/players/${id.player_id}`} className={linkButton} data-testid="player-full-page">
+          <DLink href={`/players/${id.player_id}`} className={`${linkButton} max-sm:w-full max-sm:justify-center`} data-testid="player-full-page">
             Full player page
           </DLink>
+        </div>
+        <div className="mt-2">
+          <ProfileMeta method={d.method} generated={d.generated_at} season={d.season} />
         </div>
         {id.not_held.length > 0 && (
           <p className="mt-3 break-words text-xs text-muted" data-testid="identity-not-held">Not held for this player: {id.not_held.join(", ")}.</p>
@@ -302,11 +304,13 @@ function TeamHeader({ d, sub }: { d: TeamDna; sub?: ReactNode }) {
         <TeamMark team={d} size={56} />
         <div className="min-w-0 flex-1">
           <h2 className="break-words font-display text-2xl font-semibold uppercase tracking-wide text-ink">{d.name}</h2>
-          <ProfileMeta method={d.method} generated={d.generated_at} season={d.season} />
         </div>
-        <DLink href={`/teams/${d.team_id}`} className={linkButton}>
+        <DLink href={`/teams/${d.team_id}`} className={`${linkButton} max-sm:w-full max-sm:justify-center`}>
           Team page
         </DLink>
+      </div>
+      <div className="mt-2">
+        <ProfileMeta method={d.method} generated={d.generated_at} season={d.season} />
       </div>
       {sub}
     </section>

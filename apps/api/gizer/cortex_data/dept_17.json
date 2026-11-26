@@ -1,0 +1,1552 @@
+[
+ {
+  "slug": "usage-percentage",
+  "department": 17,
+  "kind": "statistic",
+  "title": "Usage percentage (USG%)",
+  "summary": "An estimate of the share of team plays a player used while he was on the floor.",
+  "body": "Usage percentage counts the plays a player ends - field goal attempts, free throw trips and turnovers - and divides by the plays his team ended during his minutes. The widely used box-score form scales the team's totals by the fraction of team minutes the player was on court, since the box score does not say what happened while he played. Free throw attempts are multiplied by 0.44 to approximate the number of possessions they consumed. The league's own statistics site defines the same idea with counted possessions: field goal attempts, possession-ending free throw attempts and turnovers over possessions played. The two versions agree closely for regular players and can differ in short minutes. An even share among five players is 20 percent. Usage describes how much of the offence a player finishes; it does not include passes, so creators who set up others are understated, and it says nothing about efficiency. In our data the figure is supplied by the provider and its exact method has not been verified.",
+  "formula": "100 * ((FGA + 0.44 * FTA + TOV) * (TmMP / 5)) / (MP * (TmFGA + 0.44 * TmFTA + TmTOV))",
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "The 0.44 coefficient is an approximation and other values are sometimes used.",
+   "Box-score and possession-counted versions differ, especially in small samples.",
+   "Excludes assists and passing; not a measure of ball dominance or quality."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "usage percentage (provider)",
+   "field goal attempts",
+   "free throw attempts",
+   "turnovers",
+   "minutes"
+  ],
+  "data_gaps": [
+   "no counted on-court team possessions for historical games",
+   "provider's usage formula not verified"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "Usg% formula and definition; opened 2026-11-26"
+   },
+   {
+    "key": "nba-stats-glossary",
+    "note": "USG% defined as (FGA + possession-ending FTA + TO) / POSS; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "usage-as-opportunity",
+   "true-shooting-percentage",
+   "turnover-percentage",
+   "efficiency-versus-volume",
+   "possessions-estimate"
+  ],
+  "evaluation_questions": [
+   "What is each player's usage if five teammates share plays equally?",
+   "A player has 18 FGA, 8 FTA and 3 TOV in 36 of his team's 240 minutes; the team has 88 FGA, 25 FTA and 14 TOV. Estimate his USG%."
+  ]
+ },
+ {
+  "slug": "true-shooting-percentage",
+  "department": 17,
+  "kind": "statistic",
+  "title": "True shooting percentage (TS%)",
+  "summary": "Points scored per two scoring attempts, where attempts include field goals and an allowance for free throws.",
+  "body": "True shooting percentage measures scoring efficiency across all three ways of scoring. The denominator, true shooting attempts, is field goal attempts plus 0.44 times free throw attempts; the coefficient is below one half because some free throws - and-ones, technicals, three-shot fouls - do not use up a separate possession. Points are divided by twice that number, so the result reads like a shooting percentage: a player who scored exactly two points per attempt would be at 100 percent. Unlike field goal percentage it gives full credit for the third point on a three and for points at the line, which makes it the fairest single comparison between, say, a three-point shooter, a mid-range scorer and a player who lives at the foul line. It should always be read with volume and role in mind, because efficiency is easier to sustain on few, selective attempts. All its inputs - points, field goal attempts and free throw attempts - are in our historical box scores.",
+  "formula": "PTS / (2 * (FGA + 0.44 * FTA))",
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "The 0.44 coefficient is a league-wide approximation; the true share varies by player and season.",
+   "Ignores turnovers and shot creation.",
+   "Unstable on small numbers of attempts."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "points",
+   "field goal attempts",
+   "free throw attempts"
+  ],
+  "data_gaps": [
+   "no shot locations or shot difficulty"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "TS% = PTS / (2 * TSA), TSA = FGA + 0.44 * FTA; opened 2026-11-26"
+   },
+   {
+    "key": "nba-stats-glossary",
+    "note": "TS% formula: Points / [2 * (FGA + 0.44 * FTA)]; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "effective-field-goal-percentage",
+   "reading-true-shooting",
+   "points-per-shot-attempt",
+   "usage-percentage",
+   "free-throw-rate"
+  ],
+  "evaluation_questions": [
+   "A player scores 24 points on 15 FGA and 6 FTA. What is his TS%?",
+   "Why is the free throw coefficient less than 0.5?"
+  ]
+ },
+ {
+  "slug": "effective-field-goal-percentage",
+  "department": 17,
+  "kind": "statistic",
+  "title": "Effective field goal percentage (eFG%)",
+  "summary": "Field goal percentage with each made three counted as one and a half makes.",
+  "body": "Effective field goal percentage corrects ordinary field goal percentage for the fact that a three-pointer is worth half as much again as a two. Half of the made threes are added to field goals made before dividing by attempts. A player who makes four of ten shots, all twos, has the same field goal percentage as one who makes four of ten with two threes, but the second scored ten points to the first's eight, and eFG% reflects that. The statistic isolates shooting from the floor: it excludes free throws, so it is the appropriate measure of shot-making and selection and an incomplete measure of scoring efficiency. For teams it is the shooting element of the commonly used four-factor description of offence. It needs field goals made, three-pointers made and field goal attempts. Our historical box scores hold threes made and field goal attempts but not field goals made, so an exact figure is available to us for live games, where full shooting lines are recorded.",
+  "formula": "(FGM + 0.5 * 3PM) / FGA",
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Excludes free throws entirely.",
+   "Volatile for low-volume and three-point-heavy shooters.",
+   "Not exactly computable from our historical box scores, which lack field goals made."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "three-pointers made",
+   "field goal attempts",
+   "makes/attempts for FG, 3PT and FT (live games only)"
+  ],
+  "data_gaps": [
+   "no field goals made in historical box scores",
+   "no shot locations"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "eFG% = (FG + 0.5 * 3P) / FGA; opened 2026-11-26"
+   },
+   {
+    "key": "nba-stats-glossary",
+    "note": "eFG% formula (FGM + 0.5 * 3PM) / FGA; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "true-shooting-percentage",
+   "reading-effective-field-goal",
+   "scoring-values",
+   "shot-frequency"
+  ],
+  "evaluation_questions": [
+   "A player makes 7 of 15 field goals including 3 threes. What is his eFG%?",
+   "Why can two players with the same FG% have different eFG%?"
+  ]
+ },
+ {
+  "slug": "assist-percentage",
+  "department": 17,
+  "kind": "statistic",
+  "title": "Assist percentage (AST%)",
+  "summary": "An estimate of the percentage of teammate field goals a player assisted while on the floor.",
+  "body": "Assist percentage relates a player's assists to the baskets his teammates made during his minutes. The box-score form estimates those baskets by taking the share of team field goals proportional to his share of team minutes, then removing his own makes, since he cannot assist himself. The league's site states the same idea with on-court counts: assists divided by team field goals made minus the player's own, measured while he played. The result says how much of the team's scoring by others passed through him, and it is the standard way to compare playmaking load across different minutes and tempos. Because it is built on made shots it inherits the limits of the assist: dependence on teammates' accuracy and on scorer judgement, and silence about passes that did not end in a basket. The minutes-based estimate can also misstate things for players who are on the floor for unusually high-scoring or low-scoring lineups. Our historical data do not store team field goals made per game.",
+  "formula": "100 * AST / (((MP / (TmMP / 5)) * TmFG) - FG)",
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Minutes-share estimate of teammate field goals is approximate.",
+   "Inherits all the limits of the assist statistic.",
+   "Not generally computable from our historical data."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "assists",
+   "minutes"
+  ],
+  "data_gaps": [
+   "no team field goals made in historical box scores",
+   "no potential assists"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "AST% formula and definition; opened 2026-11-26"
+   },
+   {
+    "key": "nba-stats-glossary",
+    "note": "AST% = AST / (TmFGM - FGM), on-court; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "reading-assist-percentage",
+   "assist",
+   "assist-ratio",
+   "usage-percentage"
+  ],
+  "evaluation_questions": [
+   "Why are the player's own field goals subtracted in the denominator?",
+   "How does the league site's definition differ from the box-score estimate?"
+  ]
+ },
+ {
+  "slug": "total-rebound-percentage",
+  "department": 17,
+  "kind": "statistic",
+  "title": "Total rebound percentage (REB% / TRB%)",
+  "summary": "An estimate of the percentage of available rebounds a player grabbed while on the floor.",
+  "body": "Total rebound percentage divides a player's rebounds by the rebounds available during his minutes at both ends. In box-score form the available pool is the sum of his team's and the opponent's total rebounds, scaled by the fraction of team minutes he played. Since ten players compete for each ball, an even share is 10 percent. The statistic removes the influence of pace, shooting accuracy and minutes from a rebound count, so it compares rebounders more fairly than per-game totals. It blends the offensive and defensive glass, however, and those are different tasks with very different success rates, so the separate percentages are more informative when available. It is also shaped by teammates: playing beside another strong rebounder lowers a player's share. The league's site defines the measure as the share of available rebounds obtained while on the floor without printing a formula; the formula here is the reference-site estimate. Computing it needs team and opponent rebound totals alongside the player's line.",
+  "formula": "100 * (TRB * (TmMP / 5)) / (MP * (TmTRB + OppTRB))",
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Blends two different skills.",
+   "Minutes-share scaling is an estimate of on-court opportunities.",
+   "Depends on which teammates share the floor."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "rebounds",
+   "minutes",
+   "offensive/defensive rebounds (live games only)"
+  ],
+  "data_gaps": [
+   "no rebound chances",
+   "opponent rebound totals not joined per player-game in historical data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "TRB% formula and definition; opened 2026-11-26"
+   },
+   {
+    "key": "nba-stats-glossary",
+    "note": "REB% definition (no formula on the page); opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "offensive-rebound-percentage",
+   "defensive-rebound-percentage",
+   "reading-rebound-percentages",
+   "rebounds-follow-missed-shots"
+  ],
+  "evaluation_questions": [
+   "What is an even share of rebounds for one of ten players on the floor?",
+   "Why is REB% preferred to rebounds per game for comparing players on different teams?"
+  ]
+ },
+ {
+  "slug": "offensive-rebound-percentage",
+  "department": 17,
+  "kind": "statistic",
+  "title": "Offensive rebound percentage (OREB%)",
+  "summary": "An estimate of the percentage of available offensive rebounds a player or team obtained.",
+  "body": "Offensive rebound percentage asks: of his own team's missed shots that could be rebounded while he played, what share did he get? The available pool is his team's offensive rebounds plus the opponent's defensive rebounds - every rebound at that end of the floor. For a team the same ratio without the minutes scaling gives the share of its own misses it recovered, one of the main components of offensive efficiency. Offensive rebounds are much harder to get than defensive ones, so percentages are low, and values that look small can mark an elite offensive rebounder. The figure reflects effort and skill and also assignment, since many coaches send only certain players to the glass. For individuals it is noisy over short spans because the events are scarce. The league's site describes the measure without a printed formula; the formula here follows the reference glossary. We hold the offensive/defensive split only for live games since 25 November 2026, so the statistic is not available for our historical record.",
+  "formula": "100 * (ORB * (TmMP / 5)) / (MP * (TmORB + OppDRB))",
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Scarce events make short-window values unstable.",
+   "Reflects coaching policy on crashing the glass as well as ability.",
+   "Not computable from our historical box scores."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "offensive/defensive rebounds (live games only)",
+   "minutes"
+  ],
+  "data_gaps": [
+   "no offensive/defensive rebound split in historical box scores",
+   "no rebound chances"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "ORB% formula and definition; opened 2026-11-26"
+   },
+   {
+    "key": "nba-stats-glossary",
+    "note": "OREB% definition (no formula on the page); opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "defensive-rebound-percentage",
+   "total-rebound-percentage",
+   "offensive-rebounding-value",
+   "crash-versus-get-back",
+   "shot-clock-14-reset"
+  ],
+  "evaluation_questions": [
+   "Which rebounds make up the pool for OREB%?",
+   "Why can a low-looking OREB% still be excellent?"
+  ]
+ },
+ {
+  "slug": "defensive-rebound-percentage",
+  "department": 17,
+  "kind": "statistic",
+  "title": "Defensive rebound percentage (DREB%)",
+  "summary": "An estimate of the percentage of available defensive rebounds a player or team obtained.",
+  "body": "Defensive rebound percentage is the mirror of the offensive version. The pool is the opponent's missed shots that were rebounded while the player was on the floor: his team's defensive rebounds plus the opponent's offensive rebounds. For a team, the ratio shows how reliably it ends possessions after forcing a miss. For an individual, it shows what share of those rebounds he personally collected, which is not the same as his contribution to securing them. Many defensive rebounds are uncontested, and teams often arrange for a particular player to take them, so a high individual figure may reflect a role. A centre who blocks out so that others can rebound will have a modest percentage and a team that rebounds well with him. Individual defensive rebounding is steadier than offensive rebounding because the events are more frequent. The formula below is the reference glossary's; the league's site gives the definition only. Our historical data lack the split, so we can compute it only for recent live games.",
+  "formula": "100 * (DRB * (TmMP / 5)) / (MP * (TmDRB + OppORB))",
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Individual share is not the same as contribution to team defensive rebounding.",
+   "Inflated for players assigned to collect uncontested rebounds.",
+   "Not computable from our historical box scores."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "offensive/defensive rebounds (live games only)",
+   "minutes"
+  ],
+  "data_gaps": [
+   "no offensive/defensive rebound split in historical box scores",
+   "no box-out data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "DRB% formula and definition; opened 2026-11-26"
+   },
+   {
+    "key": "nba-stats-glossary",
+    "note": "DREB% definition (no formula on the page); opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "offensive-rebound-percentage",
+   "total-rebound-percentage",
+   "defensive-rebounding-and-boxing-out",
+   "contested-vs-uncontested-rebounds"
+  ],
+  "evaluation_questions": [
+   "Why can a centre with a modest DREB% still be valuable to team rebounding?",
+   "Which rebounds make up the pool for DREB%?"
+  ]
+ },
+ {
+  "slug": "turnover-percentage",
+  "department": 17,
+  "kind": "statistic",
+  "title": "Turnover percentage (TOV%)",
+  "summary": "An estimate of turnovers per 100 plays used.",
+  "body": "Turnover percentage divides a player's turnovers by his plays, where plays are field goal attempts, 0.44 times free throw attempts, and turnovers. The result is the proportion of the plays he finished that ended with the ball given away. It is a rate, so it allows a fair comparison between a star who handles the ball constantly and a reserve who seldom does. A related figure on the league's site, turnover ratio, is defined as turnovers per 100 possessions, a different denominator that yields different values; the two should not be mixed. The reference-site form has a known quirk: because passes that lead to assists are not plays, a pass-first player's denominator is small and his percentage looks high. For teams, turnovers per possession is one of the principal determinants of offensive efficiency. All the inputs for the individual formula are present in our historical box scores, so it can be computed for any window, with the usual caution about small numbers of plays.",
+  "formula": "100 * TOV / (FGA + 0.44 * FTA + TOV)",
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Two different definitions circulate under similar names.",
+   "Biased against pass-first players.",
+   "The 0.44 coefficient is approximate."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "turnovers",
+   "field goal attempts",
+   "free throw attempts"
+  ],
+  "data_gaps": [
+   "no live-ball/dead-ball turnover split"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "TOV% formula and definition; opened 2026-11-26"
+   },
+   {
+    "key": "nba-stats-glossary",
+    "note": "TO Ratio = (TO * 100) / POSS; TOV% defined without formula; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "reading-turnover-percentage",
+   "turnover",
+   "usage-percentage",
+   "assist-to-turnover-ratio"
+  ],
+  "evaluation_questions": [
+   "A player has 12 FGA, 5 FTA and 3 TOV. What is his TOV%?",
+   "How does the league site's turnover ratio differ from this formula?"
+  ]
+ },
+ {
+  "slug": "steal-percentage",
+  "department": 17,
+  "kind": "statistic",
+  "title": "Steal percentage (STL%)",
+  "summary": "On the reference-site definition, an estimate of the percentage of opponent possessions that end with a steal by the player while he is on the floor.",
+  "body": "Steal percentage, as defined by the main public reference site, relates a player's steals to the opponent possessions he defended. His steals are scaled up by the ratio of team minutes to his minutes and divided by the opponent's possessions, giving the share of those possessions he ended with a steal. This puts steals on a per-opportunity basis, removing minutes and tempo. Readers should know that the name is used differently elsewhere. The league's statistics site defines STL% as the percentage of his team's steals that a player has while on the court - a share of team steals, not of opponent possessions. The two produce numbers on entirely different scales, and a figure must always be read with its source. Under either definition steals remain a narrow indicator of defence: they are rare, they reward gambling, and they are noisy over short spans. Computing the reference-site version needs an estimate of opponent possessions, which adds its own error.",
+  "formula": "100 * (STL * (TmMP / 5)) / (MP * OppPoss)",
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Two incompatible definitions share the same name.",
+   "Depends on an estimate of opponent possessions.",
+   "Steals capture only one part of defence and are noisy."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "steals",
+   "minutes"
+  ],
+  "data_gaps": [
+   "no deflections",
+   "no counted opponent possessions for historical games"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "STL% formula and definition; opened 2026-11-26"
+   },
+   {
+    "key": "nba-stats-glossary",
+    "note": "STL% defined as the share of the team's steals a player has while on court; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "steal",
+   "block-percentage",
+   "possessions-estimate",
+   "perimeter-containment"
+  ],
+  "evaluation_questions": [
+   "What does the league site's STL% measure, as opposed to the reference-site version?",
+   "Why must a STL% figure always be read with its source?"
+  ]
+ },
+ {
+  "slug": "block-percentage",
+  "department": 17,
+  "kind": "statistic",
+  "title": "Block percentage (BLK%)",
+  "summary": "On the reference-site definition, an estimate of the percentage of opponent two-point attempts a player blocked while on the floor.",
+  "body": "Block percentage on the main reference site divides a player's blocks, scaled for his minutes, by the opponent's two-point field goal attempts - opponent attempts minus opponent three-point attempts. Three-pointers are excluded from the denominator because they are very rarely blocked, so the statistic measures how often he blocks the kind of shot that can realistically be blocked. As with steals, the league's own site uses a different construction under a similar label: the percentage of a team's blocks that a player has while on the court. The two are not comparable. Block percentage adjusts for minutes and for how many shots opponents take inside the arc, which makes it better than blocks per game for comparing shot blockers across teams and eras with different shot mixes. It still counts only shots touched. Deterrence and altered shots do not register, and a player can raise his figure by chasing blocks at the expense of position and rebounding.",
+  "formula": "100 * (BLK * (TmMP / 5)) / (MP * (OppFGA - Opp3PA))",
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Two incompatible definitions exist.",
+   "Counts only touched shots; deterrence is invisible.",
+   "Needs opponent attempt splits that our historical data do not hold."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "blocks",
+   "minutes"
+  ],
+  "data_gaps": [
+   "no opponent two-point attempt totals in historical data",
+   "no defended-shot data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "BLK% formula and definition; opened 2026-11-26"
+   },
+   {
+    "key": "nba-stats-glossary",
+    "note": "%BLK defined as the share of the team's blocks a player has while on court; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "block",
+   "rim-protection",
+   "steal-percentage",
+   "rim-protector"
+  ],
+  "evaluation_questions": [
+   "Why are opponent three-point attempts removed from the denominator?",
+   "How does the league site's version of the statistic differ?"
+  ]
+ },
+ {
+  "slug": "offensive-rating",
+  "department": 17,
+  "kind": "statistic",
+  "title": "Offensive rating (ORtg / OffRtg)",
+  "summary": "Points scored per 100 possessions.",
+  "body": "Offensive rating expresses scoring per hundred possessions, removing tempo so that a fast team and a slow team can be compared on what they do with each trip. For a team or lineup it is simply points divided by possessions, times one hundred, and it is the standard measure of offensive quality. The league's site applies the same calculation to the time a player is on the floor, which describes his lineups, not his personal production. A different statistic carries the same name on the main reference site: the individual offensive rating devised by Dean Oliver, which estimates the points a player himself produces per hundred possessions he uses, through a lengthy calculation crediting scoring, assists and offensive rebounds. That version is defined in a separate method article and is not reproduced here. The two individual figures answer different questions, so the source must be stated. Team ratings depend on how possessions are counted or estimated, and small differences between sites are normal.",
+  "formula": "100 * PTS / POSS",
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "The name covers both an on-court team measure and an individual production estimate.",
+   "Values depend on the possession count or estimate used.",
+   "Single-game and short-stint values are very noisy."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "points",
+   "score progression (live games only)",
+   "play-by-play events with substitutions (live games only)"
+  ],
+  "data_gaps": [
+   "no counted possessions for historical games"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "nba-stats-glossary",
+    "note": "OffRtg = 100 * (Points / POSS); opened 2026-11-26"
+   },
+   {
+    "key": "basketball-reference-ratings",
+    "note": "individual offensive rating: points produced per 100 possessions used, devised by Dean Oliver; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "defensive-rating",
+   "net-rating",
+   "possessions-estimate",
+   "pace",
+   "net-rating-by-lineup"
+  ],
+  "evaluation_questions": [
+   "A team scores 112 points on 98 possessions. What is its offensive rating?",
+   "What is the difference between the league site's player OffRtg and the Oliver individual rating?"
+  ]
+ },
+ {
+  "slug": "defensive-rating",
+  "department": 17,
+  "kind": "statistic",
+  "title": "Defensive rating (DRtg / DefRtg)",
+  "summary": "Points allowed per 100 possessions.",
+  "body": "Defensive rating is points allowed per hundred opponent possessions. For teams it is the basic measure of defence, comparable across tempos, and lower is better. On the league's site a player's defensive rating is his team's rating during his minutes, which reflects the four teammates and the opponents he shared the floor with at least as much as his own play. The main reference site publishes a different individual statistic under the same name, based on Dean Oliver's idea of stops: it starts from the team's defensive rating and adjusts it by the player's steals, blocks and defensive rebounds, with estimates for what the box score does not record. The method article itself notes that this leans heavily on team defence and can underrate strong perimeter defenders who collect few box-score events. Neither version isolates individual defence well. On this platform, opponent-allowed context is given as per-game totals, which is not a defensive rating and should not be described as one.",
+  "formula": "100 * OppPTS / OppPOSS",
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Individual versions mostly reflect team defence.",
+   "Two different statistics share the name.",
+   "Our opponent context is per game, not per possession."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "opponent allowed-per-game context",
+   "score progression (live games only)"
+  ],
+  "data_gaps": [
+   "no counted opponent possessions for historical games",
+   "no defensive matchups"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "nba-stats-glossary",
+    "note": "DefRtg = 100 * (Opp Points / Opp POSS); opened 2026-11-26"
+   },
+   {
+    "key": "basketball-reference-ratings",
+    "note": "individual defensive rating built on stops and team defensive rating, with stated weaknesses; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "offensive-rating",
+   "net-rating",
+   "opponent-defensive-strength",
+   "defensive-identity",
+   "possessions-estimate"
+  ],
+  "evaluation_questions": [
+   "Why does a player's on-court defensive rating say little about his individual defence?",
+   "Is our opponent allowed-per-game context a defensive rating?"
+  ]
+ },
+ {
+  "slug": "net-rating",
+  "department": 17,
+  "kind": "statistic",
+  "title": "Net rating (NetRtg)",
+  "summary": "Offensive rating minus defensive rating: point differential per 100 possessions.",
+  "body": "Net rating is the difference between what a team scores and what it allows per hundred possessions. It condenses overall quality into one number that is independent of tempo, and over a season it tracks a team's strength more faithfully than its win-loss record, because margins carry more information than results decided by a possession or two. It is applied to teams, to lineups, and to the minutes a given player is on the floor. The reliability of the figure depends entirely on the number of possessions behind it. A team's season net rating is solid; a figure for ten games is suggestive; a figure for one lineup over a few dozen possessions is close to meaningless. Net rating is also unadjusted for opposition, and it can be distorted by garbage time, when reserves extend or shrink a margin already decided. Some public sites filter those minutes out, using their own conventions, which is one reason the same team can show slightly different values in different places.",
+  "formula": "OffRtg - DefRtg",
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Unadjusted for opponent strength.",
+   "Sensitive to garbage-time treatment and to the possession method.",
+   "Unreliable over small numbers of possessions."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "score progression (live games only)",
+   "play-by-play events with substitutions (live games only)"
+  ],
+  "data_gaps": [
+   "no counted possessions for historical games",
+   "no lineup data before 2026-11-25"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "nba-stats-glossary",
+    "note": "NetRtg = OFFRTG - DEFRTG; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "offensive-rating",
+   "defensive-rating",
+   "net-rating-by-lineup",
+   "on-off-differential",
+   "garbage-time"
+  ],
+  "evaluation_questions": [
+   "A team has an offensive rating of 114.0 and a defensive rating of 110.5. What is its net rating?",
+   "Why can two sites show different net ratings for the same team?"
+  ]
+ },
+ {
+  "slug": "pace",
+  "department": 17,
+  "kind": "statistic",
+  "title": "Pace",
+  "summary": "Possessions per 48 minutes.",
+  "body": "Pace is the number of possessions a team plays per 48 minutes, the length of a regulation NBA game. It converts a possession count into a standard rate so that overtime games and partial samples can be compared. The reference-site formula averages the team's and the opponent's possession estimates and scales them by the minutes played. The league's site defines pace the same way in words, as possessions per 48 minutes for a team or player, using its own counted possessions. Pace is a description of tempo and carries no judgement of quality. It matters to analysis because it sets the number of opportunities in a game: at a higher pace there are more shots, rebounds and potential assists for everyone. A team's pace over a season is fairly stable, while single games vary with the opponent and the score. Competitions with shorter games use a different scaling constant, so pace figures are comparable only within a rule set.",
+  "formula": "48 * ((TmPoss + OppPoss) / (2 * (TmMP / 5)))",
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Depends on the possession estimate or count used.",
+   "A single game's pace is a joint product of both teams and of game state.",
+   "Not comparable across competitions with different game lengths."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "opponent allowed-per-game context",
+   "team totals including points in the paint and fast-break points (live games only)"
+  ],
+  "data_gaps": [
+   "no counted possessions for historical games"
+  ],
+  "ruleset": "NBA",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "Pace formula and definition; opened 2026-11-26"
+   },
+   {
+    "key": "nba-stats-glossary",
+    "note": "PACE: possessions per 48 minutes; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "possessions-estimate",
+   "pace-identity",
+   "pace-interaction",
+   "possession",
+   "per-100-possessions"
+  ],
+  "evaluation_questions": [
+   "A team and its opponent average 101 possessions in a game that lasted 53 minutes (one overtime). What is the pace?",
+   "Why does pace carry no judgement of quality?"
+  ]
+ },
+ {
+  "slug": "possessions-estimate",
+  "department": 17,
+  "kind": "statistic",
+  "title": "Possessions estimate",
+  "summary": "A box-score formula for the number of possessions a team played.",
+  "body": "Possessions are not in a traditional box score, so they are estimated from events that end them. The basic logic: a possession ends with a field goal attempt that is not rebounded by the offence, with a turnover, or with certain free throw trips. The simple form adds field goal attempts, a fraction of free throw attempts and turnovers, and subtracts offensive rebounds. The reference-site version refines this. It multiplies free throw attempts by 0.4, and instead of subtracting offensive rebounds directly it subtracts 1.07 times the team's offensive rebounding share of its own missed field goals; it then computes the same quantity for the opponent and averages the two, since both teams should have nearly equal possessions. Other sources use 0.44 or other coefficients for free throws, and sites with play-by-play simply count possessions. Estimates and counts differ by a small percentage over a season and by more in single games. Any per-possession statistic inherits that uncertainty, and the method should be named.",
+  "formula": "0.5 * ((TmFGA + 0.4 * TmFTA - 1.07 * (TmORB / (TmORB + OppDRB)) * (TmFGA - TmFG) + TmTOV) + (OppFGA + 0.4 * OppFTA - 1.07 * (OppORB / (OppORB + TmDRB)) * (OppFGA - OppFG) + OppTOV))",
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Free throw coefficient varies by source (0.4, 0.44 and others).",
+   "Estimates differ from play-by-play counts, more so in single games.",
+   "The reference formula needs offensive and defensive rebounds for both teams, which our historical data lack."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "field goal attempts",
+   "free throw attempts",
+   "turnovers",
+   "offensive/defensive rebounds (live games only)",
+   "play-by-play events with substitutions (live games only)"
+  ],
+  "data_gaps": [
+   "no offensive/defensive rebound split in historical box scores",
+   "no counted possessions before live play-by-play"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "Poss formula with 0.4 and 1.07 coefficients, team and opponent averaged; opened 2026-11-26"
+   },
+   {
+    "key": "pbpstats",
+    "note": "play-by-play possession counting as an alternative; README read 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "possession",
+   "pace",
+   "offensive-rating",
+   "shot-clock-14-reset",
+   "stat-availability-by-era"
+  ],
+  "evaluation_questions": [
+   "Why are the team's and opponent's estimates averaged?",
+   "Name two free throw coefficients in common use for possession estimates."
+  ]
+ },
+ {
+  "slug": "player-efficiency-rating",
+  "department": 17,
+  "kind": "statistic",
+  "title": "Player efficiency rating (PER)",
+  "summary": "A per-minute, pace-adjusted summary of box-score production, scaled so the league average is 15.",
+  "body": "PER was created by John Hollinger to condense a player's box-score record into one number. It adds up positive contributions - made shots, free throws, assists, rebounds, steals, blocks - subtracts negatives such as missed shots, turnovers and fouls, weights each by an estimate of its value, expresses the total per minute, adjusts for team pace and normalises so that the league average is 15 in every season. The full formula is long and uses league-wide constants; it is defined in the reference site's method article and is not reproduced here. PER is convenient for a quick comparison of offensive production across minutes and eras. Its weaknesses are well known. It rewards volume shooting more than efficiency strictly warrants, it captures defence only through steals, blocks and rebounds, and being per-minute it can flatter reserves who play short stints against other reserves. It is a descriptive summary of the box score, not a measure of total value, and this platform does not compute it.",
+  "formula": "Not reproduced: multi-step formula defined in the Basketball-Reference article 'Calculating PER' (see source); per-minute, pace-adjusted, normalised to a league average of 15",
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Defence is represented only by box-score events.",
+   "Tends to favour high-volume scorers and short-minute reserves.",
+   "Not computed on this platform; cited for literacy only."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [],
+  "data_gaps": [
+   "league-wide constants needed for PER are not held",
+   "no historical league datasets"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-per",
+    "note": "what PER is, its creator, per-minute and pace-adjusted, league average set to 15; opened 2026-11-26"
+   },
+   {
+    "key": "basketball-reference-glossary",
+    "note": "PER glossary entry points to the method article; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "game-score",
+   "player-impact-estimate",
+   "per-minute-rates",
+   "cross-era-comparison"
+  ],
+  "evaluation_questions": [
+   "To what value is the league-average PER set each season?",
+   "Give two known weaknesses of PER."
+  ]
+ },
+ {
+  "slug": "player-impact-estimate",
+  "department": 17,
+  "kind": "statistic",
+  "title": "Player impact estimate (PIE)",
+  "summary": "The league site's measure of a player's share of the total box-score statistics in the games he plays.",
+  "body": "PIE is published on the league's statistics site. It adds a player's positive box-score events and subtracts negative ones using fixed weights, then divides by the same sum computed for everyone in the game, both teams combined. The numerator credits points, made field goals and free throws, defensive rebounds, half of offensive rebounds, assists, steals and half of blocks, and subtracts field goal and free throw attempts, personal fouls and turnovers. The result is a percentage: the player's part of everything that happened. With ten players on the floor an average contributor sits near ten percent, and it can be applied to teams, where a figure above fifty percent means the team out-produced its opponent on these events. PIE is easy to compute and to explain, and it shares the limits of all box-score composites: no credit for defence beyond counted events, arbitrary weights, and dependence on minutes and role. It needs makes and fouls, which our historical box scores lack.",
+  "formula": "(PTS + FGM + FTM - FGA - FTA + DREB + 0.5 * OREB + AST + STL + 0.5 * BLK - PF - TO) / (GmPTS + GmFGM + GmFTM - GmFGA - GmFTA + GmDREB + 0.5 * GmOREB + GmAST + GmSTL + 0.5 * GmBLK - GmPF - GmTO)",
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Weights are fixed by convention, not derived from value.",
+   "Blind to defence outside counted events.",
+   "Not computable from our historical data (no makes, fouls or rebound split)."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "makes/attempts for FG, 3PT and FT (live games only)",
+   "offensive/defensive rebounds (live games only)",
+   "personal fouls (live games only)"
+  ],
+  "data_gaps": [
+   "no field goal or free throw makes, personal fouls or rebound split in historical box scores"
+  ],
+  "ruleset": "NBA",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "nba-stats-glossary",
+    "note": "PIE numerator and denominator; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "player-efficiency-rating",
+   "game-score",
+   "plus-minus"
+  ],
+  "evaluation_questions": [
+   "What is in the denominator of PIE?",
+   "What does a team PIE above 50 percent indicate?"
+  ]
+ },
+ {
+  "slug": "on-off-differential",
+  "department": 17,
+  "kind": "statistic",
+  "title": "On-off differential",
+  "summary": "A team's net rating with a player on the floor minus its net rating with him off.",
+  "body": "The on-off differential compares two net ratings: the team's point differential per hundred possessions during a player's minutes, and the same figure during the minutes he sat. A positive value means the team did better with him than without him. It is attractive because it reflects everything a player does, measured or not. It is also among the most easily misread statistics. The off minutes are played by his substitute and usually by more reserves, against different opponents, so the differential measures the gap between two lineup contexts. A good player backed by a good reserve can show a small differential; an ordinary starter with a poor backup can show a large one. The statistic is noisy, needing a season or more to become stable, and sophisticated versions use regression across all lineups to adjust for teammates and opponents. No such adjusted model exists on this platform, and on-court data begin only on 25 November 2026, so the differential is not yet a usable measure here.",
+  "formula": "NetRtg(player on court) - NetRtg(player off court)",
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Confounded by substitute quality, teammates and opponents.",
+   "Requires very large samples.",
+   "Not checked against a source; standard definition as generally used."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "plus/minus (live games only)",
+   "derived on-court stints and minutes by quarter (live games only)"
+  ],
+  "data_gaps": [
+   "no lineup data before 2026-11-25",
+   "no adjusted plus-minus model"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "pointer; not used to check this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "on-off-reading",
+   "plus-minus",
+   "net-rating",
+   "plus-minus-noise",
+   "lineup-data-and-sample-size"
+  ],
+  "evaluation_questions": [
+   "Why can an ordinary starter have a large positive on-off differential?",
+   "What do adjusted versions of the statistic try to account for?"
+  ]
+ },
+ {
+  "slug": "plus-minus",
+  "department": 17,
+  "kind": "statistic",
+  "title": "Plus/minus (+/-)",
+  "summary": "The team's point differential while a player is on the floor.",
+  "body": "Plus/minus is the simplest on-court statistic. For each stretch a player is in the game, take the points his team scored and subtract the points the opponent scored; the sum over his stints is his plus/minus. A value of plus eight means his team outscored the opponent by eight while he played. Both the league's site and the main reference site define it this way. It requires knowing exactly who was on the floor for every score, so it is derived from play-by-play. The statistic records a fact about the game, and its interpretation is the difficulty. The five players on the floor share every point, the opponents vary, and over one game a few made shots swing the total. It is useful for seeing which periods of a game went well, and as raw material for lineup and on-off analysis over long samples. Per-game plus/minus is not a rating of the player. In our data it is present for live games only.",
+  "formula": "TeamPTS(on court) - OppPTS(on court)",
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Shared by five players; assigns no individual credit.",
+   "Very noisy in single games.",
+   "Depends on correct substitution records."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "plus/minus (live games only)",
+   "derived on-court stints and minutes by quarter (live games only)",
+   "score progression (live games only)"
+  ],
+  "data_gaps": [
+   "no plus/minus for games before 2026-11-25"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "nba-stats-glossary",
+    "note": "+/-: point differential when a player or team is on the floor; opened 2026-11-26"
+   },
+   {
+    "key": "basketball-reference-glossary",
+    "note": "+/-: difference between team and opponent scoring while the player is on the court; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "plus-minus-noise",
+   "on-off-differential",
+   "net-rating",
+   "lineup-data-and-sample-size"
+  ],
+  "evaluation_questions": [
+   "A team scores 58 and allows 51 during a player's minutes. What is his plus/minus?",
+   "Why is per-game plus/minus not a rating of the player?"
+  ]
+ },
+ {
+  "slug": "shot-frequency",
+  "department": 17,
+  "kind": "statistic",
+  "title": "Shot frequency (shot mix)",
+  "summary": "The share of a player's or team's field goal attempts that fall in a given category, such as threes.",
+  "body": "Shot frequency describes where attempts go. The league's site reports the percentage of field goal attempts that are two-pointers and the percentage that are three-pointers, and more generally defines a frequency as the number of events meeting a criterion divided by all events. The three-point attempt share is the most used: it summarises a player's or team's reliance on the outside shot. With location data the same idea extends to shares at the rim, in the paint, from mid-range and from the corners, which together form a shot profile. Frequency complements accuracy, since scoring efficiency is the product of what shots are taken and how often they go in. It is also steadier than accuracy over short spans, making it the better indicator of style. In our data the three-point share can be computed for live games, where attempts by type are recorded. For historical games we hold total attempts and threes made only, and no location-based frequencies at all.",
+  "formula": "FGA in category / total FGA (for example 3PA / FGA)",
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Location-based frequencies need shot coordinates that we do not have.",
+   "Three-point attempts are missing from our historical box scores.",
+   "Frequency says nothing about shot difficulty."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "field goal attempts",
+   "makes/attempts for FG, 3PT and FT (live games only)"
+  ],
+  "data_gaps": [
+   "no shot locations",
+   "no three-point attempts in historical box scores"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "nba-stats-glossary",
+    "note": "%FGA 2PT and %FGA 3PT entries; Frequency entry; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "shot-profile-identity",
+   "effective-field-goal-percentage",
+   "three-point-variance",
+   "shot-quality-versus-shot-making"
+  ],
+  "evaluation_questions": [
+   "A player takes 16 field goal attempts, 7 of them threes. What is his three-point attempt frequency?",
+   "Why is shot frequency a better indicator of style than accuracy over short spans?"
+  ]
+ },
+ {
+  "slug": "per-minute-rates",
+  "department": 17,
+  "kind": "statistic",
+  "title": "Per-minute rates",
+  "summary": "A counting statistic divided by minutes played.",
+  "body": "A per-minute rate is the most basic adjustment for playing time: points, rebounds or assists divided by minutes. It allows the production of players with different workloads to be compared, and it is the natural building block of a projection, which multiplies an expected rate by expected minutes. Two cautions govern its use. First, rates computed from few minutes are unstable; a reserve who scores six points in four minutes has not shown a sustainable rate. Second, rates do not necessarily hold when minutes change. Extra minutes often come against better opponents, with more fatigue and sometimes in a different role, and a reserve's per-minute scoring commonly falls when he becomes a starter; in other cases a larger role raises it. Rates also ignore tempo, so the same player will show slightly different per-minute numbers on a fast and a slow team. From our box scores every per-minute rate for the recorded statistics can be computed directly for any window of appearances.",
+  "formula": "STAT / MP",
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Unstable on small minute totals.",
+   "Not constant when minutes or role change.",
+   "Not adjusted for pace."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "minutes",
+   "points",
+   "rebounds",
+   "assists",
+   "three-pointers made",
+   "steals",
+   "blocks",
+   "turnovers",
+   "rolling windows (L3..L30, season)"
+  ],
+  "data_gaps": [
+   "no counted possessions to convert to per-possession rates for historical games"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "Per 36 Minutes entry is the related published form; pointer"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "per-36-minutes",
+   "per-100-possessions",
+   "per-minute-versus-per-possession",
+   "minutes-as-opportunity"
+  ],
+  "evaluation_questions": [
+   "A player has 96 rebounds in 300 minutes. What is his per-minute rebound rate?",
+   "Why might a reserve's per-minute scoring fall when he becomes a starter?"
+  ]
+ },
+ {
+  "slug": "per-36-minutes",
+  "department": 17,
+  "kind": "statistic",
+  "title": "Per-36-minute statistics",
+  "summary": "A statistic divided by minutes played and multiplied by 36.",
+  "body": "Per-36 figures restate per-minute rates on the scale of a typical starter's night, which makes them easy to read: a reserve averaging eight points in sixteen minutes is at eighteen points per 36. The calculation is exactly the per-minute rate times 36, so it carries the same information and the same limits. It is a convenient scale for comparison, not a projection of what the player would do in 36 minutes. Players given more minutes meet stronger opposition and tire, and foul-prone players could not stay on the floor that long; on the other hand some players improve with rhythm and responsibility. The figure is most misleading for those with very few minutes, where one good quarter can produce an extravagant number. Showing the total minutes behind a per-36 figure is the simplest safeguard. Some sources prefer per-40 or per-48 scales, which differ only by the multiplier. We can compute per-36 values from any box-score window.",
+  "formula": "36 * STAT / MP",
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "A scale for comparison, not a forecast of production at 36 minutes.",
+   "Extreme and unreliable for low-minute players.",
+   "Not adjusted for pace."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "minutes",
+   "points",
+   "rebounds",
+   "assists",
+   "rolling windows (L3..L30, season)"
+  ],
+  "data_gaps": [
+   "no counted possessions for historical games"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "Per 36 Minutes: a statistic divided by minutes played, multiplied by 36; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "per-minute-rates",
+   "per-100-possessions",
+   "per-minute-versus-per-possession",
+   "sample-size-and-confidence"
+  ],
+  "evaluation_questions": [
+   "A player has 150 assists in 900 minutes. What is his assists per 36?",
+   "Why is per-36 not a forecast of what a reserve would do in 36 minutes?"
+  ]
+ },
+ {
+  "slug": "per-100-possessions",
+  "department": 17,
+  "kind": "statistic",
+  "title": "Per-100-possession statistics",
+  "summary": "A statistic divided by possessions played and multiplied by 100.",
+  "body": "Per-100-possession figures scale a player's or team's statistics to a standard number of possessions, removing both playing time and tempo. For teams this is how offensive and defensive ratings are built. For players it takes his totals and divides by the team possessions that occurred while he was on the floor. It is the preferred basis for comparing players across teams with different paces and across eras, because a possession is the real unit of opportunity. The cost is an extra layer of estimation. On-court possessions must be counted from play-by-play or estimated by scaling team possessions by the player's share of minutes, and the estimate is rough for players whose minutes are unusual. Like all rate statistics it becomes unstable in small samples and does not promise that production would scale. Neither public glossary opened for this library gives a standalone definition, so this record states the standard construction. For our historical games on-court possessions are not counted, so any such figure is an estimate.",
+  "formula": "100 * STAT / POSS (possessions while the player or team was on the floor)",
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "On-court possessions are estimated in most box-score implementations.",
+   "No standalone definition was found in the glossaries opened; not checked.",
+   "Unstable in small samples."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "minutes",
+   "points",
+   "rebounds",
+   "assists",
+   "play-by-play events with substitutions (live games only)"
+  ],
+  "data_gaps": [
+   "no counted on-court possessions for historical games"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "nba-stats-glossary",
+    "note": "ratings and ratios are expressed per 100 possessions; no general entry on the page; pointer"
+   },
+   {
+    "key": "basketball-reference-glossary",
+    "note": "no general entry on the page; pointer"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "per-36-minutes",
+   "per-minute-rates",
+   "possessions-estimate",
+   "offensive-rating",
+   "cross-era-comparison"
+  ],
+  "evaluation_questions": [
+   "What two things does a per-100-possession figure adjust for?",
+   "How are a player's on-court possessions usually estimated from a box score?"
+  ]
+ },
+ {
+  "slug": "free-throw-rate",
+  "department": 17,
+  "kind": "statistic",
+  "title": "Free throw rate (FTA rate)",
+  "summary": "Free throw attempts relative to field goal attempts.",
+  "body": "Free throw rate is free throw attempts divided by field goal attempts. It expresses how often a player or team gets to the line relative to how often it shoots from the floor, and so describes a style: attacking the basket and drawing contact produces a high rate, and jump shooting a low one. For teams it is one of the four standard components of offensive efficiency, and the opponent's rate is the corresponding component of defence, capturing the tendency to foul. The league's site defines FTA rate with this formula. A common variant uses free throws made in the numerator, which folds accuracy at the line into the measure; the two should not be confused, and the definition in use should be stated. The rate is noisy in single games, where officiating and late intentional fouls weigh heavily. Our historical box scores contain both attempts columns, so the attempts-based rate can be computed for any player and window.",
+  "formula": "FTA / FGA",
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "A made-free-throws variant exists and gives different values.",
+   "Single-game values are heavily affected by officiating and end-game fouling.",
+   "Says nothing about accuracy at the line."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "free throw attempts",
+   "field goal attempts"
+  ],
+  "data_gaps": [
+   "no free throw makes in historical box scores",
+   "no fouls-drawn data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "nba-stats-glossary",
+    "note": "FTA Rate = FTA / FGA; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "free-throw-rate-as-skill",
+   "free-throws",
+   "true-shooting-percentage",
+   "team-fouls-and-penalty"
+  ],
+  "evaluation_questions": [
+   "A player has 9 FTA and 18 FGA. What is his free throw rate?",
+   "How does the made-free-throws variant differ in meaning?"
+  ]
+ },
+ {
+  "slug": "assist-ratio",
+  "department": 17,
+  "kind": "statistic",
+  "title": "Assist ratio",
+  "summary": "On the league site's definition, assists per 100 possessions used.",
+  "body": "Assist ratio expresses how often a player's involvement ends in an assist. The league's statistics site defines it as assists multiplied by one hundred and divided by possessions - assists averaged per hundred possessions used. It differs from assist percentage in its denominator: assist percentage compares assists with teammates' made baskets, while assist ratio compares them with the player's own possessions. A pass-first player therefore scores high on both, while a high-usage scorer with many assists can have a high assist percentage and a modest assist ratio because he also shoots a great deal. Readers will meet an older formulation elsewhere that divides assists by the sum of field goal attempts, a fraction of free throw attempts, assists and turnovers; it carries the same intent with a different definition of possessions used. The figure is a descriptor of style - how pass-oriented a player is - more than of playmaking quality, and it is sensitive to how possessions are defined.",
+  "formula": "100 * AST / POSS",
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Meaning of 'possessions used' varies between sources.",
+   "Describes orientation toward passing, not quality of passing.",
+   "The older variant mentioned was not checked against a source."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "assists"
+  ],
+  "data_gaps": [
+   "no counted individual possessions for historical games"
+  ],
+  "ruleset": "NBA",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "nba-stats-glossary",
+    "note": "AST Ratio = (AST * 100) / POSS; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "assist-percentage",
+   "assist-to-turnover-ratio",
+   "reading-assist-percentage",
+   "usage-percentage"
+  ],
+  "evaluation_questions": [
+   "How does assist ratio differ from assist percentage?",
+   "Why can a high-usage scorer have a high AST% and a modest assist ratio?"
+  ]
+ },
+ {
+  "slug": "game-score",
+  "department": 17,
+  "kind": "statistic",
+  "title": "Game Score",
+  "summary": "A single-game productivity number built from the box score on a points-like scale.",
+  "body": "Game Score, created by John Hollinger, summarises one player's box-score line for one game. It starts from points, adds a bonus for made field goals, subtracts for attempts and for missed free throws, credits offensive rebounds more than defensive ones, adds steals, assists and blocks with fixed weights, and subtracts personal fouls and turnovers. The scale is designed to resemble points scored, so that a very high value marks an outstanding game and a value near ten an average one, according to the reference glossary. It is a quick way to rank the games in a player's log or the performances in a night. It is not adjusted for minutes or pace, so it favours players who play more, and like every box-score composite it sees defence only through steals, blocks and rebounds. Its weights are a rough judgement of value and should not be treated as measured. We do not compute it for historical games, which lack several inputs.",
+  "formula": "PTS + 0.4 * FG - 0.7 * FGA - 0.4 * (FTA - FT) + 0.7 * ORB + 0.3 * DRB + STL + 0.7 * AST + 0.7 * BLK - 0.4 * PF - TOV",
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Weights are judgemental.",
+   "Not adjusted for minutes or pace.",
+   "Requires makes, fouls and the rebound split, absent from our historical box scores."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "makes/attempts for FG, 3PT and FT (live games only)",
+   "offensive/defensive rebounds (live games only)",
+   "personal fouls (live games only)"
+  ],
+  "data_gaps": [
+   "no makes, personal fouls or rebound split in historical box scores"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "Game Score formula, creator and scale; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "player-efficiency-rating",
+   "player-impact-estimate",
+   "single-game-noise"
+  ],
+  "evaluation_questions": [
+   "Is Game Score adjusted for minutes played?",
+   "Which rebounds does Game Score weight more heavily?"
+  ]
+ },
+ {
+  "slug": "sample-size-and-confidence",
+  "department": 17,
+  "kind": "method",
+  "title": "Sample size and confidence",
+  "summary": "How much evidence a number rests on determines how far it can be trusted.",
+  "body": "Every statistic computed from games is an estimate of some underlying tendency, and the estimate is uncertain to a degree that depends on how many observations went into it. With few observations the plausible range around the estimate is wide; it narrows roughly in proportion to the square root of the sample size, so four times as much data is needed to halve the uncertainty. Different statistics settle at different speeds. Those built on many events per game, such as minutes or shot attempts, become informative quickly; those built on rare or high-variance events, such as three-point percentage, steals or lineup margins, take far longer. The working rules are simple. Always show the sample size beside a figure. Count appearances, not calendar games. Treat differences between small samples as unproven. Prefer a range or percentile band to a single value. And never rank or filter on a statistic whose sample cannot support the distinction being drawn. A number without its sample size is not evidence.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "The square-root relationship assumes independent, similar observations, which games only approximate.",
+   "Large samples can be stale if circumstances changed.",
+   "No specific thresholds are prescribed here."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "rolling windows (L3..L30, season)",
+   "threshold history",
+   "splits (home/away, rest, role, opponent)",
+   "with/without-teammate splits"
+  ],
+  "data_gaps": [
+   "early-season and post-change windows have few appearances"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "research method rules of this project (RESEARCH-CONSTITUTION.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "regression-to-the-mean",
+   "distribution-versus-average",
+   "small-sample-shooting",
+   "base-rates",
+   "lineup-data-and-sample-size"
+  ],
+  "evaluation_questions": [
+   "By roughly how much must a sample grow to halve the uncertainty of an average?",
+   "Why do some statistics become reliable faster than others?"
+  ]
+ },
+ {
+  "slug": "regression-to-the-mean",
+  "department": 17,
+  "kind": "method",
+  "title": "Regression to the mean",
+  "summary": "Extreme observations tend to be followed by ones closer to the long-run average.",
+  "body": "Any observed performance mixes a stable component, the player's true level, with a chance component. When a result is extreme, it is likely that chance pushed in the same direction as skill. The next result will have the same skill and a fresh draw of chance, which on average is neutral, so it will tend to be closer to the long-run level. Nothing causes this in a physical sense; it is a property of measuring noisy quantities. It explains why a player after a career night usually scores less the next time, why the hottest shooting team of the first month cools, and why many apparent slumps and breakouts dissolve. The strength of the effect depends on how noisy the statistic is: strong for three-point percentage over ten games, weak for minutes of an established starter. The practical method is to shrink a recent figure toward a sensible prior - the player's longer record, or the typical level for his role - by more when the recent sample is small.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "How far to shrink is a modelling choice, not specified here.",
+   "A real change in role or ability does not regress; telling it apart is the hard part.",
+   "The appropriate mean to regress toward is itself uncertain."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "rolling windows (L3..L30, season)"
+  ],
+  "data_gaps": [
+   "no league-wide reference distributions stored for priors beyond our own history"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "research method rules of this project (RESEARCH-CONSTITUTION.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "sample-size-and-confidence",
+   "hot-hand-and-regression",
+   "role-change-versus-noise",
+   "base-rates",
+   "small-samples-in-history"
+  ],
+  "evaluation_questions": [
+   "Why does regression to the mean need no physical cause?",
+   "For which kind of statistic is regression strongest?"
+  ]
+ },
+ {
+  "slug": "distribution-versus-average",
+  "department": 17,
+  "kind": "method",
+  "title": "Distribution versus average (median and percentiles)",
+  "summary": "An average hides the spread and shape of outcomes; medians and percentiles describe them.",
+  "body": "A mean is one number summarising many games, and it is pulled toward extreme values. A player who scores between ten and fourteen most nights and forty once has a mean well above what he usually produces. The median, the middle value when games are sorted, is the better description of a typical game and is not disturbed by one outlier. Percentiles extend the idea: the tenth and ninetieth mark a low and a high outcome that were each exceeded on only one occasion in ten. Together they show how wide and how lopsided the outcomes are, which is what matters whenever a question concerns a threshold rather than a total. Basketball statistics are often skewed. Counts cannot go below zero, minutes have a ceiling, and rare big games stretch the upper tail. This platform's projections therefore report a p10 and p90 around the central value. The spread is part of the answer: two players with the same expected points can differ greatly in how often they reach a given number.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Percentiles from small samples are themselves unreliable.",
+   "Model-based p10/p90 can be miscalibrated and should be checked against outcomes.",
+   "The median ignores how far the extremes reach."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "rolling windows (L3..L30, season)",
+   "threshold history",
+   "projected minutes and stat projections with p10/p90 (models)"
+  ],
+  "data_gaps": [
+   "short histories for new or recently changed roles"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "research method rules of this project (RESEARCH-CONSTITUTION.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "minutes-distribution-and-variance",
+   "calibration",
+   "sample-size-and-confidence",
+   "threshold-contracts",
+   "assist-variance"
+  ],
+  "evaluation_questions": [
+   "Why is the median a better description of a typical game than the mean for a skewed statistic?",
+   "What do the p10 and p90 of a projection represent?"
+  ]
+ },
+ {
+  "slug": "correlation-versus-causation",
+  "department": 17,
+  "kind": "method",
+  "title": "Correlation versus causation",
+  "summary": "Two things moving together does not show that one causes the other.",
+  "body": "A correlation is an observed association: a player scores more in games his team wins, or rebounds more against a certain opponent. A causal claim says that changing one thing would change the other. The gap between them is filled by alternative explanations. A third factor may drive both, as when minutes rise in close games and bring points with them. The direction may be reversed: teams do not win because a role player shoots more; he shoots more in games the offence is flowing. The sample may be selected. Or the pattern may be chance, especially when many splits have been examined and only the striking one is reported. In sports data all four are common, and controlled experiments are impossible, so causal language needs restraint. Careful wording says what was observed, in how many games, and names the rival explanations. A plausible mechanism plus a pattern that persists in new data is the most that observation can offer, and it is still short of proof.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Observational data cannot settle causation.",
+   "Mechanistic stories are easy to invent after seeing a pattern.",
+   "Searching many splits makes chance findings likely."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "splits (home/away, rest, role, opponent)",
+   "with/without-teammate splits"
+  ],
+  "data_gaps": [
+   "no experimental data; all evidence is observational"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "research method rules of this project (RESEARCH-CONSTITUTION.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "confounding-in-with-without",
+   "overfitting-and-leakage",
+   "research-hypotheses-and-experiments",
+   "fatigue-requires-evidence",
+   "base-rates"
+  ],
+  "evaluation_questions": [
+   "Give two alternative explanations for a correlation between a player's shot attempts and team wins.",
+   "Why does examining many splits increase the risk of a chance finding?"
+  ]
+ },
+ {
+  "slug": "calibration",
+  "department": 17,
+  "kind": "method",
+  "title": "Calibration",
+  "summary": "A probabilistic forecast is calibrated if events given a certain probability happen about that often.",
+  "body": "A model that says seventy percent should be right about seven times in ten across all the occasions it says so. That property is calibration, and it is separate from sharpness, the ability to give probabilities far from fifty percent. A model can be sharp and badly calibrated, which is overconfidence, or calibrated and uninformative. Calibration is checked by grouping past forecasts by stated probability and comparing each group's average forecast with the observed frequency; plotted, a calibrated model lies on the diagonal. The same idea applies to ranges: outcomes should fall below a projection's p10 about one time in ten and above its p90 about one time in ten. Calibration can only be judged over many forecasts, never from one result, and it must be measured on data the model did not train on. It matters especially wherever a probability is compared with a price, because a small systematic overstatement would make every comparison look favourable. Only registered, validated models produce probabilities on this platform.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Needs many forecasts per probability group to assess.",
+   "Good calibration overall can hide poor calibration in subgroups.",
+   "Past calibration does not ensure future calibration if conditions change."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "projected minutes and stat projections with p10/p90 (models)",
+   "paper-testing results"
+  ],
+  "data_gaps": [
+   "limited history of settled forecasts while paper testing accumulates"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "research method rules of this project (RESEARCH-CONSTITUTION.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "calibration-curves",
+   "distribution-versus-average",
+   "overfitting-and-leakage",
+   "price-is-not-model-probability",
+   "promotion-gates"
+  ],
+  "evaluation_questions": [
+   "How does calibration differ from sharpness?",
+   "How often should outcomes fall below a calibrated p10?"
+  ]
+ },
+ {
+  "slug": "overfitting-and-leakage",
+  "department": 17,
+  "kind": "method",
+  "title": "Overfitting and data leakage",
+  "summary": "A model that learns noise or uses information unavailable at prediction time will look better in testing than it performs in use.",
+  "body": "Overfitting occurs when a model, or an analyst, adapts so closely to past data that it captures accidents of that sample. The signs are many adjustable choices, rules that fit history neatly, and performance that collapses on new data. The defence is to evaluate on data not used for fitting, in time order, and to distrust complexity that is not paid for by out-of-sample improvement. Leakage is a specific and common failure: the inputs include something that would not have been known when the forecast was made. Using a final box score to build a feature for the same game, season averages that include later games, a confirmed lineup for a forecast stamped before it was announced, or a closing market price are all leaks. Leaked evaluations are worthless however good they look. Walk-forward testing, in which each prediction uses only information timestamped before it, is the standard guard. On this platform a market price is never a model input, which removes one frequent source of leakage by rule.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Leakage can be subtle and survive review.",
+   "Out-of-sample tests reused many times become in-sample.",
+   "Simple models can also overfit when the analyst tries many variants."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "paper-testing results",
+   "projected minutes and stat projections with p10/p90 (models)"
+  ],
+  "data_gaps": [
+   "limited history limits the size of honest out-of-sample tests"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "research method rules of this project (RESEARCH-CONSTITUTION.md); not opened in this session"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "project rule: a market price is never a model input (CLAUDE.md, read 2026-11-26)"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "calibration",
+   "research-hypotheses-and-experiments",
+   "promotion-gates",
+   "survivorship-bias",
+   "hindsight-bias-in-review"
+  ],
+  "evaluation_questions": [
+   "Give two examples of data leakage in a pregame player forecast.",
+   "What is walk-forward testing designed to prevent?"
+  ]
+ },
+ {
+  "slug": "base-rates",
+  "department": 17,
+  "kind": "method",
+  "title": "Base rates",
+  "summary": "The general frequency of an outcome, which should anchor any judgement about a specific case.",
+  "body": "A base rate is how often something happens in the relevant reference group, before the particulars of a case are considered. How often does a player with this role and these minutes reach a given total? How often do apparent breakouts over five games persist? People tend to ignore such background frequencies when a vivid story is available - a revenge game, a favourable matchup, a hot streak - and overestimate what the story adds. Sound reasoning begins with the base rate and adjusts for specific evidence in proportion to its strength. Weak evidence moves the estimate a little; only strong, reliable evidence moves it far. Choosing the reference group is a judgement, and a narrower group is more relevant but has fewer cases. On this platform an important distinction applies. A player's threshold history is a base rate in the descriptive sense, a frequency in past games with a stated sample size. It is not a probability for the next game; probabilities come only from registered, validated models.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "The right reference group is debatable.",
+   "Past frequencies may not apply after a change in role.",
+   "A descriptive frequency must not be presented as a probability."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "threshold history",
+   "rolling windows (L3..L30, season)"
+  ],
+  "data_gaps": [
+   "no league-wide reference tables beyond our own stored history"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "research method rules of this project (RESEARCH-CONSTITUTION.md); not opened in this session"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "project rule: a historical frequency is never presented as a probability (CLAUDE.md, read 2026-11-26)"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "sample-size-and-confidence",
+   "regression-to-the-mean",
+   "matchup-context-is-a-mild-adjustment",
+   "assist-variance",
+   "price-is-not-model-probability"
+  ],
+  "evaluation_questions": [
+   "What is base-rate neglect?",
+   "Why is a player's threshold history not a probability on this platform?"
+  ]
+ }
+]

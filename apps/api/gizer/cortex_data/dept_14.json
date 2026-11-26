@@ -1,0 +1,343 @@
+[
+ {
+  "slug": "back-to-backs",
+  "department": 14,
+  "kind": "context",
+  "title": "Back-to-backs",
+  "summary": "Games on consecutive days, the most visible schedule stress in a season.",
+  "body": "A back-to-back is a pair of games played on consecutive calendar days, frequently in different cities. It is the shortest recovery interval the schedule allows and the point at which rest decisions concentrate. Its effects reach the data through two channels that should be kept apart. The first is availability: some players, particularly veterans and those managing injuries, are held out of one of the two games, and coaches may shorten minutes for others. The second is performance by those who do play, which is the channel people usually mean by fatigue and the one for which individual evidence is weakest. The availability channel is observable and often large; the performance channel is small on average and impossible to confirm for one player from a handful of games. When the second night of a back-to-back is flagged, the first questions are therefore who is playing and for how long. Our rest splits group a player's past games by days since his previous game.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Individual rest splits rest on small samples.",
+   "Players who sat out second nights are absent from the split, which biases the comparison.",
+   "No travel information is attached to the flag."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "splits (home/away, rest, role, opponent)",
+   "did-not-play records",
+   "minutes",
+   "injuries and lineup status"
+  ],
+  "data_gaps": [
+   "no travel distance or flight data",
+   "no physiological or tracking load data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "rest-day split derivations (PLAYER-HISTORICAL-ANALYSIS.md); not opened in this session"
+   },
+   {
+    "key": "awesome-nba-data",
+    "note": "curated list of schedule and data resources; pointer only"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "rest-days",
+   "back-to-back-handling",
+   "fatigue-requires-evidence",
+   "rest-and-injury-management-designations",
+   "schedule-density"
+  ],
+  "evaluation_questions": [
+   "Through which two channels does a back-to-back reach the data?",
+   "Which channel is observable and often large?"
+  ]
+ },
+ {
+  "slug": "rest-days",
+  "department": 14,
+  "kind": "context",
+  "title": "Rest days",
+  "summary": "The number of days between a team's or player's games, used as a splitting variable.",
+  "body": "Rest is usually counted as the number of full days off before a game: none on the second night of a back-to-back, one for games played every other day, two or more after a longer break. Splitting performance by rest is a common descriptive exercise. Several cautions apply to reading such splits. Most games fall into the one-day category, so the others have few observations. The categories differ in more than rest: zero-rest games involve travel and selected absences, and long-rest games often follow breaks in the schedule or a player's own absence, when rust or a minutes limit may apply. A team's rest must be weighed against its opponent's, since both sides can be tired. And for an individual, the days since his last appearance may differ from the team's days since its last game. A rest split is a tabulation of what happened under each condition. It becomes evidence of an effect only if the pattern is consistent across a large sample, which single-player splits seldom provide.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Uneven category sizes; the rare categories are noisy.",
+   "Rest is correlated with travel, absences and schedule context.",
+   "Player rest and team rest can differ."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "splits (home/away, rest, role, opponent)",
+   "did-not-play records",
+   "rolling windows (L3..L30, season)"
+  ],
+  "data_gaps": [
+   "no travel distance or flight data",
+   "no physiological or tracking load data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "rest-day split derivations (PLAYER-HISTORICAL-ANALYSIS.md); not opened in this session"
+   },
+   {
+    "key": "awesome-nba-data",
+    "note": "curated list of schedule and data resources; pointer only"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "back-to-backs",
+   "schedule-density",
+   "fatigue-requires-evidence",
+   "sample-size-and-confidence",
+   "correlation-versus-causation"
+  ],
+  "evaluation_questions": [
+   "Why are zero-rest and long-rest categories hard to interpret?",
+   "Why might a player's rest differ from his team's?"
+  ]
+ },
+ {
+  "slug": "travel-and-time-zones",
+  "department": 14,
+  "kind": "context",
+  "title": "Travel and time zones",
+  "summary": "Road trips, long flights and time-zone changes as possible influences on performance.",
+  "body": "Teams cross the continent repeatedly during a season, and it is reasonable to suppose that long flights, late arrivals and shifted body clocks have some effect. Researchers have looked for such effects in aggregate data, with attention to direction of travel and number of zones crossed. Whatever the average effect, it is small compared with the ordinary variation in a single game, and it is entangled with other things: road games themselves, back-to-backs, and the quality of opponents on a trip. This platform does not hold travel data. We do not record flight distances, arrival times or zones crossed, and we make no travel adjustment. We can identify home and away games and the days of rest between them, and that is all. Statements that a team will be affected by a particular trip are therefore outside what our data can support. If travel is mentioned in research, it should be as an unmeasured circumstance, clearly separated from anything that was actually computed.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "No travel variables exist in our data.",
+   "Published research is referred to in general terms; no study was opened in this session.",
+   "Any average effect is small relative to single-game variation."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "splits (home/away, rest, role, opponent)"
+  ],
+  "data_gaps": [
+   "no travel distance or flight data",
+   "no physiological or tracking load data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "rest-day split derivations (PLAYER-HISTORICAL-ANALYSIS.md); not opened in this session"
+   },
+   {
+    "key": "awesome-nba-data",
+    "note": "curated list of schedule and data resources; pointer only"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "home-and-away",
+   "back-to-backs",
+   "fatigue-requires-evidence",
+   "schedule-density"
+  ],
+  "evaluation_questions": [
+   "What travel-related information does this platform actually hold?",
+   "With what other factors is travel entangled?"
+  ]
+ },
+ {
+  "slug": "altitude",
+  "department": 14,
+  "kind": "context",
+  "title": "Altitude",
+  "summary": "Playing at high elevation as a possible factor for visiting teams.",
+  "body": "A small number of arenas sit at high elevation, where the air holds less oxygen. Visiting players are not acclimatised, and it is widely believed that they tire more quickly, especially late in games and when arriving on short rest. Home teams at altitude are thought to gain a modest advantage for that reason, and some prefer a fast tempo to exploit it. The idea is physiologically plausible, but the size of any effect on basketball statistics is hard to isolate from ordinary home advantage and from the quality of the teams involved. We hold no physiological data and no variable for arena elevation, so altitude does not enter any calculation on this platform. It may be noted as background when a game is played at such a venue. It should not be offered as an explanation of a specific player's performance, before or after the fact, because nothing in our data can test that explanation for an individual game.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "No elevation variable or physiological data exist here.",
+   "The size of any effect is not established in this record.",
+   "Confounded with general home advantage and team quality."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "splits (home/away, rest, role, opponent)"
+  ],
+  "data_gaps": [
+   "no travel distance or flight data",
+   "no physiological or tracking load data",
+   "no arena elevation field"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "rest-day split derivations (PLAYER-HISTORICAL-ANALYSIS.md); not opened in this session"
+   },
+   {
+    "key": "awesome-nba-data",
+    "note": "curated list of schedule and data resources; pointer only"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "home-and-away",
+   "fatigue-requires-evidence",
+   "travel-and-time-zones",
+   "pace-identity"
+  ],
+  "evaluation_questions": [
+   "Why is an altitude effect hard to isolate statistically?",
+   "May altitude be given as the reason for one player's poor game on this platform?"
+  ]
+ },
+ {
+  "slug": "schedule-density",
+  "department": 14,
+  "kind": "context",
+  "title": "Schedule density",
+  "summary": "How tightly a team's games are packed over a stretch of days.",
+  "body": "Beyond single back-to-backs, the load of a schedule depends on how many games fall within a week or ten days and how much travel connects them. Stretches such as four games in six nights, or a long road trip, compress recovery and practice time. Coaches respond across the stretch and not only on its hardest night: they may lengthen the rotation, rest a veteran once, and manage minutes whenever a game allows. Dense periods are thus associated with wider minute distributions and more did-not-play entries for rest. Whether they also depress the performance of those who play is a separate question that individual data rarely answer. Density can be computed from a schedule by counting games in a trailing window, and we can describe a player's past production in games following heavier and lighter stretches through rest splits. The interpretation should stay with what is observable - availability and minutes - unless a consistent pattern in a large sample says more.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "No standard definition of a dense stretch; any window is a convention.",
+   "Performance effects are not established for individuals.",
+   "Density correlates with travel, which we do not measure."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "splits (home/away, rest, role, opponent)",
+   "did-not-play records",
+   "minutes"
+  ],
+  "data_gaps": [
+   "no travel distance or flight data",
+   "no physiological or tracking load data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "rest-day split derivations (PLAYER-HISTORICAL-ANALYSIS.md); not opened in this session"
+   },
+   {
+    "key": "awesome-nba-data",
+    "note": "curated list of schedule and data resources; pointer only"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "back-to-backs",
+   "rest-days",
+   "rest-and-load-management",
+   "rotation-length",
+   "fatigue-requires-evidence"
+  ],
+  "evaluation_questions": [
+   "How do coaches typically respond to a dense stretch of games?",
+   "Which observable quantities respond most clearly to schedule density?"
+  ]
+ },
+ {
+  "slug": "fatigue-requires-evidence",
+  "department": 14,
+  "kind": "concept",
+  "title": "Why fatigue must not be asserted without evidence",
+  "summary": "Fatigue is an internal state we cannot observe; schedule facts are not proof of it.",
+  "body": "It is easy to write that a player looked tired or that a team will have heavy legs. These are claims about a physical state. We have no measurements of that state: no tracking of speed or distance, no heart-rate or sleep data, no reports from the team. What we have are schedule facts - a back-to-back, a long trip, a run of heavy minutes - and outcomes. Reasoning from a schedule fact to fatigue and from fatigue to a predicted outcome stacks two unsupported steps. After the game the temptation is stronger, since any poor performance on a second night can be labelled fatigue, and any good one forgotten. The rule is to state what is known. A player is on zero days of rest; in his previous such games, of which there were this many, his line was thus. If nothing in the record shows a difference, say so. Fatigue may be real, but on this platform it is a hypothesis to be tested in aggregate, not a fact to be reported about an individual.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "A rule of conduct; it does not deny that fatigue exists.",
+   "Aggregate schedule effects, if any, are not estimated in this record.",
+   "Absence of evidence in a small sample is not evidence of no effect."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "splits (home/away, rest, role, opponent)",
+   "minutes"
+  ],
+  "data_gaps": [
+   "no travel distance or flight data",
+   "no physiological or tracking load data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "project rule: never fabricate operational or physical status; missing data leads to abstention (CLAUDE.md, read 2026-11-26)"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "never-infer-a-diagnosis",
+   "back-to-backs",
+   "correlation-versus-causation",
+   "hindsight-bias-in-review",
+   "research-hypotheses-and-experiments"
+  ],
+  "evaluation_questions": [
+   "What two unsupported steps does a fatigue-based prediction usually stack?",
+   "How should a zero-rest situation be described on this platform?"
+  ]
+ },
+ {
+  "slug": "schedule-splits-selection",
+  "department": 14,
+  "kind": "method",
+  "title": "Selection effects in schedule splits",
+  "summary": "Players who appear in hard schedule spots are not a random sample of players or of nights.",
+  "body": "Suppose a split shows that a group of players performs as well on the second night of back-to-backs as on other nights. It does not follow that back-to-backs are harmless. The players most affected may have been rested, so they are missing from the second-night sample, and those who remain are the ones their teams judged able to play. The same filtering operates within a single player's record: the second nights he played are the ones on which he felt well enough. This is a selection effect, and it biases schedule splits toward showing no difference. A related problem runs through opponent quality, because schedule makers and television pair games in ways that are not random. The remedy is not a formula but awareness: when reading a schedule split, look at how many games are missing from each cell and why, and treat the availability pattern itself as a finding. Often the most reliable statement is about who plays, not how they play.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "No correction for selection is applied in our splits.",
+   "Reasons for missed games are reported labels.",
+   "The direction of bias is argued from logic, not measured here."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "splits (home/away, rest, role, opponent)",
+   "did-not-play records",
+   "injuries and lineup status"
+  ],
+  "data_gaps": [
+   "no travel distance or flight data",
+   "no physiological or tracking load data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "rest-day split derivations (PLAYER-HISTORICAL-ANALYSIS.md); not opened in this session"
+   },
+   {
+    "key": "awesome-nba-data",
+    "note": "curated list of schedule and data resources; pointer only"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "survivorship-bias",
+   "back-to-backs",
+   "rest-days",
+   "confounding-in-with-without",
+   "did-not-play-is-not-a-zero"
+  ],
+  "evaluation_questions": [
+   "Why can second-night splits understate the effect of back-to-backs?",
+   "What should be examined alongside any schedule split?"
+  ]
+ }
+]

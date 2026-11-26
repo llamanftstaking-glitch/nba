@@ -1,0 +1,381 @@
+[
+ {
+  "slug": "assist-as-playmaking-evidence",
+  "department": 11,
+  "kind": "concept",
+  "title": "The assist as evidence of playmaking",
+  "summary": "What an assist total does and does not show about a player's ability to create for others.",
+  "body": "Assists are the only passing statistic in a traditional box score, so they carry more interpretive weight than they can bear. An assist shows that a player's pass was followed directly by a teammate's basket. It does not show whether the pass created the shot or merely preceded it, and it gives no credit for an equally good pass that the shooter missed, or for one that led to free throws. A handoff to a shooter and a pass that splits two defenders count the same. Read sensibly, a sustained assist rate indicates that a player has the ball often and looks to pass - a statement about role - and, at high levels, real creative ability. The number is best paired with usage and turnovers to form a picture of how much offence runs through him and at what cost. Because every assist needs a made shot, assists are among the more variable counting statistics from game to game for a given role.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Does not distinguish creative passes from routine ones.",
+   "Ignores good passes that led to misses or fouls.",
+   "Scorer judgement adds noise."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "assists",
+   "usage percentage (provider)",
+   "turnovers",
+   "rolling windows (L3..L30, season)"
+  ],
+  "data_gaps": [
+   "no potential assists or passes made",
+   "no assist-pair data in historical box scores"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "nba-stats-glossary",
+    "note": "passing entries; pointer; not used to check this record"
+   },
+   {
+    "key": "basketball-reference-glossary",
+    "note": "assist and turnover percentage definitions; pointer; not used to check this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "assist",
+   "reading-assist-percentage",
+   "potential-assists",
+   "playmaking-dependence-on-teammate-shooting",
+   "assist-variance"
+  ],
+  "evaluation_questions": [
+   "Name two kinds of good pass that produce no assist.",
+   "With which other statistics should assists be paired to describe a playmaker?"
+  ]
+ },
+ {
+  "slug": "potential-assists",
+  "department": 11,
+  "kind": "concept",
+  "title": "Potential assists (not in our data)",
+  "summary": "A tracking count of passes that led to a shot, whether or not it went in; unavailable here.",
+  "body": "The league's tracking data record a potential assist for a pass to a teammate who shoots within one dribble of receiving it. The count includes the shots that missed, so it measures the chances a passer created independent of his teammates' accuracy. Comparing potential assists with actual assists shows how much of a player's assist total in a given stretch was conversion by others. A passer whose assists fell while his potential assists held steady has not changed; his teammates went cold. This is the measure one would want for projecting assists, since it is steadier than the outcome it leads to. This platform does not have it. We hold no potential assists, no passes made, no secondary assists and no assist points created, and none can be derived from box scores. When a player's assists move, we can check his minutes, his usage and who was available to shoot, and we should say plainly that the passing volume underneath is not observed.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Cannot be computed or estimated from our data.",
+   "The tracking definition is the league's and may change.",
+   "Without it, a change in assists cannot be split into passing and conversion."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [],
+  "data_gaps": [
+   "no tracking data: potential assists, passes, secondary assists"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "nba-stats-glossary",
+    "note": "Potential AST entry: a pass to a teammate who shoots within one dribble of receiving the ball; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "assist-as-playmaking-evidence",
+   "playmaking-dependence-on-teammate-shooting",
+   "hockey-assist",
+   "touches-not-in-our-data",
+   "rebound-chances"
+  ],
+  "evaluation_questions": [
+   "What does a potential assist count that an assist does not?",
+   "If assists fall while potential assists hold steady, what has changed?"
+  ]
+ },
+ {
+  "slug": "reading-assist-percentage",
+  "department": 11,
+  "kind": "concept",
+  "title": "Reading assist percentage",
+  "summary": "AST% estimates the share of teammates' baskets a player assisted while on the floor.",
+  "body": "Assist percentage scales a player's assists to the opportunities he had: the field goals his teammates made during his minutes. It answers how much of the team's scoring by others ran through his passes, independent of how many minutes he played or how fast the game was. Lead guards post the highest figures, and the measure separates a true organiser from a scorer who collects a few assists through sheer volume of possessions. Reading it requires two reminders. It is built on made baskets, so it inherits the dependence of assists on teammates' shooting, and it tells nothing about passes that did not end in a score. And it is an estimate in its box-score form, apportioning team field goals by minutes played, so it is less exact for players whose minutes come with unusual lineups. Our historical data contain a player's assists and minutes; the team field goals needed for the denominator are not stored per game as makes, so the percentage is not generally computable for older games here.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Box-score version estimates on-court teammate field goals from minutes share.",
+   "Depends on teammates making shots.",
+   "Not generally computable from our historical data, which lack team field goal makes."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "assists",
+   "minutes"
+  ],
+  "data_gaps": [
+   "no potential assists or passes made",
+   "no assist-pair data in historical box scores",
+   "no team field goals made in historical box scores"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "nba-stats-glossary",
+    "note": "passing entries; pointer; not used to check this record"
+   },
+   {
+    "key": "basketball-reference-glossary",
+    "note": "assist and turnover percentage definitions; pointer; not used to check this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "assist-percentage",
+   "assist-as-playmaking-evidence",
+   "facilitator",
+   "assist-ratio"
+  ],
+  "evaluation_questions": [
+   "What question does AST% answer that raw assists do not?",
+   "Why is the box-score version of AST% an estimate?"
+  ]
+ },
+ {
+  "slug": "assist-to-turnover-ratio",
+  "department": 11,
+  "kind": "statistic",
+  "title": "Assist-to-turnover ratio",
+  "summary": "Assists divided by turnovers: a simple gauge of how carefully a player creates.",
+  "body": "The assist-to-turnover ratio compares the possessions a player's passing completed with the possessions he gave away. A high ratio indicates a passer who creates without much waste; a low one indicates risk or loose handling. It is popular for evaluating point guards because it is easy to compute and to understand. Its weaknesses come from what each count includes. Turnovers arise from shooting and driving as well as passing, so a scorer who attacks the basket is charged with turnovers that have no connection to his playmaking. Assists depend on teammates. And the ratio rewards caution: a player who makes only safe passes will look better than one who attempts the difficult pass that creates a layup. It also behaves badly when turnovers are few, since dividing by one or two produces wild values, and it is undefined for a game with none. Over a reasonable window, alongside usage, it is a fair description of ball security for players in similar roles.",
+  "formula": "AST / TOV",
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Turnovers include non-passing errors.",
+   "Rewards conservative play.",
+   "Unstable or undefined when turnovers are few; use windows, not single games."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "assists",
+   "turnovers",
+   "rolling windows (L3..L30, season)"
+  ],
+  "data_gaps": [
+   "no potential assists or passes made",
+   "no assist-pair data in historical box scores"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "nba-stats-glossary",
+    "note": "AST/TO entry describes assists compared with turnovers and gives no formula; opened 2026-11-26, formula here is the conventional one and was not on the page"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "turnover-percentage",
+   "turnover",
+   "facilitator",
+   "assist-ratio",
+   "reading-turnover-percentage"
+  ],
+  "evaluation_questions": [
+   "Why can the ratio flatter a cautious passer?",
+   "Why is a single-game assist-to-turnover ratio often meaningless?"
+  ]
+ },
+ {
+  "slug": "hockey-assist",
+  "department": 11,
+  "kind": "concept",
+  "title": "Hockey assist (secondary assist)",
+  "summary": "The pass that leads to the assist; a measure of advantage creation one step removed.",
+  "body": "Borrowing a term from ice hockey, a hockey assist is the pass before the pass: the one that started the sequence ending in an assisted basket. In drive-and-kick offence the player who collapses the defence often passes to a teammate who immediately swings the ball to the open shooter. The second passer gets the assist, while the first, who created the advantage, gets nothing in the box score. The league's tracking data count a secondary assist when a player passes to a teammate who then records an assist within a short time and without dribbling. The idea matters conceptually because it exposes a blind spot in assists: they credit the last link in the chain, not necessarily the most important one. Players who initiate advantages and move the ball early can be undervalued, and those who make the final simple pass can be overvalued. We do not have secondary assists, and they cannot be inferred from play-by-play text, which names only the assister on a made basket.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Not available in our data and not derivable from play-by-play assists.",
+   "The tracking definition's time window is the league's.",
+   "Even secondary assists miss earlier links in longer chains."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [],
+  "data_gaps": [
+   "no secondary assist data",
+   "no pass tracking"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "nba-stats-glossary",
+    "note": "Secondary assist entry: a pass to a player who records an assist within one second and without dribbling; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "potential-assists",
+   "connector",
+   "assist",
+   "drive-and-kick"
+  ],
+  "evaluation_questions": [
+   "Who gets the box-score assist when a driver's kick-out is swung to an open shooter?",
+   "What blind spot in assists does the hockey assist expose?"
+  ]
+ },
+ {
+  "slug": "playmaking-dependence-on-teammate-shooting",
+  "department": 11,
+  "kind": "concept",
+  "title": "Playmaking depends on teammates' shooting",
+  "summary": "A passer's assists rise and fall with the shot-making and availability of the players he passes to.",
+  "body": "An assist is completed by someone else. A passer can deliver ten good looks in a game and finish with eight assists or three, depending on whether the shots drop. Over a game or a short run of games this conversion luck is a large part of the variation in his assist total. The dependence is also structural. A playmaker surrounded by strong shooters and finishers will post more assists than the same player with weak ones, and when a team's best shooter or lob target is injured, the passer's assists tend to fall even if his passing does not. The reverse holds when a finisher returns. So two questions should be asked before reading a change in assists as a change in the passer: who was on the floor to finish, and how did they shoot? Our data can answer the first through availability and with-and-without splits. The second is only partly visible, since teammates' makes are not held for historical games.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Conversion by teammates cannot be separated from passing volume without tracking data.",
+   "With/without samples are small.",
+   "Teammates' makes are incomplete in our historical data."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "assists",
+   "with/without-teammate splits",
+   "injuries and lineup status"
+  ],
+  "data_gaps": [
+   "no potential assists or passes made",
+   "no assist-pair data in historical box scores"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "nba-stats-glossary",
+    "note": "passing entries; pointer; not used to check this record"
+   },
+   {
+    "key": "basketball-reference-glossary",
+    "note": "assist and turnover percentage definitions; pointer; not used to check this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "potential-assists",
+   "assist",
+   "with-without-splits",
+   "complementary-skills",
+   "assist-variance"
+  ],
+  "evaluation_questions": [
+   "What two questions should be asked before attributing a change in assists to the passer?",
+   "Why might a guard's assists fall when a lob target is injured?"
+  ]
+ },
+ {
+  "slug": "reading-turnover-percentage",
+  "department": 11,
+  "kind": "concept",
+  "title": "Reading turnover percentage",
+  "summary": "TOV% expresses turnovers as a share of the plays a player used.",
+  "body": "Turnover percentage estimates how many of a player's plays - his shot attempts, shooting trips to the line and turnovers together - ended in a turnover. It corrects the basic unfairness of raw counts, which penalise players for having the ball more. A star with four turnovers on thirty plays is more careful than a reserve with two on eight. The measure has a known bias of its own: assists are not part of the denominator, so a pass-first player, who uses few plays by this definition yet handles the ball constantly, shows a high turnover percentage that overstates his carelessness. Finishers who rarely dribble show low figures that say little about skill. The figure is most useful for comparing players in similar roles, and as a team statistic, where it is one of the main components of offensive efficiency. All of its inputs - turnovers, field goal attempts and free throw attempts - are in our historical box scores, so it can be computed for any player and window.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Overstates turnover-proneness of pass-first players because passes are not in the denominator.",
+   "Uses an approximate free throw coefficient.",
+   "Noisy over small numbers of plays."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "turnovers",
+   "field goal attempts",
+   "free throw attempts",
+   "rolling windows (L3..L30, season)"
+  ],
+  "data_gaps": [
+   "no live-ball/dead-ball turnover split",
+   "no touches"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "nba-stats-glossary",
+    "note": "passing entries; pointer; not used to check this record"
+   },
+   {
+    "key": "basketball-reference-glossary",
+    "note": "assist and turnover percentage definitions; pointer; not used to check this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "turnover-percentage",
+   "turnover",
+   "assist-to-turnover-ratio",
+   "usage-percentage"
+  ],
+  "evaluation_questions": [
+   "Why does TOV% overstate the carelessness of pass-first players?",
+   "Which inputs are needed to compute it, and do we have them?"
+  ]
+ },
+ {
+  "slug": "assist-variance",
+  "department": 11,
+  "kind": "concept",
+  "title": "Game-to-game variance in assists",
+  "summary": "Why assist totals swing from night to night and how to read them.",
+  "body": "Assists are a count of fairly rare events, each of which requires two things to go right: a pass and a made shot. For most players the nightly total is a small number, and small counts fluctuate a great deal in proportion to their average. A player who averages four will regularly record one and regularly record seven. Several forces add to the spread beyond pure chance: teammates' shooting on the night, how the opponent defends the pick-and-roll, foul trouble, the score, and scorer judgement. Lead guards with high totals are steadier in proportion, though their range in absolute terms is still wide. The implication is that a single-game assist figure is close to uninformative about change, and that the distribution - median, typical low and high values - describes a player better than the mean. Threshold history, the count of past games above a given number, is a useful description when shown with its sample size. It is a record of frequency in the past, and it is not a probability for the next game.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "The example range is illustrative, not a measured distribution.",
+   "Past frequency is descriptive and must not be presented as a probability.",
+   "Role changes make older games poor guides."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "assists",
+   "threshold history",
+   "rolling windows (L3..L30, season)",
+   "projected minutes and stat projections with p10/p90 (models)"
+  ],
+  "data_gaps": [
+   "no potential assists or passes made",
+   "no assist-pair data in historical box scores"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "nba-stats-glossary",
+    "note": "passing entries; pointer; not used to check this record"
+   },
+   {
+    "key": "basketball-reference-glossary",
+    "note": "assist and turnover percentage definitions; pointer; not used to check this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "distribution-versus-average",
+   "playmaking-dependence-on-teammate-shooting",
+   "single-game-noise",
+   "base-rates",
+   "assist-as-playmaking-evidence"
+  ],
+  "evaluation_questions": [
+   "Why do low-count statistics fluctuate more in proportion to their average?",
+   "What is threshold history, and what must it not be presented as?"
+  ]
+ }
+]

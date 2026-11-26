@@ -6,7 +6,9 @@ PostgreSQL full-text search over each record's title, slug, summary, body, formu
 1. Strict pass: every meaningful word must match (`websearch_to_tsquery`).
 2. If nothing matches: any word may match, and weak stray-word matches are dropped.
 3. Ranking: text rank, plus a boost when the query appears in the title or slug, plus a smaller boost per query word in the title.
-4. Filler words and bare numbers are removed from the query first, so a full question works as a query.
+4. Filler words and bare numbers are removed from the query first, so a full question works as a query. A small
+   hand-kept synonym table (`SYNONYMS` in `cortex.py`) maps everyday wording to library terms (bonus → penalty,
+   questionable → status designations, parlay → combination). It widens a query; it never creates a record.
 5. Filters: department, kind. Results are short records; the full record is fetched by slug.
 6. Every search is logged (`cortex_retrieval_log`: query, filters, returned slugs, method, duration, caller).
 

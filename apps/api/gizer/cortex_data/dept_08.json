@@ -1,0 +1,459 @@
+[
+ {
+  "slug": "usage-as-opportunity",
+  "department": 8,
+  "kind": "concept",
+  "title": "Usage as a measure of opportunity",
+  "summary": "Usage shows what share of his team's possessions a player ends while on the floor; it measures involvement, not quality.",
+  "body": "Usage percentage estimates the fraction of team plays a player finishes with a shot, a trip to the line or a turnover during his minutes. Read as opportunity, it answers the question: when this player is on the court, how often does the possession end with him? Five players share the floor, so an even split would give each one fifth, and a player far above that is a focal point while one far below is a supporting piece. Usage is the bridge between minutes and scoring volume. Minutes say how long he plays, usage says how much of the offence he consumes in that time, and efficiency says what he makes of it. It is a description of role, and roles change with lineups: the same player may carry high usage with reserves and modest usage beside a star. The usage figure in our data comes from the provider, whose exact formula we have not verified, so small differences from other sites are expected.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "The provider's exact usage formula is not verified; variants exist.",
+   "Usage ignores passing, so it understates the involvement of pass-first players.",
+   "A single-game usage figure is noisy, especially in short minutes."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "usage percentage (provider)",
+   "field goal attempts",
+   "free throw attempts",
+   "turnovers",
+   "minutes",
+   "rolling windows (L3..L30, season)"
+  ],
+  "data_gaps": [
+   "no touches or time of possession",
+   "no lineup-level usage before 2026-11-25"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "usage definition; pointer; not used to check this record"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "opportunity profile derivations; original text"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "usage-percentage",
+   "shot-volume",
+   "usage-redistribution",
+   "efficiency-versus-volume",
+   "minutes-as-opportunity"
+  ],
+  "evaluation_questions": [
+   "What would usage be for each player if possessions were shared evenly among five?",
+   "Why does usage understate a pass-first guard's involvement?"
+  ]
+ },
+ {
+  "slug": "shot-volume",
+  "department": 8,
+  "kind": "concept",
+  "title": "Shot volume",
+  "summary": "The number of field goal attempts a player takes, the most direct driver of his scoring.",
+  "body": "Points come from shots, and the count of field goal attempts is the plainest measure of scoring opportunity. A player's attempts in a game depend on his minutes, his share of the offence while he plays, the pace of the game, and how the defence chooses to guard him and his teammates. Volume is steadier than accuracy. Over a handful of games a scorer's attempts stay within a fairly narrow band while his makes swing widely, which is why attempts are the better guide to his role and makes the noisier outcome. A rise in attempts that persists across several games is among the clearer signs of an expanded role; a rise in points without a rise in attempts is usually hot shooting. Free throw attempts should be read alongside, since a fouled shooter is not charged with a field goal attempt. Our historical data give total attempts but not their split by distance, so two players with the same volume may have very different shot diets.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Attempts do not show shot difficulty or location.",
+   "A missed shot on which the player was fouled is not counted as an attempt.",
+   "Volume depends on teammates' availability and can shift overnight."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "field goal attempts",
+   "free throw attempts",
+   "points",
+   "rolling windows (L3..L30, season)",
+   "minutes"
+  ],
+  "data_gaps": [
+   "no shot locations",
+   "no three-point attempts in historical box scores"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "usage definition; pointer; not used to check this record"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "opportunity profile derivations; original text"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "usage-as-opportunity",
+   "role-change-versus-noise",
+   "points-per-shot-attempt",
+   "efficiency-versus-volume",
+   "free-throw-attempts-as-opportunity"
+  ],
+  "evaluation_questions": [
+   "Why are attempts a better guide to role than makes over a short span?",
+   "What does a rise in points without a rise in attempts usually indicate?"
+  ]
+ },
+ {
+  "slug": "touches-not-in-our-data",
+  "department": 8,
+  "kind": "concept",
+  "title": "Touches (not in our data)",
+  "summary": "Touches count how often a player possesses the ball; they come from tracking systems and are not available here.",
+  "body": "A touch is recorded by the league's tracking system each time a player gains possession of the ball. Touches, together with time of possession and dribbles per touch, describe involvement more completely than usage does, because they include the possessions on which a player handled the ball and then passed. A point guard who sets up the offence and gives the ball away may have modest usage and very many touches; a finisher may have the reverse. These measures would settle questions that box scores leave open, such as whether a rise in assists reflects more ball handling or better-shooting teammates. This platform does not hold tracking data. No touch counts, front-court touches, paint touches or possession times exist in our tables, and nothing here should be read as an estimate of them. Where a question needs touches to be answered properly, the honest response is that the box-score proxies - usage, assists, turnovers - are consistent with several explanations and cannot choose between them.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Nothing about touches can be computed or estimated from our data.",
+   "Box-score proxies cannot separate ball handling from finishing.",
+   "Definitions belong to the league's tracking provider and may change."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [],
+  "data_gaps": [
+   "no tracking data of any kind: touches, time of possession, dribbles, passes"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "nba-stats-glossary",
+    "note": "Touches entry: times a player or team touches and possesses the ball; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "usage-as-opportunity",
+   "on-ball-vs-off-ball-opportunity",
+   "potential-assists",
+   "rebound-chances",
+   "facilitator"
+  ],
+  "evaluation_questions": [
+   "What do touches capture that usage percentage misses?",
+   "How should a question that needs touch data be answered on this platform?"
+  ]
+ },
+ {
+  "slug": "usage-redistribution",
+  "department": 8,
+  "kind": "concept",
+  "title": "Usage redistribution when a teammate is out",
+  "summary": "When a high-usage player is absent, his possessions are divided among teammates, unevenly and with a likely cost in efficiency.",
+  "body": "A team will end roughly the same number of possessions whether or not its leading scorer plays, so the shots, free throws and turnovers he would have used must go somewhere. They do not spread evenly. The largest share usually goes to the next creator, some goes to the player who takes his minutes, and the rest is scattered. Two cautions apply. The replacement in the lineup is often not the replacement in the offence: a reserve may inherit the minutes while a starter inherits the shots. And increased usage tends to come with lower efficiency, because the extra attempts are harder ones and the defence can now focus on the remaining threats. The best evidence for a specific case is what happened in earlier games the absent player missed, which our with-and-without splits describe from box scores. Those samples are usually small and may include games with other absences, so they show a direction more reliably than a size.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "With/without samples are small and confounded by other lineup differences.",
+   "The efficiency cost is a general tendency, not measured for each player.",
+   "Coaches may respond to the same absence differently on different nights."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "with/without-teammate splits",
+   "usage percentage (provider)",
+   "field goal attempts",
+   "injuries and lineup status",
+   "minutes"
+  ],
+  "data_gaps": [
+   "no lineup data before 2026-11-25",
+   "no touches or play types"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "usage definition; pointer; not used to check this record"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "opportunity profile derivations; original text"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "with-without-splits",
+   "secondary-creator",
+   "star-dependence",
+   "efficiency-versus-volume",
+   "confounding-in-with-without"
+  ],
+  "evaluation_questions": [
+   "Why is the lineup replacement often not the one who inherits the absent player's shots?",
+   "Why does increased usage tend to lower efficiency?"
+  ]
+ },
+ {
+  "slug": "on-ball-vs-off-ball-opportunity",
+  "department": 8,
+  "kind": "concept",
+  "title": "On-ball versus off-ball opportunity",
+  "summary": "Opportunity a player creates with the ball in his hands differs in stability from opportunity that teammates create for him.",
+  "body": "A player's chances arise in two ways. On-ball opportunity is self-generated: he dribbles into a shot, a foul or a pass. Off-ball opportunity is delivered: he receives the ball in a position to shoot because a teammate or the system produced the opening. The distinction matters for stability. On-ball players control their own volume, so their attempts are steadier and less affected by who else plays. Off-ball players depend on the creators around them and on the defence's choices, so their volume moves when a creator is absent or when the opponent decides to stay attached to them. The distinction also shapes how roles respond to lineup changes. When a primary creator is out, an on-ball secondary creator's opportunity rises, while an off-ball shooter's may fall even though more shots are nominally available. We cannot measure the split directly, since it needs play-type or tracking data. A profile of usage, assists, turnovers and threes suggests which side dominates, as an inference to be stated with its evidence.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "The split cannot be measured without play-type or tracking data.",
+   "Many players operate in both modes depending on the lineup.",
+   "The inference from box-score mix is suggestive only."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "usage percentage (provider)",
+   "assists",
+   "turnovers",
+   "three-pointers made",
+   "with/without-teammate splits"
+  ],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no assisted/unassisted split",
+   "no touches"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "usage definition; pointer; not used to check this record"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "opportunity profile derivations; original text"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "off-ball-scorer",
+   "primary-creator",
+   "touches-not-in-our-data",
+   "usage-redistribution",
+   "catch-and-shoot"
+  ],
+  "evaluation_questions": [
+   "Why is on-ball opportunity generally more stable than off-ball opportunity?",
+   "Why might an off-ball shooter's volume fall when a primary creator is out?"
+  ]
+ },
+ {
+  "slug": "per-minute-versus-per-possession",
+  "department": 8,
+  "kind": "concept",
+  "title": "Per-minute versus per-possession rates",
+  "summary": "Per-minute rates adjust for playing time; per-possession rates also adjust for pace.",
+  "body": "Dividing a statistic by minutes removes the effect of playing time and allows a reserve to be compared with a starter. It does not remove the effect of tempo: a minute in a fast game contains more possessions, and so more chances, than a minute in a slow one. Dividing by possessions removes that as well, which is why per-100-possession figures are preferred for comparing players across teams and eras. Each has its place. Per-minute rates are the natural input to a projection built on projected minutes, as long as the expected pace of the game is considered separately. Per-possession rates are the cleaner description of what a player does with his chances. Both share a weakness: they assume production scales in proportion, when in practice a reserve given starter minutes faces better opponents and more fatigue. With our data, per-minute rates are computed directly from box scores, while per-possession rates require an estimate of team possessions during the player's time on court, which adds error.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Neither rate holds exactly when a player's minutes change substantially.",
+   "Per-possession rates rely on estimated possessions in our historical data.",
+   "Rates from very few minutes are unstable."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "minutes",
+   "points",
+   "rebounds",
+   "assists",
+   "rolling windows (L3..L30, season)"
+  ],
+  "data_gaps": [
+   "no counted on-court possessions for historical games"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "usage definition; pointer; not used to check this record"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "opportunity profile derivations; original text"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "per-minute-rates",
+   "per-36-minutes",
+   "per-100-possessions",
+   "pace",
+   "minutes-as-opportunity"
+  ],
+  "evaluation_questions": [
+   "What does a per-possession rate adjust for that a per-minute rate does not?",
+   "What assumption do both rates share?"
+  ]
+ },
+ {
+  "slug": "role-change-versus-noise",
+  "department": 8,
+  "kind": "concept",
+  "title": "Role change versus noise",
+  "summary": "Distinguishing a real shift in a player's role from ordinary game-to-game variation.",
+  "body": "A player scores well above his average for three games. Either something has changed, or nothing has and the games fell on the favourable side of his normal range. Telling the two apart is one of the central tasks in reading recent form. Role changes leave marks in the inputs: more minutes, a change in starting status, a higher shot count, higher usage, usually tied to an identifiable cause such as a teammate's injury, a trade or a lineup decision. Noise shows up in the outputs alone: the same minutes and attempts, with more of the shots going in. Inputs are steadier than outputs, so a sustained move in minutes and attempts is stronger evidence than a move in points. The cause matters as well. A role that grew because a teammate is injured will shrink when he returns. Short windows are responsive and easily fooled; longer ones are steadier and slow. Looking at both, and at the inputs before the outputs, is the working method.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "No rule cleanly separates the two; this is a structured judgement.",
+   "A real role change can coincide with a lucky stretch, exaggerating its apparent size.",
+   "Causes are established from availability records, not from the statistics themselves."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "minutes",
+   "starter flag",
+   "field goal attempts",
+   "usage percentage (provider)",
+   "rolling windows (L3..L30, season)",
+   "injuries and lineup status"
+  ],
+  "data_gaps": [
+   "no coach identities",
+   "no play-type or tracking data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "usage definition; pointer; not used to check this record"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "opportunity profile derivations; original text"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "regression-to-the-mean",
+   "shot-volume",
+   "sample-size-and-confidence",
+   "usage-as-opportunity",
+   "hot-hand-and-regression"
+  ],
+  "evaluation_questions": [
+   "Which changes are stronger evidence of a new role: inputs or outputs? Why?",
+   "Why does the cause of a role change matter for how long it will last?"
+  ]
+ },
+ {
+  "slug": "free-throw-attempts-as-opportunity",
+  "department": 8,
+  "kind": "concept",
+  "title": "Free throw attempts as opportunity",
+  "summary": "Trips to the line are scoring chances that do not appear in the field goal attempt column.",
+  "body": "A player fouled while shooting is not charged with a field goal attempt unless the shot goes in, so his free throws represent scoring chances that shot volume misses. For players who attack the basket this is a large part of their offence, and leaving it out understates both their opportunity and their efficiency. Free throw attempts depend on style - drives, post play and offensive rebounding draw contact - and on context: how the game is officiated, how early the opponent reaches the penalty, and whether the game ends with intentional fouling. They are therefore more volatile from game to game than field goal attempts. A sensible measure of total scoring opportunity combines the two, counting each free throw attempt as a fraction of a shooting possession, which is what true shooting attempts do. In our historical data we have attempts but not makes, so free throw accuracy has to be taken from points, field goals and threes by subtraction where that is possible, or left unknown.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Free throw makes are not in our historical box scores.",
+   "Attempts vary with officiating and game situation.",
+   "The fraction used to convert attempts to possessions is an approximation."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "free throw attempts",
+   "field goal attempts",
+   "points",
+   "makes/attempts for FG, 3PT and FT (live games only)"
+  ],
+  "data_gaps": [
+   "no free throw makes in historical data",
+   "no foul-drawn data by type"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "usage definition; pointer; not used to check this record"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "opportunity profile derivations; original text"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "free-throws",
+   "free-throw-rate",
+   "true-shooting-percentage",
+   "shot-volume",
+   "team-fouls-and-penalty"
+  ],
+  "evaluation_questions": [
+   "Why do free throws represent opportunity that field goal attempts miss?",
+   "Why are free throw attempts more volatile than field goal attempts?"
+  ]
+ },
+ {
+  "slug": "opportunity-is-shared",
+  "department": 8,
+  "kind": "concept",
+  "title": "Opportunity is shared among teammates",
+  "summary": "A team's possessions and shots are finite, so individual opportunities are linked.",
+  "body": "Each team has a limited number of possessions in a game, and every shot one player takes is a shot his teammates did not. This simple constraint has consequences that are easy to forget when players are studied one at a time. Projections for teammates cannot all be raised together without implying more possessions than the team will have. A player's opportunity depends on who shares the floor: joining a lineup of high-usage scorers lowers it, and playing with low-usage defenders raises it. And outcomes among teammates are correlated in specific ways. Shots are substitutes, so in a game where one scorer takes far more than usual, others tend to take fewer; rebounds among a team's big men are similar. Assists and made shots are complements, since a passer's assist requires a teammate's basket. These relationships matter whenever two statistics from the same game are considered together, and they are one reason combinations of outcomes cannot be treated as independent events.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "The strength of these relationships is not quantified in this record.",
+   "Pace and overtime can raise everyone's opportunity at once.",
+   "Lineup-level sharing cannot be observed before 2026-11-25."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "usage percentage (provider)",
+   "field goal attempts",
+   "with/without-teammate splits",
+   "derived on-court stints and minutes by quarter (live games only)"
+  ],
+  "data_gaps": [
+   "no lineup data before 2026-11-25",
+   "no touches"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "usage definition; pointer; not used to check this record"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "opportunity profile derivations; original text"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "usage-redistribution",
+   "complementary-skills",
+   "correlation-versus-causation",
+   "usage-as-opportunity",
+   "combination-contracts-not-assumed"
+  ],
+  "evaluation_questions": [
+   "Why can projections for all teammates not be raised at the same time?",
+   "Give one example of substitute outcomes and one of complementary outcomes among teammates."
+  ]
+ }
+]

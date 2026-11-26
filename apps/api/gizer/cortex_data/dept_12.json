@@ -1,0 +1,452 @@
+[
+ {
+  "slug": "on-off-reading",
+  "department": 12,
+  "kind": "concept",
+  "title": "Reading on/off numbers",
+  "summary": "Comparing how a team performs with a player on the floor and with him off it.",
+  "body": "On/off analysis splits a team's minutes into those a player was on the court and those he was not, and compares the team's results in each. If the team outscores opponents with him and is outscored without him, the difference is taken as a sign of his value. The appeal is that it captures everything, including defence and off-ball effects that box scores miss. The difficulty is that the two groups of minutes differ in more than his presence. His on minutes are played mostly with fellow starters against starters; his off minutes with reserves against reserves. A starter on a team with a weak bench will show a large positive difference partly because his replacement is poor. The figure therefore measures the gap between a player and his substitute in a given team context, not his worth in the abstract. It needs many minutes to settle, and for this platform it exists only for games tracked live since late November 2026, a sample far too small to support conclusions yet.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Confounded by teammates, opponents and the quality of the substitute.",
+   "Requires large samples; ours is very short.",
+   "Opponent strength during on and off minutes is not adjusted."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "plus/minus (live games only)",
+   "derived on-court stints and minutes by quarter (live games only)",
+   "play-by-play events with substitutions (live games only)"
+  ],
+  "data_gaps": [
+   "no lineup data before 2026-11-25",
+   "no adjusted plus-minus models"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "pbpstats",
+    "note": "open-source package that derives lineups and possessions from play-by-play; README read 2026-11-26, pointer; not used to check this record"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "with/without and lineup derivations (LINEUP-INTELLIGENCE.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "on-off-differential",
+   "plus-minus-noise",
+   "lineup-data-and-sample-size",
+   "net-rating-by-lineup",
+   "star-dependence"
+  ],
+  "evaluation_questions": [
+   "Why does a weak backup inflate a starter's on/off number?",
+   "What does on/off measure, precisely?"
+  ]
+ },
+ {
+  "slug": "plus-minus-noise",
+  "department": 12,
+  "kind": "concept",
+  "title": "Plus/minus and its noise",
+  "summary": "Single-game plus/minus is dominated by chance and by who else was on the floor.",
+  "body": "Plus/minus records the change in the score margin while a player was on the court. In one game it is the sum of a limited number of possessions at each end, with outcomes that hinge on a few made or missed threes by any of ten players. A reserve can be plus fifteen because his stint coincided with teammates' hot shooting, having done nothing notable himself. Because five players share every point, the figure cannot say who was responsible. Over a season the chance element shrinks but the context problem remains: the number still reflects his usual lineup mates and opponents. Plus/minus is useful as a description of what happened in a game - which stretches went well - and as raw material for lineup analysis in large samples. It is poor evidence about an individual from one game or a handful. In our data it is available for live games only, and it should be displayed as an observation without any suggestion that it rates the player.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Single-game values are mostly noise.",
+   "Shared among five players; individual credit is not identified.",
+   "Available only for live games since 2026-11-25."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "plus/minus (live games only)",
+   "derived on-court stints and minutes by quarter (live games only)",
+   "score progression (live games only)"
+  ],
+  "data_gaps": [
+   "no lineup data before 2026-11-25"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "pbpstats",
+    "note": "open-source package that derives lineups and possessions from play-by-play; README read 2026-11-26, pointer; not used to check this record"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "with/without and lineup derivations (LINEUP-INTELLIGENCE.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "plus-minus",
+   "on-off-reading",
+   "single-game-noise",
+   "sample-size-and-confidence",
+   "lineup-data-and-sample-size"
+  ],
+  "evaluation_questions": [
+   "Why can a reserve have a large positive plus/minus without playing well?",
+   "For what is single-game plus/minus legitimately useful?"
+  ]
+ },
+ {
+  "slug": "lineup-data-and-sample-size",
+  "department": 12,
+  "kind": "concept",
+  "title": "Lineup data and sample size",
+  "summary": "Five-man lineup statistics rest on very few possessions and must be read with their sample.",
+  "body": "A lineup statistic describes how a specific group of five performed together. The trouble is arithmetic. A team uses a great many different five-man combinations in a season, and all but a few play together for only a small number of minutes. Even a starting unit accumulates possessions slowly, and injuries interrupt it. A lineup's scoring margin over a few dozen possessions can be extreme in either direction through shooting luck alone, and rankings of lineups are dominated by such accidents. Sound practice is to show the minutes or possessions beside every lineup figure, to pay attention only to the most-used groups, and to prefer broader groupings - two-player or three-player combinations, or all lineups containing a given player - which gather more data at the cost of being less specific. For this platform the caution is stronger still. On-court groups are derived from play-by-play substitutions and exist only from 25 November 2026 onward, so lineup samples are small by any standard and descriptive only.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Most lineups never reach a meaningful sample.",
+   "Derived lineups depend on correct substitution events in the feed.",
+   "Opponent quality differs between lineups and is not adjusted."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "derived on-court stints and minutes by quarter (live games only)",
+   "play-by-play events with substitutions (live games only)",
+   "plus/minus (live games only)"
+  ],
+  "data_gaps": [
+   "no lineup data before 2026-11-25",
+   "no counted possessions by lineup for historical games"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "pbpstats",
+    "note": "open-source package that derives lineups and possessions from play-by-play; README read 2026-11-26, pointer; not used to check this record"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "with/without and lineup derivations (LINEUP-INTELLIGENCE.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "net-rating-by-lineup",
+   "sample-size-and-confidence",
+   "on-off-reading",
+   "plus-minus-noise",
+   "complementary-skills"
+  ],
+  "evaluation_questions": [
+   "Why do lineup rankings tend to be dominated by chance?",
+   "What is gained and lost by analysing two-player combinations instead of five-man units?"
+  ]
+ },
+ {
+  "slug": "with-without-splits",
+  "department": 12,
+  "kind": "concept",
+  "title": "With/without-teammate splits",
+  "summary": "Comparing a player's box-score line in games a given teammate played and games he missed.",
+  "body": "A with/without split divides a player's games by whether a named teammate appeared, and summarises his statistics in each group. It is the most direct box-score evidence about how an absence changes a role: more shots and usage when a scorer is out, more rebounds when a big is out, fewer assists when a finisher is out. Unlike lineup data, it needs only game logs and availability records, so it extends back through our historical data. Its unit is the game, not the minute, which makes it coarse: it cannot distinguish the minutes the two would have shared from the rest. Samples are typically small, because healthy stars miss few games, and the split must always show the number of games on each side. It describes what happened in those games. Whether the same will happen next time depends on whether the surrounding circumstances - the other available players, the coach's approach, the opponent - are similar, and that question is taken up under confounding.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Small samples on the 'without' side are the norm.",
+   "Game-level, so it cannot isolate shared minutes.",
+   "Descriptive of past games; not a prediction."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "with/without-teammate splits",
+   "minutes",
+   "points",
+   "rebounds",
+   "assists",
+   "usage percentage (provider)",
+   "injuries and lineup status",
+   "did-not-play records"
+  ],
+  "data_gaps": [
+   "no minute-level overlap before 2026-11-25"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "pbpstats",
+    "note": "open-source package that derives lineups and possessions from play-by-play; README read 2026-11-26, pointer; not used to check this record"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "with/without and lineup derivations (LINEUP-INTELLIGENCE.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "confounding-in-with-without",
+   "usage-redistribution",
+   "rebounding-with-and-without-teammates",
+   "sample-size-and-confidence",
+   "star-dependence"
+  ],
+  "evaluation_questions": [
+   "What evidence does a with/without split provide that lineup data cannot, in our platform?",
+   "What must always be shown alongside the split?"
+  ]
+ },
+ {
+  "slug": "confounding-in-with-without",
+  "department": 12,
+  "kind": "method",
+  "title": "Confounding in with/without comparisons",
+  "summary": "Games a teammate missed differ from the others in more ways than his absence.",
+  "body": "A with/without comparison invites a causal reading: the difference in a player's line is what the teammate's absence does. That holds only if the two sets of games are otherwise alike, and they seldom are. Absences cluster in time, so the without games may all come from one stretch when the schedule was easier or harder, when another teammate was also out, or when the player himself was returning from injury. A star may have been rested mainly on back-to-backs or against weak opponents. The coach may have changed the rotation for unrelated reasons. With a handful of games, one overtime or one blowout can account for the whole gap. Guarding against this means checking the dates and opponents of the without games, looking at minutes and attempts as well as points, noting other absences in the same games, and asking whether the next game resembles them. The split is evidence to be weighed and described with its caveats, not an adjustment to be applied mechanically.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "No statistical adjustment for confounders is performed in this record.",
+   "With very few games, confounding cannot be distinguished from noise.",
+   "Unrecorded factors such as coaching intent remain invisible."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "with/without-teammate splits",
+   "splits (home/away, rest, role, opponent)",
+   "injuries and lineup status",
+   "minutes"
+  ],
+  "data_gaps": [
+   "no coach identities",
+   "no lineup data before 2026-11-25"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "pbpstats",
+    "note": "open-source package that derives lineups and possessions from play-by-play; README read 2026-11-26, pointer; not used to check this record"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "with/without and lineup derivations (LINEUP-INTELLIGENCE.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "with-without-splits",
+   "correlation-versus-causation",
+   "sample-size-and-confidence",
+   "usage-redistribution"
+  ],
+  "evaluation_questions": [
+   "Give three ways in which 'without' games can differ besides the teammate's absence.",
+   "What checks reduce the risk of misreading a with/without split?"
+  ]
+ },
+ {
+  "slug": "complementary-skills",
+  "department": 12,
+  "kind": "concept",
+  "title": "Complementary skills",
+  "summary": "Players are worth more together when their abilities cover each other's gaps.",
+  "body": "Lineups are not sums of individual talents. A driver is more effective with shooters who keep helpers away; a shooter gets better looks beside a creator who draws two defenders; a rim protector lets perimeter defenders pressure the ball; a rebounding big allows wings to leak out in transition. Duplicated skills overlap instead: two ball-dominant creators must take turns, two non-shooters shrink the floor for everyone. This is why a player's statistics shift when he changes teams or when a teammate is injured, with no change in his own ability. For research, complementarity is the reasoning behind teammate effects, and it suggests where to look: the absence of a shooter matters to the driver, the absence of a passer matters to the finisher. It remains a reason to examine the record, not a result. The evidence available to us is box-score with-and-without splits and a short span of on-court data; neither can demonstrate fit, though both can show whether the expected pattern has appeared in past games.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Fit is a qualitative idea; our data cannot measure it.",
+   "Expected teammate effects should be checked against splits, not assumed.",
+   "Lineup samples are too small to confirm synergy."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "with/without-teammate splits",
+   "derived on-court stints and minutes by quarter (live games only)"
+  ],
+  "data_gaps": [
+   "no lineup data before 2026-11-25",
+   "no play types or tracking data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "pbpstats",
+    "note": "open-source package that derives lineups and possessions from play-by-play; README read 2026-11-26, pointer; not used to check this record"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "with/without and lineup derivations (LINEUP-INTELLIGENCE.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "spacing",
+   "with-without-splits",
+   "opportunity-is-shared",
+   "playmaking-dependence-on-teammate-shooting",
+   "lineup-data-and-sample-size"
+  ],
+  "evaluation_questions": [
+   "Give an example of complementary skills and an example of duplicated skills.",
+   "Why is complementarity a reason to examine the record and not itself a finding?"
+  ]
+ },
+ {
+  "slug": "stagger-lineup-view",
+  "department": 12,
+  "kind": "concept",
+  "title": "Stagger seen in lineup data",
+  "summary": "How overlapping and separate minutes of two key players appear in on-court records.",
+  "body": "Staggering is a coaching choice; in data it appears as the split of two players' minutes into three parts: both on the floor, only the first, only the second. The size of each part shows how the coach deploys them, and each player's production can be quite different across the parts. A star's usage in his solo minutes is typically higher than in the shared minutes, and the team's results in the minutes with neither on the floor show how much the bench can sustain. This three-way view is more informative than each player's total line because it locates where his statistics come from. It also clarifies what an absence will do: if one of the two is out, the other's shared minutes disappear and his pattern must be rebuilt. Constructing the view requires on-court stints from play-by-play. We have those only for live games since 25 November 2026, so for now the breakdown rests on a short sample and serves as description.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Requires stint data that we have only for recent live games.",
+   "Small samples in each of the three parts.",
+   "Patterns change with injuries and matchups."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "derived on-court stints and minutes by quarter (live games only)",
+   "play-by-play events with substitutions (live games only)",
+   "plus/minus (live games only)"
+  ],
+  "data_gaps": [
+   "no lineup data before 2026-11-25"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "pbpstats",
+    "note": "open-source package that derives lineups and possessions from play-by-play; README read 2026-11-26, pointer; not used to check this record"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "with/without and lineup derivations (LINEUP-INTELLIGENCE.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "staggering-stars",
+   "lineup-data-and-sample-size",
+   "on-off-reading",
+   "usage-redistribution"
+  ],
+  "evaluation_questions": [
+   "Into which three parts does a stagger divide two stars' minutes?",
+   "Why is the three-way view more informative than each player's total line?"
+  ]
+ },
+ {
+  "slug": "net-rating-by-lineup",
+  "department": 12,
+  "kind": "statistic",
+  "title": "Net rating by lineup",
+  "summary": "Point differential per 100 possessions for a specific group of players while they share the floor.",
+  "body": "Net rating for a lineup is its offensive rating minus its defensive rating: points scored per hundred possessions less points allowed per hundred, counted only while that group was on the court. Putting the margin on a per-possession scale lets lineups with different minutes and tempos be compared. It is the standard summary of how a unit has performed. Everything said about lineup sample sizes applies with full force. A unit with a spectacular net rating over a short span has usually just had a favourable run of shooting at both ends, and its figure will move a long way as possessions accumulate. The denominator matters too: possessions for a lineup should be counted from play-by-play, and estimates from box-score formulas are rough over short stints. Opponent strength is not accounted for, so a bench unit that feasts on other benches can outrank the starters. For this platform, lineup net ratings can be formed only for recently tracked live games and should be shown with possessions and treated as observations.",
+  "formula": "100 * (PTS_for / POSS_for) - 100 * (PTS_against / POSS_against), restricted to the lineup's on-court time",
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Extremely noisy at typical lineup sample sizes.",
+   "No adjustment for opponent or for garbage time.",
+   "Possession counts for short stints are sensitive to method."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "derived on-court stints and minutes by quarter (live games only)",
+   "score progression (live games only)",
+   "play-by-play events with substitutions (live games only)"
+  ],
+  "data_gaps": [
+   "no lineup data before 2026-11-25",
+   "no counted lineup possessions for historical games"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "nba-stats-glossary",
+    "note": "NetRtg defined as OFFRTG - DEFRTG; opened 2026-11-26; lineup application is standard practice and was not checked on the page"
+   },
+   {
+    "key": "pbpstats",
+    "note": "derives possessions and lineups from play-by-play; README read 2026-11-26"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "net-rating",
+   "lineup-data-and-sample-size",
+   "offensive-rating",
+   "defensive-rating",
+   "on-off-differential"
+  ],
+  "evaluation_questions": [
+   "How is a lineup's net rating calculated?",
+   "Why can a bench unit outrank the starters on net rating without being better?"
+  ]
+ },
+ {
+  "slug": "teammate-availability-first",
+  "department": 12,
+  "kind": "method",
+  "title": "Check teammate availability before reading any line",
+  "summary": "A player's recent statistics should be read against who was available beside him in those games.",
+  "body": "Before interpreting a player's last five or ten games, establish which of his teammates played in them. A stretch of high scoring may coincide exactly with the absence of the team's leading scorer; a dip in assists may coincide with the absence of its best shooter. If the lineup situation for the upcoming game matches the window, the window is relevant; if the absent teammate has returned or another has gone out, it describes a different team. This check is cheap and prevents the most common error in recent-form analysis, which is to treat a context-driven stretch as a change in the player. It applies equally to opponents: a team's allowed averages over a period when its best defender was out do not describe it at full strength. In practice the check uses the injury and did-not-play records to annotate each game in the window, and the with-and-without splits to summarise the contrast, with game counts shown for both sides.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Availability explains some but not all variation; avoid over-attributing.",
+   "Availability records show who played, not how limited a returning player was.",
+   "No lineup-minute detail for older games."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "injuries and lineup status",
+   "did-not-play records",
+   "with/without-teammate splits",
+   "rolling windows (L3..L30, season)"
+  ],
+  "data_gaps": [
+   "no lineup data before 2026-11-25"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "pbpstats",
+    "note": "open-source package that derives lineups and possessions from play-by-play; README read 2026-11-26, pointer; not used to check this record"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "with/without and lineup derivations (LINEUP-INTELLIGENCE.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "with-without-splits",
+   "role-change-versus-noise",
+   "identities-expire",
+   "usage-redistribution",
+   "confounding-in-with-without"
+  ],
+  "evaluation_questions": [
+   "What should be established before interpreting a player's last ten games?",
+   "How does the same check apply to opponent context?"
+  ]
+ }
+]

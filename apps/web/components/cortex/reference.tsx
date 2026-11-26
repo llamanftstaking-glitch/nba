@@ -89,12 +89,14 @@ export function ResearchJournal({ status, onStatus }: { status: string; onStatus
 }
 
 /* ------------------------------------------------------------------ sources */
+const sentence = (t: string): string => t.charAt(0).toUpperCase() + t.slice(1);
+
 function AccessResult({ s }: { s: CortexSource }) {
   const opened = sourceWasOpened(s.access_result);
   return (
     <span className="block min-w-0" data-testid="access-result" data-opened={opened ? "1" : "0"}>
       <StatusDot tone={opened ? "accent" : "warn"} className={opened ? undefined : "font-semibold text-warn"}>
-        {opened ? "Opened and read" : s.access_result ? titleCase(s.access_result.split("(")[0]?.trim() ?? s.access_result) : "Not recorded"}
+        {opened ? "Opened and read" : s.access_result ? sentence(s.access_result.split("(")[0]?.trim() || s.access_result) : "Not recorded"}
       </StatusDot>
       {s.access_result && s.access_result.includes("(") && <span className="mt-0.5 block whitespace-normal break-words text-xs text-muted">{s.access_result.slice(s.access_result.indexOf("("))}</span>}
     </span>
@@ -135,7 +137,7 @@ export function Sources() {
           return (
             <>
               <p className="text-sm text-muted" data-testid="sources-count" data-total={d.items.length}>
-                <span className="num font-semibold text-ink">{d.items.length}</span> sources indexed · <span className="num font-semibold text-ink">{opened}</span> opened and read · <span className="num font-semibold text-ink">{d.items.length - opened}</span> not opened. A source is cited by link; its text is not reproduced.
+                <span className="num font-semibold text-ink">{d.items.length}</span> sources indexed · <span className="num font-semibold text-ink">{opened}</span> opened and read · <span className="num font-semibold text-ink">{d.items.length - opened}</span> not read. A source is cited by link; its text is not reproduced.
               </p>
               <Panel bodyClassName="p-3" className="hidden xl:block">
                 <DataTable columns={columns} rows={d.items} rowKey={(s) => s.key} caption="Knowledge sources" />

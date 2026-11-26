@@ -1,0 +1,454 @@
+[
+ {
+  "slug": "forecast-error-mae-and-bias",
+  "department": 20,
+  "kind": "statistic",
+  "title": "Forecast error: MAE and bias",
+  "summary": "Mean absolute error measures the typical size of a projection's miss; bias measures whether misses lean one way.",
+  "body": "After games are played, each projection can be compared with the outcome. The error is the outcome minus the projection. Two summaries of many errors answer different questions. Mean absolute error averages the sizes of the misses, ignoring direction, and says how far off a projection typically is, in the units of the statistic. Bias, the plain average of the signed errors, says whether projections are systematically too high or too low. A model can have zero bias and large errors, or small errors that all lean the same way; both figures are needed. They should be computed over many forecasts and also within groups - by statistic, by role, by minutes tier, by whether the player's status was uncertain - since an overall figure can hide a group in which the model is consistently wrong. A further useful split separates the error due to minutes from the error due to per-minute production. Errors must be measured against projections exactly as they were made, without later revision.",
+  "formula": "MAE = mean(|actual - projected|); bias = mean(actual - projected)",
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "MAE treats all misses alike and is hard to compare across statistics of different scale.",
+   "Averages conceal subgroup problems.",
+   "Small evaluation samples make both figures noisy."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "projected minutes and stat projections with p10/p90 (models)",
+   "paper-testing results"
+  ],
+  "data_gaps": [
+   "limited history of settled forecasts while paper testing accumulates"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "RESEARCH-CONSTITUTION.md (excerpt on validation and promotion) and CLAUDE.md, read 2026-11-26"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "calibration-curves",
+   "error-attribution-minutes-versus-rate",
+   "single-game-noise",
+   "hindsight-bias-in-review",
+   "promotion-gates"
+  ],
+  "evaluation_questions": [
+   "A model's projections for five games miss by +3, -2, +4, -1 and +1. What are the MAE and the bias?",
+   "Why are both MAE and bias needed?"
+  ]
+ },
+ {
+  "slug": "calibration-curves",
+  "department": 20,
+  "kind": "method",
+  "title": "Calibration curves",
+  "summary": "A plot of stated probability against observed frequency, used to check whether probabilities mean what they say.",
+  "body": "To build a calibration curve, collect many past probability forecasts with their outcomes, sort them into groups by stated probability, and for each group compute the average forecast and the fraction of events that occurred. Plot one against the other. A calibrated model's points fall along the diagonal. Points below it, where events occurred less often than stated, show overconfidence in that range; points above show underconfidence. The same check applies to ranges: count how often outcomes fell below the p10 and above the p90 and compare with one in ten. Reading a curve takes care. Each point is itself an estimate, so groups with few forecasts scatter widely and should be shown with their counts. The forecasts must be out-of-sample and unrevised. And a good overall curve does not rule out poor calibration for particular statistics or roles, so curves are drawn by subgroup where the data allow. A calibration curve says whether probabilities are honest, not whether they are useful; that needs a measure of sharpness as well.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Needs many forecasts per group; sparse groups mislead.",
+   "Group boundaries are a choice that affects the picture.",
+   "Does not measure sharpness or usefulness."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "projected minutes and stat projections with p10/p90 (models)",
+   "paper-testing results"
+  ],
+  "data_gaps": [
+   "limited history of settled forecasts while paper testing accumulates"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "RESEARCH-CONSTITUTION.md (excerpt on validation and promotion) and CLAUDE.md, read 2026-11-26"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "calibration",
+   "forecast-error-mae-and-bias",
+   "promotion-gates",
+   "distribution-versus-average"
+  ],
+  "evaluation_questions": [
+   "What does a point below the diagonal on a calibration curve indicate?",
+   "Why should each point be shown with its count of forecasts?"
+  ]
+ },
+ {
+  "slug": "hindsight-bias-in-review",
+  "department": 20,
+  "kind": "method",
+  "title": "Comparing projection to outcome without hindsight bias",
+  "summary": "Judge a forecast by what was known when it was made, not by what happened afterwards.",
+  "body": "Once a result is known it seems to have been predictable. The reasons a player fell short are obvious after the game - the foul trouble, the blowout, the cold shooting - and it is easy to conclude that the projection should have seen them coming. Most of those reasons were unknowable beforehand. Hindsight bias leads to two errors: blaming a sound forecast for an outcome within its stated range, and rewriting the story of what was believed. Reviews avoid it through procedure. The projection, its range and its inputs are stored when made and are not edited; earlier research editions are kept when updates are issued. The review asks set questions. Was the outcome inside the stated range? Was any input wrong at the time, such as a status that later changed? Was information available that was not used? Only the last two point to something fixable. An outcome in the tail of a well-calibrated range is expected to happen sometimes and is not, by that fact alone, a failure.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Procedure reduces but does not eliminate the bias.",
+   "Requires complete records of what was known at forecast time.",
+   "Tail outcomes and model faults can look alike in a single case."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "projected minutes and stat projections with p10/p90 (models)",
+   "paper-testing results",
+   "injuries and lineup status"
+  ],
+  "data_gaps": [
+   "limited history of settled forecasts while paper testing accumulates"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "RESEARCH-CONSTITUTION.md (excerpt on validation and promotion) and CLAUDE.md, read 2026-11-26"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "single-game-noise",
+   "one-failure-does-not-change-a-model",
+   "availability-changes-create-updates",
+   "forecast-error-mae-and-bias",
+   "overfitting-and-leakage"
+  ],
+  "evaluation_questions": [
+   "What three questions should a postgame review ask of a missed projection?",
+   "Why is an outcome in the tail of a stated range not necessarily a failure?"
+  ]
+ },
+ {
+  "slug": "single-game-noise",
+  "department": 20,
+  "kind": "method",
+  "title": "Single-game noise",
+  "summary": "One game's outcome is dominated by chance variation and says little about a player or a model.",
+  "body": "A single game is a small sample of everything. A player takes perhaps a dozen or two shots, each of which goes in or does not; his minutes depend on fouls and the margin; his assists depend on teammates' makes; overtime may or may not occur. The spread of plausible outcomes around any sensible expectation is therefore wide relative to the expectation itself, and wider still, in proportion, for low-count statistics. This has consequences for every kind of conclusion. A player's good or bad night is weak evidence of a change in ability. A team's result against one opponent is weak evidence about the matchup. And a model's hit or miss on one projection is almost no evidence about the model. Evaluation has to be done in aggregate, over enough games for chance to average out, and with attention to the stated ranges. When describing a single game, the fitting language is descriptive - what happened - and avoids verdicts about what it proves.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "The size of typical variation is described qualitatively, not measured here.",
+   "Some single games do carry information, for example an injury or an announced role change.",
+   "Aggregation hides real change if windows are too long."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "rolling windows (L3..L30, season)",
+   "projected minutes and stat projections with p10/p90 (models)"
+  ],
+  "data_gaps": [
+   "limited history of settled forecasts while paper testing accumulates"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "RESEARCH-CONSTITUTION.md (excerpt on validation and promotion) and CLAUDE.md, read 2026-11-26"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "sample-size-and-confidence",
+   "regression-to-the-mean",
+   "one-failure-does-not-change-a-model",
+   "three-point-variance",
+   "distribution-versus-average"
+  ],
+  "evaluation_questions": [
+   "Why is one projection's miss almost no evidence about a model?",
+   "Name three sources of chance variation in a player's single-game line."
+  ]
+ },
+ {
+  "slug": "research-hypotheses-and-experiments",
+  "department": 20,
+  "kind": "method",
+  "title": "Research hypotheses and controlled experiments",
+  "summary": "Ideas are stated in advance as testable hypotheses and evaluated on data they were not built from.",
+  "body": "A hypothesis is a specific claim that could turn out false: for example, that including a certain input lowers the error of the rebounds projection for reserve bigs. Good practice fixes the claim, the measure of success, the data and the comparison before looking at results. The test compares a candidate with the current baseline on the same out-of-sample games, in time order so that nothing from the future leaks in, and changes one thing at a time so that any difference can be attributed. The result is recorded whichever way it falls; negative results are kept, because discarding them is how a collection of chance findings comes to look like knowledge. True experiments are impossible in basketball - nobody can replay a game with a different lineup - so the controlled comparison of models on historical data is the nearest substitute, and its conclusions concern forecasting performance, not causes on the court. An idea that originates from one memorable game is a prompt for a hypothesis, not evidence for it.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Historical comparisons are not true experiments.",
+   "Repeated testing on the same data erodes its independence.",
+   "Pre-specification requires discipline that is easy to relax."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "paper-testing results",
+   "projected minutes and stat projections with p10/p90 (models)"
+  ],
+  "data_gaps": [
+   "limited history of settled forecasts while paper testing accumulates",
+   "no experimental control over real games"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "RESEARCH-CONSTITUTION.md (excerpt on validation and promotion) and CLAUDE.md, read 2026-11-26"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "overfitting-and-leakage",
+   "correlation-versus-causation",
+   "promotion-gates",
+   "one-failure-does-not-change-a-model",
+   "survivorship-bias"
+  ],
+  "evaluation_questions": [
+   "What should be fixed before the results of a model experiment are examined?",
+   "Why must negative results be recorded?"
+  ]
+ },
+ {
+  "slug": "one-failure-does-not-change-a-model",
+  "department": 20,
+  "kind": "method",
+  "title": "Why one failure does not change a model",
+  "summary": "Models are changed through validated evidence over many cases, not in reaction to a single miss.",
+  "body": "After a conspicuous miss there is pressure to fix something: add a rule for that situation, shade the next projection, distrust the model for that player. Acting on it is nearly always a mistake. A single outcome cannot distinguish a flawed model from an ordinary unlucky draw, and a patch written for one case is fitted to noise; applied to all future cases it will usually make forecasts worse. Reactive adjustment also destroys the ability to evaluate, because the thing being measured keeps changing. The disciplined response has steps. Record the miss with its context. Check for a factual input error, which is a data problem to be corrected at source. If the miss suggests a pattern, state it as a hypothesis and test it against the full history. Change the model only if the candidate passes the same validation gate as any other version, with a new version identifier. On this platform no person or assistant may alter a model's output or classification by hand, and past predictions are never edited.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Genuine model faults do exist and are found only by aggregate testing, which takes time.",
+   "Waiting for evidence means tolerating known imperfections meanwhile.",
+   "Input errors must still be fixed promptly; that is not a model change."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "paper-testing results",
+   "projected minutes and stat projections with p10/p90 (models)"
+  ],
+  "data_gaps": [
+   "limited history of settled forecasts while paper testing accumulates"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "RESEARCH-CONSTITUTION.md (excerpt on validation and promotion) and CLAUDE.md, read 2026-11-26"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "single-game-noise",
+   "hindsight-bias-in-review",
+   "research-hypotheses-and-experiments",
+   "promotion-gates",
+   "overfitting-and-leakage"
+  ],
+  "evaluation_questions": [
+   "Why is a patch written after one miss likely to make a model worse?",
+   "What is the correct sequence of steps after a conspicuous miss?"
+  ]
+ },
+ {
+  "slug": "promotion-gates",
+  "department": 20,
+  "kind": "method",
+  "title": "Promotion gates",
+  "summary": "Fixed validation criteria a candidate model must pass before its output may be used.",
+  "body": "A promotion gate is a set of criteria, defined in advance, that a model version must meet to move from candidate to production. On this platform the gate is a walk-forward evaluation: the candidate is tested in time order on games it was not trained on and must meet the stated standards for error and calibration. Several safeguards surround it. The gate's constants are not loosened to let a model through; a model that fails stays a candidate and is displayed as such. A model cannot be promoted by its own author: promotion requires a separate auditor. A market family with no production model that has passed the gate is rejected by the research guard, so no forecast is issued for it. And a market price is never a model feature. The purpose is to make it difficult for enthusiasm, convenience or a good recent run to put an unproven model into use. A gate does not make a model right; it ensures the claim that it works has been tested honestly.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Passing a gate on past data does not ensure future performance.",
+   "Gate criteria are themselves choices and can be too strict or too lenient.",
+   "The specific constants are defined in project code and documents, not restated here."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "paper-testing results",
+   "projected minutes and stat projections with p10/p90 (models)"
+  ],
+  "data_gaps": [
+   "limited history of settled forecasts while paper testing accumulates"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "RESEARCH-CONSTITUTION.md (excerpt on validation and promotion) and CLAUDE.md, read 2026-11-26"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "calibration",
+   "overfitting-and-leakage",
+   "paper-testing",
+   "research-hypotheses-and-experiments",
+   "one-failure-does-not-change-a-model"
+  ],
+  "evaluation_questions": [
+   "Who may promote a model on this platform?",
+   "What happens to a market family that has no model which passed the gate?"
+  ]
+ },
+ {
+  "slug": "paper-testing",
+  "department": 20,
+  "kind": "method",
+  "title": "Paper testing",
+  "summary": "Recording hypothetical positions and settling them on real outcomes, with no money involved.",
+  "body": "Paper testing is the practice of writing down, before a game, the positions a research process would take at the prices then observed, and afterwards settling them against the official results. No order is placed and no money is at risk; this platform holds no exchange credentials and contains no trading code. Its value depends on rigour. Every evaluated selection is recorded, not only those that look good later. Prices are those actually observed at the time, at the ask, with an estimate of fees. Records are append-only, and a correction is a new superseding row. Settlement follows the platform's stated rules, which differ from the exchange's in known cases such as a player who does not play. Paper results have limits that should always accompany them: they assume the observed price could have been obtained in size, which thin markets make doubtful; they cover a short period; and when hundreds of contracts are evaluated per game, the best-looking results are inflated by selection. Paper performance is evidence for research and nothing more.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Assumes fills at observed prices, which illiquid markets may not allow.",
+   "Short history; results are noisy.",
+   "Selection across many contracts inflates apparent performance."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "paper-testing results",
+   "Kalshi contract observations (price, spread, volume, history)"
+  ],
+  "data_gaps": [
+   "limited history of settled forecasts while paper testing accumulates",
+   "no real execution data, by design"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "RESEARCH-CONSTITUTION.md (excerpt on validation and promotion) and CLAUDE.md, read 2026-11-26"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "docs/data/KALSHI.md: ask plus estimated fee, settlement differences, selection effects; read 2026-11-26"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "selection-effects-in-ranked-picks",
+   "break-even-including-fees",
+   "settlement-rules-and-wording",
+   "promotion-gates",
+   "survivorship-bias"
+  ],
+  "evaluation_questions": [
+   "Why must every evaluated selection be recorded in a paper test?",
+   "Give two reasons paper results may overstate what real trading would achieve."
+  ]
+ },
+ {
+  "slug": "selection-effects-in-ranked-picks",
+  "department": 20,
+  "kind": "method",
+  "title": "Selection effects in ranked picks",
+  "summary": "When many candidates are scored and the top few are chosen, the chosen ones look better than they are.",
+  "body": "Suppose a model evaluates several hundred contracts for one game and ranks them by the gap between its probability and the price-implied break-even. Every probability contains some error. The contracts at the top of the ranking are disproportionately those where the model's error happened to be in the favourable direction, so their apparent advantage is overstated, and the more candidates examined, the stronger the effect. This is sometimes called the winner's curse. It is why the realised performance of top-ranked picks is typically worse than their estimated edge, even for a calibrated model. It bites hardest in illiquid markets, where an outlying price may reflect nobody's considered view. Honest evaluation accounts for it by assessing the selection rule as a whole on out-of-sample data, by shrinking estimated gaps toward zero, by requiring adequate market quality, and by reporting results for everything the rule selected. A single large apparent gap is more likely to signal an error - in the model, the contract interpretation or the price - than an opportunity.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "The size of the effect depends on model error and the number of candidates; it is not quantified here.",
+   "Shrinkage choices are judgemental.",
+   "Cannot be removed, only accounted for."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "paper-testing results",
+   "Kalshi contract observations (price, spread, volume, history)",
+   "projected minutes and stat projections with p10/p90 (models)"
+  ],
+  "data_gaps": [
+   "limited history of settled forecasts while paper testing accumulates"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "RESEARCH-CONSTITUTION.md (excerpt on validation and promotion) and CLAUDE.md, read 2026-11-26"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "docs/data/KALSHI.md notes that ranked picks are subject to selection effects; read 2026-11-26"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "paper-testing",
+   "price-is-not-model-probability",
+   "regression-to-the-mean",
+   "overfitting-and-leakage",
+   "liquidity"
+  ],
+  "evaluation_questions": [
+   "Why do top-ranked picks tend to perform worse than their estimated edge?",
+   "What is a single very large apparent gap most likely to indicate?"
+  ]
+ },
+ {
+  "slug": "error-attribution-minutes-versus-rate",
+  "department": 20,
+  "kind": "method",
+  "title": "Attributing error to minutes or to rate",
+  "summary": "Separating how much of a projection miss came from playing time and how much from production per minute.",
+  "body": "A stat projection is, in effect, projected minutes multiplied by a projected per-minute rate. When the outcome differs, the miss can be divided into two parts. The minutes part is the rate that was projected multiplied by the difference between actual and projected minutes. The rate part is the actual minutes multiplied by the difference between the actual and projected rates. The two sum to the total error. The split is informative because the two components have different causes and different remedies. Minutes errors come from rotation changes, foul trouble, blowouts, overtime and late availability news; rate errors come from shooting variance, matchup and role within the minutes played. If a model's errors are mostly on the minutes side, effort belongs in the minutes model and in availability handling, and no refinement of rates will help. Across many games the split shows where a model is weak. In one game it explains what happened without assigning blame, since both components are subject to chance.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "The decomposition is one of several possible conventions for splitting an interaction.",
+   "Rates are unstable when actual minutes are very low.",
+   "Requires the projected minutes to have been stored with the stat projection."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "projected minutes and stat projections with p10/p90 (models)",
+   "minutes",
+   "paper-testing results"
+  ],
+  "data_gaps": [
+   "limited history of settled forecasts while paper testing accumulates"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "RESEARCH-CONSTITUTION.md (excerpt on validation and promotion) and CLAUDE.md, read 2026-11-26"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "forecast-error-mae-and-bias",
+   "minutes-as-opportunity",
+   "per-minute-rates",
+   "projected-minutes-uncertainty",
+   "hindsight-bias-in-review"
+  ],
+  "evaluation_questions": [
+   "A player projected for 30 minutes at 0.5 points per minute (15 points) plays 24 minutes and scores 18. Compute the minutes part and the rate part of the 3-point error.",
+   "Why does the split matter for deciding where to improve a model?"
+  ]
+ }
+]

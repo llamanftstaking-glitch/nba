@@ -1,0 +1,479 @@
+[
+ {
+  "slug": "reading-a-box-score-in-progress",
+  "department": 19,
+  "kind": "live",
+  "title": "Reading a box score in progress",
+  "summary": "A partial box score is a snapshot of an unfinished game and must be read with the clock and the timestamp.",
+  "body": "A live box score shows what has accumulated up to the moment our system last observed it. Three things have to be read with it. The game clock and period say how much of the game the numbers cover: twelve points at halftime and twelve points with two minutes left are different facts. The observation time says how fresh the snapshot is. And each player's minutes say how much of the elapsed game he took part in. Partial lines invite extrapolation - doubling a first-half total - which ignores how unevenly statistics arrive. Scoring comes in bursts, minutes are not spread evenly across quarters, starters rest at predictable points, and the fourth quarter depends on the score. Values that the provider has not published are shown as null, not zero; a player with no line may simply not have entered. Live observations describe the game so far. They do not alter pregame projections, which remain displayed beside them unchanged, and they are never the basis of a live forecast on this platform.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "A snapshot can change through later corrections.",
+   "Simple pro-rating of partial totals is unreliable.",
+   "The feed is an unofficial public source with no published contract."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "makes/attempts for FG, 3PT and FT (live games only)",
+   "offensive/defensive rebounds (live games only)",
+   "personal fouls (live games only)",
+   "plus/minus (live games only)",
+   "derived on-court stints and minutes by quarter (live games only)",
+   "score progression (live games only)",
+   "minutes",
+   "points",
+   "rebounds",
+   "assists"
+  ],
+  "data_gaps": [
+   "observations are polled and delayed, not real-time",
+   "no shot locations or tracking data in live feeds"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "docs/operations/LIVE-VALIDATION.md and GIZER LIVE rules in CLAUDE.md, read 2026-11-26"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "why-live-data-is-delayed",
+   "minutes-versus-projection-mid-game",
+   "no-in-game-probability",
+   "stat-corrections-after-the-game",
+   "stale-feed-handling"
+  ],
+  "evaluation_questions": [
+   "What three things must be read alongside a partial stat line?",
+   "Why is doubling a first-half total a poor estimate of the final?"
+  ]
+ },
+ {
+  "slug": "foul-trouble-thresholds-live",
+  "department": 19,
+  "kind": "live",
+  "title": "Foul-trouble thresholds as conventions",
+  "summary": "Counts such as two fouls in the first quarter or four in the third are coaching conventions for concern, not rules.",
+  "body": "When following a game, certain foul counts are commonly treated as trouble: a second foul in the first quarter, a third before halftime, a fourth in the third quarter, a fifth with much of the fourth remaining. These markers come from the six-foul limit and from the habit of many coaches of sitting a player so that he is available late. They are conventions. Nothing in the rules removes a player before his sixth foul, and coaches differ in how they respond; some leave trusted players in. A live display can therefore flag that a player has reached a conventional threshold, and can show whether he has in fact been substituted, which play-by-play makes visible. It should not state that he will sit, or for how long. The flag is useful context for understanding why a player's minutes are running behind his usual pattern. It carries no forecast, and after the game it explains a shortfall only if the stint record shows he actually sat following the foul.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Conventions vary by coach and by player; coach identities are not recorded.",
+   "A flag does not predict a substitution.",
+   "Other competitions with a five-foul limit use different conventions."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "personal fouls (live games only)",
+   "play-by-play events with substitutions (live games only)",
+   "derived on-court stints and minutes by quarter (live games only)"
+  ],
+  "data_gaps": [
+   "observations are polled and delayed, not real-time",
+   "no shot locations or tracking data in live feeds",
+   "no coach identities"
+  ],
+  "ruleset": "NBA",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "docs/operations/LIVE-VALIDATION.md and GIZER LIVE rules in CLAUDE.md, read 2026-11-26"
+   },
+   {
+    "key": "nba-official-rulebook",
+    "note": "Rule 3: disqualification on the sixth personal foul; opened 2026-11-26; the conventions themselves are not in the rulebook"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "foul-trouble-management",
+   "personal-fouls-and-fouling-out",
+   "foul-trouble-effect-on-minutes",
+   "minutes-versus-projection-mid-game"
+  ],
+  "evaluation_questions": [
+   "Is a player with three first-half fouls required to sit?",
+   "What evidence shows that foul trouble actually reduced a player's minutes?"
+  ]
+ },
+ {
+  "slug": "pace-of-a-game-in-progress",
+  "department": 19,
+  "kind": "live",
+  "title": "Pace of a game in progress",
+  "summary": "How quickly possessions are being played so far, estimated from the running totals.",
+  "body": "During a game the tempo so far can be gauged from the combined field goal attempts, free throw attempts, turnovers and offensive rebounds of both teams relative to the minutes elapsed, or more directly by counting possessions in the play-by-play. A fast first quarter means more shots and rebounds have been available than usual. Two cautions apply to reading it. Early-game pace is a small sample: one quarter contains only a few dozen possessions per team, and a handful of quick turnovers or a string of free throws can make it look faster or slower than the game will turn out. And pace is not constant through a game. It commonly changes in the fourth quarter with the score, slowing in close finishes and becoming ragged in blowouts. Running pace is a description of opportunity to date and helps explain why counting totals are ahead of or behind their usual rate. It is shown as an observation, with no projection of the final tempo attached.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Estimated from running totals unless possessions are counted from play-by-play.",
+   "Early-game values are small samples.",
+   "Tempo shifts late with game state."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "makes/attempts for FG, 3PT and FT (live games only)",
+   "offensive/defensive rebounds (live games only)",
+   "play-by-play events with substitutions (live games only)",
+   "team totals including points in the paint and fast-break points (live games only)",
+   "score progression (live games only)"
+  ],
+  "data_gaps": [
+   "observations are polled and delayed, not real-time",
+   "no shot locations or tracking data in live feeds"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "docs/operations/LIVE-VALIDATION.md and GIZER LIVE rules in CLAUDE.md, read 2026-11-26"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "pace",
+   "possessions-estimate",
+   "pace-interaction",
+   "runs-and-score-progression",
+   "reading-a-box-score-in-progress"
+  ],
+  "evaluation_questions": [
+   "Why is first-quarter pace an unreliable guide to the full game?",
+   "Which running totals are used to estimate pace so far?"
+  ]
+ },
+ {
+  "slug": "runs-and-score-progression",
+  "department": 19,
+  "kind": "live",
+  "title": "Runs and score progression",
+  "summary": "The path of the score through a game, including stretches in which one team scores heavily.",
+  "body": "Score progression is the record of the margin over time. Within it, a run is a stretch in which one team outscores the other decisively - ten unanswered points, or a sixteen-to-four spell. Runs are the natural texture of basketball: because each possession ends in zero, one, two or three points with a large element of chance, uneven stretches arise constantly, and they are amplified by turnovers that lead to quick baskets. They are frequently described in terms of momentum, as if a run foretold more of the same. The evidence for that is weak, and this platform makes no such inference. Score progression has descriptive uses. It shows when a game was close and when it was decided, which bears on starters' minutes; it identifies which lineups were on the floor during the decisive stretches; and it gives context to plus/minus. We store the progression from live observations. It is a record of what happened and is presented without any statement about what will follow.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Runs are largely chance clustering; no predictive meaning is assigned.",
+   "Progression is sampled at polling intervals plus play-by-play events.",
+   "Attribution of a run to a lineup is descriptive and noisy."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "score progression (live games only)",
+   "play-by-play events with substitutions (live games only)",
+   "derived on-court stints and minutes by quarter (live games only)",
+   "plus/minus (live games only)"
+  ],
+  "data_gaps": [
+   "observations are polled and delayed, not real-time",
+   "no shot locations or tracking data in live feeds"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "docs/operations/LIVE-VALIDATION.md and GIZER LIVE rules in CLAUDE.md, read 2026-11-26"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "plus-minus-noise",
+   "garbage-time-detection-live",
+   "timeout-usage",
+   "single-game-noise",
+   "no-in-game-probability"
+  ],
+  "evaluation_questions": [
+   "Why do scoring runs arise even without any change in how teams are playing?",
+   "Name two descriptive uses of score progression."
+  ]
+ },
+ {
+  "slug": "garbage-time-detection-live",
+  "department": 19,
+  "kind": "live",
+  "title": "Garbage time detection as a judgement",
+  "summary": "Deciding during a game that the result is settled and regulars are finished is a judgement from margin, time and substitutions.",
+  "body": "No signal announces garbage time. It is inferred from three observable things: the size of the margin, the time remaining, and who is on the floor. A large lead late in the fourth quarter with both benches emptied is a clear case. A fifteen-point lead with eight minutes left and starters still playing is not. Any rule that combines these into a label is a convention chosen by whoever wrote it, and different public sites choose differently. During a live game the label is also provisional, because comebacks occur and starters sometimes return. For these reasons a live garbage-time flag here should state its basis - the margin, the clock, and whether the usual rotation players have been substituted out according to the play-by-play - and should be worded as an assessment. Its main use is explanatory: it accounts for a starter's minutes stopping short. Statistics accumulated after the flag are still official and still count toward final totals; the label changes how they are interpreted, not whether they exist.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Any threshold is a convention; none is official.",
+   "Provisional until the game ends.",
+   "Depends on correct substitution data in the feed."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "score progression (live games only)",
+   "derived on-court stints and minutes by quarter (live games only)",
+   "play-by-play events with substitutions (live games only)"
+  ],
+  "data_gaps": [
+   "observations are polled and delayed, not real-time",
+   "no shot locations or tracking data in live feeds"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "docs/operations/LIVE-VALIDATION.md and GIZER LIVE rules in CLAUDE.md, read 2026-11-26"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "garbage-time",
+   "blowout-management",
+   "blowout-risk-to-minutes",
+   "runs-and-score-progression",
+   "minutes-versus-projection-mid-game"
+  ],
+  "evaluation_questions": [
+   "Which three observable things inform a garbage-time judgement?",
+   "Do statistics accumulated in garbage time count toward official totals?"
+  ]
+ },
+ {
+  "slug": "minutes-versus-projection-mid-game",
+  "department": 19,
+  "kind": "live",
+  "title": "Minutes versus projection mid-game",
+  "summary": "Comparing a player's minutes so far with his pregame projection, as an observation and not a new forecast.",
+  "body": "At any point in a game a player's minutes to date can be set beside what his pregame projection implied for the full game. Minutes by quarter, derived from on-court stints, show whether he is following his usual pattern, is ahead because a teammate is in foul trouble, or is behind because of fouls, a short stint or an apparent injury. The comparison has to respect the shape of rotations. Minutes do not accrue evenly, so a starter with fifteen minutes at halftime is not simply on course for thirty; whether he plays his normal fourth quarter depends on the margin. The comparison is a way of seeing how the game is departing from the pregame picture and why. It does not update the projection. Pregame projections on this platform are fixed once made and are shown unchanged beside live observations; no in-game model revises them. Derived stints exist only when the starting five and the substitution chain are consistent; otherwise on-court status is null and the reason is listed.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "No in-game projection model exists; the comparison is descriptive.",
+   "Derived minutes depend on a consistent substitution chain.",
+   "Minutes accrue unevenly across quarters."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "derived on-court stints and minutes by quarter (live games only)",
+   "play-by-play events with substitutions (live games only)",
+   "personal fouls (live games only)",
+   "score progression (live games only)",
+   "projected minutes and stat projections with p10/p90 (models)",
+   "minutes"
+  ],
+  "data_gaps": [
+   "observations are polled and delayed, not real-time",
+   "no shot locations or tracking data in live feeds"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "docs/operations/LIVE-VALIDATION.md and GIZER LIVE rules in CLAUDE.md, read 2026-11-26"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "projected-minutes-uncertainty",
+   "substitution-patterns",
+   "foul-trouble-thresholds-live",
+   "no-in-game-probability",
+   "garbage-time-detection-live"
+  ],
+  "evaluation_questions": [
+   "Why is a starter with fifteen minutes at halftime not simply on course for thirty?",
+   "Does a mid-game comparison change the pregame projection on this platform?"
+  ]
+ },
+ {
+  "slug": "why-live-data-is-delayed",
+  "department": 19,
+  "kind": "live",
+  "title": "Why live data is delayed",
+  "summary": "Live values reach the platform through polling a public provider, so they trail the arena and are never real-time.",
+  "body": "What appears as live data has travelled a chain. An event happens on the court, is entered by scorers, is published by the data provider, is fetched by our server on its polling cycle, is parsed and stored, and is then read by a browser. Each link adds time. Our process polls every few seconds to tens of seconds while a game is in progress and less often otherwise, so observations are typically tens of seconds behind the arena and can be further behind when the provider is slow or failing. For this reason every live value carries the time it was observed, and the platform describes the data as delayed observations and never as real-time. Delay also means that a value on screen may already have been superseded - a basket added, a foul reassigned after review. Anyone comparing our display with a broadcast will see the difference. The limitation is deliberate and stated: the feed is a public, unofficial source, and faster paid feeds have not been purchased.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Actual delay varies and is not measured against the arena clock.",
+   "Provider outages lengthen the delay without warning.",
+   "Polling cadence is a configuration that may change."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "play-by-play events with substitutions (live games only)",
+   "score progression (live games only)"
+  ],
+  "data_gaps": [
+   "no direct arena or official league live feed"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "docs/operations/LIVE-VALIDATION.md and GIZER LIVE rules in CLAUDE.md, read 2026-11-26"
+   },
+   {
+    "key": "nba-api-docs",
+    "note": "README notes that NBA.com endpoints throttle requests and often do not answer cloud-hosted addresses; read 2026-11-26. Our live source is a different public provider."
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "stale-feed-handling",
+   "reading-a-box-score-in-progress",
+   "first-observed-is-not-opening",
+   "instant-replay",
+   "stat-corrections-after-the-game"
+  ],
+  "evaluation_questions": [
+   "Name four links in the chain between an event on court and its appearance on screen.",
+   "Why must every live value carry its observation time?"
+  ]
+ },
+ {
+  "slug": "stale-feed-handling",
+  "department": 19,
+  "kind": "live",
+  "title": "Stale feeds and last verified values",
+  "summary": "When observations stop arriving, the last verified values are shown and marked stale; nothing is invented to fill the gap.",
+  "body": "A live feed can stop: the provider fails, the network drops, or our process restarts. When a game that is in progress has not been observed within a short set interval, the platform marks it stale. The last verified values stay on display with their observation time, and no score, clock or statistic is estimated to cover the gap. A game is treated as live only when the provider itself reports it in progress; an unknown status is not promoted to live. Provider data are attached to a game only when the event identifier and both teams match our schedule, so a mismatched payload is dropped instead of being guessed onto a game. These rules reflect a simple priority: a correct value with an honest age is more useful than a current-looking value of unknown truth. For the reader, a stale marker means the numbers shown are a floor on what has happened - counting statistics can only have increased since - and that no conclusion should be drawn about the present state of the game.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "A stale marker says nothing about why the feed stopped.",
+   "Counting totals shown while stale understate the current state.",
+   "The staleness interval is a configuration value."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "score progression (live games only)",
+   "play-by-play events with substitutions (live games only)"
+  ],
+  "data_gaps": [
+   "no secondary live source to cross-check"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "docs/operations/LIVE-VALIDATION.md and GIZER LIVE rules in CLAUDE.md, read 2026-11-26"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "why-live-data-is-delayed",
+   "reading-a-box-score-in-progress",
+   "no-in-game-probability"
+  ],
+  "evaluation_questions": [
+   "What is displayed when a live feed stops?",
+   "Under what condition is provider data attached to one of our games?"
+  ]
+ },
+ {
+  "slug": "no-in-game-probability",
+  "department": 19,
+  "kind": "live",
+  "title": "Why no in-game probability exists on this platform",
+  "summary": "The platform shows live observations and pregame projections; it produces no live win or stat probabilities and no live guidance.",
+  "body": "Live basketball invites constant re-estimation: who will win now, will a player reach his number from here. This platform deliberately does none of it. There are three reasons. A probability may come only from a registered, validated model, and no in-game model has been built or validated; a number produced by intuition, by pro-rating, or by a language model would be a fabricated statistic. The data are delayed observations from an unofficial public source, unsuitable as the basis for time-sensitive estimates. And the platform's purpose is research and paper testing before games, not in-game wagering guidance, which is excluded by policy. What is shown during a game is therefore limited to observations with their timestamps, the unchanged pregame projection beside them, and descriptive context such as fouls or minutes relative to pattern. A paper position that has not settled is described by its current observed state without outcome wording: it has not been won or lost until the final official statistic is recorded.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "A policy and capability boundary, not a claim that in-game models are impossible.",
+   "Descriptive context can still be over-read by a user as a forecast.",
+   "Pregame projections are not updated for in-game events."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "score progression (live games only)",
+   "projected minutes and stat projections with p10/p90 (models)",
+   "paper-testing results"
+  ],
+  "data_gaps": [
+   "no validated in-game model",
+   "no real-time data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "docs/operations/LIVE-VALIDATION.md and GIZER LIVE rules in CLAUDE.md, read 2026-11-26"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "price-is-not-model-probability",
+   "minutes-versus-projection-mid-game",
+   "why-live-data-is-delayed",
+   "calibration",
+   "paper-testing"
+  ],
+  "evaluation_questions": [
+   "Give two reasons this platform produces no in-game probabilities.",
+   "How is an unsettled paper position described during a game?"
+  ]
+ },
+ {
+  "slug": "stat-corrections-after-the-game",
+  "department": 19,
+  "kind": "live",
+  "title": "Stat corrections after the game",
+  "summary": "Live and final-buzzer statistics can be revised; evaluation uses the final official box score.",
+  "body": "The numbers seen when a game ends are not always the numbers of record. During the game, plays are re-scored after replay reviews and scorer changes; in one evening of observation our system recorded dozens of provider corrections to plays already published, each kept with its earlier wording. After the game the league may still amend the box score - an assist removed, a rebound reassigned. The platform handles this in layers. Live plays are unique per provider event, and a changed play keeps its history. Live rows are refreshed once more after the provider marks the game final. The scheduled settlement and historical jobs then re-import final box scores, and paper results are settled on those. If a correction arrives after a paper settlement, the fix is a new superseding record, never an edit of the old one. For a reader, the rule is to treat any statistic near a threshold as provisional until the final official figure is in, and to remember that an exchange contract settles by its own rules and source.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "The timing of league corrections was not verified from a source.",
+   "Our provider's final box may itself lag an official correction.",
+   "The count of corrections cited is from one observed evening, not a general rate."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "play-by-play events with substitutions (live games only)",
+   "paper-testing results",
+   "points",
+   "rebounds",
+   "assists"
+  ],
+  "data_gaps": [
+   "no official correction log",
+   "no scorer identity"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "docs/operations/LIVE-VALIDATION.md and GIZER LIVE rules in CLAUDE.md, read 2026-11-26"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "official-scoring-and-stat-corrections",
+   "settlement-rules-and-wording",
+   "paper-testing",
+   "instant-replay",
+   "why-live-data-is-delayed"
+  ],
+  "evaluation_questions": [
+   "Why should a statistic near a threshold be treated as provisional at the final buzzer?",
+   "How is a correction that arrives after a paper settlement handled?"
+  ]
+ }
+]

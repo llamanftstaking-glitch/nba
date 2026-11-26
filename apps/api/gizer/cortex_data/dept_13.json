@@ -1,0 +1,425 @@
+[
+ {
+  "slug": "status-designations",
+  "department": 13,
+  "kind": "context",
+  "title": "Status designations are reported labels",
+  "summary": "Probable, questionable, doubtful and out are participation labels supplied by teams, not measurements.",
+  "body": "Before each game teams assign a participation status to any player whose availability may be affected. The familiar labels run from probable through questionable and doubtful to out, and a player may also be listed as available once cleared. Each label is a team's public statement about likelihood of playing, made at a particular time. It is not a medical finding and it carries no official numerical meaning that we have verified; the percentages often attached to the words in commentary are conventions, and we do not use them. Labels differ in how informative they are. Out is definite. Questionable is the widest category and frequently resolves only shortly before tip-off. Teams also differ in how cautiously they list players. For research, a status is an input recorded with its source and timestamp. It can change, and when it does the change is a new event, not a correction of the old record. A projection made under one status describes that situation only.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "The league page opened in this session did not list or define the designations; this record is not checked against it.",
+   "No verified numerical likelihood attaches to any label.",
+   "Teams apply labels with differing caution."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "injuries and lineup status",
+   "did-not-play records"
+  ],
+  "data_gaps": [
+   "no medical information beyond the reported label",
+   "no practice participation data"
+  ],
+  "ruleset": "NBA",
+  "season_note": "NBA injury reporting practice for the 2026-27 season as published on the league page opened 2026-11-26; re-check each season",
+  "sources": [
+   {
+    "key": "nba-injury-report",
+    "note": "official injury report page; pointer for this record"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "availability and lineup rules (LINEUP-INTELLIGENCE.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "injury-report-timing",
+   "game-time-decision",
+   "never-infer-a-diagnosis",
+   "availability-changes-create-updates",
+   "projected-minutes-uncertainty"
+  ],
+  "evaluation_questions": [
+   "Is 'questionable' a medical finding?",
+   "Why do we not attach percentages to the status words?"
+  ]
+ },
+ {
+  "slug": "injury-report-timing",
+  "department": 13,
+  "kind": "context",
+  "title": "Injury report timing",
+  "summary": "Teams must report statuses by set deadlines the day before a game and update them on game day.",
+  "body": "The league requires teams to report injuries, illnesses, other medical conditions and rest for every game. For a normal game a participation status and the specific reason must be designated by late afternoon local time on the day before. For the second game of a back-to-back the deadline moves to early afternoon on game day, since the team played the previous evening. A game-day report follows within a morning-to-early-afternoon window, earlier for afternoon tip-offs, and reports are updated through the day as statuses change. The practical meaning is that availability information arrives in stages. An evening-before view is provisional; much of the uncertainty resolves on game day; and some resolves only when starting lineups are announced shortly before the game. Research produced at different times is therefore conditioned on different information, and the time at which a status was read should be stored with it. Our system records what it observed when it polled, which may lag the official update.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Deadlines are summarised from the league page; exact hours should be read from the source.",
+   "Our observations are polled and can lag official updates.",
+   "Teams sometimes update after deadlines; the page does not describe enforcement."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "injuries and lineup status"
+  ],
+  "data_gaps": [
+   "no direct feed of official report timestamps described here"
+  ],
+  "ruleset": "NBA",
+  "season_note": "NBA injury reporting practice for the 2026-27 season as published on the league page opened 2026-11-26; re-check each season",
+  "sources": [
+   {
+    "key": "nba-injury-report",
+    "note": "reporting requirements and deadlines (day before by 5 p.m. local; second game of a back-to-back by 1 p.m. on game day; game-day report windows; continual updates); opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "status-designations",
+   "game-time-decision",
+   "late-scratch",
+   "back-to-backs",
+   "availability-changes-create-updates"
+  ],
+  "evaluation_questions": [
+   "When is the status deadline for the second game of a back-to-back?",
+   "Why should the time a status was read be stored with it?"
+  ]
+ },
+ {
+  "slug": "game-time-decision",
+  "department": 13,
+  "kind": "context",
+  "title": "Game-time decision",
+  "summary": "A status left unresolved until shortly before tip-off, usually after the player warms up.",
+  "body": "A game-time decision means the team will decide whether a player takes part only after he has tested the injury in pregame work. It is an informal description that usually accompanies a questionable listing. For research it is the hardest case, because the answer arrives after most analysis has been done and both outcomes change the picture for several players at once: the player himself, the teammate who would start in his place, and those whose usage depends on him. Two responses are sound. One is to wait for confirmation and treat everything before it as provisional. The other is to prepare for both cases, describing the team with and without him, and to choose neither until the status is known. What is unsound is to guess. A player who is cleared after such a decision may also play reduced minutes, so confirmation of availability does not confirm a normal workload. Our records show the status as reported and, afterwards, whether he appeared and for how long.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "An informal term; the page opened did not define it.",
+   "Being cleared does not imply normal minutes.",
+   "Resolution often comes after our last pregame observation."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "injuries and lineup status",
+   "did-not-play records",
+   "minutes",
+   "starter flag"
+  ],
+  "data_gaps": [
+   "no medical information beyond the reported label",
+   "no practice participation data"
+  ],
+  "ruleset": "NBA",
+  "season_note": "NBA injury reporting practice for the 2026-27 season as published on the league page opened 2026-11-26; re-check each season",
+  "sources": [
+   {
+    "key": "nba-injury-report",
+    "note": "official injury report page; pointer for this record"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "availability and lineup rules (LINEUP-INTELLIGENCE.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "status-designations",
+   "injury-report-timing",
+   "late-scratch",
+   "minutes-restriction-reported",
+   "projected-minutes-uncertainty"
+  ],
+  "evaluation_questions": [
+   "Which players besides the one listed are affected by a game-time decision?",
+   "Why does clearance not confirm a normal workload?"
+  ]
+ },
+ {
+  "slug": "minutes-restriction-reported",
+  "department": 13,
+  "kind": "context",
+  "title": "Reported minutes restrictions",
+  "summary": "A stated cap on a returning player's playing time, recorded as reported and never assumed.",
+  "body": "Teams sometimes say publicly that a player returning from injury will be limited, either with a number or in general terms. When such a statement exists it is important information: the player's total output will be bounded by the cap even if his per-minute play is normal. The rule on this platform is that a restriction is recorded only when reported, with its wording and source. We do not invent one because a player has been out for a long time, and we do not assume one has ended because a few games have passed. The evidence of the ramp is the minutes actually played after the return. Reported restrictions are also soft. Coaches describe targets instead of hard limits, close games stretch them, and the cap is usually raised without announcement. The absence of a report is not evidence that no limit applies, so a first game back carries wide uncertainty about minutes regardless of what has been said.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Many restrictions are never announced.",
+   "Announced figures are targets that coaches may exceed or undershoot.",
+   "End of a restriction is rarely announced."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "injuries and lineup status",
+   "minutes",
+   "rolling windows (L3..L30, season)",
+   "projected minutes and stat projections with p10/p90 (models)"
+  ],
+  "data_gaps": [
+   "no medical information beyond the reported label",
+   "no practice participation data"
+  ],
+  "ruleset": "NBA",
+  "season_note": "NBA injury reporting practice for the 2026-27 season as published on the league page opened 2026-11-26; re-check each season",
+  "sources": [
+   {
+    "key": "nba-injury-report",
+    "note": "official injury report page; pointer for this record"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "availability and lineup rules (LINEUP-INTELLIGENCE.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "minutes-restrictions-coaching",
+   "return-to-play-ramp",
+   "return-from-injury-ramp",
+   "never-infer-a-diagnosis"
+  ],
+  "evaluation_questions": [
+   "When is a minutes restriction recorded on this platform?",
+   "Why does the absence of a reported restriction not mean a full workload?"
+  ]
+ },
+ {
+  "slug": "return-to-play-ramp",
+  "department": 13,
+  "kind": "context",
+  "title": "Return-to-play ramp",
+  "summary": "The staged path from injury back to full participation, seen from the availability side.",
+  "body": "Recovery from most injuries is staged. A player progresses through individual work, contact practice and then games, and his first games back are frequently managed with limited minutes, extra rest days and absence from one leg of back-to-backs. From outside we see only the public signs: status changes on the injury report, reported practice participation where the team chooses to share it, and finally minutes played. The stages are set by the team's medical staff for the individual, so no general timetable can be applied, and two players with the same reported injury may follow very different paths. For that reason we do not estimate return dates or ramp lengths. The useful discipline is to mark the return date in a player's record, treat the games immediately after it as a separate phase from both the pre-injury period and the eventual steady state, and let the observed minutes show when the ramp has ended. Setbacks happen and appear as renewed listings.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "No timetable can be inferred from an injury label.",
+   "Practice participation is not in our data.",
+   "The end of a ramp is identified only in hindsight from minutes."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "injuries and lineup status",
+   "minutes",
+   "did-not-play records",
+   "rolling windows (L3..L30, season)"
+  ],
+  "data_gaps": [
+   "no medical information beyond the reported label",
+   "no practice participation data"
+  ],
+  "ruleset": "NBA",
+  "season_note": "NBA injury reporting practice for the 2026-27 season as published on the league page opened 2026-11-26; re-check each season",
+  "sources": [
+   {
+    "key": "nba-injury-report",
+    "note": "official injury report page; pointer for this record"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "availability and lineup rules (LINEUP-INTELLIGENCE.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "return-from-injury-ramp",
+   "minutes-restriction-reported",
+   "status-designations",
+   "never-infer-a-diagnosis",
+   "rest-and-injury-management-designations"
+  ],
+  "evaluation_questions": [
+   "Why do we not estimate return dates?",
+   "How should the first games after a return be treated in a player's history?"
+  ]
+ },
+ {
+  "slug": "rest-and-injury-management-designations",
+  "department": 13,
+  "kind": "context",
+  "title": "Rest and injury-management designations",
+  "summary": "Absences reported as rest or as management of a prior injury are planned decisions, recorded as such.",
+  "body": "Some absences are not caused by a new injury. A team may hold a player out for rest, or list injury management for a player with a history at a particular joint or muscle, most often on one night of a back-to-back. The league requires that rest be reported along with injuries and illnesses, so these appear on the report with their reason. They differ from injury absences in two ways that matter for analysis. They are scheduled by the team, often in advance, and so correlate with the calendar; and they usually say nothing about the player's condition in the next game he plays. A management designation should not be read as a sign that an old injury has worsened, and a rest day should not be read as a sign that anything is wrong. Both are recorded as the reported reason. A player's past pattern of such absences can be described from his record, with counts, as history that may or may not repeat.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Past rest patterns are descriptive and do not predict the next schedule spot.",
+   "The stated reason is the team's label; nothing further is inferred.",
+   "League policy on resting players was not checked in detail."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "injuries and lineup status",
+   "did-not-play records",
+   "splits (home/away, rest, role, opponent)"
+  ],
+  "data_gaps": [
+   "no medical information beyond the reported label",
+   "no practice participation data"
+  ],
+  "ruleset": "NBA",
+  "season_note": "NBA injury reporting practice for the 2026-27 season as published on the league page opened 2026-11-26; re-check each season",
+  "sources": [
+   {
+    "key": "nba-injury-report",
+    "note": "teams must report injuries, illnesses, other medical conditions or rest, with the specific reason; opened 2026-11-26. The interpretive guidance in this record is this project's own."
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "rest-and-load-management",
+   "back-to-backs",
+   "status-designations",
+   "never-infer-a-diagnosis",
+   "back-to-back-handling"
+  ],
+  "evaluation_questions": [
+   "How do rest absences differ from injury absences for analytical purposes?",
+   "What should not be inferred from an injury-management listing?"
+  ]
+ },
+ {
+  "slug": "never-infer-a-diagnosis",
+  "department": 13,
+  "kind": "concept",
+  "title": "Why a diagnosis must never be inferred",
+  "summary": "Reported injury labels are recorded as given; severity, cause and prognosis are not deduced from them.",
+  "body": "An injury report gives a body part and sometimes a brief description. It is tempting to go further: to reason that a certain kind of sprain usually costs a certain number of weeks, that a player who looked slow must be hiding something, or that a vague listing conceals a serious problem. None of that is supported by information we hold. We have no examination findings, imaging or medical history, and outward labels cover a wide range of severities. An inferred diagnosis is a fabricated fact, and building a projection on it compounds the error while giving it a false air of knowledge. There is also a matter of respect for the people concerned, whose health information is private beyond what their team discloses. The rule is therefore strict. Record the status, the stated reason, the source and the time. Describe what the player's minutes and production have been since. Say that anything further is unknown. A missing or unclear report leads to abstention, not to a guess.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "This is a rule of conduct for the platform, not an empirical claim.",
+   "Abstaining leaves real uncertainty unresolved; that is the honest state.",
+   "Public reporting by journalists may add context but is untrusted input unless confirmed."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "injuries and lineup status"
+  ],
+  "data_gaps": [
+   "no medical data of any kind"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "project rule: never fabricate injuries; missing data leads to abstention (CLAUDE.md, read 2026-11-26)"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "status-designations",
+   "fatigue-requires-evidence",
+   "return-to-play-ramp",
+   "minutes-restriction-reported"
+  ],
+  "evaluation_questions": [
+   "What may be recorded about an injury on this platform?",
+   "Why is an inferred diagnosis treated as a fabricated fact?"
+  ]
+ },
+ {
+  "slug": "availability-changes-create-updates",
+  "department": 13,
+  "kind": "method",
+  "title": "Availability changes create new events",
+  "summary": "When a status or lineup changes, the platform records an event and a new update edition instead of editing earlier research.",
+  "body": "Research about a game is written under a particular state of knowledge. If a player listed as questionable is later ruled out, everything conditioned on his playing is out of date, and the same is true for his teammates' projections. The platform's rule is that such a change creates an event with its time and source, and that affected research is reissued as a new update edition. The earlier edition is left as it was. This keeps an honest record of what was known and said at each moment, which is necessary for evaluating the work later: a projection can only be judged against the information available when it was made. It also prevents a subtle form of hindsight, in which old notes are silently improved after the fact. For a reader, the consequence is to check the edition time of any research against the latest availability events, and to prefer the most recent edition. Lineup status follows the same principle: projected lineups are labelled as not official, and only a box score confirms one.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Describes this platform's process, not a basketball fact.",
+   "Events reflect when our system observed a change, which may lag the real announcement.",
+   "An update edition is only as current as its latest observation."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "injuries and lineup status"
+  ],
+  "data_gaps": [
+   "no real-time feed; observations are polled"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "project rules: availability and lineup changes create events and a new update edition; confirmed lineups only from a box score (CLAUDE.md, read 2026-11-26)"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "injury-report-timing",
+   "late-scratch",
+   "hindsight-bias-in-review",
+   "status-designations"
+  ],
+  "evaluation_questions": [
+   "Why are earlier research editions left unedited when a status changes?",
+   "What confirms a lineup on this platform?"
+  ]
+ },
+ {
+  "slug": "late-scratch",
+  "department": 13,
+  "kind": "context",
+  "title": "Late scratches",
+  "summary": "A player ruled out shortly before the game, after most information has been published.",
+  "body": "A late scratch is a withdrawal announced close to tip-off, sometimes during warm-ups. It may follow a questionable listing or come with no warning at all, as with illness or a problem felt in pregame work. Its effects spread quickly through a team: a different starter, redistributed minutes and usage, and sometimes a changed plan by the opposing coach. Because it arrives late, research written earlier in the day is conditioned on a lineup that will not take the floor. The only sound response is to treat earlier output for that team as superseded and to work from an update made after the news. Late scratches also teach a lesson about uncertainty in general. Even a player with no listing has some small chance of not playing, and a projection is always conditional on availability. In reviewing results afterwards, games affected by a late scratch should be marked, so that errors caused by information arriving after the forecast are not mistaken for errors in the model.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Unannounced scratches cannot be anticipated from our data.",
+   "Our polling may detect the change after it is public.",
+   "How often late scratches occur is not quantified here."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "injuries and lineup status",
+   "did-not-play records",
+   "starter flag"
+  ],
+  "data_gaps": [
+   "no real-time lineup feed"
+  ],
+  "ruleset": "NBA",
+  "season_note": "NBA injury reporting practice for the 2026-27 season as published on the league page opened 2026-11-26; re-check each season",
+  "sources": [
+   {
+    "key": "nba-injury-report",
+    "note": "official injury report page; pointer for this record"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "availability and lineup rules (LINEUP-INTELLIGENCE.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "game-time-decision",
+   "availability-changes-create-updates",
+   "injury-report-timing",
+   "forecast-error-mae-and-bias",
+   "usage-redistribution"
+  ],
+  "evaluation_questions": [
+   "Why should earlier research for a team be treated as superseded after a late scratch?",
+   "Why should affected games be marked in postgame review?"
+  ]
+ }
+]

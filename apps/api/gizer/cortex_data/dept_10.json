@@ -1,0 +1,389 @@
+[
+ {
+  "slug": "reading-rebound-percentages",
+  "department": 10,
+  "kind": "concept",
+  "title": "Reading OREB%, DREB% and REB%",
+  "summary": "Rebound percentages express rebounds as a share of those available while a player was on the floor.",
+  "body": "A rebound total depends on how many shots were missed. Rebound percentage removes that dependence by asking what share of the available rebounds a player collected during his minutes. Three versions exist. Offensive rebound percentage uses his team's missed shots as the pool, defensive rebound percentage uses the opponent's, and total rebound percentage uses both. They should be read separately because the scales differ: defensive rebounds are much easier to obtain, so a given player's defensive share is normally well above his offensive share. With five players on each side, an even split would be one tenth of all rebounds per player; bigs sit well above that and guards below. The percentages are better than raw totals for comparing players across paces and minutes loads. They are still team-dependent. A big who shares the floor with another strong rebounder will have a lower share than he would alone. Box-score versions are estimates that assume a player's time on court saw a proportional share of the game's misses.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Box-score versions estimate on-court rebound opportunities from team totals.",
+   "Shares depend on which teammates are also rebounding.",
+   "Our historical data lack the offensive/defensive split, so only a total share can be approximated."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "rebounds",
+   "minutes",
+   "offensive/defensive rebounds (live games only)"
+  ],
+  "data_gaps": [
+   "no rebound chances or box-out data",
+   "no offensive/defensive split in historical box scores",
+   "no opponent rebound totals joined per player-game in historical data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "rebound percentage definitions; pointer; not used to check this record"
+   },
+   {
+    "key": "nba-stats-glossary",
+    "note": "rebounding entries; pointer; not used to check this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "total-rebound-percentage",
+   "offensive-rebound-percentage",
+   "defensive-rebound-percentage",
+   "rebounds-follow-missed-shots",
+   "rebounder"
+  ],
+  "evaluation_questions": [
+   "Why should offensive and defensive rebound percentages be read on different scales?",
+   "What share of rebounds would each player get under an even split?"
+  ]
+ },
+ {
+  "slug": "rebound-chances",
+  "department": 10,
+  "kind": "concept",
+  "title": "Rebound chances (not in our data)",
+  "summary": "A tracking measure of how often a player was positioned to get a rebound; unavailable here.",
+  "body": "The league's tracking data define a rebound chance as an occasion on which a player is the closest to the ball at some point between its dropping below the rim and its being secured. Dividing rebounds by chances shows how well a player converts his opportunities, and the count of chances shows how often his positioning put him in the contest. These measures separate two things a box score blends: getting to the ball and securing it. They also reveal how many of a player's rebounds were available to him alone. This platform holds no tracking data. We have no rebound chances, no conversion rates and no distances, and no figure here should be taken as a stand-in for them. The practical effect is that we cannot tell whether a change in a player's rebounding reflects fewer opportunities - a different position on the floor, a new scheme, a rebounding teammate returning - or a change in how he competes for them. Both remain possible explanations and should be presented that way.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Cannot be computed or approximated from our data.",
+   "The tracking definition belongs to the league and may be revised.",
+   "Even with chances, scheme effects complicate interpretation."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [],
+  "data_gaps": [
+   "no tracking data: rebound chances, contested rebounds, rebound distance"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "nba-stats-glossary",
+    "note": "Rebound chances entry: opportunities where the player is closest to the ball between the ball crossing below the rim and being rebounded; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "contested-vs-uncontested-rebounds",
+   "reading-rebound-percentages",
+   "touches-not-in-our-data",
+   "potential-assists"
+  ],
+  "evaluation_questions": [
+   "What two things do rebound chances allow an analyst to separate?",
+   "What can we not determine about a decline in a player's rebounds without chance data?"
+  ]
+ },
+ {
+  "slug": "contested-vs-uncontested-rebounds",
+  "department": 10,
+  "kind": "concept",
+  "title": "Contested versus uncontested rebounds",
+  "summary": "Many rebounds are collected with no opponent nearby; those say less about rebounding skill than contested ones.",
+  "body": "Not all rebounds are won. On a typical defensive possession the defence has inside position, and the ball often falls to a player with no opponent close enough to challenge him. Tracking data label a rebound contested when an opponent is within a short distance of the rebounder, and uncontested otherwise. The split changes how totals should be understood. An uncontested defensive rebound would usually have been taken by some teammate if not by this one, so it adds little to the team; who gets it is partly a matter of team habit, such as letting the point guard collect the ball to start the break. Contested rebounds, and offensive rebounds in general, are closer to a real contribution. Two players with the same total can therefore differ greatly in impact. For projection the uncontested share matters in another way: it is the part of a player's rebounding most easily reassigned when lineups change. We do not hold this split, so the point serves as a caution when reading totals.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "The split is tracking data that we do not have.",
+   "The distance threshold is the league's definition and is cited, not adopted by us.",
+   "Uncontested does not mean valueless; securing the ball still ends the possession."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "rebounds",
+   "offensive/defensive rebounds (live games only)"
+  ],
+  "data_gaps": [
+   "no contested/uncontested rebound split",
+   "no rebound chances or box-out data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "nba-stats-glossary",
+    "note": "Contested rebound entry: a rebound collected with an opponent within 3.5 feet; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "rebound-chances",
+   "defensive-rebounding-and-boxing-out",
+   "rebounder",
+   "offensive-rebounding-value"
+  ],
+  "evaluation_questions": [
+   "Why does an uncontested defensive rebound add little to the team?",
+   "Which part of a player's rebounding is most easily reassigned when lineups change?"
+  ]
+ },
+ {
+  "slug": "crash-versus-get-back",
+  "department": 10,
+  "kind": "context",
+  "title": "Team scheme: crash the glass or get back",
+  "summary": "A team's choice between sending players to the offensive boards and retreating to defend transition.",
+  "body": "When a shot goes up, each offensive player either goes to the basket for the rebound or retreats to stop a fast break. Coaches set this as policy. Some send two or three players to the glass and accept the risk of being outnumbered going the other way; some send one, or none, and concentrate on getting set on defence. The policy shapes individual numbers. On a crashing team, forwards and even guards collect offensive rebounds; on a get-back team, almost all of them belong to the centre, and there are fewer in total. It also affects the opponent: against a team that crashes, defensive rebounds are harder to secure, while fast-break chances are more frequent once the ball is won. A player's offensive rebounding is therefore partly his coach's decision, and it can change when he changes teams or when the coach changes approach for a particular opponent. We can see the team-level outcome in live games through offensive rebound and fast-break totals, not the instruction behind it.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "The policy itself is not observable; only its box-score outcome.",
+   "Policies vary by opponent and by lineup.",
+   "Offensive rebound counts by player exist only for live games since 2026-11-25."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "offensive/defensive rebounds (live games only)",
+   "team totals including points in the paint and fast-break points (live games only)",
+   "rebounds"
+  ],
+  "data_gaps": [
+   "no rebound chances or box-out data",
+   "no offensive/defensive split in historical box scores",
+   "no coach identities"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "fiba-wabc",
+    "note": "coaching manuals discuss rebounding and defensive balance; pointer; not used to check this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "transition-defense",
+   "offensive-rebounding-value",
+   "offensive-rebound-percentage",
+   "defensive-rebounding-and-boxing-out",
+   "transition-offense"
+  ],
+  "evaluation_questions": [
+   "What does a team risk by sending three players to the offensive glass?",
+   "Why is a player's offensive rebounding partly a coaching decision?"
+  ]
+ },
+ {
+  "slug": "rebounds-follow-missed-shots",
+  "department": 10,
+  "kind": "concept",
+  "title": "Rebounding follows pace and missed shots",
+  "summary": "The number of rebounds available in a game is set by how many shots are missed.",
+  "body": "A rebound requires a miss. The total available in a game is roughly the number of missed field goals plus missed final free throws, less the balls that go out of bounds untouched. Two things drive that number. Pace determines how many shots are taken, and shooting accuracy determines how many miss. A fast game between two poor-shooting teams offers many rebounds; a slow game between two accurate ones offers few. This means a player's rebound total can rise or fall for reasons that are unrelated to his effort or role. It also creates a subtle link between statistics: a night on which the opponent shoots badly gives the defence more defensive rebounds, and a night on which his own team shoots badly gives a big more offensive rebound chances. When comparing a player's rebounding across games or opponents, the available misses should be considered first. Opponent context in our data offers rebounds allowed per game, which blends the opponent's own rebounding with the pace and shooting of its games.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Available rebounds for a specific player's minutes are not counted in our historical data.",
+   "Opponent rebounds-allowed figures are not adjusted for pace or shooting.",
+   "Team rebounds and dead-ball rebounds complicate exact accounting."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "rebounds",
+   "opponent allowed-per-game context",
+   "field goal attempts",
+   "makes/attempts for FG, 3PT and FT (live games only)",
+   "offensive/defensive rebounds (live games only)"
+  ],
+  "data_gaps": [
+   "no rebound chances or box-out data",
+   "no offensive/defensive split in historical box scores"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "rebound percentage definitions; pointer; not used to check this record"
+   },
+   {
+    "key": "nba-stats-glossary",
+    "note": "rebounding entries; pointer; not used to check this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "reading-rebound-percentages",
+   "pace",
+   "pace-interaction",
+   "rebounder",
+   "opponent-defensive-strength"
+  ],
+  "evaluation_questions": [
+   "What two factors determine how many rebounds are available in a game?",
+   "Why can a big man's offensive rebound chances rise when his own team shoots poorly?"
+  ]
+ },
+ {
+  "slug": "positional-rebounding",
+  "department": 10,
+  "kind": "concept",
+  "title": "Positional rebounding",
+  "summary": "Rebounding expectations differ by position and role, and by where a player stands when shots go up.",
+  "body": "Centres and power forwards collect the most rebounds because they play nearest the basket at both ends. Wings collect fewer and guards fewest, with exceptions for guards who are assigned to take defensive rebounds and push the ball. Judging a player's rebounding therefore needs a reference group: a figure that is poor for a centre can be excellent for a guard. Position in the modern game is loose, however, and what matters more is location and task. A big who shoots from the perimeter is far from the rim when his teammates' shots miss and will have few offensive rebounds whatever his size. A wing who plays as a small-ball forward will be asked to rebound against bigger players. A team's collective rebounding also redistributes when lineups change: playing small moves rebounds toward wings and guards, and losing a centre to injury shifts them to whoever replaces him inside. Position labels in our data are descriptive, and we do not hold positional splits of what opponents allow.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Position labels are coarse and do not capture role.",
+   "No positional opponent splits are available.",
+   "Reference-group comparisons are not computed in this record."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "rebounds",
+   "minutes",
+   "with/without-teammate splits"
+  ],
+  "data_gaps": [
+   "no rebound chances or box-out data",
+   "no offensive/defensive split in historical box scores",
+   "no positional defence splits"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "rebound percentage definitions; pointer; not used to check this record"
+   },
+   {
+    "key": "nba-stats-glossary",
+    "note": "rebounding entries; pointer; not used to check this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "rebounder",
+   "stretch-big",
+   "positional-matchups",
+   "rebounding-with-and-without-teammates",
+   "reading-rebound-percentages"
+  ],
+  "evaluation_questions": [
+   "Why might a tall stretch big have few offensive rebounds?",
+   "How does playing a small lineup redistribute rebounds?"
+  ]
+ },
+ {
+  "slug": "offensive-rebounding-value",
+  "department": 10,
+  "kind": "concept",
+  "title": "The value of an offensive rebound",
+  "summary": "An offensive rebound extends a possession and often leads to a high-percentage shot.",
+  "body": "An offensive rebound gives a team a second attempt on the same possession. Because the rebounder is usually close to the basket and the defence is out of position, the shot that follows - a putback or a kick-out to an open shooter - tends to be a good one. The shot clock returns to fourteen seconds, so the second chance is brief. From the standpoint of efficiency an offensive rebound rescues a possession that would otherwise have ended with nothing, which is why offensive rebounding rate is counted among the main factors of team offence. The cost is the transition exposure created by sending players to the glass. For individuals, offensive rebounds are scarcer and more variable than defensive ones and are concentrated among a small number of players. They also feed scoring: putbacks give a big man attempts that do not depend on anyone passing to him, a small but dependable source of points. Second-chance points per player are not something our data record.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Second-chance points by player are not available.",
+   "The quality of the shot after an offensive rebound is described in general terms, not measured here.",
+   "Scarce events: single-game counts are noisy."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "offensive/defensive rebounds (live games only)",
+   "rebounds",
+   "team totals including points in the paint and fast-break points (live games only)"
+  ],
+  "data_gaps": [
+   "no second-chance points per player",
+   "no putback identification"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "rebound percentage definitions; pointer; not used to check this record"
+   },
+   {
+    "key": "nba-stats-glossary",
+    "note": "rebounding entries; pointer; not used to check this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "shot-clock-14-reset",
+   "offensive-rebound-percentage",
+   "crash-versus-get-back",
+   "offensive-and-defensive-rebound",
+   "rim-runner"
+  ],
+  "evaluation_questions": [
+   "Why is the shot after an offensive rebound often a good one?",
+   "What does a team risk in pursuing offensive rebounds?"
+  ]
+ },
+ {
+  "slug": "rebounding-with-and-without-teammates",
+  "department": 10,
+  "kind": "concept",
+  "title": "Rebounding with and without teammates",
+  "summary": "A player's rebounds depend on which other rebounders share the floor with him.",
+  "body": "Rebounds are a shared pool within a lineup. When two strong rebounders play together they divide the available balls, and each gets fewer than he would alongside weaker rebounders. The absence of a team's leading rebounder therefore tends to raise the totals of those who remain, especially the player who takes over his position near the basket; his return has the opposite effect. The size of the shift depends on how the vacated minutes are filled. If a similar player steps in, little changes for the others; if the team goes small, rebounds spread toward the wings. This is one of the more dependable teammate effects in basketball because the mechanism is direct, but it still needs to be checked against the record instead of assumed. Our with-and-without splits show a player's rebounds in games a named teammate played and missed. As always the count of games in each group must be shown, and other differences between the two sets of games - opponents, minutes, other injuries - can account for part of any gap.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "With/without samples are often small.",
+   "Other lineup changes coincide with the absence.",
+   "The effect depends on who replaces the missing player."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "rebounds",
+   "with/without-teammate splits",
+   "minutes",
+   "injuries and lineup status"
+  ],
+  "data_gaps": [
+   "no rebound chances or box-out data",
+   "no offensive/defensive split in historical box scores",
+   "no lineup data before 2026-11-25"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "rebound percentage definitions; pointer; not used to check this record"
+   },
+   {
+    "key": "nba-stats-glossary",
+    "note": "rebounding entries; pointer; not used to check this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "with-without-splits",
+   "confounding-in-with-without",
+   "usage-redistribution",
+   "positional-rebounding",
+   "rebounder"
+  ],
+  "evaluation_questions": [
+   "Why do two strong rebounders each collect fewer rebounds when they play together?",
+   "What must accompany any with/without rebounding comparison?"
+  ]
+ }
+]

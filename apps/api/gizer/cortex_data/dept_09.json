@@ -1,0 +1,448 @@
+[
+ {
+  "slug": "reading-true-shooting",
+  "department": 9,
+  "kind": "concept",
+  "title": "Reading true shooting percentage",
+  "summary": "How to interpret TS% as points per scoring attempt, and what it leaves out.",
+  "body": "True shooting percentage expresses a player's points as a fraction of the points he would have scored by making a two on every scoring attempt, where attempts include an allowance for free throws. It is the broadest single efficiency figure because it rewards threes and free throws as well as accuracy. Reading it well takes three habits. First, compare like with like: efficiency expectations differ between a high-usage creator and a low-usage finisher, since the finisher takes only easy shots. Second, check the volume behind it. A percentage built on forty attempts is an anecdote. Third, remember what it omits: turnovers, shot creation for others, and the difficulty of the attempts. A player can post a strong figure by declining hard shots that someone on his team must then take. In our historical data the inputs - points, field goal attempts and free throw attempts - are all present, so the figure can be computed for any window, with the free throw coefficient as the main approximation.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Says nothing about turnovers or passing.",
+   "Depends on an approximate free throw coefficient.",
+   "Unstable over small numbers of attempts."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "points",
+   "field goal attempts",
+   "free throw attempts",
+   "rolling windows (L3..L30, season)"
+  ],
+  "data_gaps": [
+   "no shot locations or shot difficulty"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "shooting efficiency definitions; pointer; not used to check this record"
+   },
+   {
+    "key": "nba-stats-glossary",
+    "note": "shooting efficiency definitions; pointer; not used to check this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "true-shooting-percentage",
+   "efficiency-versus-volume",
+   "points-per-shot-attempt",
+   "sample-size-and-confidence",
+   "reading-effective-field-goal"
+  ],
+  "evaluation_questions": [
+   "What three habits help in reading TS% responsibly?",
+   "How can a player post a high TS% while making his team's offence harder?"
+  ]
+ },
+ {
+  "slug": "reading-effective-field-goal",
+  "department": 9,
+  "kind": "concept",
+  "title": "Reading effective field goal percentage",
+  "summary": "eFG% adjusts field goal percentage for the extra value of threes and isolates shooting from the floor.",
+  "body": "Effective field goal percentage answers a narrower question than true shooting: how productive were this player's field goal attempts, given that some were worth three? It leaves free throws out entirely. That makes it the right tool for judging shot-making and shot selection from the floor, and the wrong one for players whose value lies in drawing fouls, who will look worse than they are. The gap between a player's true shooting and effective field goal figures is itself informative, since it reflects how much he adds at the line. For three-point specialists eFG% can be high on ordinary-looking raw field goal percentages, and it is volatile for them because their makes are worth more and arrive less predictably. In our historical box scores the calculation needs field goals made, which must be derived from points, threes and free throws made; because free throw makes are not held for older games, an exact eFG% is available to us only for live games with full shooting lines.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Ignores free throws, which penalises foul-drawers.",
+   "Exact computation is limited in our historical data because makes are incomplete.",
+   "Volatile for low-volume and three-heavy shooters."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "three-pointers made",
+   "field goal attempts",
+   "makes/attempts for FG, 3PT and FT (live games only)"
+  ],
+  "data_gaps": [
+   "no field goal or free throw makes in historical box scores",
+   "no shot locations"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "shooting efficiency definitions; pointer; not used to check this record"
+   },
+   {
+    "key": "nba-stats-glossary",
+    "note": "shooting efficiency definitions; pointer; not used to check this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "effective-field-goal-percentage",
+   "reading-true-shooting",
+   "three-point-variance",
+   "scoring-values"
+  ],
+  "evaluation_questions": [
+   "What does the gap between a player's TS% and eFG% reflect?",
+   "For which kind of player is eFG% a poor summary of scoring efficiency?"
+  ]
+ },
+ {
+  "slug": "three-point-variance",
+  "department": 9,
+  "kind": "concept",
+  "title": "Three-point variance and small samples",
+  "summary": "Three-point results swing widely over short spans because each make is worth more and success rates are low.",
+  "body": "A three-point attempt succeeds less often than it fails for nearly every shooter, and each success is worth three points. That combination makes outcomes lumpy. Over a single game a capable shooter can easily make none of six or four of six with no change in skill, and the difference is twelve points. Over five or ten games the percentage can sit far above or below the player's long-run level for the same reason. It takes a large number of attempts - a substantial part of a season for a typical shooter - before a three-point percentage becomes a dependable description of ability, and we do not state a precise figure because we have not verified one. The practical consequences are that recent hot or cold shooting from distance is weak evidence, that attempts are a better indicator of role than makes, and that roles built on threes carry wide scoring ranges. The same applies to teams: a single game's result is often decided by which side shot better from distance on that night.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "No specific stabilisation threshold is given because none was verified.",
+   "Shot quality differs between attempts and is not observed.",
+   "Historical box scores here include threes made but not attempted."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "three-pointers made",
+   "makes/attempts for FG, 3PT and FT (live games only)",
+   "rolling windows (L3..L30, season)",
+   "threshold history"
+  ],
+  "data_gaps": [
+   "no three-point attempts in historical box scores",
+   "no shot locations or defender distance"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "shooting efficiency definitions; pointer; not used to check this record"
+   },
+   {
+    "key": "nba-stats-glossary",
+    "note": "shooting efficiency definitions; pointer; not used to check this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "hot-hand-and-regression",
+   "regression-to-the-mean",
+   "floor-spacer",
+   "sample-size-and-confidence",
+   "single-game-noise"
+  ],
+  "evaluation_questions": [
+   "Why are three-point outcomes lumpier than two-point outcomes?",
+   "Why are attempts better evidence of role than makes?"
+  ]
+ },
+ {
+  "slug": "free-throw-rate-as-skill",
+  "department": 9,
+  "kind": "concept",
+  "title": "Free throw rate as a skill",
+  "summary": "Drawing fouls is a repeatable part of a scorer's game and a major source of efficiency.",
+  "body": "Some players get to the line far more often than others with similar shot counts. The difference comes from how they play: attacking the basket, absorbing contact, using fakes, posting up, rebounding their own misses. Because it follows from style, foul-drawing is reasonably persistent for a player across a season, even though any single game depends on the officials and the opponent. It matters for efficiency because two free throws are usually worth more than an average field goal attempt, and for teammates because fouls put the opponent into the penalty and its defenders into foul trouble. A scorer with a high free throw rate also has a floor of points that does not depend on his jump shot falling. Free throw rate is read as attempts relative to field goal attempts. It should be judged over a meaningful window, and with attention to role changes, since a player moved off the ball will usually see his rate fall. Accuracy at the line is a separate skill from getting there.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Single-game rates are heavily affected by officiating and game situation.",
+   "The rate does not include accuracy at the line.",
+   "Late intentional fouls can inflate it for players on leading teams."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "free throw attempts",
+   "field goal attempts",
+   "rolling windows (L3..L30, season)"
+  ],
+  "data_gaps": [
+   "no fouls-drawn data",
+   "no free throw makes in historical box scores"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "shooting efficiency definitions; pointer; not used to check this record"
+   },
+   {
+    "key": "nba-stats-glossary",
+    "note": "shooting efficiency definitions; pointer; not used to check this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "free-throw-rate",
+   "free-throws",
+   "free-throw-attempts-as-opportunity",
+   "interior-scorer",
+   "late-game-fouling-strategy"
+  ],
+  "evaluation_questions": [
+   "Why is foul-drawing considered a persistent trait even though single games vary?",
+   "Why does a high free throw rate give a scorer a steadier floor?"
+  ]
+ },
+ {
+  "slug": "shot-quality-versus-shot-making",
+  "department": 9,
+  "kind": "concept",
+  "title": "Shot quality versus shot making",
+  "summary": "Separating how good a player's or team's attempts were from how well they happened to be converted.",
+  "body": "Scoring efficiency has two components. Shot quality is the expected value of the attempts taken, set by location, defender proximity, whether the shot came off the catch or the dribble, and who took it. Shot making is the result compared with that expectation. Over short periods shot making dominates what we see and is mostly variance; over long periods quality and genuine skill show through. Analysts with tracking data build expected-points models to separate the two, so they can say that an offence generated good looks and missed them, or took poor shots that happened to fall. The distinction is essential for judging whether a stretch of results is likely to continue. This platform cannot make that separation. We have no shot locations, no defender distances and no shot-type labels, so every efficiency figure we show blends quality and conversion. The appropriate inference is limited: unusual efficiency over a short window should be presumed to contain a large share of luck unless inputs such as role have changed.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Cannot be decomposed with our data.",
+   "Even with tracking data, expected-value models carry their own error.",
+   "Genuine shot-making skill exists and differs between players."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "points",
+   "field goal attempts",
+   "three-pointers made"
+  ],
+  "data_gaps": [
+   "no shot locations",
+   "no defender distance",
+   "no shot-type labels"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-data-science",
+    "note": "repository README lists a shot-quality (expected make/points) study; the study itself was not opened"
+   },
+   {
+    "key": "nba-stats-glossary",
+    "note": "tracking shot categories are defined there; pointer; not used to check this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "hot-hand-and-regression",
+   "three-point-variance",
+   "shot-profile-identity",
+   "regression-to-the-mean",
+   "reading-true-shooting"
+  ],
+  "evaluation_questions": [
+   "What determines shot quality?",
+   "Why can this platform not separate shot quality from shot making?"
+  ]
+ },
+ {
+  "slug": "hot-hand-and-regression",
+  "department": 9,
+  "kind": "concept",
+  "title": "Hot streaks and regression",
+  "summary": "Recent hot or cold shooting is weak evidence about the next game; expect movement back toward the player's established level.",
+  "body": "Whether shooters truly become hot has been studied for decades, with careful work on both sides. Whatever small effect may exist within a game, the practical lesson for forecasting is settled: a recent run of makes is a poor predictor of what follows. A player who has shot far above his norm for a week is, in expectation, the same shooter he was before, and his next games are more likely to look like his longer record than like the streak. That drift back is regression to the mean, and it requires no slump or defensive adjustment to explain it. The caution cuts both ways. A cold stretch is not evidence of decline by default. What can change the expectation is a change in inputs: a new role, different shot volume, an injury. Without one, the streak is mostly noise. Product language matters here too. Describing a player as hot states a fact about the past, and should not be worded as a claim about what he will do tonight.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "The research literature is summarised from general knowledge; no study was opened in this session.",
+   "Regression describes expectation, not a force that makes a miss due.",
+   "Real changes in ability do occur and can be mistaken for streaks."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "rolling windows (L3..L30, season)",
+   "three-pointers made",
+   "points",
+   "field goal attempts"
+  ],
+  "data_gaps": [
+   "no shot-level data to examine streaks within games"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "shooting efficiency definitions; pointer; not used to check this record"
+   },
+   {
+    "key": "nba-stats-glossary",
+    "note": "shooting efficiency definitions; pointer; not used to check this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "regression-to-the-mean",
+   "three-point-variance",
+   "role-change-versus-noise",
+   "base-rates",
+   "single-game-noise"
+  ],
+  "evaluation_questions": [
+   "Does regression to the mean imply that a hot shooter is due to miss?",
+   "What kind of evidence would justify expecting a hot stretch to continue?"
+  ]
+ },
+ {
+  "slug": "efficiency-versus-volume",
+  "department": 9,
+  "kind": "concept",
+  "title": "The efficiency-volume trade-off",
+  "summary": "As a player takes on more of the offence, his efficiency generally falls, because the added shots are harder.",
+  "body": "The easiest shots on a team are the first to be taken: open catch-and-shoot looks, layups from cuts, putbacks. A player who uses few possessions can live on those. A player asked to use many must also take the difficult ones - late in the clock, off the dribble, against a set defender who is expecting him. For that reason efficiency and usage tend to move in opposite directions for a given player, and comparing the raw efficiency of a low-usage finisher with that of a high-usage creator misleads. The creator's willingness to take hard shots is part of what gives the finisher his easy ones. The trade-off has two uses here. When a player's role expands because a teammate is out, his volume will rise and his efficiency should be expected to slip somewhat. And when judging a scorer, efficiency should be read at his level of usage. The size of the trade-off differs between players and is not something we estimate for individuals.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "The size of the trade-off varies by player and is not estimated here.",
+   "A tendency, not a law; some players maintain efficiency at higher volume.",
+   "Cannot be isolated from teammate and opponent effects with box scores."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "usage percentage (provider)",
+   "field goal attempts",
+   "points",
+   "free throw attempts",
+   "with/without-teammate splits"
+  ],
+  "data_gaps": [
+   "no shot difficulty data",
+   "no play types"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "shooting efficiency definitions; pointer; not used to check this record"
+   },
+   {
+    "key": "nba-stats-glossary",
+    "note": "shooting efficiency definitions; pointer; not used to check this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "usage-percentage",
+   "usage-redistribution",
+   "reading-true-shooting",
+   "rim-runner",
+   "primary-creator"
+  ],
+  "evaluation_questions": [
+   "Why do added shots tend to be harder than a player's existing ones?",
+   "Why is it misleading to compare a finisher's efficiency with a creator's directly?"
+  ]
+ },
+ {
+  "slug": "points-per-shot-attempt",
+  "department": 9,
+  "kind": "statistic",
+  "title": "Points per shot attempt",
+  "summary": "Points divided by a count of scoring attempts; a direct way to express scoring efficiency.",
+  "body": "Points per shot attempt states efficiency in its most intuitive unit: how many points a player produced each time he tried to score. The definition of an attempt varies. The simplest version divides points by field goal attempts, which flatters players who draw many fouls because their free throw points are counted without the trips that produced them. The more careful version divides by true shooting attempts, field goal attempts plus a fraction of free throw attempts; that figure is exactly twice the true shooting percentage, so the two carry identical information on different scales. Whichever is used, it must be named. The measure is helpful for explaining why an efficient role player and an inefficient star can score the same total, and for translating a change in volume into expected points. Like any ratio it is unstable on few attempts, and it describes scoring only. In our data both versions can be computed from points, field goal attempts and free throw attempts.",
+  "formula": "PTS / FGA (simple version); PTS / (FGA + 0.44 * FTA) (per true shooting attempt, equal to 2 * TS%)",
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Two definitions are in use and give different values.",
+   "The simple version overstates efficiency for foul-drawers.",
+   "Unstable on small numbers of attempts."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "points",
+   "field goal attempts",
+   "free throw attempts"
+  ],
+  "data_gaps": [
+   "no shot locations"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "TSA defined as FGA + 0.44 * FTA and TS% as PTS / (2 * TSA); opened 2026-11-26; the points-per-shot labels themselves are not glossary entries"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "true-shooting-percentage",
+   "reading-true-shooting",
+   "shot-volume",
+   "free-throw-attempts-as-opportunity"
+  ],
+  "evaluation_questions": [
+   "How is points per true shooting attempt related to TS%?",
+   "Why does points per field goal attempt flatter players who draw many fouls?"
+  ]
+ },
+ {
+  "slug": "small-sample-shooting",
+  "department": 9,
+  "kind": "method",
+  "title": "Shooting percentages in small samples",
+  "summary": "Why percentages over a few games mislead, and how to present them honestly.",
+  "body": "A shooting percentage is a ratio of two small counts whenever the window is short. Ten attempts can only produce results in steps of ten percentage points, and the chance spread around a player's true rate over ten, thirty or even a hundred attempts is wide. Short-window percentages therefore say more about luck than about the shooter. Three practices keep the reading honest. Show the counts with the percentage - makes and attempts, or at least attempts - so the reader can see how little evidence there is. Prefer the longer record as the baseline and treat the short window as a deviation from it to be explained. And avoid ranking players or opponents on percentages from samples that cannot support a ranking. The same reasoning applies to what opponents shoot against a team over a few games. In our historical data the problem is compounded for threes, since attempts are not held, so a count of makes cannot be turned into a percentage at all.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "How many attempts are 'enough' depends on the statistic and is not specified here.",
+   "Counts are missing for some shooting categories in our historical data.",
+   "A long baseline can be stale if the player's role or health has changed."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "field goal attempts",
+   "three-pointers made",
+   "makes/attempts for FG, 3PT and FT (live games only)",
+   "rolling windows (L3..L30, season)"
+  ],
+  "data_gaps": [
+   "no three-point attempts or field goal makes in historical box scores"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "shooting efficiency definitions; pointer; not used to check this record"
+   },
+   {
+    "key": "nba-stats-glossary",
+    "note": "shooting efficiency definitions; pointer; not used to check this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "sample-size-and-confidence",
+   "three-point-variance",
+   "hot-hand-and-regression",
+   "regression-to-the-mean"
+  ],
+  "evaluation_questions": [
+   "Why should attempts always be shown alongside a shooting percentage?",
+   "What baseline should a short-window percentage be compared with?"
+  ]
+ }
+]

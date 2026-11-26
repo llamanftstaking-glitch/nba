@@ -36,6 +36,14 @@ VERIFICATIONS = ("checked_against_source", "authored_not_checked")
 FORBIDDEN = re.compile(r"\b(lock|locks|locked|guaranteed|free money|risk-free|cannot lose|sure thing)\b", re.I)
 REQUIRED = ("slug", "department", "kind", "title", "summary", "body", "limitations", "observable_in_our_data", "data_gaps",
             "ruleset", "sources", "verification")
+# Everyday wording -> the terms the library uses. Small and hand-kept; it widens a query, it never invents a record.
+SYNONYMS = {"bonus": "penalty team fouls", "questionable": "status designations injury report", "doubtful": "status designations injury report",
+            "probable": "status designations injury report", "gtd": "game-time decision status", "b2b": "back-to-back", "pnr": "pick-and-roll",
+            "p&r": "pick-and-roll", "dho": "dribble handoff", "iso": "isolation", "ts": "true shooting", "efg": "effective field goal",
+            "usg": "usage", "ortg": "offensive rating", "drtg": "defensive rating", "odds": "price probability", "juice": "fees break-even",
+            "vig": "fees break-even", "parlay": "combination joint probability", "sgp": "combination same game dependence",
+            "blowout": "garbage time", "boards": "rebounds", "dimes": "assists", "threes": "three-point", "treys": "three-point",
+            "fouled": "personal fouls", "ejected": "technical flagrant ejection", "ot": "overtime", "sub": "substitution", "subs": "substitutions"}
 STOPWORDS = frozenset("""the and for with what when where which who whom why how does did are was were has have had his her its their
 this that these those from into over under than then them they you your our out per not any all can could would should will may might
 about after before between during against each more most much many some such only also just very one two three game games team teams
@@ -170,7 +178,9 @@ def search(q: str, department: int | None = None, kind: str | None = None, limit
     t0 = time.monotonic()
     q = " ".join((q or "").split())[:300]
     limit = max(1, min(int(limit), 12))
-    terms = [w for w in re.findall(r"[a-z0-9%]+", q.lower()) if len(w) > 2 and not w.isdigit() and w not in STOPWORDS][:16]
+    words = re.findall(r"[a-z0-9%&]+", q.lower())
+    extra = " ".join(SYNONYMS[w] for w in words if w in SYNONYMS)
+    terms = [w for w in re.findall(r"[a-z0-9%]+", (q + " " + extra).lower()) if len(w) > 2 and not w.isdigit() and w not in STOPWORDS][:20]
     rows, method = [], "none"
     with session_scope() as s:
         if terms:
@@ -182,7 +192,7 @@ def search(q: str, department: int | None = None, kind: str | None = None, limit
                     "from cortex_concepts " + where + " and (to_tsvector('english', search_text) @@ {tsq} or lower(title) like cast(:like as text)) "
                     "order by score desc, slug limit :lim")
             params = {"q": q, "dept": department, "kind": kind, "like": f"%{q.lower()[:60]}%", "terms": terms, "lim": limit}
-            hits = s.execute(text(base.format(tsq="websearch_to_tsquery('english', cast(:q as text))")), params).all()
+            hits = [] if extra else s.execute(text(base.format(tsq="websearch_to_tsquery('english', cast(:q as text))")), params).all()
             method = "all_words"
             if not hits:
                 params["q"] = " or ".join(terms)

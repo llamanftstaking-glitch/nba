@@ -1,0 +1,327 @@
+[
+ {
+  "slug": "era-and-pace-changes",
+  "department": 16,
+  "kind": "context",
+  "title": "Eras and changes in pace",
+  "summary": "League-wide tempo has risen and fallen over the decades, changing the raw totals players could accumulate.",
+  "body": "The speed of professional basketball has not been constant. The early decades after the shot clock were played at a very fast tempo, with many possessions and many missed shots; the game then slowed over a long period, reaching a notably deliberate style around the turn of the century, and has quickened again since. Because counting statistics depend on possessions, the same per-possession production yields different per-game totals in different eras. High rebound totals from fast, poor-shooting eras reflect the abundance of missed shots as well as the players' ability; scoring averages from slow eras understate what those players might do at a faster tempo. This is the basic reason era comparisons use per-possession or pace-adjusted figures. The description here is qualitative on purpose. We have not opened a source giving league pace by season, so no numbers are quoted, and our own data cover only recent seasons and cannot illustrate the long history.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Qualitative summary from general knowledge; no season-by-season figures were verified.",
+   "Possession estimates for early eras are themselves rough because some statistics were not recorded.",
+   "Our own data do not span these eras."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "rolling windows (L3..L30, season)"
+  ],
+  "data_gaps": [
+   "no historical league-wide datasets beyond our own box-score history",
+   "no shot locations"
+  ],
+  "ruleset": "NBA",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "notes on when statistics became available; pointer; not used to check this record"
+   },
+   {
+    "key": "awesome-nba-data",
+    "note": "curated list of historical data resources; pointer only"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "pace",
+   "cross-era-comparison",
+   "per-100-possessions",
+   "rule-changes-and-statistics",
+   "stat-availability-by-era"
+  ],
+  "evaluation_questions": [
+   "Why do raw rebound totals from fast, low-accuracy eras overstate rebounding dominance?",
+   "What kind of statistic corrects for era differences in tempo?"
+  ]
+ },
+ {
+  "slug": "three-point-revolution",
+  "department": 16,
+  "kind": "context",
+  "title": "The three-point revolution",
+  "summary": "The long shift toward three-point shooting that reshaped spacing, positions and the variance of scoring.",
+  "body": "The three-point line was a novelty when the league adopted it, used sparingly and mostly by specialists. Over the following decades, and with particular speed in the most recent ones, teams came to recognise that a three made at a moderate rate is worth more per attempt than most two-point jumpers. Attempts rose steadily, mid-range shots declined, and the shape of the sport changed with them. Big men were asked to shoot or to defend shooters; lineups became smaller and more interchangeable; spacing became the organising idea of offence; and defences were redesigned to protect both the rim and the arc. For statistics the consequences include higher scoring efficiency, more long rebounds, and wider game-to-game swings, since outcomes depend more on a volatile shot. Three-point totals from earlier eras are not comparable with current ones because the opportunity was so different. No attempt figures are given here: the trend is described qualitatively, as none was checked against a source in this session.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "No numbers are quoted because none were verified.",
+   "The causes of the shift are summarised; the full history is more complicated.",
+   "Our data do not cover the period described."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "three-pointers made"
+  ],
+  "data_gaps": [
+   "no historical league-wide datasets beyond our own box-score history",
+   "no shot locations"
+  ],
+  "ruleset": "NBA",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "notes on when statistics became available; pointer; not used to check this record"
+   },
+   {
+    "key": "awesome-nba-data",
+    "note": "curated list of historical data resources; pointer only"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "three-point-variance",
+   "spacing",
+   "stretch-big",
+   "cross-era-comparison",
+   "shot-profile-identity"
+  ],
+  "evaluation_questions": [
+   "Why did teams shift from mid-range shots to threes?",
+   "How did the shift change game-to-game variance in scoring?"
+  ]
+ },
+ {
+  "slug": "rule-changes-and-statistics",
+  "department": 16,
+  "kind": "context",
+  "title": "Rule changes that affect statistics",
+  "summary": "Changes to the rules alter what players can do and therefore what the numbers mean.",
+  "body": "The rulebook is revised regularly, and some revisions move statistics directly. The introduction of the shot clock set a floor on tempo. The three-point line created a new category of shot. Restrictions on hand-checking and other perimeter contact made it easier for ball handlers to score and draw fouls. Allowing zone principles while penalising defenders who camp in the lane changed how help is given. The shorter shot-clock reset after offensive rebounds quickened second chances. Adjustments to how certain fouls are called or penalised, including transition fouls and non-basketball shooting motions, have shifted free throw rates from one season to the next. The coach's challenge and expanded replay changed how calls are corrected. The lesson is that a statistic is always measured under a particular set of rules. A change in a league-wide rate between seasons may reflect a rule or its enforcement and not a change in players. Statements about current rules should cite the season, and comparisons across a rule change should be made with care.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "The list is illustrative and from general knowledge; dates and details were not verified in this session.",
+   "Enforcement emphasis changes without formal rule changes.",
+   "Effects on statistics are described qualitatively only."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "rolling windows (L3..L30, season)"
+  ],
+  "data_gaps": [
+   "no historical league-wide datasets beyond our own box-score history",
+   "no shot locations"
+  ],
+  "ruleset": "NBA",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "nba-official-rulebook",
+    "note": "current rules; historical changes are not documented on the pages opened; pointer; not used to check this record"
+   },
+   {
+    "key": "nba-video-rulebook",
+    "note": "categories include non-basketball moves and transition fouls; home page read 2026-11-26, pointer; not used to check this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "shot-clock-24",
+   "shot-clock-14-reset",
+   "coachs-challenge",
+   "cross-era-comparison",
+   "era-and-pace-changes"
+  ],
+  "evaluation_questions": [
+   "Give two rule changes that directly affected scoring statistics.",
+   "Why might a league-wide free throw rate change between seasons without any change in players?"
+  ]
+ },
+ {
+  "slug": "cross-era-comparison",
+  "department": 16,
+  "kind": "method",
+  "title": "Why cross-era comparisons need adjustment",
+  "summary": "Raw statistics from different eras are not on a common scale and must be adjusted before comparison.",
+  "body": "Comparing players from different periods by raw per-game numbers compares their environments as much as the players. Tempo differed, so possessions per game differed. Shooting accuracy and shot selection differed, changing how many rebounds and assists were available. Rules and their enforcement differed. Minutes loads for stars were heavier in some periods. Even the set of statistics kept has changed. Adjustments address these in layers: per-possession rates remove tempo; measuring a player against the league average of his own season removes much of the environment; and metrics built that way, such as those scaled to a fixed league average, are designed for exactly this use. No adjustment is complete, because the game itself - skills, tactics, the talent pool - has changed, and a statistic cannot say how a player would have adapted. Era comparison is therefore an exercise in describing dominance relative to contemporaries. On this platform it is background knowledge; our data and research concern current seasons.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "No adjustment can account for changes in tactics and talent pool.",
+   "Relative-to-league measures assume the league average is a comparable benchmark across time.",
+   "Not something our data are designed to compute."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [],
+  "data_gaps": [
+   "no historical league-wide datasets beyond our own box-score history",
+   "no shot locations"
+  ],
+  "ruleset": "NBA",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-per",
+    "note": "PER is pace-adjusted and scaled so the league average is 15 in every season; opened 2026-11-26"
+   },
+   {
+    "key": "basketball-reference-glossary",
+    "note": "pointer; not used to check this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "era-and-pace-changes",
+   "per-100-possessions",
+   "player-efficiency-rating",
+   "stat-availability-by-era",
+   "rule-changes-and-statistics"
+  ],
+  "evaluation_questions": [
+   "Name three environmental differences that distort raw cross-era comparisons.",
+   "What does a relative-to-league measure describe?"
+  ]
+ },
+ {
+  "slug": "stat-availability-by-era",
+  "department": 16,
+  "kind": "context",
+  "title": "Which statistics exist for which eras",
+  "summary": "Several box-score statistics were not recorded in the league's early decades, limiting historical analysis.",
+  "body": "The modern box score was assembled over time. Minutes played were not recorded in the league's first seasons; a widely used reference site dates its player efficiency calculations from 1951-52 for that reason. The reference glossary applies its possession formula, which needs offensive and defensive rebounds separately, only from the 1973-74 season, so possession estimates and the rate statistics built on them begin there. Individual turnovers are available from 1977-78. Three-point statistics exist only from the adoption of the line. Play-by-play data, and with them plus/minus and lineup analysis, cover only recent decades, and tracking data fewer years still. The consequence is that any advanced metric has a starting point before which it is absent or estimated with extra assumptions, and career totals for older players omit categories entirely. A missing historical statistic is unknown, not zero. Our own platform has a similar boundary in miniature: detailed live fields exist only from 25 November 2026.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Dates are taken from the reference glossary's notes on availability; statistics not mentioned there are not dated in this record.",
+   "Completeness of early records varies by source.",
+   "Applies to the NBA; other leagues differ."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [],
+  "data_gaps": [
+   "no historical league-wide datasets beyond our own box-score history",
+   "no shot locations"
+  ],
+  "ruleset": "NBA",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "basketball-reference-glossary",
+    "note": "notes: possessions formula applies from 1973-74; turnovers since 1977-78; opened 2026-11-26"
+   },
+   {
+    "key": "basketball-reference-per",
+    "note": "PER computed back to 1951-52, when minutes were first recorded; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "cross-era-comparison",
+   "possessions-estimate",
+   "turnover-percentage",
+   "era-and-pace-changes",
+   "did-not-play-is-not-a-zero"
+  ],
+  "evaluation_questions": [
+   "From which season are individual turnovers available?",
+   "Why do possession-based statistics on reference sites begin in 1973-74?"
+  ]
+ },
+ {
+  "slug": "small-samples-in-history",
+  "department": 16,
+  "kind": "method",
+  "title": "Sample size and regression in historical records",
+  "summary": "Extreme short-run performances in the historical record mostly reflect chance and move back toward normal.",
+  "body": "History is full of remarkable short stretches: a week of extraordinary scoring, a month of hot shooting, a perfect record in some narrow situation. Such stretches are selected for attention precisely because they are extreme, and extremes are where chance contributes most. Followed forward, the players involved almost always return toward their established level. This is regression to the mean operating on the historical record. It has two practical lessons. Records and streaks defined over small samples or narrow conditions - a certain day of the week, a certain opponent, the first game after a break - are generally noise, however striking, because enough such conditions can be examined that some will look unusual by accident. And a player's long record is a better guide to his future than his best or worst stretch. When presenting history we therefore show sample sizes, prefer broad windows to narrow situational cuts, and describe frequencies as what happened, without converting them into chances.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Some extreme stretches do reflect real change; hindsight identifies them more easily than foresight.",
+   "No quantitative regression estimates are given.",
+   "Narrow situational splits multiply the risk of chance findings."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "rolling windows (L3..L30, season)",
+   "threshold history",
+   "splits (home/away, rest, role, opponent)"
+  ],
+  "data_gaps": [
+   "no historical league-wide datasets beyond our own box-score history"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "project rule: historical frequency is never presented as a probability; sample sizes always shown (CLAUDE.md, read 2026-11-26)"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "regression-to-the-mean",
+   "sample-size-and-confidence",
+   "survivorship-bias",
+   "base-rates",
+   "hot-hand-and-regression"
+  ],
+  "evaluation_questions": [
+   "Why are remarkable short stretches especially likely to be followed by more ordinary play?",
+   "Why are narrow situational records usually noise?"
+  ]
+ },
+ {
+  "slug": "survivorship-bias",
+  "department": 16,
+  "kind": "method",
+  "title": "Survivorship bias",
+  "summary": "Conclusions drawn only from players, teams or strategies that lasted long enough to be noticed.",
+  "body": "Survivorship bias arises when the sample consists of those who passed some filter, and the filter is related to the thing being studied. Studying only players with long careers to learn how players age overlooks those whose decline ended their careers early, and makes ageing look gentler than it is. Judging a late draft position by its famous successes ignores the many who never played. Looking only at players who returned from a certain injury ignores those who did not return. Closer to daily work, a set of historical games in which a player appeared excludes the nights he was held out, and a list of research ideas that 'worked' excludes those quietly dropped. In every case the remedy is to ask who or what is missing from the data and why. On this platform it is the reason paper-testing records are append-only and include every evaluated pick: a record that kept only the successes would be worthless as evidence.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Identifying what is missing is often difficult or impossible after the fact.",
+   "The examples are general and not measured here.",
+   "Awareness reduces but does not remove the bias."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "paper-testing results",
+   "did-not-play records"
+  ],
+  "data_gaps": [
+   "no historical league-wide datasets beyond our own box-score history"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "project rule: append-only tables stay append-only (CLAUDE.md, read 2026-11-26)"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "schedule-splits-selection",
+   "small-samples-in-history",
+   "overfitting-and-leakage",
+   "paper-testing",
+   "base-rates"
+  ],
+  "evaluation_questions": [
+   "How does studying only long careers distort conclusions about ageing?",
+   "Why must a paper-testing record include every evaluated pick?"
+  ]
+ }
+]

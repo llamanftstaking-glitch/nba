@@ -44,10 +44,10 @@ const DISCLAIMER = "Research and paper testing only. No outcome is guaranteed. N
 // The mandated footer sentence "No outcome is guaranteed" stays; it is removed before the vocabulary scan.
 const FORBIDDEN = [/\block\b/i, /\blocks\b/i, /guaranteed/i, /guarantee\b/i, /free money/i, /risk[- ]free/i, /can(?:[’']?t|not) lose/i, /sure thing/i, /sharp money/i, /smart money/i, /insider/i, /real[- ]?time/i, /live odds/i];
 
-const NAV = ["/live", "/jarvis", "/", "/games", "/picks", "/player-props", "/kalshi-intelligence", "/lineups", "/parlays", "/parlays/same-game", "/players", "/minutes", "/players/compare", "/players/history", "/matchups", "/injuries", "/builder", "/tickets", "/research/daily", "/results", "/performance", "/research-lab", "/agents", "/models", "/data-health", "/settings"];
-const OTHER = ["/kalshi-intelligence/KXFIX-A-PTS25", "/kalshi-intelligence/KXFIX-A-DD", "/games/FIX-G1", "/games/FIX-G2", "/players/9001", "/players/9004", "/players/compare?ids=9001,9005", "/teams", "/teams/1", "/exposure", "/markets", "/simulations", "/backtesting", "/admin", "/admin/ai-budget", "/live/following", "/live/research-tracker", "/games/FIX-G1?tab=boxscore", "/games/FIX-G1?tab=plays", "/games/FIX-G1?tab=rotations", "/games/FIX-G1?tab=overview"];
+const NAV = ["/live", "/jarvis", "/cortex", "/", "/games", "/picks", "/player-props", "/kalshi-intelligence", "/lineups", "/parlays", "/parlays/same-game", "/players", "/minutes", "/players/compare", "/players/history", "/matchups", "/injuries", "/builder", "/tickets", "/research/daily", "/results", "/performance", "/research-lab", "/agents", "/models", "/data-health", "/settings"];
+const OTHER = ["/kalshi-intelligence/KXFIX-A-PTS25", "/kalshi-intelligence/KXFIX-A-DD", "/games/FIX-G1", "/games/FIX-G2", "/players/9001", "/players/9004", "/players/compare?ids=9001,9005", "/teams", "/teams/1", "/exposure", "/markets", "/simulations", "/backtesting", "/admin", "/admin/ai-budget", "/live/following", "/live/research-tracker", "/games/FIX-G1?tab=boxscore", "/games/FIX-G1?tab=plays", "/games/FIX-G1?tab=rotations", "/games/FIX-G1?tab=overview", "/cortex?tab=encyclopedia", "/cortex?tab=playbook", "/cortex?tab=statistics", "/cortex?tab=player-dna", "/cortex?tab=player-dna&player=9001", "/cortex?tab=team-dna", "/cortex?tab=team-dna&team=1", "/cortex?tab=coach-dna", "/cortex?tab=coach-dna&team=1", "/cortex?tab=research", "/cortex?tab=sources", "/cortex?tab=coverage", "/cortex?tab=evaluations", "/cortex/fix-shot-clock"];
 // The ten pages captured at every viewport for design review.
-const GALLERY = [["/", "overview"], ["/games", "games"], ["/lineups", "lineups"], ["/player-props", "player-props"], ["/players/9001", "player-profile"], ["/games/FIX-G1", "game"], ["/parlays", "parlays"], ["/results", "results"], ["/agents", "agents"], ["/data-health", "data-health"], ["/kalshi-intelligence", "kalshi"], ["/kalshi-intelligence/KXFIX-A-PTS25", "kalshi-detail"], ["/minutes", "minutes"], ["/injuries", "injuries"], ["/jarvis", "jarvis"], ["/admin/ai-budget", "ai-budget"], ["/live", "live"], ["/games/FIX-G1?tab=overview", "live-game"], ["/games/FIX-G1?tab=boxscore", "live-boxscore"], ["/games/FIX-G1?tab=rotations", "live-rotations"]];
+const GALLERY = [["/", "overview"], ["/games", "games"], ["/lineups", "lineups"], ["/player-props", "player-props"], ["/players/9001", "player-profile"], ["/games/FIX-G1", "game"], ["/parlays", "parlays"], ["/results", "results"], ["/agents", "agents"], ["/data-health", "data-health"], ["/kalshi-intelligence", "kalshi"], ["/kalshi-intelligence/KXFIX-A-PTS25", "kalshi-detail"], ["/minutes", "minutes"], ["/injuries", "injuries"], ["/jarvis", "jarvis"], ["/admin/ai-budget", "ai-budget"], ["/live", "live"], ["/games/FIX-G1?tab=overview", "live-game"], ["/games/FIX-G1?tab=boxscore", "live-boxscore"], ["/games/FIX-G1?tab=rotations", "live-rotations"], ["/cortex", "cortex"], ["/cortex?tab=encyclopedia", "cortex-encyclopedia"], ["/cortex/fix-shot-clock", "cortex-record"], ["/cortex?tab=player-dna&player=9001", "cortex-player"], ["/cortex?tab=team-dna&team=1", "cortex-team"]];
 const VIEWPORTS = [[1920, 1080], [1440, 900], [1280, 800], [1024, 768], [768, 1024], [430, 932], [390, 844]];
 
 let passed = 0;
@@ -118,6 +118,11 @@ async function visit(page, route, label, errors) {
   const scan = text.split(DISCLAIMER).join(" ");
   const hit = FORBIDDEN.find((re) => re.test(scan));
   check(`[${label}] ${route} has no forbidden vocabulary`, !hit, hit ? `${hit} near "${scan.slice(Math.max(0, scan.search(hit) - 30), scan.search(hit) + 40).replace(/\s+/g, " ")}"` : "");
+  if (route.startsWith("/cortex")) {
+    const main = await page.locator("main").innerText();
+    const boast = main.match(/AI[- ]powered|\bintelligent\b|\bsmart\b|\bgenius\b|state[- ]of[- ]the[- ]art/i);
+    check(`[${label}] ${route} does not describe the system as AI-powered, intelligent or smart`, !boast, boast ? boast[0] : "");
+  }
   const mf = await minFont(page);
   check(`[${label}] ${route} has no text below 11px`, mf >= 11, `smallest ${mf}px`);
   check(`[${label}] ${route} raised no page/console errors`, errors.length === before, errors.slice(before).join(" | "));
@@ -444,6 +449,239 @@ async function liveFlow(page, label, errors, shot) {
   errors.length = 0;
 }
 
+
+/** GIZER CORTEX: the knowledge library and the computed profiles. */
+async function cortexFlow(page, label, errors, shot) {
+  const isMobile = label === "mobile";
+  const go = async (route) => {
+    await page.goto(`${BASE}${route}`, { waitUntil: "domcontentloaded" });
+    await settle(page);
+  };
+  const apiGet = (path) => page.evaluate((p) => fetch(`/api/v1${p}`, { credentials: "include" }).then((r) => r.json()), path);
+  const num = async (id) => Number((await page.locator(`[data-testid="${id}"]`).first().innerText()).replace(/[^0-9.-]/g, ""));
+  errors.length = 0;
+
+  // --- overview: every number equals the API value ---
+  await go("/cortex");
+  const o = await apiGet("/cortex/overview");
+  check(`[${label}] cortex: eleven section tabs, Overview selected`, (await page.locator('[role="tablist"][aria-label="CORTEX sections"] [role="tab"]').count()) === 11 && (await page.locator('[data-tab="overview"][aria-selected="true"]').count()) === 1);
+  check(`[${label}] cortex overview: knowledge records, checked and not-checked equal the API`, (await num("count-records")) === o.knowledge_records && (await num("count-checked")) === o.records_checked_against_a_source && (await num("count-not-checked")) === o.records_authored_not_checked && o.knowledge_records === 260, `${await num("count-records")}/${await num("count-checked")}/${await num("count-not-checked")}`);
+  check(`[${label}] cortex overview: sources, profiles and coaching counts equal the API`, (await num("count-sources")) === o.sources_indexed && (await num("count-sources-opened")) === o.sources_opened_by_author && (await num("count-players")) === o.player_profiles_available && (await num("count-teams")) === o.team_profiles_available && (await num("count-coaching")) === 0);
+  check(`[${label}] cortex overview: coaching note, findings and unresolved hypotheses from the API`, (await page.locator('[data-testid="coaching-note"]').innerText()).trim() === o.coaching_note && (await num("count-findings")) === 5 && (await num("count-unresolved")) === o.unresolved_hypotheses);
+  const bar = await page.locator('[data-testid="verification-split"] [role="img"] > div').evaluateAll((a) => a.map((e) => parseFloat(e.style.width)));
+  check(`[${label}] cortex overview: two-part verification bar in proportion`, bar.length === 2 && Math.abs(bar[0] - (o.records_checked_against_a_source / o.knowledge_records) * 100) < 0.5 && Math.abs(bar[0] + bar[1] - 100) < 0.01, bar.join("/"));
+  const cards = page.locator('[data-testid="department-card"]');
+  check(`[${label}] cortex overview: twenty department cards with the API counts`, (await cards.count()) === 20 && (await cards.evaluateAll((a, deps) => a.every((e, i) => Number(e.dataset.department) === deps[i].id && Number(e.dataset.records) === deps[i].records && e.innerText.includes(deps[i].name)), o.departments)));
+  check(`[${label}] cortex overview: the "Not built" list is shown in full`, (await page.locator('[data-testid="not-built"] li').count()) === o.not_built.length && (await page.locator('[data-testid="not-built"]').innerText()).includes("keyword search only"));
+  await shot("cortex-overview", { fullPage: true });
+
+  // --- department card → encyclopedia filtered ---
+  await cards.nth(2).click();
+  await page.waitForFunction(() => new URLSearchParams(location.search).get("tab") === "encyclopedia" && document.querySelector('[data-testid="concept-count"]')?.getAttribute("data-total") === "13", null, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] cortex: a department card opens the Encyclopedia filtered to it`, new URL(page.url()).searchParams.get("department") === "3" && (await page.locator('[data-testid="concept-count"]').getAttribute("data-total")) === "13" && (await page.locator('[data-testid="concept-row"]').count()) === 13 && (await page.locator('select[name="cortex_department"]').inputValue()) === "3" && (await page.locator('[data-testid="concept-row"]').evaluateAll((a) => a.every((e) => e.innerText.includes("Defensive Tactical Intelligence")))));
+
+  // --- encyclopedia: browse pages of 30, filters, chips ---
+  await go("/cortex?tab=encyclopedia");
+  const rows = page.locator('[data-testid="concept-row"]');
+  check(`[${label}] encyclopedia: browse mode shows 30 of 260 with pagination`, (await rows.count()) === 30 && (await page.locator('[data-testid="concept-count"]').getAttribute("data-total")) === "260" && /1–30 of 260/.test(await page.locator('nav[aria-label="Pagination"]').innerText()));
+  const chipsOk = await rows.evaluateAll((a) => a.every((e) => { const v = e.querySelector('[data-testid="verification-chip"]'); const t = v.innerText.trim().toLowerCase(); const cls = v.firstElementChild.className; return e.querySelector('[data-testid="kind-chip"]') && e.querySelector('[data-testid="ruleset-chip"]') && (v.dataset.verification === "checked_against_source" ? t === "checked against source" && /text-accent/.test(cls) : t === "not checked" && /text-warn/.test(cls)); }));
+  check(`[${label}] encyclopedia: every row has kind, ruleset and a verification chip (emerald when checked, amber when not)`, chipsOk && (await page.locator('[data-testid="verification-chip"][data-verification="authored_not_checked"]').count()) >= 1 && (await page.locator('[data-testid="verification-chip"][data-verification="checked_against_source"]').count()) >= 1);
+  await page.locator('nav[aria-label="Pagination"] button', { hasText: "Next" }).click();
+  await page.waitForFunction(() => /31–60 of 260/.test(document.querySelector('nav[aria-label="Pagination"]')?.innerText ?? ""), null, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] encyclopedia: next page`, /31–60 of 260/.test(await page.locator('nav[aria-label="Pagination"]').innerText()) && (await rows.count()) === 30);
+  await page.selectOption('select[name="cortex_verification"]', "authored_not_checked");
+  await page.waitForFunction(() => document.querySelector('[data-testid="concept-count"]')?.getAttribute("data-total") === "65", null, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] encyclopedia: verification filter shows only unchecked records, with the API total`, (await page.locator('[data-testid="concept-count"]').getAttribute("data-total")) === String(o.records_authored_not_checked) && (await page.locator('[data-testid="verification-chip"][data-verification="checked_against_source"]').count()) === 0);
+  await page.selectOption('select[name="cortex_verification"]', "");
+  await page.selectOption('select[name="cortex_kind"]', "market");
+  await page.waitForFunction((n) => document.querySelector('[data-testid="concept-count"]')?.getAttribute("data-total") === String(n), o.by_kind.market, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] encyclopedia: kind filter shows only that kind, with the API total`, (await page.locator('[data-testid="concept-count"]').getAttribute("data-total")) === String(o.by_kind.market) && (await rows.count()) === o.by_kind.market && (await page.locator('[data-testid="concept-row"] [data-testid="kind-chip"]').evaluateAll((a) => a.every((e) => e.dataset.kind === "market"))));
+  await page.selectOption('select[name="cortex_kind"]', "");
+
+  // search: all words → any word → none
+  await page.fill('input[name="cortex_q"]', "shotclock fourteen");
+  await page.waitForFunction(() => document.querySelector('[data-testid="concept-count"]')?.getAttribute("data-method") === "all_words", null, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] encyclopedia: search (debounced) finds the record and says it matched every word`, (await page.locator('[data-testid="concept-count"]').getAttribute("data-mode")) === "search" && (await rows.count()) === 1 && (await rows.first().getAttribute("data-slug")) === "fix-shot-clock" && /containing every word/.test(await page.locator('[data-testid="concept-count"]').innerText()));
+  await page.fill('input[name="cortex_q"]', "shotclock zzqq");
+  await page.waitForFunction(() => document.querySelector('[data-testid="concept-count"]')?.getAttribute("data-method") === "any_word", null, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] encyclopedia: a looser match is labelled as "any of the words"`, /any of the words/.test(await page.locator('[data-testid="concept-count"]').innerText()) && (await rows.count()) === 1);
+  await page.fill('input[name="cortex_q"]', "zzqq");
+  await page.waitForFunction(() => document.querySelector('[data-testid="concept-count"]')?.getAttribute("data-total") === "0", null, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] encyclopedia: no match is stated honestly (keyword search, not meaning)`, (await rows.count()) === 0 && /No record matches this search/.test(await page.locator('[data-testid="encyclopedia"]').innerText()) && /by keyword, not by meaning/.test(await page.locator('[data-testid="encyclopedia"]').innerText()));
+  await page.fill('input[name="cortex_q"]', "shotclock fourteen");
+  await rows.first().waitFor({ timeout: 8000 }).catch(() => {});
+  await shot("cortex-search");
+  await Promise.all([page.waitForURL((u) => u.pathname === "/cortex/fix-shot-clock"), rows.first().locator("a").click()]);
+  await settle(page);
+
+  // --- record page ---
+  const rec = page.locator('[data-testid="concept"]');
+  const c = await apiGet("/cortex/concepts/fix-shot-clock");
+  check(`[${label}] record: opens on its own route with title, chips and summary`, (await page.locator("h1").innerText()).toUpperCase().includes("FIXTURE SHOT CLOCK RESET") && (await rec.locator('[data-testid="kind-chip"]').getAttribute("data-kind")) === "rule" && (await rec.locator('[data-testid="verification-chip"]').getAttribute("data-verification")) === "checked_against_source" && (await rec.locator('[data-testid="concept-summary"]').innerText()).trim() === c.summary);
+  check(`[${label}] record: body as two paragraphs`, (await rec.locator('[data-testid="concept-body"] p').count()) === 2);
+  check(`[${label}] record: formula in a monospace block, text unchanged`, (await rec.locator('[data-testid="formula"]').innerText()).trim() === c.formula && /mono/.test(await rec.locator('[data-testid="formula"]').evaluate((e) => getComputedStyle(e).fontFamily)));
+  check(`[${label}] record: season note, limitations and when-not-to-use`, (await rec.locator('[data-testid="season-note"]').innerText()).includes(c.season_note) && (await rec.locator('[data-testid="concept-limitations"] li').count()) === c.limitations.length && (await rec.locator('[data-testid="concept-when-not"]').innerText()).includes(c.when_not_to_use));
+  const colTops = await page.evaluate(() => ["concept-observable", "concept-gaps"].map((t) => Math.round(document.querySelector(`[data-testid="${t}"]`).getBoundingClientRect().top)));
+  check(`[${label}] record: "What our data can show" and "What we cannot see" ${isMobile ? "stacked" : "side by side"}`, (await rec.locator('[data-testid="concept-observable"] li').count()) === c.observable_in_our_data.length && (await rec.locator('[data-testid="concept-gaps"] li').count()) === c.data_gaps.length && /What our data can show/i.test(await rec.locator('[data-testid="concept-observable"]').innerText()) && /What we cannot see/i.test(await rec.locator('[data-testid="concept-gaps"]').innerText()) && (isMobile ? colTops[1] > colTops[0] : colTops[0] === colTops[1]), colTops.join("/"));
+  check(`[${label}] record: evaluation questions, related records as links, sources with link and note`, (await rec.locator('[data-testid="concept-questions"] li').count()) === 1 && (await rec.locator('[data-testid="concept-related"] a[href^="/cortex/"]').count()) === 2 && (await rec.locator('[data-testid="concept-source"]').count()) === 2 && (await rec.locator('[data-testid="concept-source"] a[target="_blank"][rel~="noopener"]').count()) === 2 && /FIXTURE note/.test(await rec.locator('[data-testid="concept-source"]').first().innerText()));
+  await shot("cortex-record", { fullPage: true });
+  await page.click('[data-testid="ask-jarvis-concept"]');
+  await page.locator('[data-testid="jarvis-panel"] textarea').waitFor({ timeout: 8000 }).catch(() => {});
+  check(`[${label}] record: "Ask JARVIS about this" opens the panel with the question prefilled, not sent`, (await page.locator('[data-testid="jarvis-panel"] textarea').inputValue()) === "Explain FIXTURE Shot clock reset and how it applies to tonight's slate" && (await page.locator('[data-testid="jarvis-panel"] [data-testid="jarvis-owner"]').count()) === 0);
+  await page.keyboard.press("Escape");
+  await rec.locator('[data-testid="concept-related"] a').first().click();
+  await page.waitForURL((u) => u.pathname === "/cortex/fix-d1-1");
+  await settle(page);
+  check(`[${label}] record: a related link opens that record; offense/defense fields appear only when present`, (await page.locator('[data-testid="concept"]').getAttribute("data-slug")) === "fix-d1-1" && (await page.locator('[data-testid="concept-responsibilities"]').count()) === 1 && (await page.locator('[data-testid="concept-responses"]').count()) === 1);
+  await go("/cortex/fix-d1-3");
+  check(`[${label}] record: an unchecked record says so and shows no source`, (await page.locator('[data-testid="concept"] [data-testid="verification-chip"]').getAttribute("data-verification")) === "authored_not_checked" && (await page.locator('[data-testid="concept-no-sources"]').count()) === 1 && (await page.locator('[data-testid="concept-unchecked-note"]').count()) === 1 && (await page.locator('[data-testid="concept-responsibilities"]').count()) === 0);
+  await go("/cortex/fix-d1-5");
+  check(`[${label}] record: an empty "can show" list is stated, not hidden`, /shows nothing for this topic/.test(await page.locator('[data-testid="concept-observable"]').innerText()));
+  errors.length = 0;
+  await go("/cortex/no-such-record");
+  check(`[${label}] record: an unknown slug shows the server's not-found message`, /FIXTURE: knowledge record not found\./.test(await page.locator('[data-testid="concept-missing"]').innerText().catch(() => "")));
+  errors.length = 0; // the 404 above is expected
+
+  // --- playbook and statistics ---
+  await go("/cortex?tab=playbook");
+  const kinds = (sel) => page.locator(`[data-testid="${sel}"] [data-testid="kind-chip"]`).evaluateAll((a) => a.map((e) => e.dataset.kind));
+  const off = await kinds("playbook-offense"), def = await kinds("playbook-defense");
+  check(`[${label}] playbook: Offense and Defense lists hold only their kind, with API totals`, off.length === 12 && off.every((k) => k === "offense") && def.length === 12 && def.every((k) => k === "defense") && (await page.locator('[data-testid="playbook-offense"] [data-testid="kind-total"]').innerText()).startsWith(String(o.by_kind.offense)) && (await page.locator('[data-testid="playbook-defense"] [data-testid="kind-total"]').innerText()).startsWith(String(o.by_kind.defense)));
+  const pb = await page.evaluate(() => ["playbook-offense", "playbook-defense"].map((t) => Math.round(document.querySelector(`[data-testid="${t}"]`).getBoundingClientRect().left)));
+  check(`[${label}] playbook: ${isMobile ? "one column on a phone" : "two columns"}`, isMobile ? pb[0] === pb[1] : pb[1] > pb[0] + 200, pb.join("/"));
+  await go("/cortex?tab=statistics");
+  await page.waitForFunction(() => document.querySelectorAll('[data-testid="statistics"] [data-testid="formula"], [data-testid="statistics"] [data-testid="no-formula"]').length === 20, null, { timeout: 10000 }).catch(() => {});
+  const st = await kinds("statistics-statistic"), me = await kinds("statistics-method");
+  check(`[${label}] statistics: statistic and method records only`, st.length === 10 && st.every((k) => k === "statistic") && me.length === 10 && me.every((k) => k === "method"));
+  check(`[${label}] statistics: each row shows its recorded formula, or says none is recorded`, (await page.locator('[data-testid="statistics"] [data-testid="formula"]').count()) >= 15 && (await page.locator('[data-testid="statistics"] [data-testid="formula"]').count()) + (await page.locator('[data-testid="statistics"] [data-testid="no-formula"]').count()) === 20 && /^FIXTURE_STATISTIC_\d+ = PTS/.test((await page.locator('[data-testid="statistics-statistic"] [data-testid="formula"]').first().innerText()).trim()));
+  await shot("cortex-statistics");
+
+  // --- player DNA ---
+  await go("/cortex?tab=player-dna");
+  const pl = await apiGet("/cortex/players?limit=60");
+  check(`[${label}] player DNA: list from the API, most minutes first, with headshot fallback, team, games and minutes`, (await page.locator('[data-testid="cortex-player"]').count()) === pl.items.length && (await page.locator('[data-testid="cortex-player"]').first().getAttribute("data-player-id")) === String(pl.items[0].player_id) && new RegExp(`${pl.items[0].games} g`).test(await page.locator('[data-testid="cortex-player"]').first().innerText()) && new RegExp(`${pl.items[0].minutes} min`).test(await page.locator('[data-testid="cortex-player"]').first().innerText()));
+  await page.fill('input[name="cortex_player_q"]', "Player A");
+  await page.waitForFunction(() => document.querySelectorAll('[data-testid="cortex-player"]').length === 1, null, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] player DNA: search narrows the list`, (await page.locator('[data-testid="cortex-player"]').count()) === 1);
+  await page.locator('[data-testid="cortex-player"]').first().click();
+  await page.locator('[data-testid="player-dna"]').waitFor({ timeout: 8000 }).catch(() => {});
+  const dna = page.locator('[data-testid="player-dna"]');
+  check(`[${label}] player DNA: profile is linkable (?player=) with identity, what is not held, and team history`, new URL(page.url()).searchParams.get("player") === "9001" && /FIXTURE PLAYER A/i.test(await dna.innerText()) && /Not held for this player: height, weight, age/.test(await dna.locator('[data-testid="identity-not-held"]').innerText()) && (await dna.locator('[data-testid="team-history"] li').count()) === 2);
+  const sl = (await dna.locator('[data-testid="season-line"]').innerText()).replace(/\s+/g, " ");
+  check(`[${label}] player DNA: season line labels per-36 values as "per 36" and a missing value is the marker`, (sl.match(/PER 36/gi) ?? []).length === 9 && /BLK PER 36 —/i.test(sl) && /USAGE % 27\.4/i.test(sl), sl.slice(0, 200));
+  check(`[${label}] player DNA: recent 10 block`, (await dna.locator('[data-testid="recent-10"] dt').count()) === 6);
+  const rules = await dna.locator('[data-testid="archetype"]').evaluateAll((a) => a.map((e) => [e.querySelector("span")?.innerText.trim(), e.querySelector('[data-testid="archetype-rule"]')?.innerText.trim()]));
+  check(`[${label}] player DNA: each archetype chip has its rule visible underneath`, rules.length === 2 && rules[0][1] === "usage ≥ 26% and assists per 36 ≥ 5.5" && rules[1][1] === "start share ≥ 80% and minutes per game ≥ 32" && /not scouting verdicts/.test(await dna.innerText()), JSON.stringify(rules));
+  check(`[${label}] player DNA: teammate table with a small-sample marker and a missing value shown as the marker`, (await dna.locator('[data-testid="teammate-row"]').count()) === 2 && (await dna.locator('[data-testid="teammate-row"][data-small="1"] [data-testid="small-sample"]').count()) === 1 && (await dna.locator('[data-testid="teammate-row"][data-small="0"] [data-testid="small-sample"]').count()) === 0 && (await dna.locator('[data-testid="teammate-row"][data-small="1"] [aria-label="not available"]').count()) === 1);
+  const tac = (await dna.locator('[data-testid="tactical-profile"]').innerText()).replace(/\s+/g, " ");
+  check(`[${label}] player DNA: tactical profile panel says "Not available" with the server's reason`, /NOT AVAILABLE/i.test(tac) && tac.includes("FIXTURE: no play-type, shot-location or tracking data is held"), tac);
+  check(`[${label}] player DNA: not-available list, notes and a link to the full player page`, (await dna.locator('[data-testid="dna-not-available"] li').count()) === 2 && (await dna.locator('[data-testid="dna-notes"] li').count()) === 2 && (await dna.locator('[data-testid="player-full-page"]').getAttribute("href")).startsWith("/players/9001"));
+  await shot("cortex-player", { fullPage: true });
+  const od = await overflow(page);
+  check(`[${label}] player DNA: no horizontal page overflow`, !od, od ? JSON.stringify(od) : "");
+  await go("/cortex?tab=player-dna&player=9002");
+  check(`[${label}] player DNA: when archetypes are not derived the status text is shown instead of chips`, (await page.locator('[data-testid="archetype"]').count()) === 0 && /usage was not published/.test(await page.locator('[data-testid="archetypes-not-derived"]').innerText()) && /Not available for this player/.test(await page.locator('[data-testid="teammates-none"]').innerText()));
+  await go("/cortex?tab=player-dna&player=9004");
+  check(`[${label}] player DNA: an unavailable profile shows the server's note and no numbers`, (await page.locator('[data-testid="player-dna"]').getAttribute("data-available")) === "0" && /FIXTURE: no box scores are held/.test(await page.locator('[data-testid="player-dna-unavailable"]').innerText()) && (await page.locator('[data-testid="season-line"]').count()) === 0);
+  await page.click('[data-testid="profile-back"]');
+  await page.locator('[data-testid="cortex-player"]').first().waitFor({ timeout: 8000 }).catch(() => {});
+  check(`[${label}] player DNA: back returns to the list`, new URL(page.url()).searchParams.get("player") === null && (await page.locator('[data-testid="cortex-player"]').count()) === pl.items.length);
+  await go("/players/9001");
+  check(`[${label}] player page: "Profile (CORTEX)" link`, (await page.locator('[data-testid="cortex-profile-link"]').getAttribute("href")).startsWith("/cortex?tab=player-dna&player=9001"));
+
+  // --- team DNA ---
+  await go("/cortex?tab=team-dna");
+  check(`[${label}] team DNA: grid of 30 teams with the profile state`, (await page.locator('[data-testid="cortex-team"]').count()) === 30 && (await page.locator('[data-testid="cortex-team"][data-available="0"]').count()) === 1 && /No profile yet/.test(await page.locator('[data-testid="cortex-team"][data-available="0"]').innerText()) && /29 of 30 teams have a profile/.test(await page.locator('[data-testid="team-grid-count"]').innerText()));
+  await page.locator('[data-testid="cortex-team"][data-team-id="1"]').click();
+  await page.locator('[data-testid="team-dna"]').waitFor({ timeout: 8000 }).catch(() => {});
+  const td = page.locator('[data-testid="team-dna"]');
+  check(`[${label}] team DNA: record, ratings and shot volume (a missing value is the marker)`, /11–6/.test(await td.locator('[data-testid="team-record"]').innerText()) && /113\.1/.test(await td.locator('[data-testid="team-ratings"]').innerText()) && /\+3\.0/.test(await td.locator('[data-testid="team-ratings"]').innerText()) && (await td.locator('[data-testid="team-shot-volume"] [aria-label="not available"]').count()) === 1);
+  const rot = (await td.locator('[data-testid="rotation-block"]').innerText()).replace(/\s+/g, " ");
+  check(`[${label}] team DNA: rotation block (length and range, starter minutes, bench points, starting fives, leaders, first substitution)`, /8\.9/.test(rot) && /8–10/.test(rot) && /30\.8/.test(rot) && /40\.2/.test(rot) && (await td.locator('[data-testid="starting-fives"] li').count()) === 2 && (await td.locator('[data-testid="minutes-leaders"] li').count()) === 3 && /5\.4 minutes into the game, over 6 games observed live/.test(rot), rot.slice(0, 160));
+  check(`[${label}] team DNA: tactical identity "Not available" with its reason, not-available list and notes`, /NOT AVAILABLE/i.test(await td.locator('[data-testid="tactical-identity"]').innerText()) && /no system is attributed/.test(await td.locator('[data-testid="tactical-identity"]').innerText()) && (await td.locator('[data-testid="dna-not-available"] li').count()) === 2 && (await td.locator('[data-testid="dna-notes"] li').count()) === 2);
+  await shot("cortex-team", { fullPage: true });
+  const ot = await overflow(page);
+  check(`[${label}] team DNA: no horizontal page overflow`, !ot, ot ? JSON.stringify(ot) : "");
+  await go("/cortex?tab=team-dna&team=2");
+  check(`[${label}] team DNA: ratings that are null read "Not available", never zero`, (await page.locator('[data-testid="team-ratings"]').count()) === 0 && /Not available/i.test(await page.locator('[data-testid="team-ratings-unavailable"]').innerText()) && /no live play-by-play held/i.test(await page.locator('[data-testid="first-substitution"]').innerText()));
+  await go("/cortex?tab=team-dna&team=3");
+  check(`[${label}] team DNA: a team without a profile shows the server's note`, (await page.locator('[data-testid="team-dna"]').getAttribute("data-available")) === "0" && /fewer than three final games/.test(await page.locator('[data-testid="team-dna-unavailable"]').innerText()));
+
+  // --- coach DNA ---
+  await go("/cortex?tab=coach-dna");
+  check(`[${label}] coach DNA: the same 30-team grid, stating that coaches are not identified`, (await page.locator('[data-testid="coach-dna-grid"] [data-testid="cortex-team"]').count()) === 30 && /Coach identities are not in our data/.test(await page.locator('[data-testid="coach-dna-grid"]').innerText()));
+  await page.locator('[data-testid="cortex-team"][data-team-id="1"]').click();
+  await page.locator('[data-testid="coach-dna"]').waitFor({ timeout: 8000 }).catch(() => {});
+  const cd = page.locator('[data-testid="coach-dna"]');
+  check(`[${label}] coach DNA: only the rotation block, headed "Rotation tendencies (coach not identified)", with the coach note prominent`, /ROTATION TENDENCIES \(COACH NOT IDENTIFIED\)/i.test(await cd.innerText()) && (await cd.locator('[data-testid="coach-note"]').innerText()).includes("FIXTURE: coach names and staff are not in our data.") && (await cd.locator('[data-testid="rotation-block"]').count()) === 1 && (await cd.locator('[data-testid="team-record"]').count()) === 0 && (await cd.locator('[data-testid="team-ratings"]').count()) === 0 && (await cd.locator('[data-testid="tactical-identity"]').count()) === 0);
+  await shot("cortex-coach");
+  await go("/cortex?tab=coach-dna&team=3");
+  check(`[${label}] coach DNA: a team without a profile says rotation data is not available`, /Not available/i.test(await page.locator('[data-testid="coach-rotation-unavailable"]').innerText()));
+
+  // --- research journal ---
+  await go("/cortex?tab=research");
+  check(`[${label}] research: the endpoint note and all five findings`, /A finding marked open is a hypothesis, not knowledge/.test(await page.locator('[data-testid="research-note"]').innerText()) && (await page.locator('[data-testid="finding"]').count()) === 5);
+  const f1 = (await page.locator('[data-testid="finding"]').first().innerText()).replace(/\s+/g, " ");
+  check(`[${label}] research: a finding shows hypothesis, supporting vs contradicting, sample size, experiment, result and limitations`, /bench minutes rise/.test(f1) && /SUPPORTING \(1\)/i.test(f1) && /CONTRADICTING \(1\)/i.test(f1) && /Sample size: 20/.test(f1) && /PROPOSED EXPERIMENT/i.test(f1) && /No result yet/.test(f1) && /one month of games/.test(f1) && /OPEN HYPOTHESIS/i.test(f1), f1.slice(0, 200));
+  for (const [st2, n] of [["open", 2], ["supported", 1], ["rejected", 1], ["inconclusive", 1]]) {
+    await page.locator(`[role="tablist"][aria-label="Finding status"] [data-tab="${st2}"]`).click();
+    await page.waitForFunction(([s2, k]) => { const a = [...document.querySelectorAll('[data-testid="finding"]')]; return a.length === k && a.every((e) => e.dataset.status === s2); }, [st2, n], { timeout: 8000 }).catch(() => {});
+    check(`[${label}] research: status filter "${st2}"`, (await page.locator('[data-testid="finding"]').count()) === n && (await page.locator('[data-testid="finding"]').evaluateAll((a, s2) => a.every((e) => e.dataset.status === s2), st2)) && new URL(page.url()).searchParams.get("status") === st2);
+  }
+
+  // --- sources ---
+  await go("/cortex?tab=sources");
+  const src = await apiGet("/cortex/sources");
+  const srcRow = isMobile ? '[data-testid="source-card"]' : '[data-testid="sources"] table tbody tr';
+  check(`[${label}] sources: one ${isMobile ? "card" : "table row"} per source with the API count`, (await page.locator(srcRow).count()) === src.items.length && (await page.locator('[data-testid="sources-count"]').getAttribute("data-total")) === String(src.items.length));
+  const acc = await page.locator(`${srcRow} [data-testid="access-result"]`).evaluateAll((a) => a.map((e) => [e.dataset.opened, e.innerText.replace(/\s+/g, " ").trim(), e.querySelector("span")?.className ?? ""]));
+  check(`[${label}] sources: "not opened" and "not reachable" look different from "opened and read"`, acc.filter((x) => x[0] === "1").length === 3 && acc.filter((x) => x[0] === "0").length === 2 && acc.filter((x) => x[0] === "0").every((x) => /text-warn/.test(x[2]) && /Not opened|Not reachable/i.test(x[1])) && acc.filter((x) => x[0] === "1").every((x) => !/text-warn/.test(x[2]) && /Opened and read/i.test(x[1])), JSON.stringify(acc.map((x) => x.slice(0, 2))));
+  const srcText = (await page.locator('[data-testid="sources"]').innerText()).replace(/\s+/g, " ");
+  check(`[${label}] sources: publisher, league, kind, reliability, permission note, accessed date and records citing`, /FIXTURE League/.test(srcText) && /FIBA/.test(srcText) && /official rules/.test(srcText) && /independent; not official/.test(srcText) && /no licence visible/.test(srcText) && /[A-Z][a-z]{2} \d{1,2}, 2026/.test(srcText) && srcText.includes(String(src.items[0].records_citing)));
+  check(`[${label}] sources: titles link out safely; a source without a URL is plain text`, (await page.locator(`${srcRow} [data-testid="source-link"][target="_blank"][rel~="noopener"]`).count()) === 4);
+  await shot("cortex-sources", { fullPage: true });
+  const os = await overflow(page);
+  check(`[${label}] sources: no horizontal page overflow`, !os, os ? JSON.stringify(os) : "");
+
+  // --- coverage ---
+  await go("/cortex?tab=coverage");
+  check(`[${label}] coverage: twenty department rows with API counts and a bar each`, (await page.locator('[data-testid="coverage-row"]').count()) === 20 && (await page.locator('[data-testid="coverage-row"]').evaluateAll((a, deps) => a.every((e, i) => Number(e.dataset.records) === deps[i].records && e.querySelector('[role="img"]')), o.departments)) && /0 of 20 departments have no records/.test(await page.locator('[data-testid="coverage-empty"]').innerText()));
+  check(`[${label}] coverage: by-kind breakdown, verification split and "Not built"`, (await page.locator('[data-testid="coverage-kinds"] li').count()) === 10 && (await num("count-checked")) === o.records_checked_against_a_source && (await page.locator('[data-testid="not-built"] li').count()) === o.not_built.length);
+  check(`[${label}] coverage: says plainly that no library-wide "observable" summary is published`, /does not publish a library-wide summary/.test(await page.locator('[data-testid="coverage"]').innerText()));
+
+  // --- evaluations (owner) ---
+  await go("/cortex?tab=evaluations");
+  const ev = page.locator('[data-testid="evaluations"]');
+  const b = await apiGet("/cortex/benchmark");
+  check(`[${label}] evaluations: benchmark size against the target of 500`, (await num("benchmark-questions")) === b.questions && /target 500 questions/.test(await ev.innerText()));
+  check(`[${label}] evaluations: "reviewed by a person: N of M" with the note verbatim and prominent`, /0 of 204/i.test(await ev.locator('[data-testid="reviewed"]').innerText()) && (await ev.locator('[data-testid="benchmark-note-text"]').innerText()).trim() === b.note && (await page.evaluate(() => document.querySelector('[data-testid="benchmark-note"]').getBoundingClientRect().top < document.querySelector('[data-testid="benchmark-questions"]').getBoundingClientRect().top)));
+  check(`[${label}] evaluations: by category / type / split tables`, (await ev.locator('[data-testid="benchmark-by-category"] dt').count()) === Object.keys(b.by_category).length && (await ev.locator('[data-testid="benchmark-by-type"] dt').count()) === 4 && (await ev.locator('[data-testid="benchmark-by-split"] dt').count()) === 2);
+  const run = (await ev.locator('[data-testid="benchmark-run"]').first().innerText()).replace(/\s+/g, " ");
+  check(`[${label}] evaluations: runs with kind, split, model, n, score as a percentage, cost and date`, (await ev.locator('[data-testid="benchmark-run"]').count()) === 2 && /Answers/.test(run) && /Dev/.test(run) && /FIXTURE-model-a/.test(run) && /\b20\b/.test(run) && /85\.0%/.test(run) && /\$0\.0412/.test(run) && /ET/.test(run) && /provisional/.test(await ev.innerText()), run);
+  await ev.locator('[data-testid="run-misses"] summary').first().click();
+  check(`[${label}] evaluations: misses expand`, (await ev.locator('[data-testid="run-misses"][open] li').count()) === 3 && /FIXTURE RULE-007/.test(await ev.locator('[data-testid="run-misses"][open]').innerText()));
+  check(`[${label}] evaluations: recent searches, sample questions and how-to-run in a code block`, (await ev.locator('[data-testid="retrieval"]').count()) === 2 && /returned nothing/.test(await ev.locator('[data-testid="retrievals"]').innerText()) && (await ev.locator('[data-testid="sample-questions"] > li').count()) === 2 && (await ev.locator('[data-testid="how-to-run"]').innerText()).trim() === b.how_to_run && /mono/.test(await ev.locator('[data-testid="how-to-run"]').evaluate((e) => getComputedStyle(e).fontFamily)));
+  await shot("cortex-evaluations", { fullPage: true });
+
+  // --- tab switching keeps the URL; a phone scrolls the tab row, not the page ---
+  await go("/cortex");
+  for (const t of ["encyclopedia", "playbook", "player-dna", "team-dna", "coach-dna", "statistics", "research", "sources", "coverage", "evaluations", "overview"]) {
+    await page.locator(`[role="tablist"][aria-label="CORTEX sections"] [data-tab="${t}"]`).click();
+    await page.waitForFunction((x) => document.querySelector('[data-testid="cortex-panel"]')?.getAttribute("data-tab") === x, t, { timeout: 5000 }).catch(() => {});
+    await settle(page);
+    const ok = new URL(page.url()).searchParams.get("tab") === t && (await page.locator('[data-testid="cortex-panel"]').getAttribute("data-tab")) === t && (await page.locator('[data-state="error"]').count()) === 0 && (await page.locator('[data-testid="cortex-panel"]').innerText()).trim().length > 80;
+    check(`[${label}] cortex: tab "${t}" renders and is in the URL`, ok);
+  }
+  if (isMobile) {
+    const tabs = await page.evaluate(() => { const e = document.querySelector('[role="tablist"][aria-label="CORTEX sections"]'); return { scrolls: e.scrollWidth > e.clientWidth + 20, ox: getComputedStyle(e).overflowX }; });
+    check(`[${label}] cortex: the tab row scrolls horizontally inside itself`, tabs.scrolls && /auto|scroll/.test(tabs.ox), JSON.stringify(tabs));
+    await go("/cortex?tab=evaluations");
+    check(`[${label}] cortex: the selected tab is scrolled into view`, await page.evaluate(() => { const e = document.querySelector('[role="tablist"][aria-label="CORTEX sections"] [aria-selected="true"]').getBoundingClientRect(); return e.left >= 0 && e.right <= window.innerWidth; }));
+  }
+  check(`[${label}] cortex flows raised no page/console errors`, errors.length === 0, errors.slice(0, 4).join(" | "));
+  errors.length = 0;
+}
+
 async function runViewport(browser, label, viewport) {
   console.log(`\n== ${label} ${viewport.width}x${viewport.height} ==`);
   const isMobile = label === "mobile";
@@ -480,13 +718,13 @@ async function runViewport(browser, label, viewport) {
     check(`[${label}] bottom nav targets are at least 44px`, small === 0, `${small} too small`);
     await page.click('[data-testid="more-button"]');
     await page.waitForSelector('[role="dialog"]');
-    check(`[${label}] More sheet lists the navigation groups`, (await page.locator('[role="dialog"] a').count()) >= 26 && /Live Games/.test(await page.locator('[role="dialog"]').innerText()) && /JARVIS/.test(await page.locator('[role="dialog"]').innerText()) && /Kalshi Markets/.test(await page.locator('[role="dialog"]').innerText()) && /Minutes Intelligence/.test(await page.locator('[role="dialog"]').innerText()));
+    check(`[${label}] More sheet lists the navigation groups`, (await page.locator('[role="dialog"] a').count()) >= 27 && /CORTEX/.test(await page.locator('[role="dialog"]').innerText()) && /Live Games/.test(await page.locator('[role="dialog"]').innerText()) && /JARVIS/.test(await page.locator('[role="dialog"]').innerText()) && /Kalshi Markets/.test(await page.locator('[role="dialog"]').innerText()) && /Minutes Intelligence/.test(await page.locator('[role="dialog"]').innerText()));
     await shot("more-sheet");
     await page.keyboard.press("Escape");
   } else {
     const side = await page.locator('[data-testid="sidebar"]').innerText();
     check(`[${label}] sidebar has the four groups`, ["COMMAND CENTER", "PLAYER INTELLIGENCE", "MY RESEARCH", "SYSTEM"].every((g) => side.toUpperCase().includes(g)));
-    check(`[${label}] sidebar has 26 destinations led by Live Games, incl. JARVIS, Kalshi Markets and Minutes Intelligence`, (await page.locator('[data-testid="sidebar"] nav a').count()) === 26 && (await page.locator('[data-testid="sidebar"] nav a').first().innerText()).trim() === "Live Games" && /JARVIS/.test(side) && /Kalshi Markets/.test(side) && /Minutes Intelligence/.test(side));
+    check(`[${label}] sidebar has 27 destinations led by Live Games, incl. JARVIS, CORTEX, Kalshi Markets and Minutes Intelligence`, (await page.locator('[data-testid="sidebar"] nav a').count()) === 27 && (await page.locator('[data-testid="sidebar"] nav a').first().innerText()).trim() === "Live Games" && /JARVIS/.test(side) && (await page.locator('[data-testid="sidebar"] nav a').nth(2).innerText()).trim() === "CORTEX" && /Kalshi Markets/.test(side) && /Minutes Intelligence/.test(side));
     check(`[${label}] brand caption present`, /PARLAY COMMAND CENTER/i.test(side));
   }
 
@@ -1247,6 +1485,8 @@ async function runViewport(browser, label, viewport) {
 
   await liveFlow(page, label, errors, shot);
 
+  await cortexFlow(page, label, errors, shot);
+
   // --- redirects ---
   for (const [from, to] of [["/today", "/"], ["/research", "/research/daily"], ["/props", "/player-props"]]) {
     await page.goto(`${BASE}${from}`);
@@ -1269,7 +1509,7 @@ async function runViewport(browser, label, viewport) {
  */
 async function largeSlate(browser) {
   const LIMITS = [[1440, 900, 12000], [390, 844, 15000]];
-  const routes = [...NAV, "/games/FIX-L1", "/players/9001", "/kalshi-intelligence/KXFIX-L-20000-pts-5", "/markets", "/simulations", "/backtesting", "/exposure", "/admin/ai-budget", "/live/following", "/live/research-tracker", "/games/FIX-G1?tab=boxscore", "/games/FIX-G1?tab=plays", "/games/FIX-G1?tab=rotations"];
+  const routes = [...NAV, "/games/FIX-L1", "/players/9001", "/kalshi-intelligence/KXFIX-L-20000-pts-5", "/markets", "/simulations", "/backtesting", "/exposure", "/admin/ai-budget", "/live/following", "/live/research-tracker", "/games/FIX-G1?tab=boxscore", "/games/FIX-G1?tab=plays", "/games/FIX-G1?tab=rotations", "/cortex?tab=encyclopedia", "/cortex?tab=playbook", "/cortex?tab=statistics", "/cortex?tab=player-dna", "/cortex?tab=player-dna&player=9001", "/cortex?tab=team-dna", "/cortex?tab=team-dna&team=1", "/cortex?tab=coach-dna", "/cortex?tab=coach-dna&team=1", "/cortex?tab=research", "/cortex?tab=sources", "/cortex?tab=coverage", "/cortex?tab=evaluations", "/cortex/fix-shot-clock"];
   for (const [width, height, maxHeight] of LIMITS) {
     const tag = `large ${width}`;
     console.log(`\n== large slate ${width}x${height} ==`);
@@ -1383,6 +1623,13 @@ async function viewerRole(browser) {
   await page.reload();
   await settle(page);
   check("[viewer] following is refused with the server's 403 message and nothing is followed", fe.includes("FIXTURE: following requires the owner account.") && (await page.locator('[data-testid="live-following"]').count()) === 0, fe);
+  await page.goto(`${BASE}/cortex?tab=evaluations`);
+  await settle(page);
+  const ce = await page.locator('[data-testid="evaluations-forbidden"]').innerText().catch(() => "");
+  check("[viewer] CORTEX evaluations shows the server's 403 message and no benchmark", /Owner access required/i.test(ce) && ce.includes("FIXTURE: this area is available to the owner account only.") && (await page.locator('[data-testid="evaluations"]').count()) === 0, ce);
+  await page.goto(`${BASE}/cortex`);
+  await settle(page);
+  check("[viewer] the rest of CORTEX is readable by a viewer", (await page.locator('[data-testid="cortex-overview"]').count()) === 1 && (await page.locator('[data-state="error"]').count()) === 0);
   await context.close();
 }
 

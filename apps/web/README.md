@@ -54,6 +54,7 @@ app/
 components/
   ui/                            local primitives (button, badge, panel, tabs, sheet, data-table, states…)
   shell/                         app shell, brand wordmark, date selector, providers, notice text
+  cortex/                        knowledge library: chips, record rows, profiles, research, sources, evaluations
   live/                          scoreboard strip, score header, box score, plays, rotations, follow, notifications
   game-card.tsx                  MatchupHeader, GameMatchupCard
   lineup-table.tsx               LineupTable
@@ -62,6 +63,7 @@ components/
   selection-card.tsx, combo-card.tsx, status.tsx, prob.tsx, player-avatar.tsx, …
 lib/
   api.ts, types.ts               typed client and contract types
+  cortex.ts                      knowledge library client and types
   live.ts                        live API client, scoreboard polling, game event stream
   format.ts, date.tsx, queries.ts, nav.ts, cn.ts, use-debounced.ts
 middleware.ts                    session-cookie gate + runtime API proxy
@@ -126,6 +128,21 @@ The mock (`e2e/mock-api.mjs`) serves every live route with a scripted game, `FIX
 `POST /api/v1/__mock/live {"phase": 0-4, "stale": bool, "streamError": bool}` (0 scheduled, 1 live Q1, 2 halftime,
 3 live Q3, 4 final). It includes unpublished (null) statistics, a corrected play, a team whose rotations cannot be
 determined, in-memory follows and thresholds, and the event stream.
+
+## GIZER CORTEX
+
+`/cortex` is the knowledge library JARVIS reads from (`lib/cortex.ts`, `components/cortex/*`), all `GET`:
+Overview, Encyclopedia (keyword search and filters, 30 per page), Playbook, Player DNA (`?player=`), Team DNA and
+Coach DNA (`?team=`), Statistics, Research Journal, Sources, Coverage and Evaluations (owner only), with each
+knowledge record on its own route, `/cortex/[slug]`.
+
+The rule for these pages is that the system never looks more capable than it is: every count is an API value, every
+record shows whether it was checked against a source, "Not built" and "Not available" lists are shown in full, and
+the copy does not use words such as "AI-powered", "intelligent" or "smart" (the smoke suite checks this).
+
+The mock serves a generated library of 260 records (13 per department, every kind, both verification states), five
+sources with mixed access results, players and teams with available and unavailable profiles, five research
+findings and a benchmark with two runs.
 
 ## Design system
 

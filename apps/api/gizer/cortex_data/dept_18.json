@@ -1,0 +1,786 @@
+[
+ {
+  "slug": "binary-event-contract",
+  "department": 18,
+  "kind": "market",
+  "title": "Binary event contract",
+  "summary": "A contract that pays a fixed amount if a defined event happens and nothing if it does not.",
+  "body": "An event contract is an agreement whose value at the end depends on the answer to a stated yes-or-no question. On the exchange this platform reads, the basic object is a market, which its documentation describes as a single binary market; markets are grouped into events, and related events into series. A binary market has two sides, YES and NO. If the event is determined to have happened, each YES contract pays one dollar and each NO contract pays nothing; if not, the reverse. Before determination the contract trades at a price between those extremes. The documentation also lists a scalar market type, whose payout is not all-or-nothing, so the type of every contract must be read and not presumed. For basketball, typical questions are whether a player will record at least a stated number of points or whether a team will win. This platform reads such contracts as a reference for which questions exist and what they cost. It is read-only: it holds no account, places no orders and contains no trading code.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Not every listed market is binary; the type field must be checked.",
+   "The contract's meaning is fixed by its rules text, not by its title.",
+   "Describes one exchange's structure as documented on the access date."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "Kalshi contract observations (price, spread, volume, history)"
+  ],
+  "data_gaps": [
+   "no authenticated exchange data (no order book depth stream, no trades feed)",
+   "no price history before this system's first observation"
+  ],
+  "ruleset": "general",
+  "season_note": "Exchange documentation as read on 2026-11-26; fields, fees and rules change and must be re-read",
+  "sources": [
+   {
+    "key": "kalshi-docs",
+    "note": "terms page: market, event, series; Get Market: market_type binary or scalar; settlement page: one dollar per winning contract; opened 2026-11-26"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "read-only role of the Kalshi integration; read 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "yes-no-price",
+   "settlement-rules-and-wording",
+   "threshold-contracts",
+   "protected-and-special-structures",
+   "market-status-and-lifecycle"
+  ],
+  "evaluation_questions": [
+   "What does a YES contract pay if the event occurs, and if it does not?",
+   "How are markets, events and series related in the exchange's documentation?"
+  ]
+ },
+ {
+  "slug": "yes-no-price",
+  "department": 18,
+  "kind": "market",
+  "title": "YES and NO prices as cents on the dollar",
+  "summary": "A contract's price is the cost of a claim that pays one dollar if its side wins.",
+  "body": "Because a winning binary contract pays one dollar, its price can be read as cents on the dollar. A YES price of 0.62 means paying 62 cents for a claim worth one dollar if the event happens and nothing otherwise. The NO side is the complementary claim, and in a market without frictions the YES and NO prices would sum to one dollar; in practice the prices at which each can actually be bought sum to slightly more, the difference being the spread. The exchange's interface reports prices as dollar amounts in text form, with enough decimal places to allow steps smaller than a cent in some markets, so a system reading them should not assume whole cents. A price expresses the cost of the position. The cost implies a break-even frequency - a YES contract bought at 62 cents needs the event to occur more than 62 percent of the time to profit before fees - and that implied figure is a property of the contract, not a forecast made by this platform.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "The price at which one can buy (ask) differs from the price at which one can sell (bid).",
+   "Price units and tick sizes are exchange settings that can change.",
+   "A price-implied frequency is not a model probability."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "Kalshi contract observations (price, spread, volume, history)"
+  ],
+  "data_gaps": [
+   "no authenticated exchange data (no order book depth stream, no trades feed)",
+   "no price history before this system's first observation"
+  ],
+  "ruleset": "general",
+  "season_note": "Exchange documentation as read on 2026-11-26; fields, fees and rules change and must be re-read",
+  "sources": [
+   {
+    "key": "kalshi-docs",
+    "note": "Get Market: price fields are fixed-point dollar strings, with price ranges and tick sizes; orderbook page: prices as dollar strings supporting subpenny values; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "bid-ask-spread",
+   "break-even-including-fees",
+   "price-is-not-model-probability",
+   "binary-event-contract",
+   "midpoint-price"
+  ],
+  "evaluation_questions": [
+   "A YES contract costs 0.40. Before fees, how often must the event occur for the buyer to break even?",
+   "Why do the YES ask and NO ask usually sum to more than one dollar?"
+  ]
+ },
+ {
+  "slug": "bid-ask-spread",
+  "department": 18,
+  "kind": "market",
+  "title": "Bid, ask and spread",
+  "summary": "The bid is the highest price a buyer offers, the ask the lowest price a seller accepts, and the spread the gap between them.",
+  "body": "At any moment a market shows resting orders. The best bid for YES is the highest price someone is currently willing to pay for a YES contract; the best ask is the lowest price at which someone is willing to sell one. A buyer who wants to trade immediately pays the ask, and a seller receives the bid. The difference is the spread, a cost of immediacy and a rough gauge of how actively the market is quoted. The exchange's order book has a structure worth knowing: its documentation says the book returns bids only, for YES and for NO, and that asks are implied, because a bid to buy NO at a price is equivalent to an offer to sell YES at one dollar minus that price. So the YES ask equals one dollar minus the best NO bid, and the YES spread equals that amount minus the best YES bid. A wide spread means the quoted prices are a loose indication of value, and a one-sided or empty book means there is no tradable price at all.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "The best quotes may be for very small size.",
+   "Quotes can change or vanish between observations.",
+   "Our polled snapshots are not a continuous record of the book."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "Kalshi contract observations (price, spread, volume, history)"
+  ],
+  "data_gaps": [
+   "no authenticated exchange data (no order book depth stream, no trades feed)",
+   "no price history before this system's first observation"
+  ],
+  "ruleset": "general",
+  "season_note": "Exchange documentation as read on 2026-11-26; fields, fees and rules change and must be re-read",
+  "sources": [
+   {
+    "key": "kalshi-docs",
+    "note": "orderbook responses page: bids only, reciprocal relationship, spread derivation; Get Market: yes_bid, yes_ask, no_bid, no_ask descriptions; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "yes-no-price",
+   "midpoint-price",
+   "liquidity",
+   "last-price",
+   "break-even-including-fees"
+  ],
+  "evaluation_questions": [
+   "The best YES bid is 0.42 and the best NO bid is 0.56. What are the implied YES ask and the YES spread?",
+   "Why does a buyer who trades immediately pay the ask?"
+  ]
+ },
+ {
+  "slug": "midpoint-price",
+  "department": 18,
+  "kind": "market",
+  "title": "Midpoint",
+  "summary": "The average of the best bid and best ask, used as a reference price.",
+  "body": "The midpoint is halfway between the best bid and the best ask. It is a convenient single number for tracking a market, because it changes only when the quotes change and does not jump between bid and ask as individual trades do. This platform uses the midpoint as its reference price for describing movement when both sides are quoted, and falls back to the last traded price when they are not. The midpoint is a derived figure. Nobody can necessarily trade at it: a buyer pays the ask and a seller receives the bid. When the spread is narrow the midpoint is a reasonable summary of where the market stands; when the spread is wide it is merely the centre of a broad range, and when one side of the book is empty it does not exist. For any calculation about the cost of taking a position, the relevant number is the ask for the side being bought, with fees, and never the midpoint.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Not a tradable price.",
+   "Uninformative when the spread is wide.",
+   "Undefined when one side has no quote."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "Kalshi contract observations (price, spread, volume, history)"
+  ],
+  "data_gaps": [
+   "no authenticated exchange data (no order book depth stream, no trades feed)",
+   "no price history before this system's first observation"
+  ],
+  "ruleset": "general",
+  "season_note": "Exchange documentation as read on 2026-11-26; fields, fees and rules change and must be re-read",
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "reference price = bid/ask midpoint when both exist, otherwise last trade (docs/data/KALSHI.md, read 2026-11-26)"
+   },
+   {
+    "key": "kalshi-docs",
+    "note": "the midpoint is not a field defined in the pages opened; this is the platform's own derivation"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "bid-ask-spread",
+   "last-price",
+   "market-movement-is-an-observation",
+   "break-even-including-fees"
+  ],
+  "evaluation_questions": [
+   "Why is the midpoint steadier than the last traded price?",
+   "Which price should be used to compute the cost of buying YES?"
+  ]
+ },
+ {
+  "slug": "last-price",
+  "department": 18,
+  "kind": "market",
+  "title": "Last price",
+  "summary": "The price of the most recent trade, which may be old and may not reflect current quotes.",
+  "body": "The last price is what the most recent transaction in a market was done at; the exchange's documentation describes it as the price of the last traded YES contract. It is a fact about the past. In an actively traded market the last price sits between the current bid and ask and is a fair indication of the market's level. In a thinly traded one it can be hours old, struck before news arrived, and far from where anyone would trade now. A last price also says nothing about size: it may have been a single contract. For these reasons the last price is a weaker reference than current quotes and should be read together with the time it occurred and the present bid and ask. This platform records it as an observation and uses it as a reference price only when a two-sided quote is unavailable. Where the last price lies outside the current bid-ask range, it is stale by definition and should be labelled so.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "May be stale by a long interval.",
+   "Carries no information about trade size.",
+   "Our snapshots record the value seen at polling time, not the time of the trade itself."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "Kalshi contract observations (price, spread, volume, history)"
+  ],
+  "data_gaps": [
+   "no authenticated exchange data (no order book depth stream, no trades feed)",
+   "no price history before this system's first observation",
+   "no individual trade records"
+  ],
+  "ruleset": "general",
+  "season_note": "Exchange documentation as read on 2026-11-26; fields, fees and rules change and must be re-read",
+  "sources": [
+   {
+    "key": "kalshi-docs",
+    "note": "Get Market: last price is the price of the last traded YES contract; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "bid-ask-spread",
+   "midpoint-price",
+   "volume",
+   "market-movement-is-an-observation"
+  ],
+  "evaluation_questions": [
+   "Why can a last price lie outside the current bid-ask range?",
+   "What two pieces of context should accompany a last price?"
+  ]
+ },
+ {
+  "slug": "volume",
+  "department": 18,
+  "kind": "market",
+  "title": "Volume",
+  "summary": "The number of contracts that have traded in a market, in total or over a recent period.",
+  "body": "Volume counts contracts exchanged between buyers and sellers. The exchange reports a cumulative total for each market and a figure for the most recent twenty-four hours. Volume shows whether a market has been used: a contract with substantial volume has had its price tested by people willing to commit money on both sides, while one with none has a price that is merely quoted. It does not show the direction of opinion, since every trade has a buyer and a seller, and it does not show how much could be traded now at the quoted prices. High volume in the past is compatible with an empty book in the present. In basketball player markets many thresholds are listed for each player and a large share see little or no trading, so volume is a first filter on how much weight a price deserves. Counts are reported by the exchange in a text format that allows fractional contracts, another detail a reading system should not assume away.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Past trading does not ensure current depth.",
+   "Says nothing about who traded or why.",
+   "Cumulative totals are not comparable between markets open for different lengths of time."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "Kalshi contract observations (price, spread, volume, history)"
+  ],
+  "data_gaps": [
+   "no authenticated exchange data (no order book depth stream, no trades feed)",
+   "no price history before this system's first observation"
+  ],
+  "ruleset": "general",
+  "season_note": "Exchange documentation as read on 2026-11-26; fields, fees and rules change and must be re-read",
+  "sources": [
+   {
+    "key": "kalshi-docs",
+    "note": "Get Market: total contracts traded and 24-hour volume, as fixed-point count strings; opened 2026-11-26"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "many listed thresholds are illiquid (docs/data/KALSHI.md, read 2026-11-26)"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "open-interest",
+   "liquidity",
+   "last-price",
+   "market-movement-is-an-observation"
+  ],
+  "evaluation_questions": [
+   "Why does volume not reveal the direction of opinion?",
+   "What does zero volume imply about a quoted price?"
+  ]
+ },
+ {
+  "slug": "open-interest",
+  "department": 18,
+  "kind": "market",
+  "title": "Open interest",
+  "summary": "The number of contracts currently outstanding in a market.",
+  "body": "Open interest measures positions that exist and have not yet been closed or settled. It differs from volume, which counts trades. If one participant buys ten contracts from another who is opening the opposite side, both volume and open interest rise by ten. If those contracts are later sold to someone closing a position, volume rises again while open interest falls. Open interest therefore indicates how much money remains committed to a market, and volume how busy it has been. The exchange's interface reports the figure per market, and its documentation describes it as the number of contracts bought on the market without netting; the precise accounting should be taken from that documentation and not from analogy with other exchanges. Like volume, open interest carries no information about which side is right. A market can have large open interest and still be poorly priced, or small open interest and be accurate. It is context about participation, recorded here as an observation alongside price.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Exact accounting conventions are the exchange's; do not assume futures-market definitions apply.",
+   "Does not indicate which side holds the stronger view.",
+   "Observed only at our polling times."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "Kalshi contract observations (price, spread, volume, history)"
+  ],
+  "data_gaps": [
+   "no authenticated exchange data (no order book depth stream, no trades feed)",
+   "no price history before this system's first observation"
+  ],
+  "ruleset": "general",
+  "season_note": "Exchange documentation as read on 2026-11-26; fields, fees and rules change and must be re-read",
+  "sources": [
+   {
+    "key": "kalshi-docs",
+    "note": "Get Market: open interest described as contracts bought on the market, without netting; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "volume",
+   "liquidity",
+   "binary-event-contract"
+  ],
+  "evaluation_questions": [
+   "How can volume rise while open interest falls?",
+   "Does large open interest show that a price is accurate?"
+  ]
+ },
+ {
+  "slug": "liquidity",
+  "department": 18,
+  "kind": "market",
+  "title": "Liquidity",
+  "summary": "How easily a position can be bought or sold near the quoted price without moving it.",
+  "body": "Liquidity is not a single number. It is the combination of a narrow spread, meaningful size available at the best prices, and further orders behind them, so that a trade of reasonable size can be done close to the displayed price. An illiquid market has a wide spread, a few contracts on offer, or nothing at all on one side. Liquidity matters to anyone reading prices as information, even without trading, because quotes in an illiquid market are weakly anchored: a single small order can set the bid or ask, and the midpoint can sit far from where an informed participant would trade. The practical indicators available from public market data are the spread, the size at the best bid and ask, recent volume and open interest. The market record in the exchange documentation we read has no single liquidity field, so any liquidity label on this platform is our own summary of those indicators. Player contracts at extreme thresholds are frequently illiquid and their prices deserve little weight.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "No single agreed measure; any label is a convention.",
+   "Depth beyond the best quotes is not captured in our snapshots.",
+   "Liquidity can disappear quickly around news."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "Kalshi contract observations (price, spread, volume, history)"
+  ],
+  "data_gaps": [
+   "no authenticated exchange data (no order book depth stream, no trades feed)",
+   "no price history before this system's first observation"
+  ],
+  "ruleset": "general",
+  "season_note": "Exchange documentation as read on 2026-11-26; fields, fees and rules change and must be re-read",
+  "sources": [
+   {
+    "key": "kalshi-docs",
+    "note": "the Get Market page read on 2026-11-26 lists bid/ask sizes, volume and open interest and no liquidity field; the definition here is general market knowledge, not taken from the page"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "illiquid thresholds noted as a limitation (docs/data/KALSHI.md, read 2026-11-26)"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "bid-ask-spread",
+   "volume",
+   "open-interest",
+   "midpoint-price",
+   "market-movement-is-an-observation"
+  ],
+  "evaluation_questions": [
+   "Name three components of liquidity.",
+   "Why are quotes in an illiquid market weak information?"
+  ]
+ },
+ {
+  "slug": "settlement-rules-and-wording",
+  "department": 18,
+  "kind": "market",
+  "title": "Settlement rules and why exact wording matters",
+  "summary": "A contract pays according to its written rules, which define the event, the data source and the special cases.",
+  "body": "The title of a contract is a label. What decides the payout is the rules text: precisely which event counts, which source determines it, when it is determined, and what happens in unusual cases. The exchange's market record carries a primary and a secondary rules description for this reason. For a basketball statistic the questions that wording answers include whether overtime counts, which official source is used, whether later stat corrections matter, and what happens if the player does not play. On the last point this platform's own documentation notes that the exchange settles player contracts to a fair price when the player is inactive or never takes the court, while our paper testing treats that case as void; the two records therefore differ in that situation. The lesson is general. Two contracts that look alike can settle differently, and a model's forecast applies to a contract only if the model's definition of the outcome matches the contract's. Rules are stored verbatim and a contract is interpreted only when its type and wording support it.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Rules can be amended; the stored text is as first seen by our system.",
+   "Our paper settlement differs from exchange settlement in the inactive-player case.",
+   "The specific rules for each series were not read in this session."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "Kalshi contract observations (price, spread, volume, history)",
+   "paper-testing results"
+  ],
+  "data_gaps": [
+   "no authenticated exchange data (no order book depth stream, no trades feed)",
+   "no price history before this system's first observation",
+   "no exchange settlement records (read-only public data)"
+  ],
+  "ruleset": "general",
+  "season_note": "Exchange documentation as read on 2026-11-26; fields, fees and rules change and must be re-read",
+  "sources": [
+   {
+    "key": "kalshi-docs",
+    "note": "Get Market: rules_primary and rules_secondary fields; settlement page: one dollar per winning contract, timing varies; opened 2026-11-26"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "rules stored verbatim; inactive-player settlement difference (docs/data/KALSHI.md, read 2026-11-26)"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "threshold-contracts",
+   "official-scoring-and-stat-corrections",
+   "stat-corrections-after-the-game",
+   "protected-and-special-structures",
+   "paper-testing",
+   "market-status-and-lifecycle"
+  ],
+  "evaluation_questions": [
+   "Name three questions a contract's rules must answer for a player-statistic market.",
+   "How does our paper settlement differ from the exchange when a player is inactive?"
+  ]
+ },
+ {
+  "slug": "threshold-contracts",
+  "department": 18,
+  "kind": "market",
+  "title": "Threshold contracts ('N or more')",
+  "summary": "A binary contract that pays if a statistic reaches at least a stated number.",
+  "body": "Most player contracts are thresholds: YES pays if the player records N or more of a statistic. Because basketball statistics are whole numbers, 'N or more' is the same as 'more than N minus one half', and this platform stores such a contract with a half-point strike - 24.5 for '25 or more' - so that the comparison is unambiguous and matches the form in which projections are evaluated. The exchange's market record describes the comparison with a strike type, such as greater or greater-or-equal, and strike values; a contract is normalised here only when that structure and the rule text agree. Several thresholds are usually listed for the same player and statistic, forming a ladder. Their prices are linked by logic: a higher threshold cannot be more likely than a lower one. To evaluate a threshold one needs the whole distribution of the statistic, not its average, since the question is how often the outcome lands at or above a point. That is the reason projections here carry ranges.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Normalisation depends on rule text matching the expected wording.",
+   "Ladder prices in illiquid markets can be mutually inconsistent.",
+   "An average projection alone cannot evaluate a threshold."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "Kalshi contract observations (price, spread, volume, history)",
+   "threshold history",
+   "projected minutes and stat projections with p10/p90 (models)"
+  ],
+  "data_gaps": [
+   "no authenticated exchange data (no order book depth stream, no trades feed)",
+   "no price history before this system's first observation"
+  ],
+  "ruleset": "general",
+  "season_note": "Exchange documentation as read on 2026-11-26; fields, fees and rules change and must be re-read",
+  "sources": [
+   {
+    "key": "kalshi-docs",
+    "note": "Get Market: strike_type values including greater and greater_or_equal, floor_strike and cap_strike; opened 2026-11-26"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "threshold = listed strike (24.5 for '25+'), YES = at least N; normalisation conditions (docs/data/KALSHI.md, read 2026-11-26)"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "settlement-rules-and-wording",
+   "distribution-versus-average",
+   "binary-event-contract",
+   "protected-and-special-structures",
+   "price-is-not-model-probability"
+  ],
+  "evaluation_questions": [
+   "How is a '25 or more points' contract stored on this platform, and why?",
+   "Why can a higher threshold never be more likely than a lower one for the same player and statistic?"
+  ]
+ },
+ {
+  "slug": "break-even-including-fees",
+  "department": 18,
+  "kind": "market",
+  "title": "Break-even including fees",
+  "summary": "The frequency at which a position neither gains nor loses, after the cost of trading is included.",
+  "body": "Buying a YES contract at price p risks p to win one dollar. Ignoring costs, the position breaks even if the event occurs with frequency p. Trading is not free, though. The exchange charges fees on trades, and its documentation describes how those fees are rounded; the rates themselves come from the exchange's fee schedule, which can differ by series and change over time, and must be read from the exchange. No fee figure is stated here. With a fee f per contract paid on entry, the break-even frequency rises to p plus f, so the true hurdle is always higher than the quoted price suggests, and the effect is proportionally largest for cheap contracts. The relevant price is the ask, since that is what a buyer pays. This platform stores, for each normalised contract, a break-even derived from the ask plus an estimated fee. Its documentation states that the estimate has not been verified against the exact schedule for each series, so the stored break-even is an approximation.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "No fee rate is given; the schedule must be read from the exchange.",
+   "The platform's stored break-even uses an estimated, unverified fee.",
+   "Ignores the possibility of selling before settlement."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "Kalshi contract observations (price, spread, volume, history)"
+  ],
+  "data_gaps": [
+   "no authenticated exchange data (no order book depth stream, no trades feed)",
+   "no price history before this system's first observation",
+   "exact fee schedule per series not verified"
+  ],
+  "ruleset": "general",
+  "season_note": "Exchange documentation as read on 2026-11-26; fields, fees and rules change and must be re-read",
+  "sources": [
+   {
+    "key": "kalshi-docs",
+    "note": "fee rounding page: trades carry fees from a fee model, with rounding rules; the page does not give rates or the schedule; opened 2026-11-26; the break-even arithmetic is this project's own and is not on the page"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "stored price is the break-even implied by the ask plus an estimated fee, not verified per series (docs/data/KALSHI.md, read 2026-11-26)"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "yes-no-price",
+   "bid-ask-spread",
+   "price-is-not-model-probability",
+   "paper-testing"
+  ],
+  "evaluation_questions": [
+   "Why is the break-even frequency higher than the quoted ask?",
+   "Where must the fee rate be obtained?"
+  ]
+ },
+ {
+  "slug": "price-is-not-model-probability",
+  "department": 18,
+  "kind": "market",
+  "title": "A market price is not our model's probability",
+  "summary": "The market defines which contracts exist and what they cost; the forecast comes only from registered models.",
+  "body": "A price implies a break-even frequency, and it is common to call that the market's probability. On this platform the two ideas are kept strictly apart. The exchange decides which contracts are listed and at what prices they can be bought. The platform's registered, validated models decide the forecast. A market price is never an input to a model, never replaces a model output, and is never displayed as if it were one. There are good reasons. A price includes the spread and fees, reflects whoever happens to be quoting an often thin market, and can be stale. If prices fed the models, any comparison between forecast and price would be circular, and the models could not be evaluated honestly. Equally, a model probability is not a statement about the price. When the two differ, the difference is an observation to be recorded and tested over many cases in paper trading. It is not, in any single case, evidence that the market is wrong.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "A disagreement between model and price may reflect model error.",
+   "Selection across many contracts inflates apparent disagreements.",
+   "This is a platform rule; other analysts use prices as inputs."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "Kalshi contract observations (price, spread, volume, history)",
+   "projected minutes and stat projections with p10/p90 (models)",
+   "paper-testing results"
+  ],
+  "data_gaps": [
+   "no authenticated exchange data (no order book depth stream, no trades feed)",
+   "no price history before this system's first observation"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "core rule: Kalshi decides which contracts exist, GIZER models decide the forecast; a market price is never a model input (CLAUDE.md and docs/data/KALSHI.md, read 2026-11-26)"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "break-even-including-fees",
+   "calibration",
+   "overfitting-and-leakage",
+   "paper-testing",
+   "market-movement-is-an-observation"
+  ],
+  "evaluation_questions": [
+   "Why would feeding market prices into the models make evaluation circular?",
+   "What does a difference between model probability and price-implied frequency show in a single case?"
+  ]
+ },
+ {
+  "slug": "market-movement-is-an-observation",
+  "department": 18,
+  "kind": "market",
+  "title": "Market movement is an observation",
+  "summary": "A change in price is a recorded fact; its cause is not known from the price alone.",
+  "body": "Prices move for many reasons: injury news, a lineup announcement, one large order, a market maker adjusting quotes, or thin trading in which a single small trade resets the last price. From outside, the move is visible and the reason is not. This platform therefore describes movement and attributes no cause. It reports the first price it observed that day, the current price, the change, the high and low, and changes over fixed recent intervals, each null when no observation that old exists. Three cautions keep the description honest. The first observed price is where our polling began and must not be called an opening price. Observations are taken at intervals of minutes, so the record is not real-time and brief moves between polls are missed. And a move in an illiquid contract carries little information. Movement may prompt a check of availability news, which is a separate record with its own source, but it is not an input to any model.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Polling interval limits what can be seen.",
+   "No history exists before this system's first observation.",
+   "Causes are not identified."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "Kalshi contract observations (price, spread, volume, history)"
+  ],
+  "data_gaps": [
+   "no authenticated exchange data (no order book depth stream, no trades feed)",
+   "no price history before this system's first observation"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "movement is descriptive, no cause attributed; first observed is not an official open; polling is not real-time (docs/data/KALSHI.md, read 2026-11-26)"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "first-observed-is-not-opening",
+   "liquidity",
+   "price-is-not-model-probability",
+   "injury-report-timing",
+   "last-price"
+  ],
+  "evaluation_questions": [
+   "Why must the first observed price not be called an opening price?",
+   "What does this platform say about the cause of a price move?"
+  ]
+ },
+ {
+  "slug": "first-observed-is-not-opening",
+  "department": 18,
+  "kind": "market",
+  "title": "First observed is not the opening price",
+  "summary": "Our earliest recorded price for a contract is the first one our polling saw, which may be long after trading began.",
+  "body": "A market has an opening on the exchange: the time it became available to trade and the first prices quoted or traded. This platform does not see that moment unless it happens to be polling then. What it has is the first snapshot it took of the contract, which may come hours after the market opened and after substantial movement. Calling that value an opening price would misstate both the price and the size of any subsequent move. The same reasoning applies to highs and lows, which are the extremes among our observations and not the true extremes of trading. Price observations are stored append-only, a new row being written when something has changed, so the record is a faithful log of what the system saw and when. Any statement drawn from it should carry that framing: 'first observed at', 'highest observed', 'as of the last sync'. If the sync is overdue the data are marked stale, and the last verified values are shown with their time.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Our record begins at first observation, not at market open.",
+   "Extremes between polls are not captured.",
+   "Stale data are possible when polling is delayed."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "Kalshi contract observations (price, spread, volume, history)"
+  ],
+  "data_gaps": [
+   "no authenticated exchange data (no order book depth stream, no trades feed)",
+   "no price history before this system's first observation"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "price observations are append-only; first observed is never called an opening price; polling is never described as real-time (CLAUDE.md and docs/data/KALSHI.md, read 2026-11-26)"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "market-movement-is-an-observation",
+   "why-live-data-is-delayed",
+   "last-price"
+  ],
+  "evaluation_questions": [
+   "What is the difference between a first observed price and an opening price?",
+   "How should a high in our price history be described?"
+  ]
+ },
+ {
+  "slug": "protected-and-special-structures",
+  "department": 18,
+  "kind": "market",
+  "title": "Protected and special structures need separate handling",
+  "summary": "Contracts with non-standard payout provisions are tracked with their original wording and not interpreted as simple thresholds.",
+  "body": "Not every listed contract is a plain binary threshold. This platform's documentation of the exchange's basketball listings identifies several other kinds: protected versions of familiar contracts, which carry different payout provisions despite similar wording; escalator contracts, whose payout scales with the statistic instead of being all-or-nothing; and contracts on compound outcomes such as double-doubles, triple-doubles or combined steals and blocks. The exchange's interface likewise allows for scalar markets and for strike types beyond a simple comparison. A model built to answer 'will the player reach N' does not answer what these pay. The rule here is conservative. A contract is normalised and evaluated only if it is binary, has a simple strike, and its rule text matches the expected wording and agrees with the strike. Everything else is stored as unsupported, with the reason and the original wording kept, and is displayed as tracked only. Treating a special structure as an ordinary threshold because the title looks familiar would be a silent error.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "The list of special structures reflects what our system had seen at the documentation date.",
+   "New structures may appear without notice.",
+   "Unsupported contracts receive no forecast, which limits coverage."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "Kalshi contract observations (price, spread, volume, history)"
+  ],
+  "data_gaps": [
+   "no authenticated exchange data (no order book depth stream, no trades feed)",
+   "no price history before this system's first observation",
+   "no validated model for compound outcomes"
+  ],
+  "ruleset": "general",
+  "season_note": "Exchange documentation as read on 2026-11-26; fields, fees and rules change and must be re-read",
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "handling of protected, escalator, 2D/3D and stocks series; normalisation conditions (docs/data/KALSHI.md, read 2026-11-26)"
+   },
+   {
+    "key": "kalshi-docs",
+    "note": "Get Market: market_type scalar and strike types such as functional, custom, structured; opened 2026-11-26"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "settlement-rules-and-wording",
+   "threshold-contracts",
+   "binary-event-contract",
+   "combination-contracts-not-assumed"
+  ],
+  "evaluation_questions": [
+   "Why can a protected contract not be evaluated like the ordinary contract it resembles?",
+   "What three conditions must hold before a contract is normalised here?"
+  ]
+ },
+ {
+  "slug": "combination-contracts-not-assumed",
+  "department": 18,
+  "kind": "market",
+  "title": "Combination contracts are not assumed to exist",
+  "summary": "Whether a contract on several outcomes together is listed must be observed; it is never presumed or constructed.",
+  "body": "It is tempting to think of several outcomes together - two players both reaching their thresholds, or a statistic and a game result. Whether a contract on such a combination exists is a fact about the exchange's listings at a given time. The exchange's interface documentation does include objects for multivariate events, so combined structures are possible there, but that does not mean a particular combination is offered for a particular game, nor what its rules would be. This platform does not assume that one exists, does not invent a price for it by multiplying individual prices, and does not interpret a listed one unless its type and rules are supported. There is also a basketball reason for care. Outcomes within a game are not independent: teammates share possessions, minutes depend on the score, and pace lifts or lowers everyone together. The chance of two outcomes occurring together is therefore not the product of their separate chances, and estimating it requires a model of the dependence, validated like any other.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "The multivariate pages of the exchange documentation were seen in an index only and not read.",
+   "No joint-outcome model is described or validated in this record.",
+   "Listings change from day to day."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "Kalshi contract observations (price, spread, volume, history)"
+  ],
+  "data_gaps": [
+   "no authenticated exchange data (no order book depth stream, no trades feed)",
+   "no price history before this system's first observation",
+   "no validated dependence model referenced here"
+  ],
+  "ruleset": "general",
+  "season_note": "Exchange documentation as read on 2026-11-26; fields, fees and rules change and must be re-read",
+  "sources": [
+   {
+    "key": "kalshi-docs",
+    "note": "documentation index lists multivariate event endpoints; the pages themselves were not opened"
+   },
+   {
+    "key": "gizer-internal",
+    "note": "contracts are interpreted only when type and rule text support it (CLAUDE.md, read 2026-11-26)"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "opportunity-is-shared",
+   "protected-and-special-structures",
+   "correlation-versus-causation",
+   "settlement-rules-and-wording"
+  ],
+  "evaluation_questions": [
+   "Why is the chance of two same-game outcomes not the product of their separate chances?",
+   "What must be true before a combination contract is discussed as available?"
+  ]
+ },
+ {
+  "slug": "market-status-and-lifecycle",
+  "department": 18,
+  "kind": "market",
+  "title": "Market status and lifecycle",
+  "summary": "A market passes through stages from creation to final settlement, and its status says which prices are meaningful.",
+  "body": "A contract is not always open for trading. The exchange's market record carries a status that moves through stages: created but not yet tradable, active, closed to trading, determined once the outcome is known, and finalised when settlement is complete, with further states for disputed or amended outcomes. It also carries opening and closing times, an expected expiration time and, after determination, a result. Reading a price without the status invites error. Quotes on a closed market are leftovers; a determined market's last price is history. Settlement normally follows soon after the outcome is known, but the documentation says timing varies with the type of market, the availability of the data source and whether review is needed, which is relevant to statistics subject to correction. The documentation also notes that prices and status obtained through the standard request interface can lag the exchange slightly. Our snapshots store status with each observation, so a price can always be read alongside the state of the market when it was seen.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Status names and meanings are the exchange's and may change.",
+   "Our observation of a status change is delayed by the polling interval.",
+   "Dispute and amendment procedures were not read."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "Kalshi contract observations (price, spread, volume, history)"
+  ],
+  "data_gaps": [
+   "no authenticated exchange data (no order book depth stream, no trades feed)",
+   "no price history before this system's first observation"
+  ],
+  "ruleset": "general",
+  "season_note": "Exchange documentation as read on 2026-11-26; fields, fees and rules change and must be re-read",
+  "sources": [
+   {
+    "key": "kalshi-docs",
+    "note": "Get Market: status values, open/close/expiration times, result, note that prices and status can lag by a few seconds; settlement page: timing varies; opened 2026-11-26"
+   }
+  ],
+  "verification": "checked_against_source",
+  "related": [
+   "settlement-rules-and-wording",
+   "binary-event-contract",
+   "first-observed-is-not-opening",
+   "stat-corrections-after-the-game"
+  ],
+  "evaluation_questions": [
+   "Why should a price never be read without the market's status?",
+   "What can delay settlement after an outcome is known?"
+  ]
+ }
+]

@@ -159,12 +159,12 @@
   "key": "gizer-internal",
   "title": "GIZER NBA project documentation and documented derivations",
   "publisher": "Gizer Technology Group",
-  "url": "repository: docs/ (KALSHI.md, MINUTES-INTELLIGENCE.md, PLAYER-HISTORICAL-ANALYSIS.md, LINEUP-INTELLIGENCE.md, LIVE-VALIDATION.md, RESEARCH-CONSTITUTION.md)",
+  "url": "repository: CLAUDE.md, RESEARCH-CONSTITUTION.md and docs/ (data/KALSHI.md, operations/LIVE-VALIDATION.md, research/MINUTES-INTELLIGENCE.md, research/PLAYER-HISTORICAL-ANALYSIS.md, data/LINEUP-INTELLIGENCE.md)",
   "league": "NBA",
   "kind": "internal documentation",
   "reliability": "internal; describes this platform's own rules and data",
   "permission": "own work",
   "accessed": "2026-11-26",
-  "access_result": "opened and read (docs/data/KALSHI.md and the project CLAUDE.md; other internal documents were not opened in this session)"
+  "access_result": "opened and read (CLAUDE.md, docs/data/KALSHI.md, docs/operations/LIVE-VALIDATION.md and an excerpt of RESEARCH-CONSTITUTION.md; MINUTES-INTELLIGENCE.md, PLAYER-HISTORICAL-ANALYSIS.md and LINEUP-INTELLIGENCE.md were not opened in this session)"
  }
 ]

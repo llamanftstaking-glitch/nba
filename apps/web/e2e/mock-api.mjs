@@ -1117,6 +1117,111 @@ function liveStream(res, g) {
   res.on("close", () => { clearInterval(iv); LV.streams.delete(res); });
 }
 
+
+// ---------- GIZER CORTEX (knowledge library and profiles) ----------
+// 260 generated records: 13 in each of 20 departments, every kind, both verification states.
+const CX_DEPTS = ["Basketball Fundamentals", "Offensive Tactical Intelligence", "Defensive Tactical Intelligence", "Coaching Intelligence", "Player Scouting Intelligence", "Team Identity Intelligence", "Minutes and Rotation Intelligence", "Usage and Opportunity Intelligence", "Shooting and Efficiency Intelligence", "Rebounding Intelligence", "Passing and Playmaking Intelligence", "Lineup and Teammate Intelligence", "Injury and Availability Intelligence", "Schedule and Fatigue Intelligence", "Matchup Intelligence", "Historical Basketball Intelligence", "Advanced Statistical Intelligence", "Kalshi Market Literacy", "Live Game Interpretation", "Postgame Research and Learning"];
+const CX_KINDS = ["rule", "statistic", "offense", "defense", "role", "concept", "context", "market", "method", "live"];
+const CX_SOURCES = [
+  { key: "fix-rulebook", title: "FIXTURE League Rulebook", publisher: "FIXTURE League", url: "https://example.invalid/rulebook", league: "NBA", kind: "official rules", reliability: "official", permission: "FIXTURE: cited by link, not reproduced", accessed: TODAY, access_result: "opened and read (FIXTURE: rules 3 to 7 only)" },
+  { key: "fix-glossary", title: "FIXTURE Stats Glossary", publisher: "FIXTURE League", url: "https://example.invalid/glossary", league: "NBA", kind: "official glossary", reliability: "official", permission: "FIXTURE: cited by link", accessed: TODAY, access_result: "opened and read" },
+  { key: "fix-fiba", title: "FIXTURE International Rules", publisher: "FIXTURE Federation", url: "https://example.invalid/fiba", league: "FIBA", kind: "official rules", reliability: "official", permission: "FIXTURE: cited by link", accessed: null, access_result: "not opened" },
+  { key: "fix-study", title: "FIXTURE Analytics Study", publisher: "FIXTURE independent author", url: "https://example.invalid/study", league: "not league specific", kind: "open study", reliability: "independent; not official", permission: "FIXTURE: no licence visible; cited by link only", accessed: TODAY, access_result: "not reachable (FIXTURE: the page returned an error)" },
+  { key: "fix-exchange", title: "FIXTURE Exchange Documentation", publisher: "FIXTURE Exchange", url: null, league: "not league specific", kind: "market documentation", reliability: "primary", permission: "FIXTURE: cited by name", accessed: TODAY, access_result: "opened and read" },
+];
+const CX = [];
+for (let d = 1; d <= 20; d++) for (let n = 0; n < 13; n++) {
+  const kind = CX_KINDS[(d + n) % 10], i = CX.length;
+  const checked = i % 4 !== 3;
+  const hasFormula = (kind === "statistic" || kind === "method") && i % 7 !== 0;
+  CX.push({ slug: `fix-d${d}-${n}`, title: `FIXTURE ${kind} record ${d}.${n + 1}`, department: d, department_name: CX_DEPTS[d - 1], kind, summary: `FIXTURE summary for ${kind} record ${d}.${n + 1} in ${CX_DEPTS[d - 1].toLowerCase()}; keyword token${i}.`, ruleset: ["NBA", "FIBA", "general"][i % 3], verification: checked ? "checked_against_source" : "authored_not_checked", version: 1 + (i % 3), sources: checked ? [CX_SOURCES[i % 2].key] : [],
+    body: `FIXTURE body paragraph one for record ${d}.${n + 1}. It describes the ${kind} in plain prose.\n\nFIXTURE body paragraph two. It states what follows from the definition.`, formula: hasFormula ? `FIXTURE_${kind.toUpperCase()}_${i} = PTS / (2 * (FGA + 0.44 * FTA))` : null, season_note: i % 5 === 0 ? "FIXTURE: written for the 2026-27 season; re-check after rule changes." : null, updated_at: iso(60 + i),
+    limitations: [`FIXTURE limitation A for record ${d}.${n + 1}.`, "FIXTURE limitation B: small samples move quickly."], when_not_to_use: i % 3 === 0 ? "FIXTURE: do not use for a player with fewer than five games." : null, player_responsibilities: kind === "offense" || kind === "defense" ? "FIXTURE: the ball handler reads the second defender; the screener rolls or pops." : null, common_responses: kind === "offense" || kind === "defense" ? "FIXTURE: defences answer by switching or dropping." : null,
+    observable_in_our_data: i % 6 === 5 ? [] : ["FIXTURE: box-score totals", "FIXTURE: play-by-play events for games observed live"], data_gaps: ["FIXTURE: no tracking data", "FIXTURE: no shot locations"], evaluation_questions: [`FIXTURE question for record ${d}.${n + 1}?`], related: [] });
+}
+// one named record for search and detail checks
+Object.assign(CX[0], { slug: "fix-shot-clock", title: "FIXTURE Shot clock reset", kind: "rule", ruleset: "NBA", verification: "checked_against_source", sources: ["fix-rulebook", "fix-glossary"], summary: "FIXTURE summary: the shotclock resets to fourteen after an offensive rebound.", formula: "FIXTURE_RESET = 14 if offensive_rebound else 24", season_note: "FIXTURE: written for the 2026-27 season; re-check after rule changes.", when_not_to_use: "FIXTURE: not for international games." });
+Object.assign(CX[3], { verification: "authored_not_checked", sources: [] });
+CX.forEach((c, i) => { c.related = [CX[(i + 1) % CX.length], CX[(i + 13) % CX.length]].map((r) => ({ slug: r.slug, title: r.title })); });
+const cxShort = ({ slug, title, department, department_name, kind, summary, ruleset, verification, version, sources }) => ({ slug, title, department, department_name, kind, summary, ruleset, verification, version, sources });
+const cxCiting = (key) => CX.filter((c) => c.sources.includes(key)).length;
+const CX_RUNS = [
+  { id: 2, kind: "answers", split: "dev", model: "FIXTURE-model-a", n: 20, score: 0.85, cost_usd: 0.0412, created_at: iso(200), by_category: { basketball_rules: 0.9 }, misses: ["FIXTURE RULE-007: expected B, got C", "FIXTURE STAT-012: expected 57.1, got 55.0", "FIXTURE MKT-003: expected abstain, got an answer"] },
+  { id: 1, kind: "retrieval", split: "dev", model: null, n: 119, score: 0.731, cost_usd: 0, created_at: iso(400), by_category: {}, misses: [] },
+];
+const CX_BENCH = { questions: 204, target: 500, by_category: { basketball_rules: 12, offensive_tactics: 12, defensive_tactics: 12, advanced_statistics: 24, probability: 24, market_contracts: 24, research_integrity: 24, data_interpretation: 72 }, by_type: { multiple_choice: 93, numeric: 40, abstain: 40, short_answer: 31 }, by_split: { dev: 119, held_out: 85 }, reviewed_by_a_person: 0, note: "FIXTURE: answer keys were written by a model and are unreviewed until a person marks them. Scores are provisional until then." };
+const CX_FINDINGS = [
+  { uid: "FIX-F1", hypothesis: "FIXTURE hypothesis: bench minutes rise in the second game of a back-to-back.", supporting: ["FIXTURE: 14 of 20 team-games showed more bench minutes"], contradicting: ["FIXTURE: 6 of 20 team-games showed fewer"], sample_size: 20, proposed_experiment: "FIXTURE: repeat on the full season with a fixed definition of bench.", result: null, limitations: "FIXTURE: one month of games.", status: "open", source: "FIXTURE research agent" },
+  { uid: "FIX-F2", hypothesis: "FIXTURE hypothesis: usage rises when the lead guard sits.", supporting: ["FIXTURE: usage +2.1 points over 31 games"], contradicting: [], sample_size: 31, proposed_experiment: "FIXTURE: with/without split by opponent strength.", result: "FIXTURE: supported on the held-out month.", limitations: "FIXTURE: provider usage is per game.", status: "supported", source: "FIXTURE experiment 12" },
+  { uid: "FIX-F3", hypothesis: "FIXTURE hypothesis: travel distance changes rebounding.", supporting: [], contradicting: ["FIXTURE: no difference in 140 games"], sample_size: 140, proposed_experiment: null, result: "FIXTURE: rejected.", limitations: null, status: "rejected", source: null },
+  { uid: "FIX-F4", hypothesis: "FIXTURE hypothesis: early fouls shorten starter minutes.", supporting: ["FIXTURE: 9 games"], contradicting: ["FIXTURE: 8 games"], sample_size: null, proposed_experiment: "FIXTURE: collect more live games.", result: "FIXTURE: inconclusive.", limitations: ["FIXTURE: live data only", "FIXTURE: 17 games"], status: "inconclusive", source: "FIXTURE research agent" },
+  { uid: "FIX-F5", hypothesis: "FIXTURE hypothesis: pace differs after two days of rest.", supporting: [], contradicting: [], sample_size: 0, proposed_experiment: "FIXTURE: not started.", result: null, limitations: null, status: "open", source: "FIXTURE research agent" },
+];
+const CX_NOT_BUILT = ["FIXTURE: semantic search: keyword search only", "FIXTURE: possession-level reconstruction", "FIXTURE: film study", "FIXTURE: coach identities"];
+const CX_TEAMS = [...Object.values(T).map((t) => ({ team_id: t.id, abbr: t.abbr, name: t.name })), ...Array.from({ length: Math.max(0, 30 - Object.values(T).length) }, (_, i) => ({ team_id: 100 + i, abbr: `F${String(i + 1).padStart(2, "0")}`, name: `FIXTURE Team ${i + 1}` }))].map((t, i) => ({ ...t, profile_available: i !== 2 }));
+function cxOverview() {
+  const count = (f) => CX.filter(f).length;
+  return { knowledge_records: CX.length, records_checked_against_a_source: count((c) => c.verification === "checked_against_source"), records_authored_not_checked: count((c) => c.verification !== "checked_against_source"), departments: CX_DEPTS.map((name, i) => ({ id: i + 1, name, records: count((c) => c.department === i + 1) })), by_kind: Object.fromEntries(CX_KINDS.map((k) => [k, count((c) => c.kind === k)])),
+    sources_indexed: CX_SOURCES.length, sources_opened_by_author: CX_SOURCES.filter((x) => x.access_result.startsWith("opened")).length, player_profiles_available: PLAYERS.filter((p) => p.games != null).length, team_profiles_available: CX_TEAMS.filter((t) => t.profile_available).length, coaching_profiles_available: 0, coaching_note: "FIXTURE: coach identities are not in our data; rotation tendencies are part of each team profile.",
+    research_findings: CX_FINDINGS.reduce((a, f) => ({ ...a, [f.status]: (a[f.status] ?? 0) + 1 }), {}), unresolved_hypotheses: CX_FINDINGS.filter((f) => f.status === "open").length, last_knowledge_update: iso(60), retrievals_logged: 7, benchmark: CX_BENCH, benchmark_runs: CX_RUNS.map(({ by_category, misses, ...r }) => r), season: "2026-27", not_built: CX_NOT_BUILT };
+}
+function cxConcepts(q) {
+  let items = CX.filter((c) => (!q.get("department") || String(c.department) === q.get("department")) && (!q.get("kind") || c.kind === q.get("kind")) && (!q.get("verification") || c.verification === q.get("verification")));
+  const limit = Number(q.get("limit") ?? 30), offset = Number(q.get("offset") ?? 0);
+  if (limit > 200) return { __status: 422, ...err("invalid_request", "FIXTURE: limit must be at most 200.") };
+  const query = (q.get("q") ?? "").trim();
+  if (!query) return { mode: "browse", items: items.slice(offset, offset + limit).map(cxShort), total: items.length };
+  const words = query.toLowerCase().split(/[^a-z0-9.]+/).filter((w) => w.length >= 2);
+  const text = (c) => `${c.title} ${c.summary} ${c.body}`.toLowerCase();
+  if (words.length === 0) return { mode: "search", query, method: "none", items: [], total: 0 };
+  let method = "all_words", hit = items.filter((c) => words.every((w) => text(c).includes(w)));
+  if (hit.length === 0) { method = "any_word"; hit = items.filter((c) => words.some((w) => text(c).includes(w))); }
+  return { mode: "search", query, method, items: hit.slice(offset, offset + limit).map((c, i) => ({ ...cxShort(c), score: +(1.2 - i * 0.01).toFixed(3) })), total: hit.length };
+}
+function cxPlayerDna(id) {
+  const p = PLAYERS.find((x) => String(x.id) === String(id));
+  if (!p) return { __status: 404, ...err("not_found", "FIXTURE: player not found.") };
+  const team = T[p.team_abbr];
+  const base = { identity: { player_id: p.id, name: p.name, team: p.team_abbr, team_id: team?.id ?? null, position: p.position, jersey: String(p.id % 100), headshot_url: HEAD[p.id] ?? null, last_game_date: p.last_game_date, not_held: ["height", "weight", "age"] }, season: "2026-27", team_history: p.games == null ? [] : [{ season: "2025-26", team: p.team_abbr, games: 70, first: "2025-10-22", last: "2026-04-12" }, { season: "2026-27", team: p.team_abbr, games: p.games, first: "2026-10-20", last: YESTERDAY }], generated_at: iso(30), method: "FIXTURE: computed from stored box scores.", available: p.games != null };
+  if (p.games == null) return { ...base, note: "FIXTURE: no box scores are held for this player this season." };
+  const thin = p.id === 9002;
+  return { ...base, season_line: { games: p.games, minutes_total: Math.round(p.games * p.min), mpg: p.min, usage: thin ? null : 27.4, usage_games: thin ? 0 : p.games, pts36: +(p.pts * 36 / p.min).toFixed(2), reb36: +(p.reb * 36 / p.min).toFixed(2), ast36: +(p.ast * 36 / p.min).toFixed(2), fg3m36: +(p.fg3m * 36 / p.min).toFixed(2), stl36: 1.2, blk36: null, tov36: 2.9, fga36: 18.4, fta36: 5.1, true_shooting_pct: 58.3, start_share: 0.95, starts_known_games: p.games, minutes_sd: 4.2 },
+    recent_10: { games: 10, mpg: p.min, pts: p.pts, reb: p.reb, ast: p.ast, usage: thin ? null : 28.0 },
+    archetypes: thin ? [] : [{ key: "primary_creator", label: "FIXTURE Primary creator", rule: "usage ≥ 26% and assists per 36 ≥ 5.5" }, { key: "high_minutes_starter", label: "FIXTURE High-minutes starter", rule: "start share ≥ 80% and minutes per game ≥ 32" }],
+    archetype_status: thin ? "FIXTURE: not derived — usage was not published for this player's games" : "derived",
+    teammate_context: thin ? null : [{ teammate: "FIXTURE Player G", games_with: 50, games_without: 8, usage_with: 26.9, usage_without: 30.2, small_sample: false }, { teammate: "FIXTURE DET S3", games_with: 57, games_without: 1, usage_with: 27.4, usage_without: null, small_sample: true }],
+    tactical_profile: { available: false, reason: "FIXTURE: no play-type, shot-location or tracking data is held, so roles and strengths are not stated." }, not_available: ["FIXTURE: assist percentage", "FIXTURE: shot distribution by zone"], notes: ["FIXTURE note: archetypes are descriptive labels from published rules. They are not predictions.", "FIXTURE note: thresholds are this platform's own conventions."] };
+}
+function cxTeamDna(id) {
+  const t = CX_TEAMS.find((x) => String(x.team_id) === String(id));
+  if (!t) return { __status: 404, ...err("not_found", "FIXTURE: team not found.") };
+  const base = { team_id: t.team_id, abbr: t.abbr, name: t.name, season: "2026-27", generated_at: iso(30), method: "FIXTURE: computed from stored final scores and box scores.", available: t.profile_available };
+  if (!t.profile_available) return { ...base, note: "FIXTURE: fewer than three final games are held for this team." };
+  const live = t.team_id === 1;
+  return { ...base, record: { games: 17, wins: 11, losses: 6, home: "5-3", away: "6-3", points_per_game: 116.7, points_allowed_per_game: 113.6, point_differential: 3.1 },
+    ratings: t.team_id === 2 ? null : { games_with_possessions: 17, pace_possessions_per_game: 103.2, offensive_rating: 113.1, defensive_rating: 110.1, net_rating: 3.0, note: "FIXTURE: per 100 of the team's own possessions for the games that have them." },
+    shot_volume: { three_pointers_made_per_game: 14.8, field_goal_attempts_per_game: 96.4, free_throw_attempts_per_game: 20.5, turnovers_per_game: null },
+    rotation: { games: 17, players_10_plus_minutes_per_game: 8.9, rotation_length_range: [8, 10], games_with_confirmed_starters: 17, starter_minutes_avg: 30.8, bench_points_per_game: 40.2, distinct_starting_fives: 5, most_used_starting_fives: [{ players: ["FIXTURE Player A", "FIXTURE Player G", `FIXTURE ${t.abbr} S3`, `FIXTURE ${t.abbr} S4`, `FIXTURE ${t.abbr} S5`], games: 8 }, { players: ["FIXTURE Player A", `FIXTURE ${t.abbr} S2`, `FIXTURE ${t.abbr} S3`, `FIXTURE ${t.abbr} S4`, `FIXTURE ${t.abbr} R6`], games: 4 }], minutes_leaders: [{ player_id: 9001, name: "FIXTURE Player A", games: 17, mpg: 34.1 }, { player_id: null, name: `FIXTURE ${t.abbr} S3`, games: 15, mpg: 31.0 }, { player_id: null, name: `FIXTURE ${t.abbr} R6`, games: 17, mpg: null }],
+      first_substitution: live ? { games_observed_live: 6, average_minutes_into_game: 5.4 } : { games_observed_live: 0, note: "FIXTURE: no live play-by-play held for this team yet." } },
+    coach: { identity: null, note: "FIXTURE: coach names and staff are not in our data. Rotation tendencies describe the team this season under whoever is coaching it; they are observations, not a forecast." }, tactical_identity: { available: false, reason: "FIXTURE: no play-type or tracking data is held, so no system is attributed to this team." }, not_available: ["FIXTURE: offensive rebound rate", "FIXTURE: coaching staff"], notes: ["FIXTURE note: a team profile describes this season to date.", "FIXTURE note: read every number with its games count."] };
+}
+function cortexRoute(path, q, role) {
+  if (path === "/cortex/overview") return cxOverview();
+  if (path === "/cortex/concepts") return cxConcepts(q);
+  const cm = path.match(/^\/cortex\/concepts\/([^/]+)$/);
+  if (cm) { const c = CX.find((x) => x.slug === decodeURIComponent(cm[1])); return c ? { ...c, sources: c.sources.map((k) => { const x = CX_SOURCES.find((y) => y.key === k); return { key: k, title: x.title, url: x.url, note: `FIXTURE note: ${x.kind}; opened ${TODAY}` }; }) } : { __status: 404, ...err("not_found", "FIXTURE: knowledge record not found.") }; }
+  if (path === "/cortex/sources") return { items: CX_SOURCES.map((x) => ({ ...x, records_citing: cxCiting(x.key) })) };
+  if (path === "/cortex/players") { const s = (q.get("q") ?? "").toLowerCase(); return { season: "2026-27", items: PLAYERS.filter((p) => !s || p.name.toLowerCase().includes(s)).map((p) => ({ player_id: p.id, name: p.name, team_abbr: p.team_abbr, position: p.position, headshot_url: HEAD[p.id] ?? null, games: p.games, minutes: p.games == null ? null : Math.round(p.games * p.min) })).sort((a, b) => (b.minutes ?? -1) - (a.minutes ?? -1)).slice(0, Number(q.get("limit") ?? 60)) }; }
+  const pm = path.match(/^\/cortex\/players\/(\d+)\/dna$/);
+  if (pm) return cxPlayerDna(pm[1]);
+  if (path === "/cortex/teams") return { season: "2026-27", items: CX_TEAMS };
+  const tm = path.match(/^\/cortex\/teams\/(\d+)\/dna$/);
+  if (tm) return cxTeamDna(tm[1]);
+  if (path === "/cortex/research") return { items: CX_FINDINGS.filter((f) => !q.get("status") || f.status === q.get("status")), note: "FIXTURE: findings come from the research agents and experiments. A finding marked open is a hypothesis, not knowledge." };
+  if (path === "/cortex/benchmark") return role !== "owner" ? { __status: 403, ...err("forbidden", "FIXTURE: this area is available to the owner account only.") } : { ...CX_BENCH, runs: CX_RUNS, recent_retrievals: [{ query: "FIXTURE shot clock", returned: ["fix-shot-clock"], method: "all_words", ms: 12, caller: "api", at: iso(20) }, { query: "FIXTURE zzqq", returned: [], method: "any_word", ms: 9, caller: "jarvis", at: iso(50) }], sample_questions: [{ id: "FIX-RULE-001", category: "basketball_rules", type: "multiple_choice", question: "FIXTURE question: how long is the shot clock at the start of a possession?", choices: ["A 24 seconds", "B 14 seconds", "C 30 seconds"] }, { id: "FIX-NUM-004", category: "advanced_statistics", type: "numeric", question: "FIXTURE question: compute true shooting for 20 points on 15 attempts and 4 free throws.", choices: null }], how_to_run: "FIXTURE retrieval check (free): `gizer cortex-eval`. Answer run (paid): `gizer cortex-benchmark --limit 20`." };
+  return undefined;
+}
+
 // ---------- handlers ----------
 const summaryNow = () => SUMMARY;
 
@@ -1476,6 +1581,7 @@ const server = http.createServer((req, res) => {
     }
     const st = method === "GET" ? path.match(/^\/live\/games\/([^/]+)\/stream$/) : null;
     if (st) { const g = liveGame(decodeURIComponent(st[1])); if (!g) return send(res, 404, err("not_found", "FIXTURE: game not found.")); return liveStream(res, g); }
+    if (method === "GET" && path.startsWith("/cortex/")) { const cr = cortexRoute(path, url.searchParams, role); if (cr !== undefined) { const code = cr.__status ?? 200; delete cr.__status; return send(res, code, cr); } }
     if (path.startsWith("/live/") || path === "/__mock/live") { const lr = liveRoute(method, path, url.searchParams, body, role); if (lr !== undefined) { const code = lr.__status ?? 200; delete lr.__status; return send(res, code, lr); } }
     const im = method === "GET" ? path.match(/^\/jarvis\/messages\/(\d+)\/images\/(\d+)$/) : null;
     if (im) {

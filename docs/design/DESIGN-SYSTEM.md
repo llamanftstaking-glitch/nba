@@ -262,6 +262,29 @@ Rules: null → "—"; no pulsing indicator unless the provider reports the game
 wherever a live number is shown; polled data is described as delayed observations; no in-game probability, no
 wagering wording, and a paper leg is never worded or coloured as an outcome before settlement.
 
+## 9e. GIZER CORTEX (knowledge library)
+
+Files: `components/cortex/*`, `lib/cortex.ts`, `app/(app)/cortex`. A reference library: plain surfaces, long-form
+text at a readable measure, no decoration that suggests capability. Copy never calls the system "AI-powered",
+"intelligent" or "smart"; counts are API values; anything missing is named as missing.
+
+| Component | Spec |
+|---|---|
+| Verification chip | Boxed `Badge` (11px uppercase semibold). `checked_against_source` → "CHECKED AGAINST SOURCE", emerald text on `accent/10` with an emerald ring. `authored_not_checked` → "NOT CHECKED", amber text on `warn/10` with an amber ring. Present on every list row and on the record header; never abbreviated to an icon. |
+| Kind and ruleset chips | Kind: neutral `Badge` (`raised` surface, muted text). Ruleset: `info` tone for NBA / FIBA, neutral for "General". Order is always kind · ruleset · verification. |
+| Record row | Whole row is a link, 12px padding, `raised/50` on hover: title 15px semibold with the department name right-aligned in muted 12px, the chip row, then the summary in 14px soft text. Rows are separated by a `line/30` rule inside one card. On the Statistics tab the formula block follows the summary. |
+| Knowledge record layout | Single column, max width 920px, centred. Order: department line (12px muted) → title (page-title style) → chips with version and update time → summary 17px/28px in `ink` → "Ask JARVIS about this" (outline button) → body paragraphs 15px/28px in `soft` → formula → season note (`raised/40` box) → player responsibilities / common responses (only when present) → Limitations and When not to use as two cards → "What our data can show" (emerald ring, eye icon) beside "What we cannot see" (amber ring, crossed-eye icon), stacked below 768px → evaluation questions → related records as chips → sources (title as an external link with the icon, note beneath). Section headings are display 17px uppercase. An empty list is stated ("None recorded."), never dropped. |
+| Formula block | `<pre>` in the monospace stack, 13px/20px, `info` text on the page background with a 1px line ring, 12px × 8px padding; wraps rather than scrolling the page. The text is the record's string, unchanged. |
+| Two-part verification bar | 10px rounded bar: emerald segment (checked) then amber segment (not checked), widths in proportion; beneath it both exact counts with a colour key. No percentage is shown without the counts. |
+| Department card | 64px min height, `card` surface: two-digit department number in display 20px muted, name 14px medium, record count in tabular 18px with "RECORDS" beneath (a zero count is muted, not hidden). Emerald ring on hover. |
+| Archetype chip with rule | A `raised/40` box holding an `info` `Badge` with the label and, directly beneath, the rule in 12px monospace (`usage ≥ 26% and assists per 36 ≥ 5.5`). The rule is always visible; there is no tooltip-only form. When labels were not derived the box is replaced by one sentence carrying the server's status text. |
+| "Not available" panel | A normal card with a muted prohibition icon and the capability name as the heading, then "NOT AVAILABLE" in amber 14px semibold uppercase and the server's reason in 14px soft text. Used for the tactical profile, tactical identity and unavailable profiles. It keeps the same size and position as a panel with content so the absence is as visible as data would be. |
+| Stat grid | Definition grid: 11px uppercase label, value in tabular 15px semibold, optional 12px muted sub-line carrying the sample ("17 games", "sd 6.9"). Null is "—". Per-36 values carry "PER 36" in the label. |
+| Small-sample marker | "SMALL SAMPLE" in amber 11px semibold uppercase beside the teammate's name. |
+| Source access status | `StatusDot`: emerald dot + "Opened and read" in the normal tone; anything else an amber dot with amber semibold text ("Not opened", "Not reachable"). A parenthetical qualifier from the server is shown beneath in muted 12px. |
+| Finding card | Hypothesis 15px semibold with a status `Badge` (open = amber "OPEN HYPOTHESIS", supported = emerald, rejected = red, inconclusive = neutral), sample size line, Supporting and Contradicting lists side by side with counts, then proposed experiment, result and limitations. |
+| Reviewed-by-a-person banner | First element of Evaluations: amber-ringed card, "REVIEWED BY A PERSON: N OF M" in display 17px amber, the server's note beneath, verbatim. |
+
 ## 10. Vocabulary
 
 Never used in UI copy: lock, guaranteed winner, free money, risk-free, can't lose, sure thing; and for market data:

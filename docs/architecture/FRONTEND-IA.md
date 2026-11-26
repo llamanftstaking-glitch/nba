@@ -11,6 +11,7 @@ Desktop (≥ 1024px): left sidebar with four groups, collapsible to an icon rail
 |---|---|---|---|
 | Command Center | Live Games (first item; pulsing dot only while a game is live) | `/live`, `/live/following`, `/live/research-tracker` | `/live/scoreboard`, `/live/watchlist` (+ `follow`, `unfollow`), `/live/milestones` (+ `/{id}/delete`), `/live/research-tracker`, `/jarvis/events?kind=milestone_reached` |
 | | JARVIS | `/jarvis` (`?c=` conversation, `?tab=memory|briefings|events`) | `/jarvis/state`, `/jarvis/suggestions`, `/jarvis/conversations` (+ `/{id}`, `/{id}/delete`, `/{id}/messages` stream), `/jarvis/memory`, `/jarvis/briefings`, `/jarvis/events` |
+| | CORTEX (knowledge library; under JARVIS) | `/cortex` (`?tab=overview|encyclopedia|playbook|player-dna|team-dna|coach-dna|statistics|research|sources|coverage|evaluations`, plus `department=`, `player=`, `team=`, `status=`), `/cortex/[slug]` | `/cortex/overview`, `/cortex/concepts` (+ `/{slug}`), `/cortex/sources`, `/cortex/players` (+ `/{id}/dna`), `/cortex/teams` (+ `/{id}/dna`), `/cortex/research`, `/cortex/benchmark` (owner) |
 | | Overview (landing) | `/` | `/command-center`, `/player-props`, `/combos` |
 | | Today's Games | `/games` | `/games` |
 | | Top Picks | `/picks` | `/selections` |
@@ -41,7 +42,7 @@ the sidebar: `/admin`, `/exposure`, `/markets`, `/simulations`, `/backtesting`, 
 `/games/[id]`. `/login` is outside the shell.
 
 `/live/following` and `/live/research-tracker` are reached from the sub-navigation on `/live` and from the "More" sheet.
-The sidebar has 26 destinations.
+The sidebar has 27 destinations.
 
 Redirects: `/today` → `/`, `/research` → `/research/daily`, `/props` → `/player-props`.
 
@@ -188,6 +189,43 @@ game centre, the observed line, freshness, the player's tracking thresholds and 
 **PWA** — `public/manifest.webmanifest` (name "GIZER NBA", `start_url` `/live`, standalone) and static PNG icons;
 iOS home-screen meta in the root layout. There is no service worker and nothing is cached for offline use.
 
+**CORTEX `/cortex`** — a reference library, read-only. Rule for every view: the system must never look more capable
+than it is. Every count is an API value, verification status is shown on every record, and "not built" / "not
+available" lists are shown in full. Header → eleven section tabs kept in `?tab=` (the row scrolls sideways on a
+phone and keeps the selected tab in view).
+*Overview*: eight tiles (knowledge records; sources indexed with the number opened by the author; player profiles;
+team profiles; coaching profiles with the server's `coaching_note`; research findings by status; unresolved
+hypotheses; last knowledge update with the number of logged library searches) → verification as one two-part bar
+with both exact counts → records by kind → the 20 departments as cards (number, name, record count; a card opens
+the Encyclopedia with `department=`) → the "Not built" list.
+*Encyclopedia*: debounced keyword search (`q`), department / kind / verification filters, 30 rows per page; the
+count line states the search method the server used (every word / any word / none). A row is the title, department,
+kind · ruleset · verification chips and the summary, and links to `/cortex/[slug]`.
+*Playbook*: two lists (Offense, Defense), 12 per page each, two columns from 1280px. *Statistics*: two lists
+(Statistics, Methods), 10 per page each; each row shows the record's formula.
+*Player DNA*: search plus the 60 players with the most minutes → profile in `?player=`: identity with what is not
+held, team history, season line (per-36 values labelled "per 36"), recent 10, archetype chips each with its rule
+(or the `archetype_status` text), usage with/without teammates with a small-sample marker, the tactical profile
+panel ("Not available" + reason), `not_available`, notes, link to `/players/[id]`. `/players/[id]` links back with
+"Profile (CORTEX)".
+*Team DNA*: grid of the teams with "Profile available" / "No profile yet" → profile in `?team=`: record, ratings
+(or "Not available"), shot volume, rotation block, tactical identity ("Not available" + reason), `not_available`,
+notes. *Coach DNA*: the same grid; the profile shows the `coach.note` in a warning panel and only the rotation
+block under "Rotation tendencies (coach not identified)".
+*Research Journal*: the endpoint `note`, status filter in `?status=`, one card per finding (hypothesis, status,
+sample size, supporting vs contradicting, proposed experiment, result, limitations). *Sources*: table at ≥ 1280px,
+cards below; the access result is a status with "opened and read" in the normal tone and anything else in amber.
+*Coverage*: department bars, by-kind bars, verification split, profile counts, "Not built"; it states that no
+library-wide "observable in our data" summary is published. *Evaluations* (owner; a viewer sees the server's 403
+message): "Reviewed by a person: N of M" with the `note` first, benchmark size against the target, by category /
+type / split, runs (score as a percentage, cost, date, expandable misses), recent library searches, sample
+questions, and `how_to_run` in a code block. Nothing on the page starts a run.
+**Knowledge record `/cortex/[slug]`** — department line, title, chips, version and update time, summary, "Ask
+JARVIS about this" (opens the panel with `{page}` and the question prefilled in the composer, not sent), body
+paragraphs, formula block, season note, player responsibilities / common responses when present, Limitations and
+When not to use, "What our data can show" beside "What we cannot see", evaluation questions, related records,
+sources (external link + note). An unknown slug shows the server's not-found message.
+
 ## 4. Component inventory and 5. Design system
 
 Both are maintained in `docs/design/DESIGN-SYSTEM.md` (tokens, typography, breakpoints, every reusable
@@ -290,3 +328,27 @@ GIZER LIVE (added 2026-11-26):
 45. Stream frames (`/live/games/{id}/stream`) carry `followed: false` and `favorite_team: null` for every viewer,
     while `/live/games/{id}` and the scoreboard carry the viewer's own flags. The UI takes score, clock and
     freshness from the newest frame and the follow flags from the fetched object.
+
+GIZER CORTEX (added 2026-11-26):
+
+46. `ConceptShort` has no `formula`, so the Statistics tab reads each visible record (`/cortex/concepts/{slug}`,
+    up to 20 requests per view, cached) to show the formula in the row.
+47. `kind` on `/cortex/concepts` takes one value (a comma list returns nothing), so Playbook and Statistics are two
+    independent paged lists each rather than one merged list.
+48. `limit` above 200 is rejected (`invalid_request`) on `/cortex/concepts` and `/cortex/players`; the contract does
+    not state the bound. `/cortex/players` has no `offset`, so the list shows the top 60 by minutes and relies on
+    search for everyone else.
+49. `access_result` is free text. The UI treats a value starting with "opened and read" as read and anything else
+    (including a missing value) as not read; a parenthetical qualifier is shown under the status.
+50. `player_responsibilities`, `common_responses` and a finding's `limitations` are a string in some records and
+    could be a list; the UI accepts both.
+51. The overview has no library-wide count of records with a non-empty `observable_in_our_data`; the Coverage tab
+    says so instead of computing one.
+52. `archetype_status` is free text ("derived" observed). With `derived` and an empty `archetypes` list the UI says
+    the rules matched none; any other value is shown as the reason the labels were not derived.
+53. `benchmark.runs[].misses` and `by_category` have no documented shape; misses are printed as text (objects as
+    JSON) and `by_category` of a run is not shown.
+54. The JARVIS context for a record is `{page: "/cortex/<slug>"}` only; there is no `concept` context key, so the
+    panel's "looking at" chips show the page.
+55. Record text is the library's own wording. A record that contains a word from the forbidden product vocabulary
+    in its basketball sense (for example a defensive term) would be shown as written; the UI does not filter it.

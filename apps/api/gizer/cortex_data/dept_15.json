@@ -1,0 +1,368 @@
+[
+ {
+  "slug": "pace-interaction",
+  "department": 15,
+  "kind": "context",
+  "title": "Pace interaction between two teams",
+  "summary": "A game's tempo is produced jointly by both teams and by the way the game unfolds.",
+  "body": "Neither team sets the pace of a game alone. Each controls how quickly it shoots when it has the ball, and each influences the other's possessions through defence, turnovers and rebounding. Since the two teams alternate possessions, both finish with nearly the same number, so the game has one pace, somewhere between the two teams' habits. A simple expectation is that a fast team meeting a slow team produces a tempo between their usual levels, and that two fast teams produce a fast game. Game state then moves it: close games slow in the final minutes as fouls and timeouts multiply, a team far behind speeds up, and overtime adds possessions outright. For player statistics the expected pace is an opportunity adjustment that applies to everyone in the game, and it is modest in size compared with the effect of minutes. We estimate tempo from box-score totals, and we treat the combined expectation as a tendency with considerable game-to-game scatter around it.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Tempo is estimated, not counted, in our historical data.",
+   "No specific combination formula is asserted here.",
+   "Game-state effects on pace are not predictable in advance."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "opponent allowed-per-game context",
+   "team totals including points in the paint and fast-break points (live games only)",
+   "rolling windows (L3..L30, season)"
+  ],
+  "data_gaps": [
+   "no counted possessions for historical games",
+   "no time-to-shot data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "opponent context and split derivations (PLAYER-HISTORICAL-ANALYSIS.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "pace",
+   "pace-identity",
+   "pace-and-early-offense",
+   "identity-versus-single-game",
+   "possessions-estimate"
+  ],
+  "evaluation_questions": [
+   "Why do both teams finish a game with nearly the same number of possessions?",
+   "How large is the pace adjustment relative to the effect of minutes?"
+  ]
+ },
+ {
+  "slug": "opponent-defensive-strength",
+  "department": 15,
+  "kind": "context",
+  "title": "Opponent defensive strength",
+  "summary": "How difficult an opponent has been to score, rebound or pass against, and the limits of per-game allowed figures.",
+  "body": "A player's expected output depends partly on the defence he faces. The usual evidence is what the opponent has allowed: points, rebounds, assists and threes per game to all opponents. This is a legitimate starting point with well-known weaknesses. Per-game allowed totals are inflated for fast-paced teams and deflated for slow ones, so they partly measure tempo. They depend on the schedule played so far, and early in a season a few games against strong or weak offences dominate. They average over whoever was in the opponent's lineup, including defenders now injured. And a team-level figure says nothing about how a defence treats a particular role: a team that concedes many points overall may still guard point guards well. The proper measure of defensive quality is points allowed per possession, adjusted for opposition. Our opponent context offers allowed-per-game figures, so they should be presented as descriptive context with those caveats, and as a mild adjustment at most.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Allowed-per-game figures are not pace- or schedule-adjusted.",
+   "No positional or role-specific defensive splits are available.",
+   "Opponent personnel changes make season averages stale."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "opponent allowed-per-game context",
+   "splits (home/away, rest, role, opponent)"
+  ],
+  "data_gaps": [
+   "no positional defence splits",
+   "no defensive matchups",
+   "no per-possession opponent ratings stored"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "opponent context and split derivations (PLAYER-HISTORICAL-ANALYSIS.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "defensive-rating",
+   "defensive-identity",
+   "identities-expire",
+   "positional-matchups",
+   "matchup-context-is-a-mild-adjustment"
+  ],
+  "evaluation_questions": [
+   "Give three weaknesses of opponent allowed-per-game figures.",
+   "What would be a better measure of defensive quality?"
+  ]
+ },
+ {
+  "slug": "positional-matchups",
+  "department": 15,
+  "kind": "context",
+  "title": "Positional matchups (not in our data)",
+  "summary": "Who guards whom, and how a defence performs against a given position; neither is available here.",
+  "body": "Much matchup discussion rests on two ideas: that a particular defender will guard a particular scorer, and that a team is weak or strong against a particular position. Both require data that this platform does not have. Individual matchup data come from the league's tracking and record which defender was nearest a player on each possession. Defence-versus-position tables, published by various sites, classify every opposing player by position and total what each class has scored against a team. We hold neither, and the second kind has its own problems even where available: positions are loosely defined, a few games by star players dominate the totals, and switching defences blur who guarded whom. On this platform, then, a statement such as 'this team struggles against centres' cannot be supported and should not be made. What can be said is how a specific player has performed against a specific team in past meetings, with the number of games, and what that team has allowed overall.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "No matchup or positional data exist in our tables.",
+   "Position-based tables elsewhere are themselves noisy and definitional.",
+   "Cross-matching and switching make assignments fluid."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "splits (home/away, rest, role, opponent)",
+   "opponent allowed-per-game context"
+  ],
+  "data_gaps": [
+   "no defensive matchups",
+   "no positional defence splits",
+   "no tracking data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "opponent context and split derivations (PLAYER-HISTORICAL-ANALYSIS.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "opponent-defensive-strength",
+   "small-head-to-head-samples",
+   "man-to-man-defense",
+   "wing-stopper",
+   "matchup-driven-lineup-changes"
+  ],
+  "evaluation_questions": [
+   "Why can a claim that a team is weak against a position not be supported here?",
+   "What matchup evidence does this platform hold instead?"
+  ]
+ },
+ {
+  "slug": "small-head-to-head-samples",
+  "department": 15,
+  "kind": "context",
+  "title": "Small head-to-head samples",
+  "summary": "A player's history against one opponent is usually a few games and carries little weight.",
+  "body": "Teams in the same conference meet three or four times in a regular season and teams in opposite conferences twice, so a player's record against a given opponent in one season is a handful of games at most. Going back further adds games but also adds change: different rosters, coaches, roles and often a different team for the player himself. A striking head-to-head average - a player who has scored well above his norm in his last three meetings with a team - is therefore almost always within the range that chance alone produces. There are real matchup effects, arising from style and personnel, but a few box scores cannot distinguish them from noise. The honest presentation is to show the opponent split with its game count and dates, to note whether the personnel on both sides were similar, and to give it far less weight than the player's broader record. Where the count is one or two, the split is best treated as an anecdote and labelled accordingly.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "The count of meetings per season is stated from general knowledge of the schedule format and was not checked against a source.",
+   "Older meetings involve different rosters and roles.",
+   "Real matchup effects cannot be separated from noise at these sample sizes."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "splits (home/away, rest, role, opponent)",
+   "threshold history"
+  ],
+  "data_gaps": [
+   "no defensive matchups",
+   "no coverage scheme data"
+  ],
+  "ruleset": "general",
+  "season_note": "Schedule format as generally understood for recent NBA seasons; not verified against a source",
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "opponent context and split derivations (PLAYER-HISTORICAL-ANALYSIS.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "sample-size-and-confidence",
+   "positional-matchups",
+   "matchup-driven-lineup-changes",
+   "regression-to-the-mean",
+   "base-rates"
+  ],
+  "evaluation_questions": [
+   "Why does adding older meetings not solve the small-sample problem?",
+   "How should a two-game head-to-head split be labelled?"
+  ]
+ },
+ {
+  "slug": "style-clashes",
+  "department": 15,
+  "kind": "context",
+  "title": "Style clashes",
+  "summary": "How two teams' preferred ways of playing interact to shape a game.",
+  "body": "Styles do not simply average; they interact. A team that crashes the offensive glass meets one that runs, and the question is whether the extra shots outweigh the fast breaks conceded. A switching defence turns a motion offence into isolations. A drop-coverage team invites a pull-up shooter to take the shots he likes. A big, slow front line may dominate the boards against a small lineup yet struggle to guard it on the perimeter, and whichever coach forces the other to adjust wins the exchange. These interactions are the substance of game planning and they help explain why some opponents trouble a team more than their overall quality suggests. They are also largely beyond our data. We cannot observe coverages, play types or shot locations, so a style clash can be discussed as basketball reasoning and never presented as a measured effect. Where the reasoning points to an expectation, the record of past meetings may be consulted, with its small sample acknowledged.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Stylistic reasoning is not measurable with our data.",
+   "Coaches adjust, so past clashes may not repeat.",
+   "Tempting narratives can be constructed for either outcome."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "splits (home/away, rest, role, opponent)",
+   "opponent allowed-per-game context"
+  ],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no coverage scheme data",
+   "no shot locations"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "opponent context and split derivations (PLAYER-HISTORICAL-ANALYSIS.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "pace-interaction",
+   "matchup-driven-lineup-changes",
+   "defensive-identity",
+   "shot-profile-identity",
+   "small-head-to-head-samples"
+  ],
+  "evaluation_questions": [
+   "Give one example of two styles interacting in a way that is not a simple average.",
+   "How should a style-based expectation be presented on this platform?"
+  ]
+ },
+ {
+  "slug": "blowout-and-garbage-time-matchup",
+  "department": 15,
+  "kind": "context",
+  "title": "Blowout probability and garbage time as a matchup feature",
+  "summary": "A wide gap in team strength raises the chance of a one-sided game, which changes minutes for both sides.",
+  "body": "The likelihood of a lopsided game is a property of the matchup. When one team is much stronger, large margins are more common, and with them early rest for starters on both benches. This matters to player projections in a way that team quality alone does not capture: the favourite's star may face a weak defence and still fall short of his usual counting totals because he plays fewer minutes. The risk is two-sided and uncertain. Mismatched games are often close anyway, and evenly matched games sometimes become routs. This platform does not publish a blowout probability as a number unless it comes from a registered, validated model; an impression of mismatch is not a probability. What can be described is each team's recent record of margins and the minutes its starters played in past one-sided games. In the minutes projection the risk appears as a wider and lower range for heavy-minutes players, not as a single adjusted figure.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "No blowout probability is produced by this record.",
+   "Margins in historical data are final margins only.",
+   "Team strength differences are themselves uncertain."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "minutes",
+   "score progression (live games only)",
+   "projected minutes and stat projections with p10/p90 (models)"
+  ],
+  "data_gaps": [
+   "no score-by-time for historical games",
+   "no validated blowout model referenced here"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "opponent context and split derivations (PLAYER-HISTORICAL-ANALYSIS.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "blowout-risk-to-minutes",
+   "garbage-time",
+   "blowout-management",
+   "garbage-time-detection-live",
+   "minutes-distribution-and-variance"
+  ],
+  "evaluation_questions": [
+   "Why might a star facing a weak defence still fall short of his usual totals?",
+   "May an impression of mismatch be reported as a blowout probability?"
+  ]
+ },
+ {
+  "slug": "home-and-away",
+  "department": 15,
+  "kind": "context",
+  "title": "Home and away",
+  "summary": "Home teams have a modest historical advantage; for individual players the split is usually small and noisy.",
+  "body": "Teams have won more often at home than on the road throughout the league's history, an advantage attributed to crowd, travel, familiarity and possibly officiating. Its size has varied over time, and we do not quote a figure here because none was verified. For an individual player's statistics the home-away difference is typically slight, and it is easily swamped by other factors in a split of roughly half a season per side. Role players are sometimes said to perform better at home; that may hold for some, but a single season's split cannot establish it for any one player. Home and away also interact with schedule, since road games involve more travel and more back-to-back second nights. The useful applications are modest: as one of several context variables, and as a check that a player's striking home or road record is not being driven by a few games. Our splits report each side with its number of appearances and should be read with that count in view.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "No verified estimate of home advantage is given.",
+   "Individual home/away splits are mostly noise at one-season sample sizes.",
+   "Confounded with travel and rest."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "splits (home/away, rest, role, opponent)",
+   "rolling windows (L3..L30, season)"
+  ],
+  "data_gaps": [
+   "no travel data",
+   "no officiating data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "opponent context and split derivations (PLAYER-HISTORICAL-ANALYSIS.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "travel-and-time-zones",
+   "altitude",
+   "sample-size-and-confidence",
+   "rest-days"
+  ],
+  "evaluation_questions": [
+   "Why is an individual player's home/away split weak evidence?",
+   "With which schedule factors is playing away confounded?"
+  ]
+ },
+ {
+  "slug": "matchup-context-is-a-mild-adjustment",
+  "department": 15,
+  "kind": "method",
+  "title": "Matchup context is a mild adjustment, not the forecast",
+  "summary": "Opponent and matchup information shifts an expectation slightly; the player's own role and minutes carry most of the weight.",
+  "body": "It is natural to open an analysis with the opponent. The evidence, though, usually points the other way: most of what determines a player's line in a given game is his own minutes, role and established rates, and the opponent moves the expectation by a comparatively small amount in either direction. Matchup stories are vivid and easily over-weighted, especially when built from a small head-to-head sample or a raw allowed-per-game ranking. A disciplined order of work helps. First establish availability and projected minutes. Then the player's role and recent inputs. Then his established production rates over a meaningful window. Only then consider opponent context, as an adjustment whose size is limited by the quality of the evidence behind it. On this platform the forecast itself comes from registered models; narrative matchup reasoning may accompany it as explanation and may not replace or override the model's number. If the matchup evidence is thin, the right adjustment is none.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "The relative weights are stated qualitatively, not estimated here.",
+   "Some matchups do matter a great deal; the difficulty is knowing which in advance.",
+   "Describes a working discipline, not an empirical law."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "opponent allowed-per-game context",
+   "splits (home/away, rest, role, opponent)",
+   "projected minutes and stat projections with p10/p90 (models)",
+   "minutes"
+  ],
+  "data_gaps": [
+   "no positional defence splits",
+   "no defensive matchups"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "opponent context and split derivations (PLAYER-HISTORICAL-ANALYSIS.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "opponent-defensive-strength",
+   "small-head-to-head-samples",
+   "minutes-as-opportunity",
+   "base-rates",
+   "style-clashes"
+  ],
+  "evaluation_questions": [
+   "In what order should the elements of a player analysis be considered?",
+   "What is the right adjustment when matchup evidence is thin?"
+  ]
+ }
+]
