@@ -17,7 +17,7 @@ export function useJarvisState() {
 
 export function useJarvisChat({ conversationId, onConversationId, context }: { conversationId: number | string | null; onConversationId: (id: number | string) => void; context?: JarvisContextInput }) {
   const qc = useQueryClient();
-  const convQ = useQuery({ queryKey: ["jarvis", "conversation", conversationId], queryFn: () => jarvis.conversation(conversationId as number | string), enabled: conversationId !== null });
+  const convQ = useQuery({ queryKey: ["jarvis", "conversation", conversationId === null ? null : String(conversationId)], queryFn: () => jarvis.conversation(conversationId as number | string), enabled: conversationId !== null });
   const [live, setLive] = useState<LiveTurn | null>(null);
   const [lastTools, setLastTools] = useState<LiveTool[]>([]);
   const [error, setError] = useState<TurnError | null>(null);
@@ -54,7 +54,7 @@ export function useJarvisChat({ conversationId, onConversationId, context }: { c
         if (id === null) {
           const c = await jarvis.create(context);
           id = c.id;
-          qc.setQueryData(["jarvis", "conversation", id], { ...c, messages: [], tool_activity: [] });
+          qc.setQueryData(["jarvis", "conversation", String(id)], { ...c, messages: [], tool_activity: [] });
           createdRef.current = id;
           onConversationId(id);
         }
@@ -83,7 +83,7 @@ export function useJarvisChat({ conversationId, onConversationId, context }: { c
       } finally {
         setLastTools(tools);
         // Reload the stored conversation before dropping the live turn, so the answer never flickers away.
-        if (id !== null) await qc.invalidateQueries({ queryKey: ["jarvis", "conversation", id] }).catch(() => {});
+        if (id !== null) await qc.invalidateQueries({ queryKey: ["jarvis", "conversation", String(id)] }).catch(() => {});
         void qc.invalidateQueries({ queryKey: ["jarvis", "state"] });
         void qc.invalidateQueries({ queryKey: ["jarvis", "conversations"] });
         abortRef.current = null;
