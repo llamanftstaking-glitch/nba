@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.1 — 2026-11-26 (JARVIS images)
+* JARVIS accepts up to three images per message (attach, paste, drag-and-drop; downsized in the browser), reads a
+  parlay or pick slip, and checks each leg against stored records. New read-only tool `evaluate_combination`
+  (simulation-engine joint probability for 2 to 6 already-evaluated selections; nothing stored).
+* Images are reserved at a flat 8,000 input tokens each in the AI budget.
+* Provider errors are shown with the provider's own wording; stray whitespace around the API key is ignored.
+* Not verified against the real Claude API (the server's key was rejected by the provider on 2026-11-26).
+
 ## 0.5.0 — 2026-11-26 (JARVIS)
 * JARVIS assistant: `/jarvis` conversations with streaming answers, 39 typed read-only tools over the existing
   research services, page-context awareness, sourced memory, deterministic events and scheduled briefings.
