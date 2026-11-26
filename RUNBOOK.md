@@ -77,3 +77,9 @@ through the same gate. Do not retrain or promote because of one bad night (RULE 
 ## Corrections
 Never update or delete ledger rows (the database will refuse). A wrong settlement is fixed by correcting the
 underlying game data and re-running settlement, which appends a superseding row and an audit event.
+
+## Regenerating `apps/api/requirements.lock`
+`uv pip compile pyproject.toml -o requirements.lock` omits `setuptools`, which the API image needs to install the
+package (`--no-build-isolation`). After regenerating, append the pinned line `setuptools==<current pin>` again and
+let the `images` check on GitHub confirm the build (it failed on 2026-11-26 when this line was dropped).
+
