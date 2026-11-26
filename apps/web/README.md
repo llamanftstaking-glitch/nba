@@ -54,6 +54,7 @@ app/
 components/
   ui/                            local primitives (button, badge, panel, tabs, sheet, data-table, states…)
   shell/                         app shell, brand wordmark, date selector, providers, notice text
+  live/                          scoreboard strip, score header, box score, plays, rotations, follow, notifications
   game-card.tsx                  MatchupHeader, GameMatchupCard
   lineup-table.tsx               LineupTable
   props.tsx                      PropRow, PropCard, MarketTable, PropDrawer, ManualEntryForm
@@ -61,6 +62,7 @@ components/
   selection-card.tsx, combo-card.tsx, status.tsx, prob.tsx, player-avatar.tsx, …
 lib/
   api.ts, types.ts               typed client and contract types
+  live.ts                        live API client, scoreboard polling, game event stream
   format.ts, date.tsx, queries.ts, nav.ts, cn.ts, use-debounced.ts
 middleware.ts                    session-cookie gate + runtime API proxy
 e2e/
@@ -91,6 +93,39 @@ sent as `{media_type, data}` base64; stored images are shown from `GET /jarvis/m
 The mock supports the stream, `/budget` (model `deterministic`), an error path (text containing
 `trigger-budget-error`), a stream that ends early (`trigger-drop`), a `viewer@fixture.test` login and a switchable
 provider state.
+
+## GIZER LIVE
+
+Observed in-game data from the `/live/*` API (`lib/live.ts`, `components/live/*`):
+
+- **Scoreboard strip** in the app shell on every page. It reads `/live/scoreboard` every 15 seconds while a game is
+  in progress and every 60 seconds otherwise, and stops while the tab is hidden.
+- **`/live`** (first item in the navigation), **`/live/following`** (followed games, players, favourite teams,
+  tracking thresholds, notification setting) and **`/live/research-tracker`** (paper tickets beside observed values).
+- **Game centre** on `/games/[id]` with `?tab=overview|boxscore|plays|rotations|research|jarvis`. The score header is
+  fed by an `EventSource` on `/live/games/{id}/stream`; it retries after 1, 2, 5 and 10 seconds ("Reconnecting…")
+  and falls back to reading the game every 15 seconds if no stream can be opened.
+- **Player page** "Live now" block.
+
+Live numbers are observations the server polled: every one is shown with its observation time, a stopped feed is
+shown as "Delayed — last update HH:MM:SS ET", and a value the source has not published is "—". Nothing in these
+views is a forecast, and a paper leg has no outcome wording before its ticket is settled.
+
+Browser notifications for reached thresholds are optional, off by default, stored per browser, and work only while
+the app is open in a tab (the shell reads `/jarvis/events?kind=milestone_reached` every 30 seconds when the setting
+is on).
+
+### Installable app (PWA)
+
+`public/manifest.webmanifest` (name "GIZER NBA", `start_url` `/live`, `display: standalone`) and the PNG icons in
+`public/icons/` make the app installable to a home screen; the root layout adds the iOS meta tags. **There is no
+service worker and no offline cache, on purpose: authenticated research data must never be stored by the browser
+for offline use.** Do not add one. The manifest and icons are the only files served without a session.
+
+The mock (`e2e/mock-api.mjs`) serves every live route with a scripted game, `FIX-G1`, moved with
+`POST /api/v1/__mock/live {"phase": 0-4, "stale": bool, "streamError": bool}` (0 scheduled, 1 live Q1, 2 halftime,
+3 live Q3, 4 final). It includes unpublished (null) statistics, a corrected play, a team whose rotations cannot be
+determined, in-memory follows and thresholds, and the event stream.
 
 ## Design system
 

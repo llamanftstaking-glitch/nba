@@ -28,23 +28,23 @@ export function ScoreHeader({ g, stream }: { g: GameRow; stream: StreamState }) 
         {g.away.name} at {g.home.name} · game centre
       </h1>
       <div className="mx-auto flex max-w-[1640px] flex-wrap items-center gap-x-6 gap-y-2">
-        <div className="flex min-w-0 flex-1 items-center justify-center gap-3 sm:justify-start md:gap-5">
-          <div className="flex items-center gap-2">
+        <div className="flex min-w-0 flex-1 items-center justify-center gap-2.5 sm:justify-start sm:gap-3 md:gap-5">
+          <div className="flex shrink-0 flex-col items-center gap-0.5 sm:flex-row sm:gap-2">
             <TeamMark team={g.away} size={36} />
-            <span className="font-display text-xl font-semibold uppercase tracking-wide text-soft">{g.away.abbr}</span>
+            <span className="font-display text-base font-semibold uppercase tracking-wide text-soft sm:text-xl">{g.away.abbr}</span>
           </div>
           <Score v={g.away.score} className="text-[44px] leading-10 md:text-[52px]" />
-          <div className="flex min-w-[5.5rem] flex-col items-center gap-0.5">
+          <div className="flex min-w-[5.5rem] max-w-[7.5rem] flex-col items-center gap-0.5 sm:max-w-none">
             <StatusChip g={g} className="text-sm" />
             {stream === "reconnecting" ? (
               <span className="text-xs font-semibold text-warn" data-testid="stream-state" data-state="reconnecting">Reconnecting…</span>
             ) : (
-              <FreshnessMark f={g} long className="text-center" />
+              <FreshnessMark f={g} long className="!whitespace-normal text-center leading-tight sm:!whitespace-nowrap" />
             )}
           </div>
           <Score v={g.home.score} className="text-[44px] leading-10 md:text-[52px]" />
-          <div className="flex items-center gap-2">
-            <span className="font-display text-xl font-semibold uppercase tracking-wide text-soft">{g.home.abbr}</span>
+          <div className="flex shrink-0 flex-col-reverse items-center gap-0.5 sm:flex-row sm:gap-2">
+            <span className="font-display text-base font-semibold uppercase tracking-wide text-soft sm:text-xl">{g.home.abbr}</span>
             <TeamMark team={g.home} size={36} />
           </div>
         </div>
@@ -106,20 +106,22 @@ function TeamBars({ id }: { id: string }) {
                 const a = it.away_value ?? 0;
                 const h = it.home_value ?? 0;
                 const total = a + h;
+                // a bar is drawn only when both sides are published: a missing value must not read as zero
+                const both = it.away_value !== null && it.home_value !== null;
                 const ap = total > 0 ? (a / total) * 100 : 50;
                 return (
                   <li key={it.key} data-testid="team-bar">
                     <div className="flex items-baseline justify-between gap-2 text-sm">
-                      <span className="num w-16 font-semibold text-ink">{it.away ?? "—"}</span>
+                      <span className="num w-16 font-semibold text-ink">{it.away ?? <NA />}</span>
                       <span className="min-w-0 flex-1 truncate text-center text-xs text-muted">{it.label}</span>
-                      <span className="num w-16 text-right font-semibold text-ink">{it.home ?? "—"}</span>
+                      <span className="num w-16 text-right font-semibold text-ink">{it.home ?? <NA />}</span>
                     </div>
                     <div className="mt-1 flex h-1.5 gap-0.5" role="img" aria-label={`${it.label}: ${d.away.abbr} ${it.away ?? "not published"}, ${d.home.abbr} ${it.home ?? "not published"}`}>
                       <div className="flex flex-1 justify-end overflow-hidden rounded-l-full bg-line/60">
-                        <div className="h-full bg-info" style={{ width: `${it.away_value === null ? 0 : ap}%` }} />
+                        <div className="h-full bg-info" style={{ width: `${both ? ap : 0}%` }} />
                       </div>
                       <div className="flex-1 overflow-hidden rounded-r-full bg-line/60">
-                        <div className="h-full bg-teal" style={{ width: `${it.home_value === null ? 0 : 100 - ap}%` }} />
+                        <div className="h-full bg-teal" style={{ width: `${both ? 100 - ap : 0}%` }} />
                       </div>
                     </div>
                   </li>
@@ -308,11 +310,11 @@ const PRE: Col[] = [
 ];
 const cellText = (c: Col, r: BoxRow) => (c.text ? c.text(r) : (c.get(r) ?? "—"));
 
-function PlayerName({ r }: { r: BoxRow }) {
+function PlayerName({ r, link = true }: { r: BoxRow; link?: boolean }) {
   return (
     <span className="flex min-w-0 items-center gap-2">
       {r.on_court === true && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" title="On court" aria-label="on court" data-testid="on-court" />}
-      {r.player_id !== null ? (
+      {r.player_id !== null && link ? (
         <DLink href={`/players/${r.player_id}`} className="truncate font-medium text-ink hover:underline">
           {r.name}
         </DLink>
@@ -324,6 +326,11 @@ function PlayerName({ r }: { r: BoxRow }) {
       {r.ejected && <span className="shrink-0 text-2xs font-semibold uppercase text-bad">Ejected</span>}
     </span>
   );
+}
+
+/** "On court" describes this moment of a game in progress; once the game is over the marker is dropped. */
+function offCourt<T extends { players: { on_court: boolean | null }[] }>(t: T, status: string): T {
+  return isInProgress(status) ? t : { ...t, players: t.players.map((p) => ({ ...p, on_court: null })) };
 }
 
 function TeamBox({ t, cols, sort, onSort }: { t: BoxTeam; cols: Col[]; sort: { key: string; dir: 1 | -1 } | null; onSort: (key: string) => void }) {
@@ -407,7 +414,7 @@ function TeamBox({ t, cols, sort, onSort }: { t: BoxTeam; cols: Col[]; sort: { k
             <button type="button" className="flex min-h-[44px] w-full items-center gap-3 text-left" aria-expanded={open === r.espn_athlete_id} onClick={() => setOpen((v) => (v === r.espn_athlete_id ? null : r.espn_athlete_id))}>
               <PlayerAvatar name={r.name} src={r.headshot_url} size={32} />
               <span className="min-w-0 flex-1">
-                <PlayerName r={r} />
+                <PlayerName r={r} link={false} />
               </span>
               <span className="num grid shrink-0 grid-cols-4 gap-x-3 text-right text-sm">
                 {main.map((c) => (
@@ -426,6 +433,13 @@ function TeamBox({ t, cols, sort, onSort }: { t: BoxTeam; cols: Col[]; sort: { k
                     <dd className="text-ink">{cellText(c, r)}</dd>
                   </div>
                 ))}
+                {r.player_id !== null && (
+                  <div className="col-span-5 pt-1">
+                    <DLink href={`/players/${r.player_id}`} className="inline-flex min-h-[44px] items-center text-sm font-medium text-accent hover:underline" data-testid="box-card-player">
+                      Player page
+                    </DLink>
+                  </div>
+                )}
               </dl>
             )}
           </li>
@@ -472,8 +486,8 @@ export function BoxScoreTab({ id }: { id: string }) {
                 <FreshnessMark f={d} long />
               </span>
             </div>
-            <TeamBox t={d.away} cols={cols} sort={sort} onSort={onSort} />
-            <TeamBox t={d.home} cols={cols} sort={sort} onSort={onSort} />
+            <TeamBox t={offCourt(d.away, d.status)} cols={cols} sort={sort} onSort={onSort} />
+            <TeamBox t={offCourt(d.home, d.status)} cols={cols} sort={sort} onSort={onSort} />
             <ul className="space-y-0.5 text-xs text-muted">
               {d.notes.map((n, i) => (
                 <li key={i}>· {n}</li>
@@ -615,7 +629,7 @@ export function PlaysTab({ id, g, version }: { id: string; g: GameRow; version: 
 }
 
 /* ------------------------------------------------------------------ rotations */
-function RotationTeamView({ t, total, quarters }: { t: RotationTeam; total: number; quarters: number[] }) {
+function RotationTeamView({ t, total, quarters, now }: { t: RotationTeam; total: number; quarters: number[]; now: boolean }) {
   if (!t.determinable) {
     return (
       <section className="rounded-lg bg-card p-4 ring-1 ring-inset ring-line/60" data-testid="rotation-team" data-determinable="0">
@@ -661,7 +675,7 @@ function RotationTeamView({ t, total, quarters }: { t: RotationTeam; total: numb
         <p className="mt-1.5 flex flex-wrap gap-x-4 text-xs text-muted">
           <span className="flex items-center gap-1.5"><span className="inline-block h-2.5 w-4 rounded-sm bg-info" aria-hidden /> Starter</span>
           <span className="flex items-center gap-1.5"><span className="inline-block h-2.5 w-4 rounded-sm bg-teal" aria-hidden /> Bench</span>
-          <span className="flex items-center gap-1.5"><span className="inline-block h-1.5 w-1.5 rounded-full bg-accent" aria-hidden /> On court now</span>
+          {now && <span className="flex items-center gap-1.5"><span className="inline-block h-1.5 w-1.5 rounded-full bg-accent" aria-hidden /> On court now</span>}
         </p>
       </div>
       <div className="mt-3 overflow-x-auto">
@@ -713,8 +727,8 @@ export function RotationsTab({ id }: { id: string }) {
         return (
           <div className="space-y-4" data-testid="rotations-tab">
             <div className="grid gap-4 2xl:grid-cols-2">
-              <RotationTeamView t={d.away} total={total} quarters={quarters} />
-              <RotationTeamView t={d.home} total={total} quarters={quarters} />
+              <RotationTeamView t={offCourt(d.away, d.status)} total={total} quarters={quarters} now={isInProgress(d.status)} />
+              <RotationTeamView t={offCourt(d.home, d.status)} total={total} quarters={quarters} now={isInProgress(d.status)} />
             </div>
             <ul className="space-y-0.5 text-xs text-muted" data-testid="rotation-notes">
               {d.notes.map((n, i) => (

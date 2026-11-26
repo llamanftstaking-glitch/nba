@@ -14,7 +14,7 @@ import { Field, Input, Select } from "@/components/ui/field";
 import { PageHeader, Panel } from "@/components/ui/panel";
 import { EmptyState, QueryView } from "@/components/ui/states";
 import { ApiError } from "@/lib/api";
-import { DLink } from "@/lib/date";
+import { DLink, useSelectedDate } from "@/lib/date";
 import { live, MILESTONE_STATS, type BoxRow } from "@/lib/live";
 import { useTeams } from "@/lib/queries";
 
@@ -104,7 +104,8 @@ function AddThreshold() {
 const lineText = (l: BoxRow | null) => (l ? `${l.minutes ?? "—"} min · ${l.pts ?? "—"} pts · ${l.reb ?? "—"} reb · ${l.ast ?? "—"} ast` : null);
 
 export default function FollowingPage() {
-  const q = useQuery({ queryKey: ["live", "watchlist"], queryFn: () => live.watchlist(), refetchInterval: 30_000 });
+  const date = useSelectedDate();
+  const q = useQuery({ queryKey: ["live", "watchlist", date ?? "today"], queryFn: () => live.watchlist(date), refetchInterval: 30_000 });
   const teams = useTeams();
   const [team, setTeam] = useState("");
   return (

@@ -10,7 +10,7 @@ import { StatusDot } from "@/components/ui/badge";
 import { Val } from "@/components/ui/na";
 import { PageHeader } from "@/components/ui/panel";
 import { EmptyState, QueryView } from "@/components/ui/states";
-import { DLink } from "@/lib/date";
+import { DLink, useSelectedDate } from "@/lib/date";
 import { fmtClockET, fmtDateTimeET, fmtLine, fmtSigned, titleCase } from "@/lib/format";
 import { live, type TrackerItem } from "@/lib/live";
 
@@ -79,7 +79,8 @@ function TicketCard({ t }: { t: TrackerItem }) {
 
 export default function ResearchTrackerPage() {
   const [offset, setOffset] = useState(0);
-  const q = useQuery({ queryKey: ["live", "tracker"], queryFn: () => live.tracker(), refetchInterval: 30_000 });
+  const date = useSelectedDate();
+  const q = useQuery({ queryKey: ["live", "tracker", date ?? "today"], queryFn: () => live.tracker(date), refetchInterval: 30_000 });
   return (
     <div className="space-y-5">
       <PageHeader title="Research Tracker" sub="Open paper tickets beside what has been observed so far: each leg’s line and current value. An outcome exists only once a ticket is settled." />

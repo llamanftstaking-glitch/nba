@@ -63,11 +63,17 @@ def live_scoreboard(date: str | None = None, p: Principal = Depends(current_user
     with session_scope() as s:
         teams = {t.id: t for t in s.scalars(select(Team))}
         games = list(s.scalars(select(Game).where(Game.game_date == d).order_by(Game.tipoff_utc, Game.id)))
+        carried = []
+        if not date:    # a late game still in progress after midnight ET stays on today's board until it ends
+            late = list(s.scalars(select(LiveGame.game_id).where(LiveGame.game_date == d - timedelta(days=1), LiveGame.status.in_(L.IN_PLAY))))
+            carried = list(s.scalars(select(Game).where(Game.id.in_(late or ["-"])).order_by(Game.tipoff_utc)))
+            games = carried + games
         lgs = {x.game_id: x for x in s.scalars(select(LiveGame).where(LiveGame.game_id.in_([g.id for g in games] or ["-"])))}
         fg, ft = _followed(s, p.email, "game"), {int(x) for x in _followed(s, p.email, "team") if x.isdigit()}
         rows = [_game_row(g, lgs.get(g.id), teams, now, fg) for g in games]
         for r in rows:
             r["favorite_team"] = r["home"]["team_id"] in ft or r["away"]["team_id"] in ft
+            r["carried_over"] = r["game_id"] in {g.id for g in carried}
         order = {"live": 0, "overtime": 0, "end_period": 0, "halftime": 1, "delayed": 2, "scheduled": 3, "final": 4}
         rows.sort(key=lambda r: (not (r["followed"] or r["favorite_team"]), order.get(r["status"], 5), str(r["tipoff_utc"])))
         return {"date": d, "prev": d - timedelta(days=1), "next": d + timedelta(days=1), "today": L.today_et(), "games": rows,
@@ -103,6 +109,8 @@ def _box_rows(s, g: Game, lg: LiveGame | None) -> list[dict]:
     for b in rows:
         d = {k: getattr(b, k) for k in ("espn_athlete_id", "player_id", "team_id", "name", "position", "jersey", "starter", "dnp",
                                         "ejected", "on_court", "minutes", *L.STAT_KEYS, "plus_minus")}
+        if lg is None or lg.status not in L.IN_PLAY:
+            d["on_court"] = None
         d["pra"], d["pr"], d["pa"], d["ra"] = (L.combo(d, k) for k in ("pra", "pr", "pa", "ra"))
         d["fg_pct"] = round(100 * b.fgm / b.fga, 1) if b.fga else None
         d["fg3_pct"] = round(100 * b.fg3m / b.fg3a, 1) if b.fg3a else None
@@ -296,7 +304,7 @@ def live_stream(game_id: str, p: Principal = Depends(current_user)):
                     row = _game_row(g2, lg, teams, now, set())
                 if row["version"] != last or quiet >= 5:        # also resend every ~15 s so staleness reaches the client
                     last, quiet = row["version"], 0
-                    yield f"data: {json.dumps(row, default=str)}\n\n"
+                    yield f"data: {json.dumps(row, default=lambda o: o.isoformat() if hasattr(o, 'isoformat') else str(o))}\n\n"
                 else:
                     quiet += 1
                     yield ": keep-alive\n\n"

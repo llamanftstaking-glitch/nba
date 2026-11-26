@@ -993,7 +993,7 @@ function scoreboard(date) {
   games.sort((a, b) => rank(a) - rank(b));
   return { date, prev: shift(date, -1), next: shift(date, 1), today: TODAY, live_count: games.filter((r) => ["live", "overtime", "halftime", "end_period"].includes(r.status)).length, server_time: new Date().toISOString(), poll_note: POLL_NOTE, games: games.map(pubRow) };
 }
-const liveGame = (id) => allGames().find((g) => g.id === id);
+const liveGame = (id) => allGames().find((g) => g.id === id) ?? (LARGE ? LG.games.find((g) => g.id === id) : undefined);
 const LNAMES = { away: ["FIXTURE Player A", "FIXTURE Player G", "FIXTURE DET S3", "FIXTURE DET S4", "FIXTURE DET S5", "FIXTURE DET R6", "FIXTURE DET R7", "FIXTURE DET R8"], home: ["FIXTURE ORL S1", "FIXTURE ORL S2", "FIXTURE ORL S3", "FIXTURE ORL S4", "FIXTURE ORL S5", "FIXTURE Player B", "FIXTURE ORL R7", "FIXTURE ORL R8"] };
 const LPID = { "FIXTURE Player A": 9001, "FIXTURE Player B": 9002 };
 function boxTeam(g, side, ph) {
@@ -1004,7 +1004,7 @@ function boxTeam(g, side, ph) {
     const n = (base) => (dnp ? null : Math.round(base * k));
     const pts = n(26 - i * 3), reb = n(9 - i), ast = n(8 - i), fgm = n(9 - i), fga = n(18 - i), fg3m = n(3), fg3a = n(7), ftm = n(4), fta = n(5), pf = dnp ? null : i === 3 ? Math.min(5, Math.ceil(ph.f * 5)) : Math.round(ph.f * 2);
     return { espn_athlete_id: `${t.abbr}-${i}`, player_id: LPID[name] ?? null, team_id: t.id, name, position: ["G", "G", "F", "F", "C", "G", "F", "C"][i], jersey: String(i + 1), headshot_url: HEAD[LPID[name]] ?? null, starter, role: starter ? "starter" : "bench", dnp, ejected: false,
-      on_court: dnp ? false : !live ? null : i === 4 ? null : starter, minutes: dnp ? null : +(34 * k).toFixed(0) * 1, pts, reb, ast, stl: n(2), blk: i === 2 ? null : n(1), tov: n(3), pf, fgm, fga, fg3m, fg3a, ftm, fta, oreb: n(2), dreb: n(6),
+      on_court: dnp ? false : ph.status === "scheduled" ? null : i === 4 ? null : starter, /* kept after the final, as the source does */ minutes: dnp ? null : +(34 * k).toFixed(0) * 1, pts, reb, ast, stl: n(2), blk: i === 2 ? null : n(1), tov: n(3), pf, fgm, fga, fg3m, fg3a, ftm, fta, oreb: n(2), dreb: n(6),
       plus_minus: i === 1 ? null : dnp ? null : Math.round((side === "home" ? 5 : -5) * ph.f + (i % 3) - 1), pra: dnp ? null : pts + reb + ast, pr: dnp ? null : pts + reb, pa: dnp ? null : pts + ast, ra: dnp ? null : reb + ast,
       fg_pct: dnp || !fga ? null : +((fgm / fga) * 100).toFixed(1), fg3_pct: null, ft_pct: dnp || !fta ? null : +((ftm / fta) * 100).toFixed(1), true_shooting_pct: dnp || !fga ? null : +((pts / (2 * (fga + 0.44 * fta))) * 100).toFixed(1),
       foul_trouble: dnp ? null : i === 3 && pf >= 3, pregame: i < 3 ? { proj_min: 33 - i, pts: 24 - i * 3, reb: 8 - i, ast: 7 - i, fg3m: 2.1, published_at: iso(300) } : null };
@@ -1055,7 +1055,7 @@ function liveSub(g, sub, q) {
   if (sub === "rotations") {
     const el = ph.elapsed;
     const team = (side, determinable) => ({ team_id: g[side].id, abbr: g[side].abbr, determinable, problems: determinable ? [] : ["FIXTURE: a substitution event is missing"], note: determinable ? "FIXTURE: derived from the published starting five and substitution events." : "FIXTURE: on-court stints cannot be determined for this team because the substitution chain is incomplete.",
-      players: determinable && started ? LNAMES[side].slice(0, 7).map((name, i) => { const starter = i < 5; const stints = starter ? [{ start_s: 0, end_s: Math.min(el, 420) }, ...(el > 600 ? [{ start_s: 600, end_s: ph.status === "live" ? null : el }] : [])] : el > 420 ? [{ start_s: 420, end_s: Math.min(el, 600) }] : []; const mins = +(stints.reduce((a2, x) => a2 + ((x.end_s ?? el) - x.start_s), 0) / 60).toFixed(1); return { espn_athlete_id: `${g[side].abbr}-${i}`, player_id: LPID[name] ?? null, name, starter, role: starter ? "starter" : "bench", on_court: ph.status === "live" ? starter : null, stints, minutes_by_period: { 1: +(Math.min(mins, 10)).toFixed(1) }, minutes: mins, pf: i === 3 ? 4 : 1, foul_trouble: i === 3, proj_min: i < 3 ? 33 - i : null, minutes_vs_projection: i < 3 ? +(mins - (33 - i)).toFixed(1) : null }; }) : [] });
+      players: determinable && started ? LNAMES[side].slice(0, 7).map((name, i) => { const starter = i < 5; const stints = starter ? [{ start_s: 0, end_s: Math.min(el, 420) }, ...(el > 600 ? [{ start_s: 600, end_s: ph.status === "live" ? null : el }] : [])] : el > 420 ? [{ start_s: 420, end_s: Math.min(el, 600) }] : []; const mins = +(stints.reduce((a2, x) => a2 + ((x.end_s ?? el) - x.start_s), 0) / 60).toFixed(1); return { espn_athlete_id: `${g[side].abbr}-${i}`, player_id: LPID[name] ?? null, name, starter, role: starter ? "starter" : "bench", on_court: starter, stints, minutes_by_period: { 1: +(Math.min(mins, 10)).toFixed(1) }, minutes: mins, pf: i === 3 ? 4 : 1, foul_trouble: i === 3, proj_min: i < 3 ? 33 - i : null, minutes_vs_projection: i < 3 ? +(mins - (33 - i)).toFixed(1) : null }; }) : [] });
     return { game_id: g.id, status: ph.status, period: ph.period, elapsed_s: el, home: team("home", true), away: team("away", false), notes: ["FIXTURE note: projected minutes are the pregame projection, kept as published."] };
   }
   if (sub === "team-stats") return { game_id: g.id, home: { team_id: g.home.id, abbr: g.home.abbr }, away: { team_id: g.away.id, abbr: g.away.abbr }, available: started, items: started ? [{ key: "fg", label: "FIXTURE Field goals", home: "20-44", away: "18-45", home_value: 20, away_value: 18 }, { key: "fgpct", label: "FIXTURE Field goal %", home: "45", away: "40", home_value: 45, away_value: 40 }, { key: "reb", label: "FIXTURE Rebounds", home: "24", away: "21", home_value: 24, away_value: 21 }, { key: "tov", label: "FIXTURE Turnovers", home: null, away: "7", home_value: null, away_value: 7 }] : [], not_published: ["FIXTURE Bench points"] };
@@ -1078,7 +1078,7 @@ function playerLive(pid) {
 }
 function liveRoute(method, path, q, body, role) {
   const date = q.get("date") || TODAY;
-  if (path === "/__mock/live") { if (method === "POST") { for (const k of ["phase", "stale", "streamError"]) if (body[k] !== undefined) LV[k] = body[k]; LV.version++; if (LV.streamError) for (const r of LV.streams) r.destroy(); } return { phase: LV.phase, stale: LV.stale, streamError: LV.streamError, version: LV.version }; }
+  if (path === "/__mock/live") { if (method === "POST") { for (const k of ["phase", "stale", "streamError"]) if (body[k] !== undefined) LV[k] = body[k]; LV.version++; if (LV.streamError) for (const r of LV.streams) r.end(); /* ended, not destroyed: a destroyed upstream socket hangs behind the Next proxy */ } return { phase: LV.phase, stale: LV.stale, streamError: LV.streamError, version: LV.version }; }
   if (method === "GET") {
     if (path === "/live/scoreboard" || path === "/live/games") return LARGE && date === TODAY ? { ...scoreboard(date), live_count: 0, games: LG.games.map((g) => pubRow(liveRow({ ...g, status: "scheduled" }))) } : scoreboard(date);
     const gm = path.match(/^\/live\/games\/([^/]+)(?:\/([a-z-]+))?$/);
@@ -1111,7 +1111,7 @@ function liveStream(res, g) {
   res.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-store, no-transform", Connection: "keep-alive", "X-Accel-Buffering": "no" });
   LV.streams.add(res);
   let sent = -1, n = 0;
-  const tick = () => { if (res.destroyed) return; const r = pubRow(liveRow(g)); const v = `${LV.version}:${LV.phase}:${LV.stale}`; if (v !== sent) { sent = v; res.write(`data: ${JSON.stringify(r)}\n\n`); } else if (++n % 5 === 0) res.write(": keep-alive\n\n"); };
+  const tick = () => { if (res.destroyed) return; const r = { ...pubRow(liveRow(g)), followed: false, favorite_team: null }; /* frames are not per-user */ const v = `${LV.version}:${LV.phase}:${LV.stale}`; if (v !== sent) { sent = v; res.write(`data: ${JSON.stringify(r)}\n\n`); } else if (++n % 5 === 0) res.write(": keep-alive\n\n"); };
   tick();
   const iv = setInterval(tick, 400);
   res.on("close", () => { clearInterval(iv); LV.streams.delete(res); });

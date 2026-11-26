@@ -1,6 +1,6 @@
 # Project state
 
-_Last updated: 2026-11-26, GIZER LIVE backend complete; live interface in progress._
+_Last updated: 2026-11-26, after GIZER LIVE (0.6.0)._
 
 ## Status
 | Area | Status |
@@ -16,7 +16,7 @@ _Last updated: 2026-11-26, GIZER LIVE backend complete; live interface in progre
 | JARVIS interface (`/jarvis`, side panel with page context, `/admin/ai-budget`) | IMPLEMENTED, TESTED (2,315 frontend smoke checks against the mock); streaming through the web proxy VERIFIED locally against the real backend with a scripted provider. Mid-stream disconnect and very long conversations NOT VERIFIED |
 | JARVIS image attachments and `evaluate_combination` (0.5.1) | IMPLEMENTED, TESTED, DEPLOYED. Real Claude API still NOT VERIFIED (the server's key was rejected by the provider) |
 | GIZER LIVE backend (ingestion, API, JARVIS live tools) | IMPLEMENTED, TESTED on real captured payloads (154 backend tests), VERIFIED against real games in progress on the development machine. NOT VERIFIED on Server M |
-| GIZER LIVE interface | IN PROGRESS |
+| GIZER LIVE interface (scoreboard strip, `/live`, game centre tabs, following, research tracker, installable app) | IMPLEMENTED, TESTED (2,894 smoke checks against the mock). VERIFIED locally against real games (in progress and finished) for rendering. Stream reconnect, stale state and browser notifications verified only against the mock |
 | Lineup projection without loaded history (last ESPN box score) and `gizer quickstart` | IMPLEMENTED, TESTED, rehearsed on an empty database; not yet run on Server M |
 | Minutes model `minutes_blend 1.0.0` | Candidate — failed its gate (5.40 vs 5.34 minutes MAE for the best baseline) |
 | Models | team_game, player_reb, player_ast, player_fg3m, player_stl, player_tov in production; player_pts, player_blk, player_pra, player_pr, player_pa, player_ra are candidates (failed the gate) |

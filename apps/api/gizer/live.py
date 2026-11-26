@@ -519,6 +519,7 @@ def poll(now: datetime | None = None, provider: EspnProvider | None = None) -> d
             rows += parse_scoreboard(prov.get_json("/scoreboard", {"dates": day.strftime("%Y%m%d")}))
         except Exception as e:      # ProviderError, network, schema: keep what we have
             out["errors"].append(f"scoreboard {day}: {type(e).__name__}")
+    rows = list({r["espn_event_id"]: r for r in rows}.values())     # the same event can be listed under two dates
     if rows:
         out["scoreboard"] = apply_scoreboard(rows, now)
     with session_scope() as s:

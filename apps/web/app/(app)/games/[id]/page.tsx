@@ -551,7 +551,9 @@ export default function GamePage() {
   const center = useQuery({ queryKey: ["live", "game", id, "center"], queryFn: () => live.game(id), retry: false });
   const stream = useGameStream(id, center.isSuccess);
   // The stream row is newer than the fetched centre object; freshness and score come from whichever is latest.
-  const row = stream.row && center.data && stream.row.version >= center.data.version ? stream.row : (center.data ?? stream.row);
+  // Stream frames are the same for every viewer, so the follow flags always come from the fetched (per-user) object.
+  const latest = stream.row && center.data && stream.row.version >= center.data.version ? stream.row : (center.data ?? stream.row);
+  const row = latest && center.data ? { ...latest, followed: center.data.followed, favorite_team: center.data.favorite_team } : latest;
   const requested = sp.get("tab");
   const auto = center.data ? tabDefault({ mode: center.data.mode, status: row?.status ?? center.data.status }) : "research";
   const tab = GAME_TABS.some(([t]) => t === requested) ? (requested as string) : auto;

@@ -225,6 +225,17 @@ def test_game_centre_endpoints_freshness_and_stale_labelling(app):
         first = next(line for line in r.iter_lines() if line.startswith("data: "))
         assert json.loads(first[6:])["game_id"] == "LIVE1"
     assert TestClient(app).get("/api/v1/live/scoreboard").status_code == 401
+    with gdb.session_scope() as s:                       # a game from yesterday that is still in progress stays on the default board
+        lg = s.get(gdb.LiveGame, "LIVE1")
+        today = lg.game_date
+        lg.game_date = today - timedelta(days=1)
+        s.get(gdb.Game, "LIVE1").game_date = today - timedelta(days=1)
+    late = c.get("/api/v1/live/scoreboard").json()["games"]
+    assert [g["carried_over"] for g in late if g["game_id"] == "LIVE1"] == [True]
+    assert "LIVE1" not in [g["game_id"] for g in c.get("/api/v1/live/scoreboard", params={"date": today.isoformat()}).json()["games"]]
+    with gdb.session_scope() as s:
+        s.get(gdb.LiveGame, "LIVE1").game_date = today
+        s.get(gdb.Game, "LIVE1").game_date = today
 
 
 def test_watchlist_milestones_and_period_summaries(app):

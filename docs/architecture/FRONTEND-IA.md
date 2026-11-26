@@ -9,7 +9,8 @@ Desktop (≥ 1024px): left sidebar with four groups, collapsible to an icon rail
 
 | Group | Label | Route | API |
 |---|---|---|---|
-| Command Center | JARVIS | `/jarvis` (`?c=` conversation, `?tab=memory|briefings|events`) | `/jarvis/state`, `/jarvis/suggestions`, `/jarvis/conversations` (+ `/{id}`, `/{id}/delete`, `/{id}/messages` stream), `/jarvis/memory`, `/jarvis/briefings`, `/jarvis/events` |
+| Command Center | Live Games (first item; pulsing dot only while a game is live) | `/live`, `/live/following`, `/live/research-tracker` | `/live/scoreboard`, `/live/watchlist` (+ `follow`, `unfollow`), `/live/milestones` (+ `/{id}/delete`), `/live/research-tracker`, `/jarvis/events?kind=milestone_reached` |
+| | JARVIS | `/jarvis` (`?c=` conversation, `?tab=memory|briefings|events`) | `/jarvis/state`, `/jarvis/suggestions`, `/jarvis/conversations` (+ `/{id}`, `/{id}/delete`, `/{id}/messages` stream), `/jarvis/memory`, `/jarvis/briefings`, `/jarvis/events` |
 | | Overview (landing) | `/` | `/command-center`, `/player-props`, `/combos` |
 | | Today's Games | `/games` | `/games` |
 | | Top Picks | `/picks` | `/selections` |
@@ -38,6 +39,9 @@ Desktop (≥ 1024px): left sidebar with four groups, collapsible to an icon rail
 Reachable from Settings ("Operations and research tools"), the mobile "More" sheet and in-page links, but not in
 the sidebar: `/admin`, `/exposure`, `/markets`, `/simulations`, `/backtesting`, `/teams`, `/teams/[id]`,
 `/games/[id]`. `/login` is outside the shell.
+
+`/live/following` and `/live/research-tracker` are reached from the sub-navigation on `/live` and from the "More" sheet.
+The sidebar has 26 destinations.
 
 Redirects: `/today` → `/`, `/research` → `/research/daily`, `/props` → `/player-props`.
 
@@ -141,6 +145,49 @@ line and checkpoints, today vs daily cap, controls (emergency pause, proactive b
 allocations with an "Edit limits" form, daily spend chart, tables by model / task / agent, price table and notes,
 recent requests.
 
+**Scoreboard strip (every page, in the shell above the page content)** — "Scores" (links to `/live`) with the
+count in progress, Yesterday · Today · Tomorrow, a collapse control remembered per browser
+(`localStorage gizer.scoreboard.collapsed`), then one compact card per game: two team rows (logo, abbreviation,
+score or "—"), status (pulsing LIVE with period and clock only for `live`/`overtime`; Halftime, End Q1, Final,
+Delayed, Postponed as plain text; tipoff in ET when scheduled), a short freshness mark and a star when followed.
+A card opens `/games/[id]?tab=live`. Horizontal scroll inside its own box (snap carousel on a phone). Polls
+`/live/scoreboard` every 15 s while `live_count > 0`, otherwise every 60 s, and not at all while the tab is hidden.
+
+**Live Games `/live`** — header with the date, count in progress and Previous day · Today · Next day (opens on the
+date selected in the top bar when there is one) → sub-navigation (Live games · My following · Research tracker) →
+sections Following, Live, Upcoming, Other (delayed / postponed), Final. Each card: status, freshness, follow
+toggle, team rows with scores, line score, points leader per team when published, venue and "Game centre". The
+server's `poll_note` is shown once at the foot. Empty states: no games on the date; no game has started yet.
+**My following `/live/following`** — followed games, followed players with their observed line and tracking
+thresholds, the threshold form (player search, statistic, value, notify), favourite teams, and the browser
+notification setting (off by default; works only while the app is open). **Research tracker
+`/live/research-tracker`** — paper tickets for the date, six per page; each leg shows line, current observed value
+and difference, the game state and when it was observed. A leg has no outcome wording or colour until its ticket is
+settled; a settled ticket shows the recorded settlement.
+
+**Game centre `/games/[id]`** — sticky score header (teams, scores, status, freshness or "Reconnecting…", line
+score, follow) → tabs `Overview | Box Score | Plays | Rotations | Research | JARVIS`, kept in `?tab=`
+(`?tab=live` or no tab selects Overview once the game has started and Research before tipoff). Overview: leaders,
+last plays (source wording), team comparison bars with the list of statistics the source has not published, score
+progression chart with lead changes / ties / largest lead / runs, stored summaries. Box Score: one table per team
+at ≥ 1024 (sticky player column, sortable headers, starters first, did-not-play rows, team totals, optional
+pregame projection columns), player cards below 1024 (four main numbers, tap for the full line). Plays: filter
+(All · Scoring · Fouls · Substitutions), team and player selects, grouped by period, 40 at a time with "more";
+new plays are fetched with `after_sequence` when the game version changes. Rotations: per-team stint timeline and
+a minutes table (per period, fouls, projected minutes, difference); a team whose stints cannot be derived shows the
+server's note and no chart. Research: the pregame research page, unchanged. JARVIS: the assistant with the game
+as context and four suggested questions. The header is fed by `GET /live/games/{id}/stream` (EventSource, with
+credentials): on a failure it retries after 1, 2, 5, 10 s showing "Reconnecting…", falls back to reading
+`/live/games/{id}` every 15 s if a stream never opens, and reconnects quietly on the server's `end` event. A higher
+`version` invalidates the tab queries. While a game is in progress the row is also re-read every 30 s as a safety
+net for a stream that is open but silent.
+
+**Player page** — a "Live now" block above Averages when `/live/players/{id}` returns a game: status, link to the
+game centre, the observed line, freshness, the player's tracking thresholds and a follow toggle.
+
+**PWA** — `public/manifest.webmanifest` (name "GIZER NBA", `start_url` `/live`, standalone) and static PNG icons;
+iOS home-screen meta in the root layout. There is no service worker and nothing is cached for offline use.
+
 ## 4. Component inventory and 5. Design system
 
 Both are maintained in `docs/design/DESIGN-SYSTEM.md` (tokens, typography, breakpoints, every reusable
@@ -215,3 +262,31 @@ Nothing was invented; where the contract is silent the UI degrades instead.
     not stated; the UI shows whatever `GET /jarvis/conversations/{id}` returns.
 33. `GET /jarvis/messages/{id}/images/{index}` is used directly as an `<img src>`; a failed load shows the browser's
     broken-image state (there is no error payload to display).
+
+GIZER LIVE (added 2026-11-26):
+
+34. Live game rows carry no team logo URL. The UI maps `abbr` to the logo from `GET /teams`; a team that is not in
+    that list shows its abbreviation only.
+35. `GameRow` has no per-game "next poll" or interval field. The strip uses 15 s / 60 s as the brief states and shows
+    `observed_at` age; it does not claim when the next observation will arrive.
+36. The stream's keep-alive is an SSE comment, which `EventSource` does not expose, so the browser cannot tell an
+    open-but-silent stream from a quiet game. The UI re-reads `/live/games/{id}` every 30 s while a game is in
+    progress as a safety net.
+37. `tipoff_utc` arrives with a space instead of `T` in stream frames (and with `T` elsewhere); the UI parses both.
+38. `GET /live/games/{id}` returns `team_stats` as a raw provider dictionary; the UI ignores it and uses
+    `/team-stats` (`items`, `not_published`).
+39. `on_court` stays `true` for players after a game is final. The UI shows the on-court marker only while the game
+    is in progress.
+40. Linescores list `0` for a period that has started but has no points yet, and the contract does not say whether a
+    period that has not started is omitted or `0`; the UI renders what it is given.
+41. `/live/watchlist`, `/live/milestones` and `/live/research-tracker` take `date`; a milestone's `game_date`
+    defaults to the server's day. The threshold form does not offer a date.
+42. Notifications: `/jarvis/events?kind=milestone_reached` has no "since" cursor; the UI keeps the last 200 shown
+    event ids in `localStorage` so an event is shown once per browser.
+43. `POST /live/watchlist/follow` for a viewer returns 403; the message is shown inline beside the control. The
+    control is not hidden for viewers because `/auth/me` role checks are not duplicated on every card.
+44. The research tracker returns every ticket for the date in one response (no `limit`/`offset`); the UI pages it
+    six at a time in the browser.
+45. Stream frames (`/live/games/{id}/stream`) carry `followed: false` and `favorite_team: null` for every viewer,
+    while `/live/games/{id}` and the scoreboard carry the viewer's own flags. The UI takes score, clock and
+    freshness from the newest frame and the follow flags from the fetched object.

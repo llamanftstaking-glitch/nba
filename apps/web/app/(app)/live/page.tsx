@@ -2,13 +2,13 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, ChevronLeft, ChevronRight, Radio } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FollowButton, FreshnessMark, LineScore, Score, StatusChip, TeamMark } from "@/components/live/common";
 import { LiveNav } from "@/components/live/live-nav";
 import { textLink } from "@/components/ui/button";
 import { PageHeader, SectionTitle } from "@/components/ui/panel";
 import { EmptyState, QueryView } from "@/components/ui/states";
-import { DLink } from "@/lib/date";
+import { DLink, useSelectedDate } from "@/lib/date";
 import { fmtDate } from "@/lib/format";
 import { isInProgress, live, useScoreboard, type GameRow, type Leaders } from "@/lib/live";
 
@@ -86,7 +86,10 @@ function Section({ title, games, testId }: { title: string; games: GameRow[]; te
 }
 
 export default function LivePage() {
-  const [day, setDay] = useState<string | undefined>(undefined);
+  // opens on the date selected in the top bar (?date=), otherwise on the server's current day
+  const selected = useSelectedDate();
+  const [day, setDay] = useState<string | undefined>(selected);
+  useEffect(() => setDay(selected), [selected]);
   const q = useScoreboard(day);
   const d = q.data;
   const btn = "inline-flex h-11 items-center gap-1 rounded-md bg-raised px-3 text-sm font-medium text-ink ring-1 ring-inset ring-line hover:bg-line/70 md:h-9";

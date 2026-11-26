@@ -236,6 +236,32 @@ then size down until under ~1.4 MB) before upload. A failed send puts the attach
 Destructive or risky actions (delete a conversation or memory, emergency pause, releasing the safety buffer) use
 an inline two-step confirm, never a browser dialog.
 
+## 9d. GIZER LIVE (observed in-game data)
+
+Files: `components/live/*`, `lib/live.ts`. The live views should read as a sports product: scores in
+`font-display`, team logos, short labels. Every live value is an observation with a time; nothing here is a forecast.
+
+| Component | Spec |
+|---|---|
+| Live indicator (`LiveDot`) | 8px emerald dot with a `ping` halo (`motion-reduce` stops the animation) followed by "LIVE" in emerald 12px semibold. Used **only** when `status` is `live` or `overtime`. Halftime, End Q*n*, Final are plain soft text; Delayed and Postponed are amber text. Never a boxed badge. |
+| Freshness mark | `updated 9s ago` in muted tabular 12px; when `stale` is true it becomes amber "Delayed" (strip) or "Delayed — last update HH:MM:SS ET" (score header, cards). Scheduled games show none. |
+| Scoreboard strip | Full-width band under the top bar, `bg-bg2/80`, bottom border. Header row 24–44px: "Scores" (display 15px), count, day buttons (the active one on `raised`), chevron to collapse. Cards 168px wide (190px when followed), `card` surface, 1px inset line ring, emerald ring on hover: two team rows (20px logo, abbreviation 14px semibold, score display 20px right-aligned), then status and freshness on one line, a filled emerald star when followed. Scrolls horizontally inside its own box with `snap-x`; collapsed height 3.25rem, expanded 9.5rem (exposed as `--strip-h` for full-height pages). |
+| Score header | Sticky under the top bar (`top-14`, `bg-bg2/95` with blur, bottom border). Scores in display 44px (52px ≥ md); team logo 36px with the abbreviation beside it (stacked under it below 640px so three-digit scores fit at 390px); status and freshness between the scores; "Reconnecting…" in amber replaces the freshness mark while the stream is down. Line score and the follow control sit on the right (second row below 640px). The page's `h1` is inside it, visually hidden. |
+| Line score | Compact table, 11–12px tabular: `TEAM`, one column per period, `T` in bold. Abbreviations only. |
+| Follow control | 44px (36px ≥ md) outline button with a star; filled emerald star and emerald ring when on. A refusal from the server appears as red text beside it. |
+| Stat table (box score) | ≥ 1024px: one table per team inside a card; 11px uppercase headers that are buttons (first click descending, second ascending, third back to "starters first"; `aria-sort` set; missing values always last); sticky first column on the card colour; 2px line above the first bench player; did-not-play rows at 50% opacity with "Did not play"; totals row in bold; on-court = 6px emerald dot before the name (only while the game is in progress); foul marker = amber "FOULS" 11px on `warn/10`. Optional pregame projection columns have amber headers and muted values. The table scrolls inside its own box. Below 1024px: one row per player as a 44px button (32px avatar, name, MIN · PTS · REB · AST), expanding to a five-column definition grid with a "Player page" link. A value the source has not published is "—", never 0. |
+| Timeline (plays) | Rows grouped under a period heading (display 15px): clock (muted tabular, 52px column), team logo 20px, the source's text unchanged, running score right-aligned on scoring plays (semibold row), an amber 11px "CORRECTED" tag when the source revised the play. Filters are the small `Tabs`; team and player are selects. 40 rows per page with a "more" button; new plays are prepended. |
+| Team comparison bars | Label centred in muted 12px, the two values in tabular semibold at the sides, then a 6px split bar (away `info` from the centre leftwards, home `teal` rightwards) on a `line/60` track. When either side is not published the values show "—" and no bar is drawn. Statistics the source does not publish are listed in one muted sentence. |
+| Score progression | Recharts line chart, 224px: one `info` line for the score margin (home minus away) against elapsed game time, zero line marked, period boundaries as vertical reference lines, a legend sentence saying which side of zero is which team, tooltip with period and both scores. Facts beside it: lead changes, ties, largest lead per team, scoring runs. The server's note that no win probability is computed is always shown. Fewer than two scoring events → an empty state instead of a chart. |
+| Rotation chart | One row per player: name (140px column, 6px emerald dot when on court during a game in progress), then a track spanning the game with period dividers; stints are 12px bars, starters `info`, bench `teal`. Legend below. Under it a minutes table (total, per period, fouls, projected, difference in muted). A team with `determinable: false` shows the server's note in a `raised/40` box and no chart. |
+| Tracking threshold row | Player statistic and threshold, then "current · remaining" in tabular figures and one status sentence ("Tracking" or "Threshold reached at N · time"). Neutral colours only; it is an observation, not an estimate. Delete is a 44px icon button. |
+| Research tracker leg | Label and game state on the left; Line · Current · Difference as three labelled figures; the observation sentence ("Not started", "In progress", "Game final — awaiting settlement") in soft text with the basis and time. No green/red, no outcome wording, until the ticket's settlement is recorded. |
+| Toast (reached threshold) | Bottom-right stack (above the bottom navigation on a phone), `raised` surface, 1px line ring, 14px text, dismiss button; at most four. Shown only when the browser notification setting is on. |
+
+Rules: null → "—"; no pulsing indicator unless the provider reports the game live; show the observation time
+wherever a live number is shown; polled data is described as delayed observations; no in-game probability, no
+wagering wording, and a paper leg is never worded or coloured as an outcome before settlement.
+
 ## 10. Vocabulary
 
 Never used in UI copy: lock, guaranteed winner, free money, risk-free, can't lose, sure thing; and for market data:

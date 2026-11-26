@@ -277,9 +277,11 @@ async function liveFlow(page, label, errors, shot) {
     check(`[${label}] box: the table scrolls inside its own box with a sticky player column`, /auto|scroll/.test(scroller) && (await page.locator('[data-testid="box-table"] tbody th').first().evaluate((e) => getComputedStyle(e).position)) === "sticky");
   } else {
     check(`[${label}] box: player cards instead of a table on a phone`, (await page.locator('[data-testid="box-card"]:visible').count()) === 14 && (await page.locator('[data-testid="box-table"]:visible').count()) === 0);
-    await page.locator('[data-testid="box-card"] button').first().click();
-    check(`[${label}] box: a card expands to the full stat line`, (await page.locator('[data-testid="box-card-detail"]').count()) === 1 && /FG/i.test(await page.locator('[data-testid="box-card-detail"]').innerText()));
-    check(`[${label}] box: a stat the source did not publish shows the marker on a card`, (await page.locator('[data-testid="box-cards"] [aria-label="not available"]').count()) + ((await page.locator('[data-testid="box-cards"]').first().innerText()).includes("—") ? 1 : 0) >= 1);
+    await page.locator('[data-testid="box-team"][data-team="DET"] [data-testid="box-card"] button').nth(2).click();
+    const det = page.locator('[data-testid="box-card-detail"]');
+    check(`[${label}] box: a card expands in place to the full stat line`, (await det.count()) === 1 && /FG/i.test(await det.innerText()) && new URL(page.url()).pathname === "/games/FIX-G1");
+    check(`[${label}] box: a stat the source did not publish shows the marker on a card, never 0`, /BLK\s*—/.test(await det.innerText()), (await det.innerText()).replace(/\s+/g, " ").slice(0, 120));
+    check(`[${label}] box: no link is nested inside the card button`, (await page.locator('[data-testid="box-card"] button a').count()) === 0);
   }
   await shot("live-boxscore", { fullPage: true });
   const ob = await overflow(page);
@@ -343,6 +345,10 @@ async function liveFlow(page, label, errors, shot) {
   await settle(page);
   check(`[${label}] follow: the game is in Following after a reload, starred on the strip`, (await page.locator('[data-testid="live-following"] [data-testid="live-card"]').count()) === 1 && (await page.locator('[data-testid="live-following"] [data-testid="follow-btn"]').getAttribute("data-on")) === "1" && (await strip.locator(`${g1} [aria-label="Following"]`).count()) === 1 && (await strip.locator('[data-testid="strip-card"]').first().getAttribute("data-game-id")) === "FIX-G1");
 
+  await go("/games/FIX-G1?tab=overview");
+  await page.waitForTimeout(600); // let a stream frame arrive: frames carry no per-user flags
+  check(`[${label}] follow: the game header shows the followed state even though stream frames are not per-user`, (await page.locator('[data-testid="score-header"] [data-testid="follow-btn"]').getAttribute("data-on")) === "1");
+
   // --- tracking thresholds ---
   await go("/live/following");
   check(`[${label}] following: the followed game is listed; notifications are off by default`, (await page.locator('[data-testid="following-games"] [data-testid="following-game"]').count()) === 1 && (await page.locator('[data-testid="notify-setting"]').getAttribute("data-on")) === "0");
@@ -358,24 +364,36 @@ async function liveFlow(page, label, errors, shot) {
   const ms = page.locator('[data-testid="watchlist-players"] [data-testid="milestone"]');
   const msText = (await ms.first().innerText().catch(() => "")).replace(/\s+/g, " ");
   check(`[${label}] threshold: created, persists after a reload, shows current value and "reached" as an observation`, (await ms.count()) === 1 && (await ms.first().getAttribute("data-reached")) === "1" && /Threshold reached/.test(msText) && !OUTCOME_WORDS.test(msText), msText);
-  await page.fill('input[name="milestone_threshold"]', "0");
-  const addDisabled = await page.locator('[data-testid="milestone-add"]').isDisabled();
-  check(`[${label}] threshold: a player and a positive value are required before adding`, addDisabled);
+  await page.click('[data-testid="milestone-add"]');
+  await page.locator('[data-testid="milestone-error"]').waitFor({ timeout: 5000 }).catch(() => {});
+  check(`[${label}] threshold: adding without a player is refused inline and creates nothing`, (await page.locator('[data-testid="milestone-error"]').count()) === 1 && (await ms.count()) === 1);
   // notifications: off by default; when the browser grants permission, a reached threshold with "notify" shows one toast
-  await page.context().grantPermissions(["notifications"]).catch(() => {});
+  // headless Chromium always denies notification permission: first the refusal path, then a stand-in
+  // Notification object that records what the app would have shown.
   await page.click('[data-testid="notify-toggle"]');
-  await page.waitForTimeout(600);
+  await page.locator('[data-testid="notify-setting"] ~ [role="alert"], [data-testid="notify-setting"] + [role="alert"]').waitFor({ timeout: 5000 }).catch(() => {});
+  check(`[${label}] notifications: without browser permission the setting stays off and says why`, (await page.locator('[data-testid="notify-setting"]').getAttribute("data-on")) === "0" && /permission was not granted|does not support/.test(await page.locator("main").innerText()));
+  await page.addInitScript(() => {
+    window.__notes = [];
+    window.Notification = class { static permission = "granted"; static requestPermission = async () => "granted"; constructor(title, opts) { window.__notes.push({ title, body: opts?.body }); } };
+  });
+  await page.reload();
+  await settle(page);
+  await page.click('[data-testid="notify-toggle"]');
+  await page.waitForFunction(() => document.querySelector('[data-testid="notify-setting"]')?.getAttribute("data-on") === "1", null, { timeout: 5000 }).catch(() => {});
   if ((await page.locator('[data-testid="notify-setting"]').getAttribute("data-on")) === "1") {
     await page.locator('[data-testid="live-toast"]').first().waitFor({ timeout: 8000 }).catch(() => {});
     check(`[${label}] notifications: one in-app toast for the reached threshold`, (await page.locator('[data-testid="live-toast"]').count()) === 1 && /reached 5 pts/.test(await page.locator('[data-testid="live-toast"]').innerText()));
+    const notes = await page.evaluate(() => window.__notes);
+    check(`[${label}] notifications: exactly one browser notification, worded as an observation`, notes.length === 1 && /threshold reached/i.test(notes[0].title) && /reached 5 pts/.test(notes[0].body) && !OUTCOME_WORDS.test(notes[0].title + " " + notes[0].body), JSON.stringify(notes));
     await page.reload();
     await settle(page);
     await page.waitForTimeout(800);
-    check(`[${label}] notifications: the same event is not shown twice`, (await page.locator('[data-testid="live-toast"]').count()) === 0 && (await page.locator('[data-testid="notify-setting"]').getAttribute("data-on")) === "1");
+    check(`[${label}] notifications: the same event is not shown twice`, (await page.locator('[data-testid="live-toast"]').count()) === 0 && (await page.evaluate(() => window.__notes.length)) === 0 && (await page.locator('[data-testid="notify-setting"]').getAttribute("data-on")) === "1");
     await page.click('[data-testid="notify-toggle"]');
     check(`[${label}] notifications: can be turned off again`, (await page.locator('[data-testid="notify-setting"]').getAttribute("data-on")) === "0");
   } else {
-    check(`[${label}] notifications: without browser permission the setting stays off and says why`, /permission was not granted|does not support/.test(await page.locator("main").innerText()));
+    check(`[${label}] notifications: the setting turns on once the browser grants permission`, false);
   }
   await shot("live-following", { fullPage: true });
 
@@ -417,6 +435,10 @@ async function liveFlow(page, label, errors, shot) {
   await mockLive(page, { phase: 4 });
   await go("/games/FIX-G1");
   check(`[${label}] final: Final in the header, Overview by default, four periods in the line score, no LIVE marker`, /Final/i.test(await header.innerText()) && /104/.test(await header.innerText()) && (await page.locator('[data-tab="overview"][aria-selected="true"]').count()) === 1 && (await page.locator('[data-testid="live-dot"]').count()) === 0);
+  await go("/games/FIX-G1?tab=rotations");
+  check(`[${label}] final: no "on court" marker once the game is over (rotations and box score)`, (await page.locator('[data-testid="rotation-row"]').count()) === 7 && (await page.locator('[data-testid="rotations-tab"] [aria-label="on court"]').count()) === 0 && !/On court now/.test(await page.locator('[data-testid="rotations-tab"]').innerText()));
+  await go("/games/FIX-G1?tab=boxscore");
+  check(`[${label}] final: box score keeps the full lines without on-court markers`, (await page.locator('[data-testid="box-team"]').count()) === 2 && (await page.locator('[data-testid="on-court"]').count()) === 0);
   await mockLive(page, { phase: 0, stale: false, streamError: false });
   check(`[${label}] live flows raised no unexpected page/console errors`, errors.length === 0, errors.slice(0, 4).join(" | "));
   errors.length = 0;

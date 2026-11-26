@@ -13,7 +13,7 @@ import { isLive, live, useTeamLogos, type Freshness, type GameRow, type LiveTeam
 export function LiveDot({ className }: { className?: string }) {
   return (
     <span className={cn("relative inline-flex h-2 w-2", className)} aria-hidden data-testid="live-dot">
-      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60" />
+      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60 motion-reduce:animate-none" />
       <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
     </span>
   );

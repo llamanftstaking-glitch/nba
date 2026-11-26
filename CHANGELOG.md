@@ -8,6 +8,10 @@
   progression, deterministic end-of-quarter / halftime / final summaries.
 * Watchlist (games, players, teams), tracking thresholds with events when reached, paper research tracker.
 * Ten JARVIS live tools; JARVIS describes observed games and gives no in-game probability.
+* Interface: scoreboard strip on every page, `/live`, game centre tabs (Overview, Box Score, Plays, Rotations, Research,
+  JARVIS) with a streaming score header, `/live/following`, `/live/research-tracker`, player "Live now" block, optional
+  browser notifications for reached thresholds, installable web app manifest (no offline cache).
+* A late game still in progress after midnight ET stays on the default scoreboard.
 * Migration `0005_live`. Evidence and limits: docs/operations/LIVE-VALIDATION.md.
 
 ## 0.5.1 — 2026-11-26 (JARVIS images)

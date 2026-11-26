@@ -232,6 +232,7 @@ export function useGameStream(id: string, enabled: boolean) {
   const [row, setRow] = useState<GameRow | null>(null);
   const [state, setState] = useState<StreamState>("connecting");
   const version = useRef(-1);
+  const inProgress = useRef(false);
 
   useEffect(() => {
     if (!enabled || typeof window === "undefined") return;
@@ -243,6 +244,7 @@ export function useGameStream(id: string, enabled: boolean) {
     let closed = false;
     const apply = (r: GameRow) => {
       setRow(r);
+      inProgress.current = isInProgress(r.status);
       if (r.version > version.current) {
         const first = version.current === -1;
         version.current = r.version;
@@ -294,8 +296,15 @@ export function useGameStream(id: string, enabled: boolean) {
       es.onerror = retry;
     };
     connect();
+    // Safety net: a stream can stay open without delivering anything (a proxy holding a dead upstream).
+    // While the game is in progress the row is also read every 30 seconds; apply() ignores an unchanged version.
+    const safety = setInterval(() => {
+      if (document.hidden || poll || !inProgress.current) return;
+      live.game(id).then(apply).catch(() => {});
+    }, 30_000);
     return () => {
       closed = true;
+      clearInterval(safety);
       es?.close();
       if (timer) clearTimeout(timer);
       if (poll) clearInterval(poll);
