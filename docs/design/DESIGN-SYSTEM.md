@@ -202,6 +202,26 @@ synthetic slate.
 When a list is cut, the cut is stated ("Showing 200 of 590", "N not qualified in total — showing the 200 most
 relevant") and the full set is one click away or on its own paged page.
 
+## 9c. JARVIS (assistant)
+
+JARVIS is the owner's intelligence officer, not a chat toy: it answers through real tool calls over platform
+records, and the interface only ever shows what the server reports.
+
+| Element | Component | Rules |
+|---|---|---|
+| Mark | `JarvisMark` (`components/jarvis/mark.tsx`) | Original geometry: solid emerald core, broken teal inner ring, four outer arcs, twelve tick marks. Inline SVG, emerald/teal only. `active` rotates the outer arcs slowly (6s) **only while a request is in flight**; the global reduced-motion rule disables it |
+| Status pill | `JarvisPill` (`status.tsx`) | Ready (emerald dot) · Processing (data-hue dot, only while a stream is open) · Provider unavailable / Budget limited / Paused (amber) · Error (red). Label always present; the server `message` is the tooltip and secondary text |
+| Conversation | `JarvisConversationView` (`conversation.tsx`) | Owner messages right-aligned on an elevated surface; answers left with the mark. Under each answer: model id, or "Answered from stored data, no model" for `deterministic`; cost as `$0.0000`; expandable Sources (tool label, tool name, args) |
+| Tool activity | `ToolActivity` | One line per real `tool_start`: spinner → check or cross on `tool_end`, with ms. No invented progress text |
+| Markdown | `Markdown` (`markdown.tsx`) | Local safe renderer (headings, lists, tables, bold, italic, inline code, fenced code, http/in-app links). Builds React elements; model text is never injected as HTML |
+| Composer | in `JarvisConversationView` | Multiline; Enter sends, Shift+Enter adds a line; Send becomes Stop while a request is in flight; "Deep review (Opus, costs more)" is off by default and resets after every send |
+| Context chips | `ContextChips` | Resolved game / player / market / record / page / date; game, player and market link to their pages |
+| Panel | `JarvisPanelProvider`, `JarvisLauncher`, `AskJarvisButton` (`panel.tsx`) | Top-bar launcher and Ctrl/Cmd+J. 420px right panel from `md`, full-screen below. Shows "JARVIS is looking at" with the resolved context |
+| Budget bars | `/admin/ai-budget` | Data hue for spend, lighter tint for pending, amber line at the suspend amount, checkpoint ticks; risky switches need a second explicit click |
+
+Destructive or risky actions (delete a conversation or memory, emergency pause, releasing the safety buffer) use
+an inline two-step confirm, never a browser dialog.
+
 ## 10. Vocabulary
 
 Never used in UI copy: lock, guaranteed winner, free money, risk-free, can't lose, sure thing; and for market data:

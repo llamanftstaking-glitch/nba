@@ -75,6 +75,19 @@ selections, 68 combinations, 640 Kalshi contracts, 26 model evaluations) and fai
 
 The application contains no fixture or mock data paths. With no API reachable every view shows its error state.
 
+## JARVIS
+
+`/jarvis` and the global side panel (top-bar launcher, Ctrl/Cmd+J) talk to the `/jarvis/*` API. Messages are sent
+with `fetch` POST and the reply is read as `text/event-stream` from `response.body` (`lib/jarvis.ts`,
+`streamMessage`); the interface shows only what the stream reports. Markdown answers are rendered by a local safe
+renderer (`components/jarvis/markdown.tsx`) — no extra dependency and no HTML injection. `/admin/ai-budget` is the
+owner-only spend and limits page. The API only allows GET and POST: deletes are `POST …/delete` and the budget
+policy is updated with `POST /admin/ai-budget`.
+
+The mock supports the stream, `/budget` (model `deterministic`), an error path (text containing
+`trigger-budget-error`), a stream that ends early (`trigger-drop`), a `viewer@fixture.test` login and a switchable
+provider state.
+
 ## Design system
 
 Tokens, typography, breakpoints and every reusable component are documented in `docs/design/DESIGN-SYSTEM.md`.

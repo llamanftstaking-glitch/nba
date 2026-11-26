@@ -128,12 +128,14 @@ export function AppShell({ children }: { children: ReactNode }) {
               <Brand compact />
             </DLink>
             <DateSelector />
-            <JarvisLauncher />
-            <div className="hidden items-center gap-3 lg:flex">
+            <div className="flex shrink-0 items-center gap-3">
+              <JarvisLauncher />
+              <div className="hidden items-center gap-3 lg:flex">
               <span className="max-w-[240px] truncate text-sm text-muted" title={me.data?.user.email}>
                 {me.data ? `${me.data.user.email} · ${me.data.user.role}` : ""}
               </span>
               <LogoutButton />
+            </div>
             </div>
           </div>
           {/* Below the desktop breakpoint the persistent notice sits under the top bar so it never collides with the bottom nav. */}

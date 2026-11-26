@@ -58,6 +58,8 @@ function LeftColumn({ activeId, onSelect, onNew, onSuggest, tab, setTab }: { act
       if (String(id) === activeId) onNew();
     },
   });
+  // A conversation gets its title from its first message; ones opened but never used are not listed.
+  const started = (c: { id: number | string; title: string | null }) => Boolean(c.title) || String(c.id) === activeId;
   return (
     <div className="flex min-h-0 flex-col gap-4" data-testid="jarvis-left">
       <Button variant="primary" size="md" onClick={onNew} data-testid="jarvis-new">
@@ -65,10 +67,10 @@ function LeftColumn({ activeId, onSelect, onNew, onSuggest, tab, setTab }: { act
       </Button>
       <div className="min-h-0">
         <Label>History</Label>
-        <QueryView query={list} rows={3} isEmpty={(d) => d.items.length === 0} empty={<p className="text-sm text-muted">No conversations yet. The first question starts one.</p>}>
+        <QueryView query={list} rows={3} isEmpty={(d) => d.items.filter(started).length === 0} empty={<p className="text-sm text-muted">No conversations yet. The first question starts one.</p>}>
           {(d) => (
             <ul className="max-h-[38vh] space-y-0.5 overflow-y-auto" data-testid="jarvis-history">
-              {d.items.map((c) => (
+              {d.items.filter(started).map((c) => (
                 <li key={c.id} className={cn("flex items-center gap-1 rounded-md", String(c.id) === activeId && tab === "conversation" ? "bg-accent/10 ring-1 ring-inset ring-accent/40" : "hover:bg-raised/60")} data-testid="jarvis-history-item">
                   <button type="button" className="min-w-0 flex-1 px-2.5 py-2 text-left" onClick={() => onSelect(String(c.id))}>
                     <span className="block truncate text-sm font-medium text-ink">{c.title || "Untitled conversation"}</span>

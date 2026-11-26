@@ -9,7 +9,8 @@ Desktop (≥ 1024px): left sidebar with four groups, collapsible to an icon rail
 
 | Group | Label | Route | API |
 |---|---|---|---|
-| Command Center | Overview (landing) | `/` | `/command-center`, `/player-props`, `/combos` |
+| Command Center | JARVIS | `/jarvis` (`?c=` conversation, `?tab=memory|briefings|events`) | `/jarvis/state`, `/jarvis/suggestions`, `/jarvis/conversations` (+ `/{id}`, `/{id}/delete`, `/{id}/messages` stream), `/jarvis/memory`, `/jarvis/briefings`, `/jarvis/events` |
+| | Overview (landing) | `/` | `/command-center`, `/player-props`, `/combos` |
 | | Today's Games | `/games` | `/games` |
 | | Top Picks | `/picks` | `/selections` |
 | | Player Props | `/player-props` | `/player-props`, `/player-props/manual` (GET/POST/withdraw), `/players/{id}/threshold`, `/players/{id}/averages` |
@@ -126,6 +127,20 @@ The injury feed is collapsed per game (slate games open, off-slate teams in one 
 shows qualified and watchlist selections, then "+N more evaluated (not qualified)" from `selection_counts`;
 Kalshi groups lead with each player's main-line contract.
 
+**JARVIS `/jarvis`** — status bar (mark, state pill, server message) → three columns ≥ 1024: left (new
+conversation, history with confirm-delete, suggested commands, links to Memory / Briefings / Events / AI budget),
+centre (Conversation · Memory · Briefings · Events tabs; conversation with streamed answers, tool activity,
+model / cost / sources, composer with the deep-review toggle), right (resolved research context, this turn's tool
+activity, data freshness, models, budget readout). Below 1024 the side columns open as drawers from two buttons in
+the status bar. **Global assistant** — a launcher in the top bar and Ctrl/Cmd+J open a 420px right panel
+(full-screen below 768px) holding the same conversation component; it creates a conversation with context from the
+route (`/games/[id]`, `/players/[id]`, `/kalshi-intelligence/[ticker]`, plus page and date), reuses it while the
+context is unchanged, and "Ask JARVIS" on selection and combination cards opens it with that record.
+**AI Budget `/admin/ai-budget`** (owner only; linked from JARVIS, Admin and Settings) — lifetime bar with suspend
+line and checkpoints, today vs daily cap, controls (emergency pause, proactive briefings, safety buffer),
+allocations with an "Edit limits" form, daily spend chart, tables by model / task / agent, price table and notes,
+recent requests.
+
 ## 4. Component inventory and 5. Design system
 
 Both are maintained in `docs/design/DESIGN-SYSTEM.md` (tokens, typography, breakpoints, every reusable
@@ -189,3 +204,10 @@ Nothing was invented; where the contract is silent the UI degrades instead.
     keys (`mae_ratio_vs_best_baseline`, `coverage_80`, `ece`, `brier`, …); an item with none of them shows only
     its sample size until "Details" is opened.
 26. `InjuryRow.game_label` is matched against `GameCard.label` to decide which feed groups open by default.
+27. JARVIS context `combo_id`: the UI sends the combination `uid` (the only id a `Combo` carries) and
+    `selection_id` = `Selection.id`. The contract does not say which identifier `combo_id` expects.
+28. The conversation list has no message count. Conversations the side panel created but that were never used
+    have a null `title`; the history hides those rather than listing "Untitled" rows.
+29. There is no data-freshness field in `/jarvis/state`; the right column shows `/command-center.latest_refresh_at`.
+30. `GET /jarvis/tools` is not used by the UI (tool labels arrive on the stream).
+31. `per_request_cap_usd` keys are not enumerated in the contract; the limits form renders whatever keys arrive.

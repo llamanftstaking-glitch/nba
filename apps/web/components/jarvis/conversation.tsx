@@ -218,7 +218,7 @@ export function JarvisConversationView({
               onKeyDown={onKey}
               rows={compact ? 2 : 3}
               maxLength={8000}
-              placeholder="Ask about a game, player, market or the system. Enter to send, Shift+Enter for a new line."
+              placeholder="Ask about a game, player, market or the system"
               className="block w-full resize-none rounded-md bg-bg px-3 py-2 text-sm text-ink ring-1 ring-inset ring-line placeholder:text-faint focus:outline-none focus:ring-accent"
               data-testid="jarvis-input"
             />
@@ -236,6 +236,7 @@ export function JarvisConversationView({
         <label className="mt-2 flex min-h-[44px] cursor-pointer items-center gap-2 text-xs text-muted md:min-h-0">
           <input type="checkbox" checked={deep} disabled={streaming} onChange={(e) => setDeep(e.target.checked)} className="h-4 w-4 accent-[rgb(0,229,160)]" data-testid="jarvis-deep" />
           Deep review (Opus, costs more)
+          <span className="ml-auto hidden text-faint sm:inline">Enter to send · Shift+Enter for a new line</span>
         </label>
       </form>
     </div>

@@ -7,7 +7,7 @@ import { cn } from "@/lib/cn";
  */
 export function JarvisMark({ className, active = false }: { className?: string; active?: boolean }) {
   return (
-    <svg viewBox="0 0 48 48" className={cn("h-5 w-5 shrink-0", className)} aria-hidden data-testid="jarvis-mark" data-active={active ? "1" : "0"}>
+    <svg viewBox="0 0 48 48" className={cn("shrink-0", className ?? "h-5 w-5")} aria-hidden data-testid="jarvis-mark" data-active={active ? "1" : "0"}>
       <g className={active ? "origin-center animate-[spin_6s_linear_infinite]" : undefined} style={{ transformBox: "fill-box", transformOrigin: "center" }}>
         <path d="M24 3a21 21 0 0 1 18.2 10.5" fill="none" stroke="rgb(var(--accent))" strokeWidth="2.5" strokeLinecap="round" />
         <path d="M45 24a21 21 0 0 1-10.5 18.2" fill="none" stroke="rgb(var(--teal))" strokeWidth="2.5" strokeLinecap="round" opacity="0.8" />
