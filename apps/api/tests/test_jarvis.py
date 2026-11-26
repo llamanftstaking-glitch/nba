@@ -233,7 +233,8 @@ def test_every_read_tool_runs_against_stored_data(app, monkeypatch):
     for t in T.TOOLS:
         f = t.args.model_fields
         a = args.get(t.name, {"game_id": "S0"} if "game_id" in f and f["game_id"].is_required() else
-                     {"player_id": pid} if "player_id" in f and f["player_id"].is_required() else {})
+                     {"player_id": pid} if "player_id" in f and f["player_id"].is_required() else
+                     {"team_id": ST["teams"][0]} if "team_id" in f and f["team_id"].is_required() else {})
         if a is None:
             continue
         r = T.execute(t.name, a, {})
