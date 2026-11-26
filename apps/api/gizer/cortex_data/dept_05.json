@@ -1,0 +1,912 @@
+[
+ {
+  "slug": "primary-creator",
+  "department": 5,
+  "kind": "role",
+  "title": "Primary creator",
+  "summary": "The player who initiates most of a team's offence and creates shots for himself and others.",
+  "body": "A primary creator is the player an offence runs through. He brings the ball up or receives it early, runs the pick-and-roll or isolates, and decides whether the possession ends in his own shot or a pass. Defences build their game plan around him, which means he sees the most attention: traps, switches designed to tire him, the opponent's best perimeter defender. The role has a recognisable box-score outline: the highest usage on the team, high assists, high turnovers in absolute terms, many free throw attempts, and heavy minutes. His output is comparatively stable from game to game because his opportunities do not depend on anyone else creating for him. It is also the role whose absence changes a team most. When a primary creator sits, his possessions must be shared out, and the offence often becomes less efficient as lesser creators take on more. A team may have two such players, in which case each behaves partly as a secondary creator when they share the floor.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "An archetype is a description of how a player has been used, not a fixed property; players combine and change roles.",
+   "Usage and assists are proxies; without touches or time of possession the role is inferred.",
+   "High usage can also belong to a finisher who creates little for others."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "usage percentage (provider)",
+   "assists",
+   "turnovers",
+   "free throw attempts",
+   "minutes",
+   "field goal attempts"
+  ],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no tracking data (touches, time of possession)",
+   "no film"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "role descriptions used in this project's research notes; original text"
+   },
+   {
+    "key": "fiba-wabc",
+    "note": "coaching manuals describe player roles; pointer only, not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "secondary-creator",
+   "usage-percentage",
+   "pick-and-roll",
+   "usage-redistribution",
+   "star-dependence",
+   "reading-role-from-box-score"
+  ],
+  "evaluation_questions": [
+   "Why is a primary creator's production comparatively stable from game to game?",
+   "Which box-score features together suggest a primary creator?"
+  ]
+ },
+ {
+  "slug": "secondary-creator",
+  "department": 5,
+  "kind": "role",
+  "title": "Secondary creator",
+  "summary": "A player who can run offence and create shots but usually does so behind a primary option.",
+  "body": "The secondary creator handles the ball in the second action of a possession, leads bench units, and takes over when the main creator rests or is trapped. He often plays off the ball beside the star, attacking closeouts and making the next pass, and then becomes the lead handler when the star sits. This dual life makes his statistics more context-dependent than most. In minutes shared with the primary creator his usage is moderate; in minutes without him it rises, along with assists and turnovers. Over a season the blend produces middling usage and a balanced points-and-assists profile that understates what he does in either setting. He is typically the main beneficiary when the primary creator misses a game, though how much depends on the coach's choices and on who else is available. Our with-and-without splits can describe how his box-score line has differed in past games the star missed, subject to the small number of such games.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "An archetype is a description of how a player has been used, not a fixed property; players combine and change roles.",
+   "With/without samples are often only a handful of games.",
+   "The increase in opportunity when a star sits is not automatic; coaches may redistribute differently."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "usage percentage (provider)",
+   "assists",
+   "turnovers",
+   "with/without-teammate splits",
+   "minutes"
+  ],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no tracking data (touches, time of possession)",
+   "no film"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "role descriptions used in this project's research notes; original text"
+   },
+   {
+    "key": "fiba-wabc",
+    "note": "coaching manuals describe player roles; pointer only, not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "primary-creator",
+   "secondary-creation",
+   "usage-redistribution",
+   "with-without-splits",
+   "staggering-stars"
+  ],
+  "evaluation_questions": [
+   "Why are a secondary creator's statistics especially context-dependent?",
+   "What limits the evidence from games the primary creator missed?"
+  ]
+ },
+ {
+  "slug": "off-ball-scorer",
+  "department": 5,
+  "kind": "role",
+  "title": "Off-ball scorer",
+  "summary": "A scorer who gets his shots by moving without the ball: running off screens, cutting and relocating.",
+  "body": "An off-ball scorer does his work before the catch. He runs off pin-downs and flares, cuts behind defenders and relocates after passing, and he shoots quickly once the ball arrives. His scoring is mostly assisted. That makes him efficient, because he takes shots created by an advantage, and it makes him dependent, because someone must set the screens and deliver the pass. His box-score outline is a solid scoring average with a high share from threes, low assist and turnover numbers for his scoring level, and usage below that of a creator who scores as much. Because he does not control the ball, his shot count varies more from night to night: a defence that stays attached to him, or a game in which the ball stops moving, can leave him with few attempts through no fault of his own. His value also includes the attention he draws, since defenders who chase him cannot help elsewhere, and that part is not measured in any statistic we hold.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "An archetype is a description of how a player has been used, not a fixed property; players combine and change roles.",
+   "Assisted versus unassisted scoring is not in our data.",
+   "Gravity - the attention a shooter draws - is unmeasured."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "points",
+   "three-pointers made",
+   "field goal attempts",
+   "usage percentage (provider)",
+   "assists",
+   "turnovers"
+  ],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no tracking data (touches, time of possession)",
+   "no film"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "role descriptions used in this project's research notes; original text"
+   },
+   {
+    "key": "fiba-wabc",
+    "note": "coaching manuals describe player roles; pointer only, not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "pin-down-screen",
+   "catch-and-shoot",
+   "floor-spacer",
+   "motion-offense",
+   "shot-volume",
+   "three-point-variance"
+  ],
+  "evaluation_questions": [
+   "Why does an off-ball scorer's shot count vary more than a primary creator's?",
+   "What is his typical relationship between scoring and usage?"
+  ]
+ },
+ {
+  "slug": "facilitator",
+  "department": 5,
+  "kind": "role",
+  "title": "Facilitator",
+  "summary": "A pass-first player whose main contribution is organising the offence and creating shots for teammates.",
+  "body": "A facilitator runs the offence with the aim of getting others good shots. He may be a traditional point guard who scores modestly, or a big man who passes from the elbow or the top of the floor. What distinguishes him from a primary creator is the balance: his assists are high relative to his own shot attempts, and his usage is moderate because many of the possessions he directs end with someone else shooting. Usage counts only shots, free throws and turnovers, so it understates how much such a player has the ball. His assist totals depend on two things outside his control - the shooting of his teammates and the scorer's judgement - and so they fluctuate even when his play is steady. Facilitators tend to post good assist-to-turnover ratios, since their passes are measured and not forced. When a team's scorers are absent, a facilitator may be asked to shoot more, which changes his profile without changing his nature.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "An archetype is a description of how a player has been used, not a fixed property; players combine and change roles.",
+   "Usage understates ball dominance for pass-first players.",
+   "Assists depend on teammates converting shots."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "assists",
+   "turnovers",
+   "usage percentage (provider)",
+   "field goal attempts"
+  ],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no tracking data (touches, time of possession)",
+   "no film",
+   "no potential assists or passes made"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "role descriptions used in this project's research notes; original text"
+   },
+   {
+    "key": "fiba-wabc",
+    "note": "coaching manuals describe player roles; pointer only, not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "assist-percentage",
+   "assist-to-turnover-ratio",
+   "primary-creator",
+   "playmaking-dependence-on-teammate-shooting",
+   "connector",
+   "dribble-handoff"
+  ],
+  "evaluation_questions": [
+   "Why does usage percentage understate a facilitator's involvement?",
+   "Which two factors outside his control move a facilitator's assist totals?"
+  ]
+ },
+ {
+  "slug": "floor-spacer",
+  "department": 5,
+  "kind": "role",
+  "title": "Floor spacer",
+  "summary": "A player whose main offensive job is to be a credible outside shooter so that defenders cannot leave him.",
+  "body": "A floor spacer stands beyond the arc and makes the defence pay for helping. His contribution has two parts. One is the shots he makes, nearly all of them catch-and-shoot threes created by others. The other is the room he gives teammates simply by being guarded closely, which is real but uncounted. In a box score he shows low usage, few assists, few free throws and few turnovers, with a large share of his attempts and points coming from three-point range. Because so much of his scoring rests on threes, his point totals are among the most volatile of any role: two or three makes separate a quiet night from a good one, and that difference is mostly chance over a single game. His minutes depend on whether he can hold up on defence, since opponents attack shooters who cannot guard. Historical box scores in our data give threes made but not attempted, so his volume has to be read from field goal attempts and makes together.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "An archetype is a description of how a player has been used, not a fixed property; players combine and change roles.",
+   "Three-point attempts are not in our historical box scores; only makes.",
+   "Single-game scoring for this role is dominated by shooting variance."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "three-pointers made",
+   "field goal attempts",
+   "usage percentage (provider)",
+   "points",
+   "makes/attempts for FG, 3PT and FT (live games only)"
+  ],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no tracking data (touches, time of possession)",
+   "no film"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "role descriptions used in this project's research notes; original text"
+   },
+   {
+    "key": "fiba-wabc",
+    "note": "coaching manuals describe player roles; pointer only, not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "spacing",
+   "catch-and-shoot",
+   "three-point-variance",
+   "stretch-big",
+   "off-ball-scorer",
+   "complementary-skills"
+  ],
+  "evaluation_questions": [
+   "Why are a floor spacer's point totals unusually volatile?",
+   "What part of a spacer's value does no box score record?"
+  ]
+ },
+ {
+  "slug": "interior-scorer",
+  "department": 5,
+  "kind": "role",
+  "title": "Interior scorer",
+  "summary": "A player who scores mainly near the basket through post-ups, rolls, cuts and offensive rebounds.",
+  "body": "An interior scorer takes most of his shots in the paint. He may post up, roll to the rim, finish passes from drivers at the dunker spot, or score on putbacks. Shots near the basket are made at a high rate and draw fouls, so his efficiency is often good and his free throw rate high, though poor free throw shooting can cut into that. Much of his scoring is set up by guards, which ties his volume to the creators he plays with; a post-up scorer who creates his own shot is the exception. His scoring is steadier from game to game than a perimeter shooter's because it rests on high-percentage attempts instead of threes, but it is sensitive to matchup: a strong rim protector or a defence that packs the paint can reduce both his attempts and his accuracy. In box scores he shows field goal attempts with few threes, free throw attempts and rebounds. We cannot confirm where his shots come from, since shot locations are not in our data.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "An archetype is a description of how a player has been used, not a fixed property; players combine and change roles.",
+   "No shot locations: interior scoring is inferred from few threes plus free throws and rebounds.",
+   "Dependence on creators is assumed from role, not measured."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "points",
+   "field goal attempts",
+   "free throw attempts",
+   "rebounds",
+   "three-pointers made"
+  ],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no tracking data (touches, time of possession)",
+   "no film",
+   "no shot locations"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "role descriptions used in this project's research notes; original text"
+   },
+   {
+    "key": "fiba-wabc",
+    "note": "coaching manuals describe player roles; pointer only, not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "post-up",
+   "rim-runner",
+   "free-throw-rate",
+   "rim-protection",
+   "opponent-defensive-strength"
+  ],
+  "evaluation_questions": [
+   "Why is an interior scorer's output usually steadier than a shooter's?",
+   "What kind of opponent most affects him?"
+  ]
+ },
+ {
+  "slug": "rim-runner",
+  "department": 5,
+  "kind": "role",
+  "title": "Rim runner",
+  "summary": "A big man whose offence is rolling hard to the basket, catching lobs and finishing plays others create.",
+  "body": "The rim runner is a low-usage finisher. He screens, rolls, runs the floor in transition and waits behind the defence for lobs and drop-off passes. He seldom dribbles or shoots from distance. His value on offence comes from vertical spacing: his roll forces a helper to leave a shooter or give up a dunk. Because his attempts are almost all at the rim, his field goal percentage is very high and his shot count low. Nearly every basket he scores is created by a teammate, so his scoring depends heavily on playing with a capable pick-and-roll passer; with a different guard, or against a defence that switches and takes away the roll, his attempts can dry up. He usually contributes offensive rebounds and blocks, and those may be steadier than his points. His minutes can be limited late in games if he shoots free throws poorly or if the opponent goes small. The profile is easy to recognise but the dependence on a passer is its key feature.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "An archetype is a description of how a player has been used, not a fixed property; players combine and change roles.",
+   "Efficiency on few attempts says little about what would happen with more.",
+   "The link to a specific passer cannot be measured without assist-pair data."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "points",
+   "field goal attempts",
+   "rebounds",
+   "blocks",
+   "usage percentage (provider)",
+   "offensive/defensive rebounds (live games only)"
+  ],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no tracking data (touches, time of possession)",
+   "no film"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "role descriptions used in this project's research notes; original text"
+   },
+   {
+    "key": "fiba-wabc",
+    "note": "coaching manuals describe player roles; pointer only, not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "pick-and-roll",
+   "four-out-one-in",
+   "interior-scorer",
+   "rim-protector",
+   "offensive-rebound-percentage",
+   "efficiency-versus-volume"
+  ],
+  "evaluation_questions": [
+   "Why does a rim runner's scoring depend on who his guard is?",
+   "What does 'vertical spacing' mean?"
+  ]
+ },
+ {
+  "slug": "rebounder",
+  "department": 5,
+  "kind": "role",
+  "title": "Rebounder",
+  "summary": "A player whose most reliable contribution is securing missed shots at one or both ends.",
+  "body": "Some players are in the game chiefly to rebound. The skill combines size, positioning, anticipation of where a miss will land, and persistence. A rebounding specialist shows a rebound total that is high for his minutes, and where the split is available the mix is informative: a high offensive share indicates a player who chases the ball, while a total made up of defensive rebounds may partly reflect a team scheme that funnels uncontested boards to him. Rebounds are one of the steadier individual statistics because every game supplies many missed shots, but they still move with factors outside the player's control: the number of misses, which depends on pace and on both teams' shooting, the opposing front line, and whether teammates who also rebound are on the floor. A rebounder's totals often rise when another big is absent. His rate per minute is the fairer description of the skill, and his minutes determine the total.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "An archetype is a description of how a player has been used, not a fixed property; players combine and change roles.",
+   "Total rebounds mix two different skills.",
+   "Scheme and teammates shape who collects defensive rebounds."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "rebounds",
+   "minutes",
+   "offensive/defensive rebounds (live games only)",
+   "with/without-teammate splits"
+  ],
+  "data_gaps": [
+   "no rebound chances",
+   "no box-out data",
+   "no offensive/defensive split in historical box scores"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "role descriptions used in this project's research notes; original text"
+   },
+   {
+    "key": "fiba-wabc",
+    "note": "coaching manuals describe player roles; pointer only, not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "total-rebound-percentage",
+   "defensive-rebounding-and-boxing-out",
+   "rebounds-follow-missed-shots",
+   "contested-vs-uncontested-rebounds",
+   "positional-rebounding"
+  ],
+  "evaluation_questions": [
+   "Why might a rebounder's total rise when a fellow big man is absent?",
+   "What does a high offensive share of rebounds suggest about a player?"
+  ]
+ },
+ {
+  "slug": "rim-protector",
+  "department": 5,
+  "kind": "role",
+  "title": "Rim protector",
+  "summary": "A defender, usually a big, whose presence near the basket lowers the opponent's success there.",
+  "body": "The rim protector anchors a defence. He stays close to the basket in most coverages, contests drives and lobs, and cleans up teammates' mistakes on the perimeter. Blocks are his visible statistic, but they are the smallest part of his effect; changed shots and declined drives matter more and are not counted. He usually rebounds well on the defensive end because he finishes possessions near the rim. Two constraints define his usefulness. He must avoid fouls, since contesting many shots exposes him to contact and foul trouble takes him off the floor. And he must survive when pulled away from the basket by shooting bigs or switches. Opponents with stretch bigs can make a rim protector less effective or force him to the bench, which is a matchup effect on his minutes. In our data he appears through blocks, rebounds and, in live games, personal fouls. Whether a team defends the rim better with him on the floor needs lineup data that we hold only for recent games.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "An archetype is a description of how a player has been used, not a fixed property; players combine and change roles.",
+   "Blocks are a narrow proxy for the skill.",
+   "On/off evidence is unavailable before 2026-11-25 and thin since."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "blocks",
+   "rebounds",
+   "personal fouls (live games only)",
+   "minutes"
+  ],
+  "data_gaps": [
+   "no defended-shot data",
+   "no shot locations",
+   "no lineup data before 2026-11-25"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "role descriptions used in this project's research notes; original text"
+   },
+   {
+    "key": "fiba-wabc",
+    "note": "coaching manuals describe player roles; pointer only, not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "rim-protection",
+   "block",
+   "block-percentage",
+   "drop-coverage",
+   "stretch-big",
+   "foul-trouble-effect-on-minutes"
+  ],
+  "evaluation_questions": [
+   "Why are blocks the smallest part of a rim protector's effect?",
+   "How can an opponent's personnel reduce his minutes?"
+  ]
+ },
+ {
+  "slug": "point-of-attack-defender",
+  "department": 5,
+  "kind": "role",
+  "title": "Point-of-attack defender",
+  "summary": "The defender assigned to the opposing ball handler, responsible for pressure and for getting through screens.",
+  "body": "The point-of-attack defender guards the player who starts the opponent's offence. His job is to make that player work: pressure the dribble, deny the easy path into the action, fight over screens and stay attached. Done well, it delays the offence by seconds and removes the need for help. It is tiring and foul-prone work, and it is close to invisible in a box score. A good one may record some steals, but his best possessions end with a contested shot or a pass to a lesser player, neither of which is credited to him. Such players are often modest offensive contributors who earn minutes through defence, so their own counting statistics are small and their playing time depends on the coach's trust and on the matchup. The effect on the opposing guard is the thing most people want to quantify, and it is exactly what we cannot: we have no record of who guarded whom, so any such claim would be an assumption.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "An archetype is a description of how a player has been used, not a fixed property; players combine and change roles.",
+   "No defensive matchup data: his effect on a specific opponent cannot be shown.",
+   "Steals capture a small and risk-dependent part of the role."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "steals",
+   "personal fouls (live games only)",
+   "minutes"
+  ],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no tracking data (touches, time of possession)",
+   "no film",
+   "no defensive matchups"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "role descriptions used in this project's research notes; original text"
+   },
+   {
+    "key": "fiba-wabc",
+    "note": "coaching manuals describe player roles; pointer only, not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "perimeter-containment",
+   "screen-navigation-over-under",
+   "wing-stopper",
+   "steal-percentage",
+   "positional-matchups"
+  ],
+  "evaluation_questions": [
+   "Why do a point-of-attack defender's best possessions leave no statistic?",
+   "Why can we not measure his effect on a specific opposing guard?"
+  ]
+ },
+ {
+  "slug": "wing-stopper",
+  "department": 5,
+  "kind": "role",
+  "title": "Wing stopper",
+  "summary": "A versatile perimeter defender assigned to the opponent's best wing scorer.",
+  "body": "The wing stopper takes the hardest individual assignment on most nights: the opposing star forward or big guard. He needs size to contest shots, strength to hold position, and enough quickness to stay in front, and in switching schemes he must also guard smaller and bigger players. His value is in making a star's points more expensive - more difficult shots, fewer free throws - not in shutting anyone out. On offence he is typically a low-usage player who shoots open threes and cuts. That combination, defending the best opponent while spacing the floor, is among the most sought-after in the sport. As with all individual defence, the evidence in a box score is thin: a few steals, blocks and rebounds. It is tempting to explain a star's poor game by the presence of a known stopper, but a single game is dominated by shooting variance, the star's own teammates and the whole team's scheme. Without matchup data, we do not attribute an opponent's result to one defender.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "An archetype is a description of how a player has been used, not a fixed property; players combine and change roles.",
+   "Attribution of an opponent's poor game to one defender is not supportable from our data.",
+   "Reputation is not a measured quantity."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "steals",
+   "blocks",
+   "rebounds",
+   "three-pointers made",
+   "usage percentage (provider)"
+  ],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no tracking data (touches, time of possession)",
+   "no film",
+   "no defensive matchups"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "role descriptions used in this project's research notes; original text"
+   },
+   {
+    "key": "fiba-wabc",
+    "note": "coaching manuals describe player roles; pointer only, not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "point-of-attack-defender",
+   "switching-defense",
+   "positional-matchups",
+   "single-game-noise",
+   "floor-spacer"
+  ],
+  "evaluation_questions": [
+   "What does a wing stopper realistically achieve against a star?",
+   "Why should a star's poor game not be credited to one defender without matchup data?"
+  ]
+ },
+ {
+  "slug": "connector",
+  "department": 5,
+  "kind": "role",
+  "title": "Connector",
+  "summary": "A low-usage player who keeps the offence moving with quick decisions, screens, cuts and extra passes.",
+  "body": "A connector links the actions of others. He does not create the first advantage and is not the main finisher, but he makes the right pass at once, screens, cuts into open space and turns a small advantage into a good shot. He is often the player who catches in the short roll and finds the corner, or who swings the ball one more time against a rotating defence. Because he neither shoots much nor holds the ball, his usage is low and his counting statistics are modest; his assists are moderate, his turnovers few. His contribution appears mainly in how lineups perform with him, which is the kind of evidence that needs large lineup samples. For projection purposes the connector's line is usually small and fairly steady, with occasional spikes in assists when the opponent's coverage sends the ball through him. He is easy to undervalue from the box score and easy to overvalue from reputation, and our data can settle neither.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "An archetype is a description of how a player has been used, not a fixed property; players combine and change roles.",
+   "The role's value is mostly outside the box score.",
+   "Lineup evidence is noisy and available only for recent live games."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "assists",
+   "turnovers",
+   "usage percentage (provider)",
+   "plus/minus (live games only)"
+  ],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no tracking data (touches, time of possession)",
+   "no film"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "role descriptions used in this project's research notes; original text"
+   },
+   {
+    "key": "fiba-wabc",
+    "note": "coaching manuals describe player roles; pointer only, not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "short-roll",
+   "motion-offense",
+   "facilitator",
+   "hockey-assist",
+   "complementary-skills",
+   "on-off-differential"
+  ],
+  "evaluation_questions": [
+   "Why is a connector's value hard to see in a box score?",
+   "In what situation might a connector's assists spike?"
+  ]
+ },
+ {
+  "slug": "stretch-big",
+  "department": 5,
+  "kind": "role",
+  "title": "Stretch big",
+  "summary": "A power forward or centre who shoots well enough from distance to pull his defender out of the paint.",
+  "body": "A stretch big is defined by where his defender has to stand. If a centre or power forward is a real threat from three-point range, the opposing big must follow him to the perimeter, and the lane opens for drives and cuts. He makes pick-and-pop a weapon and makes drop coverage costly. His box-score shape differs from a traditional big's: more three-pointers, fewer free throws, fewer offensive rebounds because he is far from the basket when shots go up. His scoring carries more variance than an interior scorer's for the same reason any shooter's does. The questions that decide his minutes are on the other end - whether he can protect the rim or rebound well enough to play centre, or needs a second big beside him. Stretch bigs change matchups: against them, an opponent's rim protector may be less effective or play less. In our historical data the role shows up as a frontcourt player with made threes, though position labels themselves are not a measured input.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "An archetype is a description of how a player has been used, not a fixed property; players combine and change roles.",
+   "Three-point shooting by bigs is especially noisy because of low attempt volume.",
+   "Position is a label, not something our data measure."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "three-pointers made",
+   "rebounds",
+   "free throw attempts",
+   "field goal attempts",
+   "offensive/defensive rebounds (live games only)"
+  ],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no tracking data (touches, time of possession)",
+   "no film",
+   "no shot locations"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "role descriptions used in this project's research notes; original text"
+   },
+   {
+    "key": "fiba-wabc",
+    "note": "coaching manuals describe player roles; pointer only, not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "pick-and-pop",
+   "five-out",
+   "floor-spacer",
+   "rim-protector",
+   "three-point-variance"
+  ],
+  "evaluation_questions": [
+   "How does a stretch big make drop coverage costly?",
+   "How does his rebounding profile usually differ from a traditional big's?"
+  ]
+ },
+ {
+  "slug": "sixth-man",
+  "department": 5,
+  "kind": "role",
+  "title": "Sixth man and microwave scorer",
+  "summary": "A leading reserve, often a scorer who provides instant offence against second units.",
+  "body": "The sixth man is the first substitute and frequently plays starter-level minutes. A common version is the microwave scorer: a player who heats up quickly, takes a large share of the shots while on the floor and carries the offence when starters rest. Coming off the bench is a deployment choice, not a ranking. It lets the coach stagger scoring, and it gives the reserve stretches as the first option against weaker defenders. His usage is therefore high for his minutes, and his scoring per minute can exceed that of some starters. His totals are more variable than a starter's for two reasons: his minutes depend more on the flow of the game and on whether he is playing well, and his shot diet tends to include many self-created jumpers. Some sixth men close games, which raises their minutes in tight contests. When a starter is absent, a sixth man may start, which sounds like a promotion but can lower his usage, since he now shares the floor with the other starters.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "An archetype is a description of how a player has been used, not a fixed property; players combine and change roles.",
+   "Starting in place of an injured player does not necessarily increase a reserve's opportunity.",
+   "Bench minutes are more variable than starter minutes."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "starter flag",
+   "minutes",
+   "usage percentage (provider)",
+   "points",
+   "field goal attempts",
+   "splits (home/away, rest, role, opponent)"
+  ],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no tracking data (touches, time of possession)",
+   "no film"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "role descriptions used in this project's research notes; original text"
+   },
+   {
+    "key": "fiba-wabc",
+    "note": "coaching manuals describe player roles; pointer only, not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "staggering-stars",
+   "closing-lineups",
+   "starter-vs-bench-minutes",
+   "usage-percentage",
+   "on-ball-vs-off-ball-opportunity",
+   "rotation-reserve"
+  ],
+  "evaluation_questions": [
+   "Why can moving a sixth man into the starting lineup lower his usage?",
+   "Give two reasons his totals vary more than a starter's."
+  ]
+ },
+ {
+  "slug": "rotation-reserve",
+  "department": 5,
+  "kind": "role",
+  "title": "Rotation reserve",
+  "summary": "A bench player with a regular but limited role, whose minutes are the first to change with circumstances.",
+  "body": "Rotation reserves fill the seventh to tenth places in a team's order. Each has a defined job - backup point guard, energy big, defensive wing, shooter - and plays in fixed, short stints. Their minutes are modest and, more important, fragile. A coach who shortens the rotation cuts them first; an injury to a starter can double them overnight; a blowout adds to them; a bad two minutes can end a night early. Small minute totals also make their statistics lumpy. A reserve averaging a few points may score zero or three times his average on any given night, and a rolling window of five games can swing widely with no change in ability. For these players the first question is always whether and how much they will play, and the second is what they do per minute. Did-not-play records matter here: a coach's decision not to use a healthy reserve is information about his standing, and it must not be recorded as a zero-minute performance.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "An archetype is a description of how a player has been used, not a fixed property; players combine and change roles.",
+   "Small minutes make every per-game statistic unstable.",
+   "A coach's decision not to play a reserve is not a zero for averaging purposes."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "minutes",
+   "did-not-play records",
+   "starter flag",
+   "minutes profile and rotation class",
+   "rolling windows (L3..L30, season)"
+  ],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no tracking data (touches, time of possession)",
+   "no film",
+   "no coach identities"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "role descriptions used in this project's research notes; original text"
+   },
+   {
+    "key": "fiba-wabc",
+    "note": "coaching manuals describe player roles; pointer only, not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "rotation-length",
+   "rotation-stability",
+   "minutes-distribution-and-variance",
+   "did-not-play-is-not-a-zero",
+   "blowout-management"
+  ],
+  "evaluation_questions": [
+   "Why are a rotation reserve's minutes described as fragile?",
+   "How should a healthy did-not-play be treated when averaging his statistics?"
+  ]
+ },
+ {
+  "slug": "reading-role-from-box-score",
+  "department": 5,
+  "kind": "concept",
+  "title": "Reading a role from box-score evidence",
+  "summary": "How to infer a player's role from minutes, usage and the mix of his statistics, and where that inference stops.",
+  "body": "A box score cannot show what a player was asked to do, but the mix of his numbers narrows it down. Start with minutes and starter flag, which set his place in the rotation. Then usage: a high figure means he ends many possessions; a low one means he mostly supports. Then the composition. Assists high relative to shots suggest a creator or facilitator; points with few assists and many threes suggest an off-ball shooter; few threes with free throws, rebounds and blocks suggest an interior role. Turnovers scale with ball handling. Stability across a window matters as much as level, since a role is a pattern and not a single game. The inference has firm limits. Several roles share a profile, a player may fill different roles with different lineups, and the statistics describe opportunity as much as skill. What we cannot see - play types, touches, defensive assignment - is exactly what would settle the ambiguous cases, so a role read from box scores should be stated as a description with its evidence.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Different roles can produce the same statistical profile.",
+   "A window that spans a role change blends two different players.",
+   "Defensive roles are almost unreadable from box scores."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "minutes",
+   "starter flag",
+   "usage percentage (provider)",
+   "points",
+   "assists",
+   "rebounds",
+   "three-pointers made",
+   "turnovers",
+   "free throw attempts",
+   "rolling windows (L3..L30, season)",
+   "minutes profile and rotation class"
+  ],
+  "data_gaps": [
+   "no play-type frequencies",
+   "no tracking data (touches, time of possession)",
+   "no film",
+   "no defensive matchups"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "role descriptions used in this project's research notes; original text"
+   },
+   {
+    "key": "fiba-wabc",
+    "note": "coaching manuals describe player roles; pointer only, not opened for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "archetypes-are-descriptive",
+   "usage-percentage",
+   "role-change-versus-noise",
+   "minutes-as-opportunity",
+   "primary-creator"
+  ],
+  "evaluation_questions": [
+   "Which statistics would you examine first to infer a player's role, and in what order?",
+   "Name two reasons a box-score role inference can be wrong."
+  ]
+ },
+ {
+  "slug": "archetypes-are-descriptive",
+  "department": 5,
+  "kind": "concept",
+  "title": "Why archetypes are descriptive and overlap",
+  "summary": "Role labels summarise how a player has been used; they are not categories with rules, and most players fit more than one.",
+  "body": "Archetypes are a vocabulary, not a classification system. A label such as floor spacer or rim runner compresses a pattern of usage into two words so that people can talk about it. Three properties follow. They overlap: a wing can be a stopper on defence and a spacer on offence, and a guard can be a primary creator with one lineup and an off-ball scorer with another. They change: roles shift with coaching, teammates, age and injury, sometimes inside a season. And they carry no thresholds; there is no usage figure at which a secondary creator becomes a primary one. For research this means a label must never drive a conclusion by itself. Saying that a player is a certain type and that such types do well in a given spot substitutes a stereotype for evidence about the player. In this platform, role and minutes classes are descriptive context shown beside the data. They are not qualification rules, and no projection is altered because of a label alone.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Labels invite stereotyping and should be accompanied by the underlying numbers.",
+   "No objective boundary separates neighbouring archetypes.",
+   "A label assigned from past data may already be out of date."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "minutes profile and rotation class",
+   "usage percentage (provider)"
+  ],
+  "data_gaps": [
+   "no play-type or tracking data to ground a label more firmly"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "project rule: minutes tiers and rotation classes are descriptive context, not qualification rules (CLAUDE.md, read 2026-11-26)"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "reading-role-from-box-score",
+   "role-change-versus-noise",
+   "rotation-class-is-descriptive",
+   "identities-expire"
+  ],
+  "evaluation_questions": [
+   "Give an example of one player fitting two archetypes at once.",
+   "Why should an archetype label never be the sole basis for a conclusion?"
+  ]
+ }
+]

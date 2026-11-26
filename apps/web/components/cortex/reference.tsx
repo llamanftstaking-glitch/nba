@@ -137,9 +137,38 @@ export function Sources() {
               <p className="text-sm text-muted" data-testid="sources-count" data-total={d.items.length}>
                 <span className="num font-semibold text-ink">{d.items.length}</span> sources indexed · <span className="num font-semibold text-ink">{opened}</span> opened and read · <span className="num font-semibold text-ink">{d.items.length - opened}</span> not opened. A source is cited by link; its text is not reproduced.
               </p>
-              <Panel bodyClassName="p-3">
-                <DataTable columns={columns} rows={d.items} rowKey={(s) => s.key} caption="Knowledge sources" mobileLimit={8} />
+              <Panel bodyClassName="p-3" className="hidden xl:block">
+                <DataTable columns={columns} rows={d.items} rowKey={(s) => s.key} caption="Knowledge sources" />
               </Panel>
+              {/* below xl: one card per source, label beside value so long notes stay readable */}
+              <ul className="space-y-2.5 xl:hidden" data-testid="source-cards">
+                {d.items.map((s) => (
+                  <li key={s.key} className="rounded-lg bg-card p-3.5 ring-1 ring-inset ring-line/60" data-testid="source-card">
+                    {columns[0]?.cell(s, 0)}
+                    <div className="mt-2">
+                      <AccessResult s={s} />
+                    </div>
+                    <dl className="mt-2 space-y-1.5 text-sm">
+                      {(
+                        [
+                          ["Publisher", s.publisher],
+                          ["League", s.league],
+                          ["Kind", s.kind],
+                          ["Reliability", s.reliability],
+                          ["Permission", s.permission],
+                          ["Accessed", fmtDate(s.accessed, { year: true })],
+                          ["Records citing", fmtInt(s.records_citing)],
+                        ] as [string, string | null][]
+                      ).map(([label, v]) => (
+                        <div key={label} className="grid grid-cols-[6.5rem_minmax(0,1fr)] gap-2">
+                          <dt className="text-2xs font-semibold uppercase tracking-wide text-muted">{label}</dt>
+                          <dd className="min-w-0 break-words text-soft">{v ?? <NA />}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </li>
+                ))}
+              </ul>
             </>
           );
         }}

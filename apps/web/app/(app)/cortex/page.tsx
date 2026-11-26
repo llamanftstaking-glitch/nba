@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 import { Encyclopedia, Playbook, Statistics } from "@/components/cortex/library";
 import { Overview } from "@/components/cortex/overview";
 import { PlayerDnaSection, TeamDnaSection } from "@/components/cortex/profiles";
@@ -18,6 +19,13 @@ export default function CortexPage() {
   const requested = sp.get("tab");
   const tab = CORTEX_TABS.some(([t]) => t === requested) ? (requested as string) : "overview";
   const overview = useQuery({ queryKey: ["cortex", "overview"], queryFn: cortex.overview });
+
+  // On a phone the tab row scrolls sideways: keep the selected tab in view.
+  useEffect(() => {
+    const el = document.querySelector<HTMLElement>('[role="tablist"][aria-label="CORTEX sections"] [aria-selected="true"]');
+    const row = el?.parentElement;
+    if (el && row) row.scrollTo({ left: Math.max(0, el.offsetLeft - (row.clientWidth - el.offsetWidth) / 2) });
+  }, [tab]);
 
   /** Section state lives in the URL so that every view is linkable. `null` removes a parameter. */
   const setParams = (next: Record<string, string | null>) => {

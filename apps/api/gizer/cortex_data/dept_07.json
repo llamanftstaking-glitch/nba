@@ -1,0 +1,512 @@
+[
+ {
+  "slug": "minutes-as-opportunity",
+  "department": 7,
+  "kind": "concept",
+  "title": "Minutes as opportunity",
+  "summary": "Playing time is the first determinant of every counting statistic.",
+  "body": "A player cannot score, rebound or assist from the bench. Every counting statistic is the product of two things: how long he played and what he did per unit of time. Of the two, minutes usually vary more for role players and are more directly controlled by a decision - the coach's. This is why minutes are treated as the foundation of a projection. A sound estimate of per-minute production multiplied by a wrong estimate of minutes gives a wrong answer, and a large share of projection misses trace back to playing time and not to performance. Minutes are also a constrained resource: a team has a fixed number to hand out, so one player's gain is another's loss. Reading a player therefore starts with where his minutes come from. Is he a starter with a fixed pattern, a reserve whose time depends on game flow, or someone covering for an absent teammate? The answer says how much confidence the minutes estimate deserves before any statistic is considered.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Minutes measure time, not possessions; pace changes the opportunity inside a minute.",
+   "Per-minute production is not constant as minutes rise or fall.",
+   "A coach's intention for the next game is never observed."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "minutes",
+   "starter flag",
+   "minutes profile and rotation class",
+   "projected minutes and stat projections with p10/p90 (models)",
+   "rolling windows (L3..L30, season)"
+  ],
+  "data_gaps": [
+   "no coach identities",
+   "no stint data before 2026-11-25"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "minutes profile, rotation class and minutes projection derivations (MINUTES-INTELLIGENCE.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "per-minute-rates",
+   "projected-minutes-uncertainty",
+   "rotation-stability",
+   "game-structure-and-regulation",
+   "per-minute-versus-per-possession"
+  ],
+  "evaluation_questions": [
+   "Why is a minutes estimate treated as the foundation of a stat projection?",
+   "Why is one player's minutes gain always someone else's loss?"
+  ]
+ },
+ {
+  "slug": "rotation-stability",
+  "department": 7,
+  "kind": "concept",
+  "title": "Rotation stability",
+  "summary": "How consistent a team's distribution of minutes has been from game to game.",
+  "body": "A stable rotation is one in which the same players receive roughly the same minutes in the same order each night. Stability is what makes past minutes useful as evidence. When a team is healthy and settled, a player's recent minutes cluster tightly and the next game is likely to resemble them. When a team is dealing with injuries, experimenting with lineups, integrating a new player or changing coaches, recent minutes are scattered and each game's distribution is partly improvised. Stability can be judged by looking at how much each player's minutes have varied across a window and whether the set of players used has changed. It applies to a team and to an individual within it: a team may be stable at the top and fluid at the bottom of the rotation. An unstable rotation does not mean a player will lose minutes. It means the estimate is less certain in both directions, and the range around it should be wider to reflect that.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Stability describes the past window; it can end with one injury.",
+   "Blowouts and overtime create apparent instability that is not a change of plan.",
+   "No single threshold separates stable from unstable."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "minutes",
+   "minutes profile and rotation class",
+   "rolling windows (L3..L30, season)",
+   "did-not-play records",
+   "starter flag"
+  ],
+  "data_gaps": [
+   "no stint data before 2026-11-25",
+   "no coach identities"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "minutes profile, rotation class and minutes projection derivations (MINUTES-INTELLIGENCE.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "rotation-length",
+   "minutes-distribution-and-variance",
+   "continuity",
+   "projected-minutes-uncertainty",
+   "substitution-patterns"
+  ],
+  "evaluation_questions": [
+   "Why does rotation stability make historical minutes more useful?",
+   "What should happen to a minutes range when the rotation is unstable?"
+  ]
+ },
+ {
+  "slug": "starter-vs-bench-minutes",
+  "department": 7,
+  "kind": "concept",
+  "title": "Starter versus bench minutes",
+  "summary": "Starting usually brings more and steadier minutes, but the label and the workload are not the same thing.",
+  "body": "Starters as a group play more than reserves and their minutes vary less, because their stints follow a fixed pattern from the opening tip. The starter flag is thus useful evidence about role. It is not a measurement of workload. Some starters play limited minutes and do not finish games; some reserves play more than starters and are on the floor at the end. A change in the flag is also ambiguous. A reserve who starts because a teammate is injured may play many more minutes, or only a few more if the coach keeps his usual substitution pattern and simply shifts the order. Starting changes who a player shares the floor with, which affects his usage and shot quality independent of minutes. When reading history, splitting a player's games by starter flag separates two different roles and is often more informative than a single average across both. The split must come with its sample size, since spot starts are usually few.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "The starter flag says who began the game, not who played most or finished.",
+   "Spot-start samples are usually small.",
+   "Reasons for a lineup change are not recorded."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "starter flag",
+   "minutes",
+   "splits (home/away, rest, role, opponent)",
+   "minutes profile and rotation class"
+  ],
+  "data_gaps": [
+   "no stint data before 2026-11-25"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "minutes profile, rotation class and minutes projection derivations (MINUTES-INTELLIGENCE.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "closing-lineups",
+   "sixth-man",
+   "minutes-as-opportunity",
+   "role-change-versus-noise",
+   "sample-size-and-confidence"
+  ],
+  "evaluation_questions": [
+   "Why is the starter flag not a measure of workload?",
+   "Why is it useful to split a player's history by starter flag?"
+  ]
+ },
+ {
+  "slug": "minutes-distribution-and-variance",
+  "department": 7,
+  "kind": "concept",
+  "title": "Minutes distribution and variance",
+  "summary": "A player's minutes form a distribution with a spread, not a single number.",
+  "body": "An average of thirty minutes can describe a player who plays between twenty-nine and thirty-one every night or one who ranges from twenty to forty. The two have the same mean and very different risk. The spread of a player's minutes comes from identifiable sources: foul trouble, blowouts in either direction, overtime, matchup decisions, minor injuries during a game, and his own play. Starters on settled teams have narrow distributions; reserves, players returning from injury and players on unsettled teams have wide ones. The shape is often lopsided. A heavy-minutes starter has little room to exceed his norm but can fall well below it in a blowout or after early fouls, so the downside tail is longer than the upside. Describing minutes with a median and a range, or with low and high percentiles, conveys this in a way an average cannot. This platform's minutes projections carry a p10 and p90 for that reason, and the width of that band is itself information about the player's situation.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Percentile bands come from models and past data; they are estimates, not bounds.",
+   "Rare events such as injury during a game fall outside any typical range.",
+   "Short histories give poor estimates of spread."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "minutes",
+   "rolling windows (L3..L30, season)",
+   "minutes profile and rotation class",
+   "projected minutes and stat projections with p10/p90 (models)"
+  ],
+  "data_gaps": [
+   "no coach identities",
+   "no stint data before 2026-11-25"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "minutes profile, rotation class and minutes projection derivations (MINUTES-INTELLIGENCE.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "distribution-versus-average",
+   "projected-minutes-uncertainty",
+   "blowout-risk-to-minutes",
+   "foul-trouble-effect-on-minutes",
+   "rotation-stability"
+  ],
+  "evaluation_questions": [
+   "Why can two players with the same average minutes carry different risk?",
+   "Why is a heavy-minutes starter's distribution often lopsided toward the downside?"
+  ]
+ },
+ {
+  "slug": "return-from-injury-ramp",
+  "department": 7,
+  "kind": "concept",
+  "title": "Return-from-injury minutes ramp",
+  "summary": "After an absence, a player's minutes typically build up over several games instead of resuming at once.",
+  "body": "Players coming back from injury seldom return to a full workload immediately. Teams commonly limit minutes in the first games and raise the limit in steps, and the player may sit out one game of a back-to-back during the period. The length and steepness of the ramp depend on the injury, the length of the absence and the team's caution, none of which we can observe directly. What we can observe is the sequence of minutes actually played since the return, and any limit stated in the reported status. Two errors are common. One is to project the pre-injury average for the first game back, which ignores the ramp. The other is to treat the reduced early games as the new normal after the ramp has ended. Rolling windows straddling an absence blend both periods and need to be read with the dates in view. The teammates who covered the absence see the reverse pattern: their extra minutes shrink gradually, not all at once.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "The shape of a ramp cannot be predicted from our data; it must be observed game by game.",
+   "Stated limits are not always reported or followed.",
+   "No medical information is available or inferred."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "minutes",
+   "injuries and lineup status",
+   "did-not-play records",
+   "rolling windows (L3..L30, season)",
+   "projected minutes and stat projections with p10/p90 (models)"
+  ],
+  "data_gaps": [
+   "no team medical plans",
+   "no practice participation data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "minutes profile, rotation class and minutes projection derivations (MINUTES-INTELLIGENCE.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "return-to-play-ramp",
+   "minutes-restrictions-coaching",
+   "minutes-restriction-reported",
+   "usage-redistribution",
+   "never-infer-a-diagnosis"
+  ],
+  "evaluation_questions": [
+   "What are the two common errors when projecting a player returning from injury?",
+   "What happens to the minutes of the teammates who covered the absence?"
+  ]
+ },
+ {
+  "slug": "blowout-risk-to-minutes",
+  "department": 7,
+  "kind": "concept",
+  "title": "Blowout risk to minutes",
+  "summary": "One-sided games reduce starters' minutes on both teams and increase deep reserves' minutes.",
+  "body": "When a game is decided early, both coaches empty their benches, and starters lose the minutes they would normally play late in the fourth quarter, sometimes most of the quarter. The effect is asymmetric in size across roles. Heavy-minutes starters lose the most; mid-rotation players may be unaffected or gain slightly; deep reserves gain the most. It applies to the winning side as much as the losing side. The chance of a blowout is higher when the teams are far apart in strength, so it is a matchup-dependent risk and not a constant. For counting statistics the consequence is a ceiling: a star in a lopsided game may be efficient and still fall short of his usual totals because he sat down early. This risk belongs in the lower part of a minutes range for players on either side of a mismatch. We can count how often a team's past games ended with large margins, but historical data do not show when starters were removed.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Final margin is an imperfect indicator of when a game was decided.",
+   "Coaches differ in how early they rest starters, and we do not record who coaches.",
+   "No probability of a blowout is produced by this record."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "minutes",
+   "score progression (live games only)",
+   "derived on-court stints and minutes by quarter (live games only)",
+   "projected minutes and stat projections with p10/p90 (models)"
+  ],
+  "data_gaps": [
+   "no score-by-time or stints for historical games"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "minutes profile, rotation class and minutes projection derivations (MINUTES-INTELLIGENCE.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "garbage-time",
+   "blowout-management",
+   "blowout-and-garbage-time-matchup",
+   "minutes-distribution-and-variance",
+   "garbage-time-detection-live"
+  ],
+  "evaluation_questions": [
+   "Why does blowout risk apply to the favourite's starters?",
+   "Which players gain the most minutes in a blowout?"
+  ]
+ },
+ {
+  "slug": "overtime-effect-on-minutes",
+  "department": 7,
+  "kind": "concept",
+  "title": "Overtime effect on minutes",
+  "summary": "Each overtime adds five minutes of play, almost all of it for the closing group.",
+  "body": "An overtime period adds five minutes to the game clock and twenty-five player-minutes per team. Coaches give nearly all of them to their best available players, so starters and closers can finish several minutes above their regulation norm, with counting totals raised accordingly. Overtime is uncommon and cannot be anticipated for a particular game, so it is not a planning input; it is a source of occasional high outliers. Its main analytical significance is in reading history. A game with one or two overtimes inflates a player's line, and if that game sits inside a short rolling window it pulls the average up. Threshold counts are affected too: a line cleared only because of extra periods is weaker evidence than one cleared in regulation. Total minutes above what regulation allows identify overtime games on sight. Players who fouled out or were otherwise unavailable in regulation gain nothing from it, which occasionally hands significant extra minutes to a reserve.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Overtime cannot be forecast for a given game from our data.",
+   "Historical box scores do not separate regulation and overtime production.",
+   "No adjustment for overtime is applied automatically in this record."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "minutes",
+   "threshold history",
+   "rolling windows (L3..L30, season)",
+   "derived on-court stints and minutes by quarter (live games only)"
+  ],
+  "data_gaps": [
+   "no regulation/overtime split in historical box scores"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "minutes profile, rotation class and minutes projection derivations (MINUTES-INTELLIGENCE.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "overtime-period",
+   "minutes-distribution-and-variance",
+   "sample-size-and-confidence",
+   "single-game-noise"
+  ],
+  "evaluation_questions": [
+   "How many player-minutes does one overtime add for a team?",
+   "Why should a threshold cleared only in overtime be treated as weaker evidence?"
+  ]
+ },
+ {
+  "slug": "foul-trouble-effect-on-minutes",
+  "department": 7,
+  "kind": "concept",
+  "title": "Foul-trouble effect on minutes",
+  "summary": "Early fouls usually cost a player minutes through his coach's caution, well before disqualification.",
+  "body": "Foul trouble reduces minutes mainly by convention. A player who collects two quick fouls often sits for the rest of the first quarter or half, and those minutes are rarely made up later. The loss depends on when the fouls occur and on the coach: some hold a strict line, others trust veterans to play carefully. Bigs who protect the rim and perimeter defenders assigned to high-usage scorers are most exposed. The effect is one-sided - foul trouble never adds minutes for the player concerned - and so it contributes to the longer downside tail of a starter's minutes distribution. It also moves minutes to a specific backup, usually the player at the same position. Because fouls are not in our historical box scores, we cannot measure how often a given player has been limited this way in the past; a low-minute game in his history might be foul trouble, a blowout or a minor injury, and the box score alone does not say which.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Personal fouls are available only for live games since 2026-11-25.",
+   "The cause of a low-minute game in history is not identifiable from the box score.",
+   "Coach behaviour varies and is not recorded."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "minutes",
+   "personal fouls (live games only)",
+   "derived on-court stints and minutes by quarter (live games only)"
+  ],
+  "data_gaps": [
+   "no personal fouls in historical box scores",
+   "no coach identities"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "minutes profile, rotation class and minutes projection derivations (MINUTES-INTELLIGENCE.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "personal-fouls-and-fouling-out",
+   "foul-trouble-management",
+   "foul-trouble-thresholds-live",
+   "minutes-distribution-and-variance"
+  ],
+  "evaluation_questions": [
+   "Why is foul trouble a one-sided risk to minutes?",
+   "Why can we not tell from history how often a player was limited by fouls?"
+  ]
+ },
+ {
+  "slug": "projected-minutes-uncertainty",
+  "department": 7,
+  "kind": "concept",
+  "title": "Projected-minutes uncertainty",
+  "summary": "A minutes projection is an estimate with a range, and the range matters as much as the centre.",
+  "body": "A projected minutes figure is the centre of a distribution built from a player's recent playing time, role and the team's current availability. It is not a schedule. The uncertainty around it has predictable drivers. It is wider for reserves than for starters, wider when the injury report contains questionable teammates whose status would change the rotation, wider for players returning from absence, and wider when the rotation has been unstable. Some of this uncertainty resolves before tip-off as statuses are confirmed and lineups announced; some cannot resolve until the game is played, such as foul trouble and the margin. Because stat projections are built on minutes, their ranges inherit the minutes range and then add the variability of per-minute production. Reading a projection responsibly means looking at the p10 and p90 alongside the central value, and noting what information was available when it was made. A projection made before a late scratch describes a situation that no longer exists and should be regenerated, not adjusted by eye.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Ranges are model estimates and can be miscalibrated.",
+   "Late lineup news can invalidate a projection entirely.",
+   "Unobserved coaching intentions are a permanent source of error."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "projected minutes and stat projections with p10/p90 (models)",
+   "minutes",
+   "injuries and lineup status",
+   "minutes profile and rotation class"
+  ],
+  "data_gaps": [
+   "no coach identities",
+   "no team rotation plans"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "minutes profile, rotation class and minutes projection derivations (MINUTES-INTELLIGENCE.md); not opened in this session"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "minutes-distribution-and-variance",
+   "calibration",
+   "minutes-as-opportunity",
+   "injury-report-timing",
+   "rotation-stability"
+  ],
+  "evaluation_questions": [
+   "Name three situations that widen the uncertainty of a minutes projection.",
+   "Why should a projection made before a late scratch be regenerated?"
+  ]
+ },
+ {
+  "slug": "rotation-class-is-descriptive",
+  "department": 7,
+  "kind": "concept",
+  "title": "Minutes tiers and rotation classes are descriptive",
+  "summary": "Labels such as starter-level or fringe rotation summarise recent playing time; they are context, not rules.",
+  "body": "It is convenient to sort players into classes by their recent minutes - heavy-minutes starter, regular rotation player, fringe reserve and so on. These classes help a reader orient quickly and compare like with like. They are summaries of what has happened and nothing more. A class boundary is an arbitrary cut on a continuous quantity: a player just above a line and one just below it are nearly identical, and a player can cross a line because of one overtime game or one blowout. Classes lag changes in role, since they are computed from a trailing window. For those reasons this platform treats minutes tiers and rotation classes as descriptive context displayed beside the numbers. They are not qualification rules. A projection, a research note or a paper test is not included or excluded because of the label alone; the underlying minutes history, its spread and the current availability picture are what carry the evidence.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Class boundaries are arbitrary cuts on a continuous measure.",
+   "Labels lag real changes in role.",
+   "A label hides the spread of a player's minutes."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "minutes profile and rotation class",
+   "minutes",
+   "rolling windows (L3..L30, season)"
+  ],
+  "data_gaps": [
+   "no coach identities"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "project rule: minutes tiers and rotation classes are descriptive context, not qualification rules (CLAUDE.md, read 2026-11-26)"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "archetypes-are-descriptive",
+   "minutes-distribution-and-variance",
+   "rotation-stability",
+   "role-change-versus-noise"
+  ],
+  "evaluation_questions": [
+   "Why is a rotation class boundary described as arbitrary?",
+   "May a player be excluded from research solely because of his rotation class?"
+  ]
+ },
+ {
+  "slug": "did-not-play-is-not-a-zero",
+  "department": 7,
+  "kind": "concept",
+  "title": "A missed game is not a zero",
+  "summary": "Games a player did not play are absences from the sample, not performances of zero.",
+  "body": "When a player sits out, he produces no statistics, but that is not the same as producing zero points in a game he played. Including did-not-play games as zeros drags every average toward nothing and misdescribes how the player performs when he is on the floor. Excluding them without comment has its own cost, because it hides how often he is unavailable. The correct treatment keeps the two questions apart. Performance windows count appearances: a last-ten window means the last ten games he actually played, and the sample size shown is the number of appearances. Availability is reported separately, as the count of games missed and the reasons recorded. The distinction between a coach's decision and an injury absence also matters, since the first says something about role and the second about health. A very short appearance, such as a player who left injured after two minutes, is a harder case: it is an appearance, and it should be visible as an outlier with its minutes shown.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Games ended early by injury remain in the sample and can distort short windows.",
+   "The recorded reason for an absence is a reported label.",
+   "Availability rates from the past are descriptive, not predictive."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "did-not-play records",
+   "minutes",
+   "rolling windows (L3..L30, season)",
+   "threshold history",
+   "injuries and lineup status"
+  ],
+  "data_gaps": [
+   "no reason codes beyond the reported status"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "project rule: windows count appearances and a missed game is never a zero (CLAUDE.md, read 2026-11-26)"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "sample-size-and-confidence",
+   "rotation-reserve",
+   "status-designations",
+   "distribution-versus-average"
+  ],
+  "evaluation_questions": [
+   "Why should a did-not-play game not be averaged in as zero?",
+   "How should a last-ten-games window be defined for a player who has missed games?"
+  ]
+ }
+]

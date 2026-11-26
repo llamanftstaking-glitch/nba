@@ -1,0 +1,409 @@
+[
+ {
+  "slug": "pace-identity",
+  "department": 6,
+  "kind": "context",
+  "title": "Pace identity",
+  "summary": "A team's habitual tempo: how many possessions it tends to play per game.",
+  "body": "Teams differ in how quickly they play. Some push after every rebound and shoot early in the clock; others walk the ball up and use most of each possession. This habit, measured as possessions per 48 minutes, is one of the more stable team traits within a season because it reflects coaching philosophy and personnel together. Its importance for individual statistics is simple arithmetic: more possessions mean more shots, misses, rebounds and assists to go around, for both teams. A game between two fast teams offers more opportunity than a game between two slow ones, with efficiency held equal. Pace identity should not be confused with quality. Fast teams are not necessarily good offences, and slow teams are not necessarily good defences. It should also be separated into what a team does on offence and what it allows; a team may shoot quickly yet force long possessions on defence. We estimate tempo from box-score totals, so the figure is an approximation, and it describes the past stretch it was computed from.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Estimated from box-score totals, not counted possessions.",
+   "A game's pace is jointly produced with the opponent and the score.",
+   "Tempo shifts when key ball handlers are absent."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "opponent allowed-per-game context",
+   "field goal attempts",
+   "rolling windows (L3..L30, season)",
+   "team totals including points in the paint and fast-break points (live games only)"
+  ],
+  "data_gaps": [
+   "no counted possessions for historical games",
+   "no time-to-shot data"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "team-context derivations used in this project; original text"
+   },
+   {
+    "key": "basketball-reference-glossary",
+    "note": "definitions of pace and team ratings; pointer only for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "pace",
+   "pace-interaction",
+   "pace-and-early-offense",
+   "possessions-estimate",
+   "identities-expire"
+  ],
+  "evaluation_questions": [
+   "Why does a faster pace raise counting statistics without any change in efficiency?",
+   "Why is pace identity not a measure of team quality?"
+  ]
+ },
+ {
+  "slug": "shot-profile-identity",
+  "department": 6,
+  "kind": "context",
+  "title": "Shot-profile identity",
+  "summary": "The mix of shot types a team seeks and allows: at the rim, from three, from mid-range, and at the line.",
+  "body": "Every offence has a characteristic diet of shots, shaped by its players and its coach's preferences. Some hunt threes and layups almost exclusively; some rely on mid-range scorers; some live at the free throw line. Defences have a mirror-image identity in the shots they are willing to concede. A drop-coverage team gives up mid-range pull-ups; a team that helps aggressively off the corners gives up threes. Shot profile matters because it sets the variance of a team's scoring - three-point-heavy teams have wider swings from night to night - and because it shapes which opposing players are likely to find their preferred shots. Here our data impose a hard limit. A true shot profile needs shot locations, which we do not have. We can see field goal attempts, three-pointers made, free throw attempts and, for live games, three-point attempts and points in the paint. Anything said about a team's shot profile from our data is therefore partial and should be labelled so.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Shot locations are not available; the profile can be described only coarsely.",
+   "Allowed shot mix reflects opponents faced as well as the defence's choices.",
+   "Three-point attempts are available only in live games."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "field goal attempts",
+   "three-pointers made",
+   "free throw attempts",
+   "makes/attempts for FG, 3PT and FT (live games only)",
+   "team totals including points in the paint and fast-break points (live games only)"
+  ],
+  "data_gaps": [
+   "no shot locations",
+   "no play-type frequencies"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "team-context derivations used in this project; original text"
+   },
+   {
+    "key": "basketball-reference-glossary",
+    "note": "definitions of pace and team ratings; pointer only for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "shot-quality-versus-shot-making",
+   "three-point-variance",
+   "shot-frequency",
+   "defensive-identity",
+   "no-middle-defense"
+  ],
+  "evaluation_questions": [
+   "Why does a three-point-heavy shot profile widen a team's game-to-game scoring range?",
+   "What prevents us from describing a full shot profile?"
+  ]
+ },
+ {
+  "slug": "defensive-identity",
+  "department": 6,
+  "kind": "context",
+  "title": "Defensive identity",
+  "summary": "The principles a team's defence is built on and the outcomes it tends to allow.",
+  "body": "A team's defensive identity is the set of things it tries to take away and the things it accepts. It might protect the rim and concede mid-range shots, pressure the ball to force turnovers at the risk of fouls, switch everything, or pack the paint and live with outside shooting. Personnel largely determine the options: a team with an elite rim protector plays differently from one with five mobile wings. The identity shows up in what opponents accumulate against it. Some defences allow few points in the paint but many threes; some suppress assists by switching; some give up offensive rebounds because they run. Our opponent-allowed context captures the box-score side of this: how many points, rebounds, assists and threes opponents have averaged against a team. Those are raw per-game figures. They are affected by pace and by the strength of the opponents already faced, and they say nothing about scheme. They are useful as a description of what has happened, and weak as an explanation of why.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Opponent-allowed per-game figures are not adjusted for pace or schedule.",
+   "Scheme cannot be observed; identity is inferred from outcomes.",
+   "Early-season figures rest on few games."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "opponent allowed-per-game context",
+   "team totals including points in the paint and fast-break points (live games only)"
+  ],
+  "data_gaps": [
+   "no coverage scheme data",
+   "no positional defence splits",
+   "no shot locations"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "team-context derivations used in this project; original text"
+   },
+   {
+    "key": "basketball-reference-glossary",
+    "note": "definitions of pace and team ratings; pointer only for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "opponent-defensive-strength",
+   "defensive-rating",
+   "rim-protection",
+   "shot-profile-identity",
+   "identities-expire"
+  ],
+  "evaluation_questions": [
+   "Why are raw opponent-allowed averages weak as an explanation of a defence?",
+   "How does personnel constrain a team's defensive identity?"
+  ]
+ },
+ {
+  "slug": "depth-identity",
+  "department": 6,
+  "kind": "context",
+  "title": "Depth",
+  "summary": "How much usable talent a team has beyond its starters, and how many players it trusts.",
+  "body": "Depth describes the quality of a team's reserves and the length of its dependable rotation. A deep team can play nine or ten without a large drop in performance, rest starters without losing leads, and absorb an injury by promoting a capable replacement. A shallow team leans on its starters for heavy minutes and is disrupted by a single absence. For individual projection depth cuts both ways. On a deep team each player's minutes are capped by the competition for them, and an injury spreads the vacant minutes across several capable players, so no one gains dramatically. On a shallow team the starters' minutes are high and secure, and an injury can hand a large role to one replacement. Depth also affects blowout behaviour and back-to-back handling, since a coach with trusted reserves is quicker to rest starters. We describe depth from the distribution of minutes and from who has played, not from any rating of bench quality, which we do not compute.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Minutes distribution shows how many players are used, not how good they are.",
+   "Injuries change depth week to week.",
+   "No bench-quality metric is computed here."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "minutes",
+   "did-not-play records",
+   "minutes profile and rotation class",
+   "starter flag"
+  ],
+  "data_gaps": [
+   "no lineup data before 2026-11-25",
+   "no player-quality ratings"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "team-context derivations used in this project; original text"
+   },
+   {
+    "key": "basketball-reference-glossary",
+    "note": "definitions of pace and team ratings; pointer only for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "rotation-length",
+   "usage-redistribution",
+   "star-dependence",
+   "blowout-management",
+   "minutes-distribution-and-variance"
+  ],
+  "evaluation_questions": [
+   "How does team depth change the effect of an injury on a replacement's minutes?",
+   "What does a minutes distribution fail to tell us about depth?"
+  ]
+ },
+ {
+  "slug": "star-dependence",
+  "department": 6,
+  "kind": "context",
+  "title": "Star-dependence",
+  "summary": "The degree to which a team's offence or defence relies on one or two players.",
+  "body": "Some teams are organised around a single player to an unusual degree. He takes a large share of the shots, creates a large share of the assists, and the team's results swing sharply between his minutes on and off the floor. Such a team is efficient and predictable while he plays and unsettled when he does not: possessions he would have used must be redistributed among players unaccustomed to them, and the opposing defence can relax its plan. Teams with balanced scoring show the opposite pattern. Any one absence matters less, but each player's own opportunity is smaller and varies more. For research, star-dependence signals two things. The star's availability is the most important single input for every teammate's projection, and games he has missed are the most informative part of each teammate's history. The concentration of usage and shots across a roster can be described from box scores. On/off evidence needs lineup data, which we hold only for games since live ingestion began.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Usage concentration describes offence; defensive dependence is far harder to see.",
+   "On/off samples are short and noisy.",
+   "Dependence changes when the supporting roster changes."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "usage percentage (provider)",
+   "field goal attempts",
+   "assists",
+   "with/without-teammate splits",
+   "injuries and lineup status"
+  ],
+  "data_gaps": [
+   "no lineup data before 2026-11-25",
+   "no touches or time of possession"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "team-context derivations used in this project; original text"
+   },
+   {
+    "key": "basketball-reference-glossary",
+    "note": "definitions of pace and team ratings; pointer only for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "primary-creator",
+   "usage-redistribution",
+   "with-without-splits",
+   "on-off-differential",
+   "depth-identity"
+  ],
+  "evaluation_questions": [
+   "Why is a star's availability the key input for his teammates' projections on a star-dependent team?",
+   "How does a balanced team differ in its response to one absence?"
+  ]
+ },
+ {
+  "slug": "continuity",
+  "department": 6,
+  "kind": "context",
+  "title": "Continuity",
+  "summary": "How much of a team's roster, coaching and system carries over from one period to the next.",
+  "body": "Continuity is the extent to which the same players are running the same system as before. A team that returns most of its rotation and its coach starts a season with established habits: players know the coverages, the spacing and each other's tendencies. A team rebuilt in the summer, or reshaped by a mid-season trade or coaching change, needs time before its patterns settle. For data analysis continuity determines how much history is relevant. Last month's rotation, usage shares and tempo are good guides when little has changed and poor guides when a starter has been traded or a new coach has arrived. Continuity is not the same as quality; a stable team can be stably mediocre. It is a statement about the reliability of past patterns as evidence. In practice we judge it by checking whether the same players are receiving similar minutes in similar roles across the window being used, and by flagging transactions and long absences that break the series.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "No formal continuity score is computed here; this is a qualitative check.",
+   "Coaching changes are not recorded in our data and must be established from outside information.",
+   "Stable minutes can hide a change of role."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "minutes",
+   "minutes profile and rotation class",
+   "rolling windows (L3..L30, season)",
+   "starter flag",
+   "injuries and lineup status"
+  ],
+  "data_gaps": [
+   "no coach identities",
+   "no transaction feed described here"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "team-context derivations used in this project; original text"
+   },
+   {
+    "key": "basketball-reference-glossary",
+    "note": "definitions of pace and team ratings; pointer only for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "identities-expire",
+   "rotation-stability",
+   "role-change-versus-noise",
+   "sample-size-and-confidence"
+  ],
+  "evaluation_questions": [
+   "Why does low continuity reduce the value of a long historical window?",
+   "Is continuity a measure of team quality?"
+  ]
+ },
+ {
+  "slug": "identities-expire",
+  "department": 6,
+  "kind": "context",
+  "title": "Why team identities expire",
+  "summary": "A team's measured tendencies stop being valid evidence when its roster, coach or health changes materially.",
+  "body": "Team tendencies are produced by particular people. Pace reflects the ball handlers and the coach; defensive results reflect the rim protector and the perimeter defenders; rebounding reflects the front line. When those people change, the tendency may change with them, yet season-long averages keep mixing the old team with the new one. A trade, a coaching change, a long-term injury to a central player, or the return of one can each make earlier games a description of a team that no longer exists. The practical discipline is to ask, before using any team-level number, whether the group that produced it is the group playing tonight. Shorter windows respond faster but are noisier; longer windows are steadier but may be stale. There is no formula that resolves this, only the habit of checking who played. Opponent-allowed context is particularly exposed, because it is an average over many weeks and silently includes games with different personnel.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "Deciding when a change is 'material' is a judgement.",
+   "Short windows after a change have too few games to measure the new tendency well.",
+   "We cannot observe coaching changes from our data alone."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "opponent allowed-per-game context",
+   "rolling windows (L3..L30, season)",
+   "injuries and lineup status",
+   "minutes"
+  ],
+  "data_gaps": [
+   "no coach identities",
+   "no lineup data before 2026-11-25"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "team-context derivations used in this project; original text"
+   },
+   {
+    "key": "basketball-reference-glossary",
+    "note": "definitions of pace and team ratings; pointer only for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "continuity",
+   "opponent-defensive-strength",
+   "pace-identity",
+   "defensive-identity",
+   "regression-to-the-mean"
+  ],
+  "evaluation_questions": [
+   "Why can a season-long opponent-allowed average mislead after a trade?",
+   "What is the trade-off between short and long windows after a roster change?"
+  ]
+ },
+ {
+  "slug": "identity-versus-single-game",
+  "department": 6,
+  "kind": "context",
+  "title": "Team identity versus a single game",
+  "summary": "A team's usual tendencies are averages; any one game can depart widely from them.",
+  "body": "An identity is a long-run tendency, and single games scatter around it. A slow team will occasionally play a fast game because the opponent ran, the game went to overtime, or early fouls put both teams at the line. A strong defence will sometimes allow a big scoring night because the opponent made difficult shots. Treating the identity as a forecast for one game ignores that spread. The right way to use team context is as a shift in expectation with the uncertainty left in place: a matchup with a fast opponent nudges the expected number of possessions upward and leaves a wide range around it. Game situation also overrides identity. A team trailing late will play faster and shoot more threes than usual; a team protecting a lead will slow down. And both teams' identities interact, so neither alone describes the game. Statements about what a game will look like should be phrased as tendencies with their evidence, never as outcomes.",
+  "formula": null,
+  "player_responsibilities": null,
+  "common_responses": null,
+  "limitations": [
+   "How far single games scatter around a team's tendency is not quantified here.",
+   "Game script effects are not modelled in this record.",
+   "Tendencies measured early in a season are especially uncertain."
+  ],
+  "when_not_to_use": null,
+  "observable_in_our_data": [
+   "opponent allowed-per-game context",
+   "score progression (live games only)",
+   "rolling windows (L3..L30, season)"
+  ],
+  "data_gaps": [
+   "no counted possessions for historical games"
+  ],
+  "ruleset": "general",
+  "season_note": null,
+  "sources": [
+   {
+    "key": "gizer-internal",
+    "note": "team-context derivations used in this project; original text"
+   },
+   {
+    "key": "basketball-reference-glossary",
+    "note": "definitions of pace and team ratings; pointer only for this record"
+   }
+  ],
+  "verification": "authored_not_checked",
+  "related": [
+   "single-game-noise",
+   "pace-interaction",
+   "style-clashes",
+   "distribution-versus-average",
+   "identities-expire"
+  ],
+  "evaluation_questions": [
+   "Why should a team's pace identity not be treated as a forecast for one game?",
+   "How does game situation override a team's usual tendencies?"
+  ]
+ }
+]
