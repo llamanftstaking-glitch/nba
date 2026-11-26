@@ -165,9 +165,9 @@ def load_library() -> dict:
 def concept_dict(c: CortexConcept, full: bool = True) -> dict:
     out = {"slug": c.slug, "title": c.title, "department": c.department, "department_name": DEPARTMENTS.get(c.department),
            "kind": c.kind, "summary": c.summary, "ruleset": c.ruleset, "verification": c.verification, "version": c.version,
-           "sources": c.source_keys}
+           "sources": c.source_keys, "formula": c.formula}
     if full:
-        out.update({"body": c.body, "formula": c.formula, "season_note": c.season_note, "updated_at": c.updated_at, **(c.detail or {})})
+        out.update({"body": c.body, "season_note": c.season_note, "updated_at": c.updated_at, **(c.detail or {})})
     return out
 
 

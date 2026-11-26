@@ -1,6 +1,6 @@
 # Project state
 
-_Last updated: 2026-11-26, after GIZER LIVE (0.6.0)._
+_Last updated: 2026-11-26, after GIZER CORTEX (0.7.0)._
 
 ## Status
 | Area | Status |
@@ -17,6 +17,7 @@ _Last updated: 2026-11-26, after GIZER LIVE (0.6.0)._
 | JARVIS image attachments and `evaluate_combination` (0.5.1) | IMPLEMENTED, TESTED, DEPLOYED. Real Claude API VERIFIED on Server M 2026-11-26 (key accepted, three model ids present, owner received answers). Cost accounting versus the Anthropic Console not yet compared |
 | GIZER LIVE backend (ingestion, API, JARVIS live tools) | IMPLEMENTED, TESTED on real captured payloads (154 backend tests), VERIFIED against real games in progress on the development machine. NOT VERIFIED on Server M |
 | GIZER LIVE interface (scoreboard strip, `/live`, game centre tabs, following, research tracker, installable app) | IMPLEMENTED, TESTED (2,894 smoke checks against the mock). VERIFIED locally against real games (in progress and finished) for rendering. Stream reconnect, stale state and browser notifications verified only against the mock |
+| GIZER CORTEX (0.7.0): knowledge library (260 records, 14 sources), keyword retrieval, Player DNA / Team DNA with rotation tendencies, six JARVIS tools, benchmark (204 questions), Knowledge Center `/cortex` | IMPLEMENTED, TESTED (160 backend tests; smoke against the mock). Profiles and screens VERIFIED locally on real data. Knowledge text: 63 records checked against an opened source, 197 not checked. Retrieval MEASURED at 68.8% top-five on the 64 evaluable questions. Benchmark keys NOT REVIEWED by a person; JARVIS's benchmark score NOT RUN. Not built: semantic search, possession reconstruction, coach identities, film study |
 | Lineup projection without loaded history (last ESPN box score) and `gizer quickstart` | IMPLEMENTED, TESTED, rehearsed on an empty database; not yet run on Server M |
 | Minutes model `minutes_blend 1.0.0` | Candidate — failed its gate (5.40 vs 5.34 minutes MAE for the best baseline) |
 | Models | team_game, player_reb, player_ast, player_fg3m, player_stl, player_tov in production; player_pts, player_blk, player_pra, player_pr, player_pa, player_ra are candidates (failed the gate) |

@@ -8,6 +8,7 @@
 | Player and team profiles reproducible from box scores, rules shown, unavailable blocks stated | TESTED; VERIFIED locally on real data | same; development database |
 | Deterministic grading; retrieval check costs nothing; answer run refused without a key or when paused | TESTED | same |
 | API routes and JARVIS tools, owner-only evaluations | TESTED | same |
+| Knowledge Center screens (eleven sections, record pages, desktop and phone) | TESTED against the mock (smoke suite); VERIFIED locally against the real 260-record library with no errors or overflow. Research findings, benchmark runs and the viewer 403 were seen only with mock data | `apps/web/e2e/smoke.mjs` |
 | **Accuracy of the knowledge text** | **NOT VERIFIED except where a record says "checked_against_source"**. Records are original text written by a model; the count checked against an opened source is shown in the Knowledge Center | BASKETBALL-CURRICULUM.md |
 | **Benchmark answer keys** | **NOT REVIEWED by a person** (0 of the questions). Numeric keys were re-computed by script; that catches arithmetic slips, not a wrong formula | BENCHMARKS.md |
 | JARVIS's score on the benchmark | NOT RUN (paid; owner-triggered: `gizer cortex-benchmark`) | |
