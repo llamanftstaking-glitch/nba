@@ -18,6 +18,9 @@ Status words as defined in CLAUDE.md.
 | Event dedupe; memory sourcing, inspection, deletion | TESTED | same |
 | Owner-only, CSRF, conversation privacy | TESTED | same |
 | Migration 0004 up / down / up on a real-data copy | VERIFIED locally | alembic |
+| Interface: page, side panel, budget page, viewer 403, mobile (2,315 smoke checks) | TESTED against the mock API | `apps/web/e2e/smoke.mjs` |
+| Streaming end to end: browser → web proxy → API → tool calls → text (scripted slow provider, real data) | VERIFIED locally | events arrived incrementally over 5.8 s; tool steps before text |
+| Mid-stream disconnect handling; very long conversations | NOT VERIFIED | |
 | **Real Claude API: authentication, model ids, streaming, tool calls, reported usage vs our cost maths** | **NOT VERIFIED** | No API key exists in the build environment. Run `gizer jarvis-verify --ping` on Server M after adding the key, then ask one question and compare `/admin/ai-budget` with the Anthropic Console. |
 | Prompt-injection resistance of the model itself | NOT VERIFIED | Only the structural limits are tested. |
 | Server restart recovery of JARVIS data | NOT VERIFIED on Server M | Data is in PostgreSQL like everything else. |

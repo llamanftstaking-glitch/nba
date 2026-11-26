@@ -8,6 +8,8 @@
 * Player opportunity profile (usage, shot volume, per-36 production, true shooting) from stored box scores.
 * Migration `0004_jarvis` (reversible). New dependency: official `anthropic` SDK 2.14.0.
 * `gizer jarvis-verify [--ping]` checks the key, the model ids and (optionally) one accounted paid request.
+* Interface: `/jarvis` (history, streaming conversation with live tool activity, sources, memory, briefings, events),
+  a global side panel (Ctrl/Cmd+J) that knows the current game, player, market or research record, and `/admin/ai-budget`.
 * The real Claude API has NOT been exercised from the build environment (no key); see docs/jarvis/VALIDATION-REPORT.md.
 
 ## 0.4.6 — 2026-11-25 (page speed)

@@ -1,6 +1,6 @@
 # Project state
 
-_Last updated: 2026-11-26, JARVIS backend complete; interface in progress._
+_Last updated: 2026-11-26, after JARVIS (0.5.0)._
 
 ## Status
 | Area | Status |
@@ -13,7 +13,7 @@ _Last updated: 2026-11-26, JARVIS backend complete; interface in progress._
 | Core Intelligence V1.0: Kalshi market intelligence (read-only), minutes and rotation intelligence, availability change events, watch jobs, update editions | IMPLEMENTED, TESTED (128 backend tests, 1,781 frontend smoke checks), VERIFIED against live Kalshi data locally. CI green on `89c7d3b`. **DEPLOYED to Server M on 2026-11-25** via `scripts/update.sh` (owner-run; owner reported success). Verified from outside: readiness (database, worker, scheduler), login page, and that the new Kalshi API route exists and requires sign-in. Authenticated pages on the server were not inspected by the build session |
 | Page audit 2026-11-25 (bounded lists, pagination, collapsed diagnostics, non-blank defaults) | IMPLEMENTED, TESTED (128 backend tests, 2,103 frontend smoke checks), VERIFIED locally against a live-data slate; mobile screenshots at real volume not reviewed |
 | JARVIS backend (budget controller, 39 tools, conversation loop, memory, events, briefings, admin API) | IMPLEMENTED, TESTED with a scripted provider (143 backend tests). Real Claude API NOT VERIFIED: needs `ANTHROPIC_API_KEY` on Server M, then `gizer jarvis-verify --ping` |
-| JARVIS interface (`/jarvis`, side panel, `/admin/ai-budget`) | IN PROGRESS |
+| JARVIS interface (`/jarvis`, side panel with page context, `/admin/ai-budget`) | IMPLEMENTED, TESTED (2,315 frontend smoke checks against the mock); streaming through the web proxy VERIFIED locally against the real backend with a scripted provider. Mid-stream disconnect and very long conversations NOT VERIFIED |
 | Lineup projection without loaded history (last ESPN box score) and `gizer quickstart` | IMPLEMENTED, TESTED, rehearsed on an empty database; not yet run on Server M |
 | Minutes model `minutes_blend 1.0.0` | Candidate — failed its gate (5.40 vs 5.34 minutes MAE for the best baseline) |
 | Models | team_game, player_reb, player_ast, player_fg3m, player_stl, player_tov in production; player_pts, player_blk, player_pra, player_pr, player_pa, player_ra are candidates (failed the gate) |

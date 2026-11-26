@@ -136,10 +136,15 @@ def resolve_context(raw: dict | None) -> dict:
             mk = s.get(KalshiMarket, tk)
             if mk is not None:
                 out["kalshi_market"] = {"ticker": mk.ticker, "title": (mk.title or "")[:120]}
-        for key, model, label in (("selection_id", Selection, "selection"), ("combo_id", Combo, "combination")):
-            v = raw.get(key)
-            if isinstance(v, (int, str)) and str(v).isdigit() and s.get(model, int(v)) is not None:
-                out[label] = {"record_id": int(v)}
+        v = raw.get("selection_id")
+        if isinstance(v, (int, str)) and str(v).isdigit() and s.get(Selection, int(v)) is not None:
+            out["selection"] = {"record_id": int(v)}
+        v = raw.get("combo_id")     # the dashboard identifies a combination by its uid; a numeric id is accepted too
+        if isinstance(v, (int, str)) and 0 < len(str(v)) <= 40:
+            c = (s.get(Combo, int(v)) if str(v).isdigit() else
+                 s.scalar(select(Combo).where(Combo.uid == str(v)).order_by(Combo.id.desc())))
+            if c is not None:
+                out["combination"] = {"record_id": c.id, "uid": c.uid}
     d = raw.get("date")
     if isinstance(d, str):
         try:

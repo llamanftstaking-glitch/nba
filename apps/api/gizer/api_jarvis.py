@@ -23,7 +23,7 @@ class ContextBody(BaseModel):
     player_id: int | None = None
     ticker: str | None = Field(None, max_length=80)
     selection_id: int | None = None
-    combo_id: int | None = None
+    combo_id: int | str | None = Field(None, max_length=40)
     date: str | None = Field(None, max_length=10)
     page: str | None = Field(None, max_length=60)
 
@@ -64,7 +64,7 @@ def jarvis_state():
 
 @api.get("/jarvis/suggestions")
 def jarvis_suggestions(game_id: str | None = None, player_id: int | None = None, ticker: str | None = None,
-                       selection_id: int | None = None, combo_id: int | None = None):
+                       selection_id: int | None = None, combo_id: str | None = None):
     ctx = jarvis.resolve_context({"game_id": game_id, "player_id": player_id, "ticker": ticker, "selection_id": selection_id,
                                   "combo_id": combo_id})
     extra = [x for k in ctx for x in CONTEXT_SUGGESTIONS.get(k, [])]
@@ -81,7 +81,9 @@ def jarvis_tool_list():
 @api.get("/jarvis/conversations")
 def jarvis_conversations(limit: int = Query(40, ge=1, le=100), p: Principal = Depends(current_user)):
     with session_scope() as s:
-        rows = s.scalars(select(JarvisConversation).where(JarvisConversation.owner == p.email, JarvisConversation.deleted_at.is_(None))
+        # A conversation exists from the moment the panel opens; it is listed once something has been asked in it.
+        rows = s.scalars(select(JarvisConversation).where(JarvisConversation.owner == p.email, JarvisConversation.deleted_at.is_(None),
+                                                         JarvisConversation.title != "New conversation")
                          .order_by(JarvisConversation.updated_at.desc()).limit(limit))
         return {"items": [jarvis.conversation_dict(c) for c in rows]}
 
@@ -106,7 +108,16 @@ def jarvis_conversation(conversation_id: int, p: Principal = Depends(current_use
         calls = [{"tool": t.tool, "label": T.BY_NAME[t.tool].label if t.tool in T.BY_NAME else t.tool, "args": t.args, "ok": t.ok,
                   "error": t.error, "ms": t.duration_ms, "truncated": t.truncated, "at": t.created_at}
                  for t in s.scalars(select(JarvisToolCall).where(JarvisToolCall.conversation_id == c.id).order_by(JarvisToolCall.id))]
-        return {**jarvis.conversation_dict(c), "messages": [m for m in msgs if not m["internal"]], "tool_activity": calls}
+        shown: list[dict] = []
+        for m in msgs:          # one owner turn = one answer: fold the steps between tool calls into the final message
+            if m["internal"]:
+                continue
+            if m["role"] == "assistant" and shown and shown[-1]["role"] == "assistant":
+                prev = shown.pop()
+                m = {**m, "text": "\n\n".join(t for t in (prev["text"], m["text"]) if t),
+                     "tool_calls": prev["tool_calls"] + m["tool_calls"], "created_at": prev["created_at"]}
+            shown.append(m)
+        return {**jarvis.conversation_dict(c), "messages": shown, "tool_activity": calls}
 
 
 @api.post("/jarvis/conversations/{conversation_id}/delete")

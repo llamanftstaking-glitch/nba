@@ -270,12 +270,20 @@ def test_chat_streams_runs_tools_persists_and_accounts_for_every_request(fake, a
     # persistence: a second turn in a fresh client replays the stored history
     c2 = login(app)
     conv = c2.get(f"/api/v1/jarvis/conversations/{cid}").json()
-    assert [m["role"] for m in conv["messages"]] == ["user", "assistant", "assistant"] and conv["title"] == "What is on the slate?"
+    assert [m["role"] for m in conv["messages"]] == ["user", "assistant"] and conv["title"] == "What is on the slate?"
+    assert conv["messages"][1]["text"] == "Four games tonight. Evidence follows." and conv["messages"][1]["sources"]
     assert [t["tool"] for t in conv["tool_activity"]] == ["get_daily_slate", "run_sql"]
     fake.script = [resp([text_block("Still four.")])]
     ask(c2, "And now?", cid=cid)
     assert len(fake.requests[-1]["messages"]) == 5 and fake.requests[-1]["messages"][-1]["content"][0]["text"].endswith("And now?")
     assert c2.get("/api/v1/jarvis/conversations").json()["items"][0]["id"] == cid
+    empty = c2.post("/api/v1/jarvis/conversations", json={"context": {"combo_id": "no-such-uid"}}).json()
+    assert empty["context"] == {} and empty["id"] not in [x["id"] for x in c2.get("/api/v1/jarvis/conversations").json()["items"]]
+    with gdb.session_scope() as s:
+        cb = s.scalar(select(gdb.Combo).order_by(gdb.Combo.id.desc()))
+        uid, cbid = (cb.uid, cb.id) if cb else (None, None)
+    if uid:     # the dashboard sends a combination's uid; it resolves to the stored record
+        assert c2.post("/api/v1/jarvis/conversations", json={"context": {"combo_id": uid}}).json()["context"]["combination"] == {"record_id": cbid, "uid": uid}
 
 
 def test_deep_mode_uses_the_opus_allocation_and_tool_rounds_are_bounded(fake, app):
