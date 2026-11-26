@@ -44,10 +44,10 @@ const DISCLAIMER = "Research and paper testing only. No outcome is guaranteed. N
 // The mandated footer sentence "No outcome is guaranteed" stays; it is removed before the vocabulary scan.
 const FORBIDDEN = [/\block\b/i, /\blocks\b/i, /guaranteed/i, /guarantee\b/i, /free money/i, /risk[- ]free/i, /can(?:[’']?t|not) lose/i, /sure thing/i, /sharp money/i, /smart money/i, /insider/i, /real[- ]?time/i, /live odds/i];
 
-const NAV = ["/", "/games", "/picks", "/player-props", "/kalshi-intelligence", "/lineups", "/parlays", "/parlays/same-game", "/players", "/minutes", "/players/compare", "/players/history", "/matchups", "/injuries", "/builder", "/tickets", "/research/daily", "/results", "/performance", "/research-lab", "/agents", "/models", "/data-health", "/settings"];
-const OTHER = ["/kalshi-intelligence/KXFIX-A-PTS25", "/kalshi-intelligence/KXFIX-A-DD", "/games/FIX-G1", "/games/FIX-G2", "/players/9001", "/players/9004", "/players/compare?ids=9001,9005", "/teams", "/teams/1", "/exposure", "/markets", "/simulations", "/backtesting", "/admin"];
+const NAV = ["/jarvis", "/", "/games", "/picks", "/player-props", "/kalshi-intelligence", "/lineups", "/parlays", "/parlays/same-game", "/players", "/minutes", "/players/compare", "/players/history", "/matchups", "/injuries", "/builder", "/tickets", "/research/daily", "/results", "/performance", "/research-lab", "/agents", "/models", "/data-health", "/settings"];
+const OTHER = ["/kalshi-intelligence/KXFIX-A-PTS25", "/kalshi-intelligence/KXFIX-A-DD", "/games/FIX-G1", "/games/FIX-G2", "/players/9001", "/players/9004", "/players/compare?ids=9001,9005", "/teams", "/teams/1", "/exposure", "/markets", "/simulations", "/backtesting", "/admin", "/admin/ai-budget"];
 // The ten pages captured at every viewport for design review.
-const GALLERY = [["/", "overview"], ["/games", "games"], ["/lineups", "lineups"], ["/player-props", "player-props"], ["/players/9001", "player-profile"], ["/games/FIX-G1", "game"], ["/parlays", "parlays"], ["/results", "results"], ["/agents", "agents"], ["/data-health", "data-health"], ["/kalshi-intelligence", "kalshi"], ["/kalshi-intelligence/KXFIX-A-PTS25", "kalshi-detail"], ["/minutes", "minutes"], ["/injuries", "injuries"]];
+const GALLERY = [["/", "overview"], ["/games", "games"], ["/lineups", "lineups"], ["/player-props", "player-props"], ["/players/9001", "player-profile"], ["/games/FIX-G1", "game"], ["/parlays", "parlays"], ["/results", "results"], ["/agents", "agents"], ["/data-health", "data-health"], ["/kalshi-intelligence", "kalshi"], ["/kalshi-intelligence/KXFIX-A-PTS25", "kalshi-detail"], ["/minutes", "minutes"], ["/injuries", "injuries"], ["/jarvis", "jarvis"], ["/admin/ai-budget", "ai-budget"]];
 const VIEWPORTS = [[1920, 1080], [1440, 900], [1280, 800], [1024, 768], [768, 1024], [430, 932], [390, 844]];
 
 let passed = 0;
@@ -178,13 +178,13 @@ async function runViewport(browser, label, viewport) {
     check(`[${label}] bottom nav targets are at least 44px`, small === 0, `${small} too small`);
     await page.click('[data-testid="more-button"]');
     await page.waitForSelector('[role="dialog"]');
-    check(`[${label}] More sheet lists the navigation groups`, (await page.locator('[role="dialog"] a').count()) >= 24 && /Kalshi Markets/.test(await page.locator('[role="dialog"]').innerText()) && /Minutes Intelligence/.test(await page.locator('[role="dialog"]').innerText()));
+    check(`[${label}] More sheet lists the navigation groups`, (await page.locator('[role="dialog"] a').count()) >= 25 && /JARVIS/.test(await page.locator('[role="dialog"]').innerText()) && /Kalshi Markets/.test(await page.locator('[role="dialog"]').innerText()) && /Minutes Intelligence/.test(await page.locator('[role="dialog"]').innerText()));
     await shot("more-sheet");
     await page.keyboard.press("Escape");
   } else {
     const side = await page.locator('[data-testid="sidebar"]').innerText();
     check(`[${label}] sidebar has the four groups`, ["COMMAND CENTER", "PLAYER INTELLIGENCE", "MY RESEARCH", "SYSTEM"].every((g) => side.toUpperCase().includes(g)));
-    check(`[${label}] sidebar has 24 destinations incl. Kalshi Markets and Minutes Intelligence`, (await page.locator('[data-testid="sidebar"] nav a').count()) === 24 && /Kalshi Markets/.test(side) && /Minutes Intelligence/.test(side));
+    check(`[${label}] sidebar has 25 destinations incl. JARVIS, Kalshi Markets and Minutes Intelligence`, (await page.locator('[data-testid="sidebar"] nav a').count()) === 25 && (await page.locator('[data-testid="sidebar"] nav a').first().innerText()).trim() === "JARVIS" && /Kalshi Markets/.test(side) && /Minutes Intelligence/.test(side));
     check(`[${label}] brand caption present`, /PARLAY COMMAND CENTER/i.test(side));
   }
 
@@ -660,6 +660,185 @@ async function runViewport(browser, label, viewport) {
   check(`[${label}] editions: list, diff and full edition`, (await page.locator('[data-testid="edition-row"]').count()) === 3 && (await page.locator('[data-testid="edition-diff"]').count()) === 1 && (await page.locator('[data-testid="edition-full"]').count()) === 1);
   check(`[${label}] flows raised no page/console errors`, errors.length === 0, errors.join(" | "));
 
+  // --- JARVIS ---
+  const mockJarvis = (state) => page.evaluate((v) => fetch("/api/v1/__mock/jarvis", { method: "POST", credentials: "include", headers: { "Content-Type": "application/json", "X-CSRF-Token": "fixture-csrf-token" }, body: JSON.stringify({ state: v }) }).then((r) => r.json()), state);
+  const pillIs = (root, st) => page.waitForFunction(([sel, v]) => document.querySelector(`${sel} [data-testid="jarvis-pill"]`)?.getAttribute("data-state") === v, [root, st], { timeout: 8000 }).then(() => true).catch(() => false);
+  const sendJ = async (root, text) => {
+    await page.locator(`${root} [data-testid="jarvis-input"]`).fill(text);
+    await page.locator(`${root} [data-testid="jarvis-input"]`).press("Enter");
+  };
+  const answered = (root, n) => page.waitForFunction(([sel, k]) => document.querySelectorAll(`${sel} [data-testid="jarvis-answer"][data-streaming="0"]`).length === k && !document.querySelector(`${sel} [data-testid="jarvis-live"]`), [root, n], { timeout: 15000 }).then(() => true).catch(() => false);
+  const P = '[data-testid="jarvis-page"]';
+  await visit(page, "/jarvis", label, errors);
+  await mockJarvis("ready");
+  await page.reload();
+  await settle(page);
+  check(`[${label}] jarvis: renders with the Ready state pill and the mark`, (await pillIs(P, "ready")) && (await page.locator(`${P} [data-testid="jarvis-mark"]`).count()) >= 1);
+  check(`[${label}] jarvis: empty state explains itself and offers suggestions`, /Every number in an answer comes from platform records/.test(await page.locator('[data-testid="jarvis-empty"]').innerText()) && (await page.locator('[data-testid="jarvis-suggestion"]').count()) >= 4);
+  const jReqs = [];
+  const onJReq = (r) => {
+    if (/\/jarvis\/conversations\/\d+\/messages$/.test(r.url())) jReqs.push({ body: JSON.parse(r.postData() ?? "{}"), headers: r.headers(), method: r.method() });
+  };
+  page.on("request", onJReq);
+  const spentBefore = isMobile ? null : await page.locator('[data-testid="jarvis-spent"]').innerText();
+  await page.check(`${P} [data-testid="jarvis-deep"]`);
+  await sendJ(P, "What is on the slate today?");
+  const sawProcessing = await pillIs(P, "processing");
+  await page.locator(`${P} [data-testid="jarvis-live"] [data-testid="jarvis-tool"]`).first().waitFor({ timeout: 8000 }).catch(() => {});
+  const liveTool = await page.locator(`${P} [data-testid="jarvis-live"] [data-testid="jarvis-tool"]`).first().innerText().catch(() => "");
+  check(`[${label}] jarvis: Processing only while the stream is open, with real tool labels`, sawProcessing && /FIXTURE: Reading the slate/.test(liveTool), liveTool);
+  check(`[${label}] jarvis: composer shows Stop while a request is in flight`, (await page.locator(`${P} [data-testid="jarvis-stop"]`).count()) === 1 || (await page.locator(`${P} [data-testid="jarvis-answer"][data-streaming="0"]`).count()) === 1);
+  check(`[${label}] jarvis: answer completes`, await answered(P, 1));
+  const ans = page.locator(`${P} [data-testid="jarvis-answer"]`).first();
+  check(`[${label}] jarvis: streamed Markdown renders a heading, bold, list, inline code and a table`, (await ans.locator('[data-testid="md-table"] tbody tr').count()) === 2 && (await ans.locator("h3").count()) === 1 && (await ans.locator("strong").count()) >= 1 && (await ans.locator("li").count()) >= 2 && (await ans.locator("code").count()) === 1 && !/\*\*|\|---/.test(await ans.innerText()));
+  const meta = (await ans.locator('[data-testid="jarvis-meta"]').innerText()).replace(/\s+/g, " ");
+  check(`[${label}] jarvis: model, cost (4 decimals) and sources under the answer`, /FIXTURE-opus-model/.test(meta) && /\$0\.2145/.test(meta) && /Sources \(2\)/.test(meta), meta);
+  await ans.locator('[data-testid="jarvis-sources"] summary').click();
+  check(`[${label}] jarvis: sources list tool label and args`, /FIXTURE: Inspecting the injury report/.test(await ans.locator('[data-testid="jarvis-sources"]').innerText()) && /material=true/.test(await ans.locator('[data-testid="jarvis-sources"]').innerText()));
+  check(`[${label}] jarvis: stream request is a POST with CSRF and mode "deep"`, jReqs.length === 1 && jReqs[0].method === "POST" && jReqs[0].headers["x-csrf-token"] === "fixture-csrf-token" && jReqs[0].body.mode === "deep");
+  check(`[${label}] jarvis: deep review toggle resets after each send`, !(await page.locator(`${P} [data-testid="jarvis-deep"]`).isChecked()));
+  check(`[${label}] jarvis: pill returns to Ready after the turn`, await pillIs(P, "ready"));
+  if (!isMobile) {
+    await page.waitForFunction((prev) => document.querySelector('[data-testid="jarvis-spent"]')?.textContent !== prev, spentBefore, { timeout: 8000 }).catch(() => {});
+    check(`[${label}] jarvis: budget readout refreshes after the turn`, (await page.locator('[data-testid="jarvis-spent"]').innerText()) !== spentBefore);
+    check(`[${label}] jarvis: right column shows this turn's tool activity`, (await page.locator('[data-testid="jarvis-right"] [data-testid="jarvis-tool"][data-status="ok"]').count()) === 2);
+  }
+  check(`[${label}] jarvis: conversation id is in the URL`, /[?&]c=\d+/.test(page.url()), page.url());
+  await page.reload();
+  await settle(page);
+  check(`[${label}] jarvis: conversation persists after reload`, (await answered(P, 1)) && /What is on the slate today\?/.test(await page.locator(`${P} [data-testid="jarvis-owner"]`).first().innerText()) && (await page.locator(`${P} [data-testid="md-table"]`).count()) === 1);
+  await sendJ(P, "/budget");
+  check(`[${label}] jarvis: slash command answered from stored data`, (await answered(P, 2)) && /Answered from stored data, no model/.test(await page.locator(`${P} [data-testid="jarvis-meta"]`).nth(1).innerText()) && jReqs[1]?.body.mode === "standard");
+  await sendJ(P, "please trigger-budget-error now");
+  await page.locator(`${P} [data-testid="jarvis-error"]`).waitFor({ timeout: 8000 }).catch(() => {});
+  check(`[${label}] jarvis: budget error shows the server message verbatim and flips the pill`, (await page.locator(`${P} [data-testid="jarvis-error"]`).innerText().catch(() => "")).trim() === "FIXTURE: the lifetime AI budget cap has been reached; no model request was sent." && (await pillIs(P, "budget_limited")));
+  await mockJarvis("ready");
+  await sendJ(P, "trigger-drop");
+  await page.waitForFunction(() => /Connection lost/.test(document.querySelector('[data-testid="jarvis-error"]')?.textContent ?? ""), null, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] jarvis: dropped stream says connection lost and reloads the conversation`, /Connection lost/.test(await page.locator(`${P} [data-testid="jarvis-error"]`).innerText().catch(() => "")) && (await page.locator(`${P} [data-testid="jarvis-live"]`).count()) === 0);
+  page.off("request", onJReq);
+  await mockJarvis("provider_unavailable");
+  await page.goto(`${BASE}/jarvis`);
+  await settle(page);
+  const un = await page.locator('[data-testid="jarvis-unavailable"]').innerText().catch(() => "");
+  check(`[${label}] jarvis: provider unavailable is stated with the server message and the slash-command note`, (await pillIs(P, "provider_unavailable")) && un.includes("FIXTURE: no provider key is configured on the server.") && /\/budget, \/status, \/health, \/events, \/agents, \/briefing/.test(un));
+  await mockJarvis("ready");
+  // history: open, delete with confirm
+  if (isMobile) await page.click('[data-testid="jarvis-history-btn"]');
+  const histRoot = isMobile ? '[data-testid="jarvis-history-sheet"]' : '[data-testid="jarvis-page"] aside';
+  await page.locator(`${histRoot} [data-testid="jarvis-history-item"]`).first().waitFor({ timeout: 8000 }).catch(() => {});
+  const histN = await page.locator(`${histRoot} [data-testid="jarvis-history-item"]`).count();
+  check(`[${label}] jarvis: conversation history lists the conversation`, histN >= 1 && /What is on the slate today\?/.test(await page.locator(`${histRoot} [data-testid="jarvis-history"]`).innerText()));
+  check(`[${label}] jarvis: left column has new conversation, suggestions and the AI budget link`, (await page.locator(`${histRoot} [data-testid="jarvis-new"]`).count()) === 1 && (await page.locator(`${histRoot} [data-testid="jarvis-budget-link"]`).count()) === 1);
+  await page.locator(`${histRoot} [data-testid="jarvis-delete"]`).first().click();
+  check(`[${label}] jarvis: delete asks for confirmation first`, (await page.locator(`${histRoot} [data-testid="jarvis-history-item"]`).count()) === histN);
+  const delReq = page.waitForRequest((r) => /\/jarvis\/conversations\/\d+\/delete$/.test(r.url()));
+  await page.locator(`${histRoot} [data-testid="jarvis-delete-confirm"]`).click();
+  check(`[${label}] jarvis: delete is a POST to …/delete`, (await delReq).method() === "POST");
+  await page.waitForFunction(([sel, n]) => document.querySelectorAll(`${sel} [data-testid="jarvis-history-item"]`).length === n - 1, [histRoot, histN], { timeout: 8000 }).catch(() => {});
+  check(`[${label}] jarvis: conversation removed from history`, (await page.locator(`${histRoot} [data-testid="jarvis-history-item"]`).count()) === histN - 1);
+  if (isMobile) {
+    await page.locator('[data-testid="jarvis-history-sheet"] [data-testid="sheet-close"]').click();
+    await page.click('[data-testid="jarvis-details-btn"]');
+    check(`[${label}] jarvis: details drawer shows context, model and budget`, (await page.locator('[data-testid="jarvis-details-sheet"] [data-testid="jarvis-budget"]').count()) === 1 && /FIXTURE-sonnet-model/.test(await page.locator('[data-testid="jarvis-details-sheet"]').innerText()));
+    await page.locator('[data-testid="jarvis-details-sheet"] [data-testid="sheet-close"]').click();
+  }
+  // memory / briefings / events
+  await page.goto(`${BASE}/jarvis?tab=memory`);
+  await settle(page);
+  const memN = await page.locator('[data-testid="memory-item"]').count();
+  check(`[${label}] jarvis memory: items with category, status, sources and author`, memN >= 2 && /Verified/i.test(await page.locator('[data-testid="jarvis-memory"]').innerText()) && /Sources: FIXTURE box scores/.test(await page.locator('[data-testid="jarvis-memory"]').innerText()));
+  await page.fill('input[name="memory_text"]', "FIXTURE smoke note");
+  await page.click('[data-testid="memory-add"]');
+  await page.waitForFunction((n) => document.querySelectorAll('[data-testid="memory-item"]').length === n + 1, memN, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] jarvis memory: add note`, (await page.locator('[data-testid="memory-item"]').count()) === memN + 1);
+  await page.locator('[data-testid="memory-item"]', { hasText: "FIXTURE smoke note" }).locator('[data-testid="memory-delete"]').click();
+  const memDel = page.waitForRequest((r) => /\/jarvis\/memory\/\d+\/delete$/.test(r.url()));
+  await page.locator('[data-testid="memory-delete-confirm"]').click();
+  check(`[${label}] jarvis memory: delete with confirm is a POST`, (await memDel).method() === "POST");
+  await page.waitForFunction((n) => document.querySelectorAll('[data-testid="memory-item"]').length === n, memN, { timeout: 8000 }).catch(() => {});
+  await page.goto(`${BASE}/jarvis?tab=briefings`);
+  await settle(page);
+  const brText = await page.locator('[data-testid="jarvis-briefings"]').innerText();
+  check(`[${label}] jarvis briefings: generator labels`, /Written by FIXTURE-haiku-model/.test(brText) && /Generated from stored records/.test(brText) && (await page.locator('[data-testid="briefing-kind"] option').count()) === 5);
+  await page.selectOption('[data-testid="briefing-kind"]', "postgame");
+  await page.click('[data-testid="briefing-run"]');
+  await page.locator('[data-testid="briefing-result"]').waitFor({ timeout: 8000 }).catch(() => {});
+  check(`[${label}] jarvis briefings: the reason is shown when nothing was created`, /Nothing was created: FIXTURE: no games are final yet/.test(await page.locator('[data-testid="briefing-result"]').innerText().catch(() => "")));
+  await page.goto(`${BASE}/jarvis?tab=events`);
+  await settle(page);
+  check(`[${label}] jarvis events: listed with severity`, (await page.locator('[data-testid="event-item"]').count()) === 3 && /Alert/i.test(await page.locator('[data-testid="event-item"]').first().innerText()));
+
+  // --- JARVIS panel: launcher, context chip, Ctrl+J, Ask JARVIS ---
+  const PN = '[data-testid="jarvis-panel"]';
+  await page.goto(`${BASE}/games/FIX-G1`);
+  await settle(page);
+  await page.click('[data-testid="jarvis-launcher"]');
+  await page.locator(`${PN} [data-testid="ctx-game"]`).waitFor({ timeout: 8000 }).catch(() => {});
+  check(`[${label}] panel: opens from a game page with the game context chip`, /DET @ ORL/.test(await page.locator(`${PN} [data-testid="ctx-game"]`).innerText().catch(() => "")) && /\/games\/FIX-G1/.test(await page.locator(`${PN} [data-testid="ctx-page"]`).innerText().catch(() => "")));
+  const box = await page.locator(PN).boundingBox();
+  check(`[${label}] panel: ${isMobile ? "full-screen drawer on mobile" : "about 420px side panel on desktop"}`, box && (isMobile ? Math.round(box.width) === viewport.width && Math.round(box.height) === viewport.height : Math.round(box.width) === 420 && Math.round(box.x + box.width) === viewport.width), JSON.stringify(box));
+  check(`[${label}] panel: context-specific suggestion first`, /What matters in DET @ ORL/.test(await page.locator(`${PN} [data-testid="jarvis-suggestion"]`).first().innerText().catch(() => "")));
+  await sendJ(PN, "Summarise this game");
+  check(`[${label}] panel: answers in place`, (await answered(PN, 1)) && (await page.locator(`${PN} [data-testid="md-table"]`).count()) === 1);
+  const po = await overflow(page);
+  check(`[${label}] panel has no horizontal overflow`, !po, po ? JSON.stringify(po) : "");
+  await shot("jarvis-panel");
+  await page.click('[data-testid="jarvis-panel-close"]');
+  check(`[${label}] panel: closes`, (await page.locator(PN).count()) === 0);
+  await page.keyboard.press("Control+j");
+  await page.locator(PN).waitFor({ timeout: 8000 }).catch(() => {});
+  check(`[${label}] panel: Ctrl+J opens it and reuses the conversation while the context is unchanged`, (await page.locator(PN).count()) === 1 && (await answered(PN, 1)));
+  check(`[${label}] panel: has an "Open full page" link to the same conversation`, /\/jarvis\?c=\d+/.test((await page.locator('[data-testid="jarvis-open-full"]').getAttribute("href")) ?? ""));
+  await page.keyboard.press("Control+j");
+  await page.goto(`${BASE}/players/9001`);
+  await settle(page);
+  await page.keyboard.press("Control+j");
+  await page.locator(`${PN} [data-testid="ctx-player"]`).waitFor({ timeout: 8000 }).catch(() => {});
+  check(`[${label}] panel: a new context starts a new conversation`, /FIXTURE Player A/.test(await page.locator(`${PN} [data-testid="ctx-player"]`).innerText().catch(() => "")) && (await page.locator(`${PN} [data-testid="jarvis-answer"]`).count()) === 0);
+  await page.click('[data-testid="jarvis-panel-close"]');
+  await page.goto(`${BASE}/parlays`);
+  await settle(page);
+  await page.locator('[data-combo-uid="FIX-D1"] [data-testid="combo-toggle"]').click();
+  await page.locator('[data-combo-uid="FIX-D1"] [data-testid="ask-jarvis"]').click();
+  await page.locator(`${PN} [data-testid="ctx-combo"]`).waitFor({ timeout: 8000 }).catch(() => {});
+  check(`[${label}] panel: "Ask JARVIS" on a combination card passes the record`, /FIX-D1/.test(await page.locator(`${PN} [data-testid="ctx-combo"]`).innerText().catch(() => "")));
+  await page.click('[data-testid="jarvis-panel-close"]');
+  await page.click('[data-tab="picks"]');
+  await settle(page);
+  await page.locator('[data-testid="selection-row"] button').first().click();
+  await page.locator('[data-testid="selection-card"] [data-testid="ask-jarvis"]').first().click();
+  await page.locator(`${PN} [data-testid="ctx-selection"]`).waitFor({ timeout: 8000 }).catch(() => {});
+  check(`[${label}] panel: "Ask JARVIS" on a selection card passes the record`, (await page.locator(`${PN} [data-testid="ctx-selection"]`).count()) === 1);
+  await page.click('[data-testid="jarvis-panel-close"]');
+
+  // --- AI budget ---
+  text = await visit(page, "/admin/ai-budget", label, errors);
+  check(`[${label}] ai budget: lifetime bar with the suspend line and five checkpoints`, (await page.locator('[data-testid="budget-suspend-line"]').count()) === 1 && (await page.locator('[data-testid="budget-checkpoints"] li').count()) === 6 && /Suspends at \$95\.00/.test(text) && /10% · \$10\.00 reached/.test(text));
+  check(`[${label}] ai budget: four allocation bars, today vs daily cap`, (await page.locator('[data-testid="budget-buckets"] [data-testid="budget-bar"]').count()) === 4 && /Today vs daily cap/.test(text));
+  check(`[${label}] ai budget: tables by model / task / agent, prices, notes verbatim, recent requests`, /By model/i.test(text) && /By task/i.test(text) && /By agent/i.test(text) && /jarvis\.chat/.test(text) && (await page.locator('[data-testid="budget-notes"] li').count()) === 2 && text.includes("FIXTURE note: requests stop at the suspend line unless the safety buffer is released.") && /provider timeout; reservation released/.test(text));
+  check(`[${label}] ai budget: totals, cache savings, average per day, estimated days, daily chart`, /\$2\.26/.test(text) && /\$0\.88/.test(text) && /94/.test(text) && (await page.locator('[data-testid="budget-chart"] .recharts-bar-rectangle').count()) === 30);
+  await page.click('[data-testid="budget-pause-btn"]');
+  check(`[${label}] ai budget: emergency pause asks for confirmation`, (await page.locator('[data-testid="budget-pause"]').getAttribute("data-on")) === "0" && /Pause every model request now\?/.test(await page.locator('[data-testid="budget-pause"]').innerText()));
+  const pauseReq = page.waitForRequest((r) => r.url().endsWith("/api/v1/admin/ai-budget") && r.method() !== "GET");
+  await page.click('[data-testid="budget-pause-confirm"]');
+  const pr2 = await pauseReq;
+  check(`[${label}] ai budget: pause issues a POST with {paused:true}`, pr2.method() === "POST" && JSON.parse(pr2.postData() ?? "{}").paused === true && pr2.headers()["x-csrf-token"] === "fixture-csrf-token");
+  await page.waitForFunction(() => document.querySelector('[data-testid="budget-pause"]')?.getAttribute("data-on") === "1", null, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] ai budget: paused state is shown`, (await page.locator('[data-testid="budget-pause"]').getAttribute("data-on")) === "1" && /Paused/i.test(await page.locator('[data-testid="budget-state"]').innerText()));
+  await page.click('[data-testid="budget-pause-btn"]');
+  await page.click('[data-testid="budget-pause-confirm"]');
+  await page.waitForFunction(() => document.querySelector('[data-testid="budget-pause"]')?.getAttribute("data-on") === "0", null, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] ai budget: briefings and safety-buffer toggles present`, (await page.locator('[data-testid="budget-briefings"]').count()) === 1 && /last \$5\.00 up to the \$100\.00 cap|remaining \$5\.00 up to the cap/.test(await page.locator('[data-testid="budget-buffer"]').innerText()));
+  await page.click('[data-testid="budget-edit"]');
+  await page.fill('input[name="allocation_sonnet"]', "500");
+  await page.click('[data-testid="budget-save"]');
+  await page.locator('[data-testid="budget-form-error"]').waitFor({ timeout: 8000 }).catch(() => {});
+  check(`[${label}] ai budget: server 422 message shown verbatim`, (await page.locator('[data-testid="budget-form-error"]').innerText().catch(() => "")).trim() === "FIXTURE: allocations exceed the lifetime cap.");
+  await shot("ai-budget", { fullPage: true });
+  check(`[${label}] JARVIS and budget flows raised no unexpected page/console errors`, errors.filter((e) => !/status of (422|500)|ERR_|Failed to fetch|network/i.test(e)).length === 0, errors.join(" | "));
+  errors.length = 0;
+
   // --- redirects ---
   for (const [from, to] of [["/today", "/"], ["/research", "/research/daily"], ["/props", "/player-props"]]) {
     await page.goto(`${BASE}${from}`);
@@ -682,7 +861,7 @@ async function runViewport(browser, label, viewport) {
  */
 async function largeSlate(browser) {
   const LIMITS = [[1440, 900, 12000], [390, 844, 15000]];
-  const routes = [...NAV, "/games/FIX-L1", "/players/9001", "/kalshi-intelligence/KXFIX-L-20000-pts-5", "/markets", "/simulations", "/backtesting", "/exposure"];
+  const routes = [...NAV, "/games/FIX-L1", "/players/9001", "/kalshi-intelligence/KXFIX-L-20000-pts-5", "/markets", "/simulations", "/backtesting", "/exposure", "/admin/ai-budget"];
   for (const [width, height, maxHeight] of LIMITS) {
     const tag = `large ${width}`;
     console.log(`\n== large slate ${width}x${height} ==`);
@@ -770,12 +949,29 @@ async function gallery(browser) {
   }
 }
 
+/** A viewer account must see the owner-only message on the AI budget page. */
+async function viewerRole(browser) {
+  console.log("\n== viewer role ==");
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const page = await context.newPage();
+  await page.goto(`${BASE}/login`);
+  await page.fill('input[name="email"]', "viewer@fixture.test");
+  await page.fill('input[name="password"]', PASSWORD);
+  await Promise.all([page.waitForURL((u) => !u.pathname.startsWith("/login")), page.click('button[type="submit"]')]);
+  await page.goto(`${BASE}/admin/ai-budget`);
+  await settle(page);
+  const t = await page.locator('[data-testid="budget-forbidden"]').innerText().catch(() => "");
+  check("[viewer] /admin/ai-budget shows the 403 message from the server", /Owner access required/i.test(t) && t.includes("FIXTURE: this area is available to the owner account only.") && (await page.locator('[data-testid="ai-budget"]').count()) === 0, t);
+  await context.close();
+}
+
 const browser = await chromium.launch();
 try {
   if (!process.env.SMOKE_ONLY || process.env.SMOKE_ONLY === "flows") {
     await runViewport(browser, "desktop", { width: 1440, height: 900 });
     await runViewport(browser, "mobile", { width: 390, height: 844 });
   }
+  if (!process.env.SMOKE_ONLY || process.env.SMOKE_ONLY === "flows") await viewerRole(browser);
   if (!process.env.SMOKE_ONLY || process.env.SMOKE_ONLY === "large") await largeSlate(browser);
   if (!process.env.SMOKE_ONLY || process.env.SMOKE_ONLY === "gallery") await gallery(browser);
 } finally {
