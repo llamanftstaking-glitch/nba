@@ -219,6 +219,20 @@ records, and the interface only ever shows what the server reports.
 | Panel | `JarvisPanelProvider`, `JarvisLauncher`, `AskJarvisButton` (`panel.tsx`) | Top-bar launcher and Ctrl/Cmd+J. 420px right panel from `md`, full-screen below. Shows "JARVIS is looking at" with the resolved context |
 | Budget bars | `/admin/ai-budget` | Data hue for spend, lighter tint for pending, amber line at the suspend amount, checkpoint ticks; risky switches need a second explicit click |
 
+**Image attachments (composer).**
+
+| Element | Rules |
+|---|---|
+| Attach button | 44px square, `ImagePlus` icon, label "Attach images"; the hint "Attach a parlay or pick slip screenshot" sits under the composer. File input accepts PNG / JPEG / WebP / GIF, `multiple`, no `capture` (phones offer library and camera) |
+| Pending thumbnails | 64px squares above the textarea, `object-cover`, 1px inset ring; a 28px round remove button at the top-right with the label "Remove attachment N: name"; a spinner tile while an image is being prepared |
+| Inline refusals | red text under the thumbnails (not an image, more than three, unreadable); never a browser dialog |
+| Drop target | while files are dragged over the conversation: a dashed 2px emerald border inset 8px, page-colour wash at 85%, "Drop images to attach (up to 3)". Removed on leave or drop |
+| Message images | 96px thumbnails above the owner's text, right-aligned; each is a button |
+| Image overlay | full-viewport black at 85%, image contained, 44px close button top-right; Esc or the close button dismisses it and focus returns to the thumbnail |
+
+Images are downscaled in the browser (longest side ≤ 1568px, JPEG 0.85 on a white background, stepping quality
+then size down until under ~1.4 MB) before upload. A failed send puts the attachments and text back in the composer.
+
 Destructive or risky actions (delete a conversation or memory, emergency pause, releasing the safety buffer) use
 an inline two-step confirm, never a browser dialog.
 

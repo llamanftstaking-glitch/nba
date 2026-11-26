@@ -84,6 +84,10 @@ renderer (`components/jarvis/markdown.tsx`) — no extra dependency and no HTML 
 owner-only spend and limits page. The API only allows GET and POST: deletes are `POST …/delete` and the budget
 policy is updated with `POST /admin/ai-budget`.
 
+Image attachments: the composer (page and side panel) accepts up to three images by file picker, paste or
+drag-and-drop. `lib/image-prep.ts` downscales each to a JPEG (longest side ≤ 1568px, under ~1.4 MB) before it is
+sent as `{media_type, data}` base64; stored images are shown from `GET /jarvis/messages/{id}/images/{index}`.
+
 The mock supports the stream, `/budget` (model `deterministic`), an error path (text containing
 `trigger-budget-error`), a stream that ends early (`trigger-drop`), a `viewer@fixture.test` login and a switchable
 provider state.

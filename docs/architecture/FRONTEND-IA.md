@@ -211,3 +211,7 @@ Nothing was invented; where the contract is silent the UI degrades instead.
 29. There is no data-freshness field in `/jarvis/state`; the right column shows `/command-center.latest_refresh_at`.
 30. `GET /jarvis/tools` is not used by the UI (tool labels arrive on the stream).
 31. `per_request_cap_usd` keys are not enumerated in the contract; the limits form renders whatever keys arrive.
+32. Image attachments: whether a turn rejected with `invalid_image` is stored (and so appears after reload) is
+    not stated; the UI shows whatever `GET /jarvis/conversations/{id}` returns.
+33. `GET /jarvis/messages/{id}/images/{index}` is used directly as an `<img src>`; a failed load shows the browser's
+    broken-image state (there is no error payload to display).
