@@ -25,7 +25,13 @@ export function useJarvisChat({ conversationId, onConversationId, context }: { c
   const streaming = live !== null;
 
   // Changing conversation abandons any stream and clears turn-local state.
+  const createdRef = useRef<number | string | null>(null);
   useEffect(() => {
+    // The id changing because this hook just created the conversation is not a switch.
+    if (conversationId !== null && createdRef.current !== null && String(createdRef.current) === String(conversationId)) {
+      createdRef.current = null;
+      return;
+    }
     abortRef.current?.abort();
     setLive(null);
     setError(null);
@@ -49,6 +55,7 @@ export function useJarvisChat({ conversationId, onConversationId, context }: { c
           const c = await jarvis.create(context);
           id = c.id;
           qc.setQueryData(["jarvis", "conversation", id], { ...c, messages: [], tool_activity: [] });
+          createdRef.current = id;
           onConversationId(id);
         }
         const outcome = await streamMessage(
