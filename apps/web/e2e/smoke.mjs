@@ -714,7 +714,7 @@ async function runViewport(browser, label, viewport) {
   check(`[${label}] jarvis: budget error shows the server message verbatim and flips the pill`, (await page.locator(`${P} [data-testid="jarvis-error"]`).innerText().catch(() => "")).trim() === "FIXTURE: the lifetime AI budget cap has been reached; no model request was sent." && (await pillIs(P, "budget_limited")));
   await mockJarvis("ready");
   await sendJ(P, "trigger-drop");
-  await page.waitForFunction(() => /Connection lost/.test(document.querySelector('[data-testid="jarvis-error"]')?.textContent ?? ""), null, { timeout: 8000 }).catch(() => {});
+  await page.waitForFunction(() => /Connection lost/.test(document.querySelector('[data-testid="jarvis-error"]')?.textContent ?? "") && !document.querySelector('[data-testid="jarvis-page"] [data-testid="jarvis-live"]'), null, { timeout: 8000 }).catch(() => {});
   check(`[${label}] jarvis: dropped stream says connection lost and reloads the conversation`, /Connection lost/.test(await page.locator(`${P} [data-testid="jarvis-error"]`).innerText().catch(() => "")) && (await page.locator(`${P} [data-testid="jarvis-live"]`).count()) === 0);
   page.off("request", onJReq);
   await mockJarvis("provider_unavailable");

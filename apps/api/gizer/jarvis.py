@@ -120,7 +120,7 @@ def check_images(images: list[dict] | None) -> list[dict]:
 
 
 def configured() -> bool:
-    return bool(os.environ.get("ANTHROPIC_API_KEY")) or _client_factory is not None
+    return bool((os.environ.get("ANTHROPIC_API_KEY") or "").strip()) or _client_factory is not None
 
 
 def client():
@@ -128,7 +128,9 @@ def client():
         return _client_factory()
     import anthropic
     # No SDK-level retries: every attempt must pass through the budget controller with its own reservation.
-    return anthropic.Anthropic(max_retries=0, timeout=get_settings().jarvis_request_timeout_s)
+    # The key is read here only to drop stray whitespace (a pasted Windows line-ending makes a valid key fail).
+    return anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"].strip(), max_retries=0,
+                               timeout=get_settings().jarvis_request_timeout_s)
 
 
 def verify_models(force: bool = False) -> dict:
