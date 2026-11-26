@@ -8,8 +8,11 @@
 #   * Only the `production` branch is deployed. `main` receives work in progress and is never deployed from.
 #   * A commit is deployed only if every GitHub check on that exact commit completed successfully.
 #   * Fast-forward only: it never moves the server to an older or unrelated commit, and never touches local changes.
-#   * After the rebuild the app must report ready; otherwise the previous version is rebuilt and the failed
-#     commit is remembered so it is not retried in a loop.
+#   * Images come from the registry: GitHub Actions builds and pushes them for every commit on `main`, and this
+#     script pulls the two images for the exact commit it deploys. If that is not possible for any reason
+#     (not signed in, registry down, image missing) it builds on this machine instead, as it always did.
+#   * After the restart the app must report ready; otherwise the previous version is restored (pulled if its
+#     images exist, else rebuilt) and the failed commit is remembered so it is not retried in a loop.
 #   * It touches only this project's containers. It never edits the proxy, DNS or other applications.
 main() {
   set -euo pipefail
@@ -18,11 +21,39 @@ main() {
   local STATE=.auto-update LOG=.auto-update/update.log
   mkdir -p "$STATE"
   log() { printf '%s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*" | tee -a "$LOG"; }
+  # Pull-or-build helpers. Loaded in full before anything changes on disk, so a deploy that updates the
+  # file cannot affect this run.
+  # shellcheck source=scripts/lib-images.sh
+  . scripts/lib-images.sh
 
   if [ "${1:-}" = "status" ]; then
     echo "deployed commit : $(git rev-parse --short HEAD)  $(git log -1 --format=%s)"
     echo "release branch  : $BRANCH"
     echo "last failed     : $(cat "$STATE/failed" 2>/dev/null || echo none)"
+    echo "last deploy used: $(cat "$STATE/images" 2>/dev/null || echo "unknown (no deploy by this version yet)")"
+    gi_fix_home
+    local head_sha api_ref cid img rev probe
+    head_sha="$(git rev-parse HEAD)"; api_ref="$(gi_ref api "$head_sha")"
+    echo "registry images : $(gi_prefix)-api, $(gi_prefix)-web (tag = full commit id)"
+    if [ -n "${GIZER_AU_NO_PULL:-}" ] || [ -f "$STATE/no-pull" ]; then
+      echo "registry pulls  : switched off on this machine (remove $STATE/no-pull to switch on)"
+    elif probe="$(timeout -k 5 25 docker manifest inspect "$api_ref" 2>&1 >/dev/null)"; then
+      echo "registry pulls  : working (image for the deployed commit is readable)"
+    else
+      probe="$(printf '%s' "$probe" | tail -n 1 | cut -c1-160)"
+      echo "registry pulls  : NOT working for the deployed commit (${probe:-timed out}); releases build on this machine"
+    fi
+    cid="$(docker compose ps -q api 2>/dev/null | head -n 1 || true)"
+    if [ -n "$cid" ]; then
+      img="$(docker inspect --format '{{.Config.Image}} ({{.Image}})' "$cid" 2>/dev/null || echo unknown)"
+      rev="$(docker inspect --format '{{.Image}}' "$cid" 2>/dev/null \
+        | xargs -r docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' 2>/dev/null || true)"
+      echo "api container   : $img"
+      if [ -n "$rev" ]; then echo "                  built by GitHub Actions from commit ${rev:0:7}"
+      else echo "                  built on this machine (no commit label)"; fi
+    else
+      echo "api container   : not running"
+    fi
     echo "--- last log lines"; tail -n 15 "$LOG" 2>/dev/null || echo "(no log yet)"
     return 0
   fi
@@ -109,19 +140,25 @@ else:
     done
     return 1
   }
-  if docker compose up -d --build >> "$LOG" 2>&1 && ready; then
-    log "deployed ${new:0:7}: application is ready"
+  # gi_up pulls the two images CI pushed for that commit and starts them without building; when it cannot,
+  # it logs the reason and runs `docker compose up -d --build` exactly as before.
+  local GI_OUT="$LOG"
+  if gi_up "$new" && ready; then
+    log "deployed ${new:0:7}: application is ready (images $GI_PATH)"
+    echo "$GI_PATH ${new:0:7} $(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$STATE/images"
     rm -f "$STATE/failed"
   else
-    log "release ${new:0:7} did not become ready; rebuilding previous version ${cur:0:7}"
+    log "release ${new:0:7} did not become ready; restoring previous version ${cur:0:7}"
     echo "$new" > "$STATE/failed"
     git reset -q --hard "$cur"
-    if docker compose up -d --build >> "$LOG" 2>&1 && ready; then
-      log "rolled back to ${cur:0:7}: application is ready (database migrations are not reversed)"
+    if gi_up "$cur" && ready; then
+      log "rolled back to ${cur:0:7}: application is ready (images $GI_PATH; database migrations are not reversed)"
     else
       log "ROLLBACK DID NOT BECOME READY — manual attention needed: docker compose ps; docker compose logs --tail 80"
     fi
+    echo "$GI_PATH ${cur:0:7} $(date -u +%Y-%m-%dT%H:%M:%SZ) (rollback)" > "$STATE/images"
   fi
+  gi_cleanup "$cur" "$new"   # keep this release and the one before it; other projects' images are never touched
   if [ -f "$STATE/history.done" ]; then log "history load: finished earlier ($(cat "$STATE/history.done"))"
   else log "history load: not finished; resuming it"; fi
   resume_history_if_needed   # it resumes; nothing already loaded is fetched again

@@ -41,9 +41,50 @@ jobs:
         with: { fetch-depth: 0 }
       - uses: gitleaks/gitleaks-action@v2
         env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+  # Builds both images. On a push to main it also publishes them to the GitHub Container Registry, tagged with
+  # the full commit id; the server pulls exactly those when that commit is promoted to `production`
+  # (scripts/auto-update.sh waits for this job like every other check). Pull requests build only.
   images:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE_PREFIX: ghcr.io/llamanftstaking-glitch/nba   # must stay lowercase; scripts/lib-images.sh uses the same
+      PUBLISH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
       - uses: actions/checkout@v4
-      - run: docker build -t gizer-nba-api apps/api
-      - run: docker build -t gizer-nba-web apps/web
+      - uses: docker/setup-buildx-action@v3
+      - name: Sign in to the container registry
+        if: env.PUBLISH == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: API image
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/api
+          push: ${{ env.PUBLISH == 'true' }}
+          provenance: false
+          tags: ${{ env.IMAGE_PREFIX }}-api:${{ github.sha }}
+          labels: |
+            org.opencontainers.image.title=gizer-nba-api
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,scope=api,mode=max
+      - name: Web image
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/web
+          push: ${{ env.PUBLISH == 'true' }}
+          provenance: false
+          tags: ${{ env.IMAGE_PREFIX }}-web:${{ github.sha }}
+          labels: |
+            org.opencontainers.image.title=gizer-nba-web
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,scope=web,mode=max

@@ -2,9 +2,17 @@
 # Only the web container is bound to a loopback port for the host's existing reverse proxy.
 name: gizer-nba
 
+# Images. `docker compose up -d --build` builds both locally under the default names below, with no registry
+# access needed. On the server, scripts/auto-update.sh pulls the images GitHub Actions pushed for the release
+# commit (ghcr.io/llamanftstaking-glitch/nba-api|nba-web:<commit>) and gives them these same names, so plain
+# `docker compose` commands keep using the deployed release. GIZER_API_IMAGE / GIZER_WEB_IMAGE / GIZER_VERSION
+# exist for running a registry tag directly on another machine, e.g.
+#   GIZER_API_IMAGE=ghcr.io/llamanftstaking-glitch/nba-api GIZER_WEB_IMAGE=ghcr.io/llamanftstaking-glitch/nba-web \
+#   GIZER_VERSION=<full commit id> docker compose up -d --no-build
+# Do not set them in the server's .env (the updater then builds locally rather than re-point a pinned tag).
 x-api: &api
   build: ./apps/api
-  image: gizer-nba-api:${GIZER_VERSION:-local}
+  image: ${GIZER_API_IMAGE:-gizer-nba-api}:${GIZER_VERSION:-local}
   restart: unless-stopped
   env_file: .env
   environment:
@@ -88,7 +96,7 @@ services:
 
   web:
     build: ./apps/web
-    image: gizer-nba-web:${GIZER_VERSION:-local}
+    image: ${GIZER_WEB_IMAGE:-gizer-nba-web}:${GIZER_VERSION:-local}
     restart: unless-stopped
     environment:
       API_INTERNAL_URL: http://api:8000
