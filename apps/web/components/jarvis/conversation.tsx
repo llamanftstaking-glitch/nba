@@ -156,6 +156,7 @@ export function JarvisConversationView({
   onSend,
   onStop,
   compact = false,
+  extraSuggestions = [],
 }: {
   messages: JarvisMessage[];
   live: LiveTurn | null;
@@ -169,6 +170,8 @@ export function JarvisConversationView({
   onSend: (text: string, deep: boolean, images?: OutgoingImage[]) => Promise<boolean> | void;
   onStop: () => void;
   compact?: boolean;
+  /** Page-specific question chips shown before the API's suggestions. */
+  extraSuggestions?: string[];
 }) {
   const [text, setText] = useState("");
   const [deep, setDeep] = useState(false);
@@ -314,6 +317,13 @@ export function JarvisConversationView({
                   </button>
                 </li>
               )}
+              {extraSuggestions.map((t) => (
+                <li key={t}>
+                  <button type="button" disabled={streaming} onClick={() => submit(t)} className="inline-flex min-h-[44px] items-center rounded-full bg-raised/70 px-3.5 text-left text-sm text-soft ring-1 ring-inset ring-line hover:bg-raised hover:text-ink disabled:cursor-not-allowed md:min-h-9" data-testid="jarvis-suggestion">
+                    {t}
+                  </button>
+                </li>
+              ))}
               {(suggestions.data?.items ?? []).slice(0, compact ? 5 : 8).map((s) => (
                 <li key={s.text}>
                   <button type="button" disabled={streaming} onClick={() => submit(s.text)} className="inline-flex min-h-[44px] items-center rounded-full bg-raised/70 px-3.5 text-left text-sm text-soft ring-1 ring-inset ring-line hover:bg-raised hover:text-ink disabled:cursor-not-allowed md:min-h-9" title={s.text} data-testid="jarvis-suggestion">

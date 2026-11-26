@@ -5,7 +5,13 @@ import { ArrowLeft, CandlestickChart, FileText, Gauge, HeartPulse, History, Laye
 import { InjuryChangeList } from "@/components/injury-changes";
 import { KalshiCompactList, KalshiSyncStatus } from "@/components/kalshi";
 import { MinutesCompact } from "@/components/minutes";
-import { useParams } from "next/navigation";
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
+import { JarvisConversationView } from "@/components/jarvis/conversation";
+import { useJarvisChat, useJarvisState } from "@/components/jarvis/use-jarvis";
+import { BoxScoreTab, OverviewTab, PlaysTab, RotationsTab, ScoreHeader, tabDefault } from "@/components/live/game-center";
+import { Tabs } from "@/components/ui/tabs";
+import { ApiError } from "@/lib/api";
+import { live, useGameStream } from "@/lib/live";
 import { useMemo, useState } from "react";
 import { ComboCard } from "@/components/combo-card";
 import { EnvironmentSummary, MatchupHeader, completenessPct } from "@/components/game-card";
@@ -21,7 +27,7 @@ import { Field, Input, Select } from "@/components/ui/field";
 import { Meter } from "@/components/ui/meter";
 import { Val } from "@/components/ui/na";
 import { BulletList, Label, Panel } from "@/components/ui/panel";
-import { EmptyState, QueryView } from "@/components/ui/states";
+import { EmptyState, ErrorState, QueryView } from "@/components/ui/states";
 import { api } from "@/lib/api";
 import { DLink } from "@/lib/date";
 import { classLabel, fmtDate, fmtDateTimeET, fmtNum, statLabel } from "@/lib/format";
@@ -245,9 +251,9 @@ function GameView({ d }: { d: GameDetail }) {
     <div className="space-y-5" data-testid="game-page">
       {/* 1 — matchup header */}
       <section id="matchup" className="rounded-lg bg-card p-4 ring-1 ring-inset ring-line/60 md:p-5" aria-label="Matchup">
-        <h1 className="sr-only">
+        <h2 className="sr-only">
           {g.away.name} at {g.home.name} · game research
-        </h1>
+        </h2>
         <MatchupHeader game={g} size={48} />
         <p className="mt-1 text-xs text-muted">
           {fmtDate(g.date, { weekday: true, year: true })} · {g.venue ?? "Venue not available"}
@@ -508,19 +514,76 @@ function GameView({ d }: { d: GameDetail }) {
   );
 }
 
+const GAME_QUESTIONS = ["What is happening in this game?", "Who is in foul trouble?", "Compare minutes with our pregame projection", "Summarise the game so far"];
+
+function JarvisTab({ gameId }: { gameId: string }) {
+  const [conversationId, setConversationId] = useState<number | string | null>(null);
+  const context = useMemo(() => ({ game_id: gameId, page: `/games/${gameId}` }), [gameId]);
+  const state = useJarvisState();
+  const chat = useJarvisChat({ conversationId, onConversationId: setConversationId, context });
+  return (
+    <div className="flex h-[70dvh] min-h-[420px] flex-col overflow-hidden rounded-lg bg-card ring-1 ring-inset ring-line/60" data-testid="game-jarvis">
+      <JarvisConversationView
+        messages={chat.conversation?.messages ?? []}
+        live={chat.live}
+        loading={chat.loading}
+        error={chat.error}
+        streaming={chat.streaming}
+        serverState={state.data?.state}
+        serverMessage={state.data?.message}
+        contextInput={context}
+        extraSuggestions={GAME_QUESTIONS}
+        onSend={chat.send}
+        onStop={chat.stop}
+      />
+    </div>
+  );
+}
+
+const GAME_TABS = [["overview", "Overview"], ["boxscore", "Box Score"], ["plays", "Plays"], ["rotations", "Rotations"], ["research", "Research"], ["jarvis", "JARVIS"]] as const;
+
 export default function GamePage() {
   const { id } = useParams<{ id: string }>();
+  const sp = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const q = useQuery({ queryKey: ["game", id], queryFn: () => api.game(id) });
+  const center = useQuery({ queryKey: ["live", "game", id, "center"], queryFn: () => live.game(id), retry: false });
+  const stream = useGameStream(id, center.isSuccess);
+  // The stream row is newer than the fetched centre object; freshness and score come from whichever is latest.
+  const row = stream.row && center.data && stream.row.version >= center.data.version ? stream.row : (center.data ?? stream.row);
+  const requested = sp.get("tab");
+  const auto = center.data ? tabDefault({ mode: center.data.mode, status: row?.status ?? center.data.status }) : "research";
+  const tab = GAME_TABS.some(([t]) => t === requested) ? (requested as string) : auto;
+  const setTab = (t: string) => {
+    const p = new URLSearchParams(sp.toString());
+    p.set("tab", t);
+    router.replace(`${pathname}?${p.toString()}`, { scroll: false });
+  };
   return (
     <div>
-      <div className="mb-3">
+      {row && <ScoreHeader g={row} stream={stream.state} />}
+      <div className="mb-3 mt-3 flex flex-wrap items-center gap-3">
         <DLink href="/games" className={textLink}>
           <ArrowLeft className="h-3 w-3" aria-hidden /> All games
         </DLink>
+        {center.isSuccess && (
+          <div className="min-w-0 flex-1">
+            <Tabs label="Game centre" scroll value={tab} onChange={setTab} items={GAME_TABS.map(([id2, label]) => ({ id: id2, label }))} />
+          </div>
+        )}
       </div>
-      <QueryView query={q} rows={8}>
-        {(d) => <GameView d={d} />}
-      </QueryView>
+      {center.isError && !(center.error instanceof ApiError && center.error.status === 404) && tab !== "research" && <ErrorState error={center.error} onRetry={() => void center.refetch()} />}
+      {center.data && row && tab === "overview" && <OverviewTab c={{ ...center.data, ...row }} />}
+      {center.data && tab === "boxscore" && <BoxScoreTab id={id} />}
+      {center.data && row && tab === "plays" && <PlaysTab id={id} g={row} version={row.version} />}
+      {center.data && tab === "rotations" && <RotationsTab id={id} />}
+      {center.data && tab === "jarvis" && <JarvisTab gameId={id} />}
+      {(tab === "research" || !center.data) && (
+        <QueryView query={q} rows={8}>
+          {(d) => <GameView d={d} />}
+        </QueryView>
+      )}
     </div>
   );
 }

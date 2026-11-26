@@ -341,7 +341,7 @@ export default function JarvisPage() {
   const right = <RightColumn conversation={chat.conversation} tools={tools} streaming={chat.streaming} state={state.data} lastModel={lastModel} />;
 
   return (
-    <div className="flex h-[calc(100dvh-11.5rem)] min-h-[420px] flex-col lg:h-[calc(100dvh-8.5rem)]" data-testid="jarvis-page">
+    <div className="flex h-[calc(100dvh-11.5rem-var(--strip-h,0px))] min-h-[420px] flex-col lg:h-[calc(100dvh-8.5rem-var(--strip-h,0px))]" data-testid="jarvis-page">
       <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2" data-testid="jarvis-statusbar">
         <JarvisMark className="h-9 w-9" active={chat.streaming} />
         <h1 className="font-display text-[26px] font-bold uppercase italic leading-7 tracking-wide text-ink">JARVIS</h1>

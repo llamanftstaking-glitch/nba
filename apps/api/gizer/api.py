@@ -1075,6 +1075,7 @@ def settings_view():
 from . import api_v3  # noqa: E402,F401  (registers the V3 routes on `api` before it is mounted)
 from . import api_core  # noqa: E402,F401  (Kalshi intelligence, minutes intelligence, availability events)
 from . import api_jarvis  # noqa: E402,F401  (JARVIS assistant, memory, briefings, AI budget)
+from . import api_live  # noqa: E402,F401  (GIZER LIVE: scoreboard, game centre, watchlist, research tracker)
 
 app.include_router(pub)
 app.include_router(api)

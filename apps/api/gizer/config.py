@@ -35,6 +35,13 @@ class Settings(BaseSettings):
     http_timeout_s: float = 30.0
     user_agent: str = "gizer-nba-research/0.1"
 
+    # GIZER LIVE (server-side polling of the public ESPN feed; observations are delayed, never "real time")
+    live_enabled: bool = True
+    live_poll_seconds: int = 15            # while a game is in progress
+    live_pregame_poll_seconds: int = 45    # within 20 minutes of tipoff, or everything at halftime
+    live_idle_poll_seconds: int = 180      # games later today
+    live_stale_seconds: int = 90           # a live game not observed for this long is labelled stale
+
     # LLM (optional; platform is fully functional without it)
     llm_provider: str = ""
     llm_monthly_budget_usd: float = 0.0

@@ -29,6 +29,8 @@ def main(argv=None):
     sub.add_parser("scheduler", help="run the scheduler")
     sub.add_parser("bootstrap-owner", help="create/update the owner account from GIZER_OWNER_EMAIL/PASSWORD")
     sub.add_parser("status")
+    lv = sub.add_parser("live", help="run the live game ingestion loop")
+    lv.add_argument("--once", action="store_true")
     jv = sub.add_parser("jarvis-verify")
     jv.add_argument("--ping", action="store_true")
     sub.add_parser("model-cards", help="render MODEL-CARDS.md content from the registry")
@@ -91,6 +93,9 @@ def main(argv=None):
     elif a.cmd == "status":
         from .jobs import operations_status
         _print(operations_status())
+    elif a.cmd == "live":
+        from .live import run_loop
+        run_loop(once=a.once)
     elif a.cmd == "jarvis-verify":
         # Free check of the key and the configured model ids. --ping also sends one tiny paid request (well under
         # one cent, taken from the development allocation) to prove a real answer comes back and is accounted for.

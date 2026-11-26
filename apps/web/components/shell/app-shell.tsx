@@ -13,6 +13,9 @@ import { SlashMark } from "@/components/ui/panel";
 import { Sheet } from "@/components/ui/sheet";
 import { Brand } from "./brand";
 import { JarvisLauncher, JarvisPanelProvider } from "@/components/jarvis/panel";
+import { LiveDot } from "@/components/live/common";
+import { ScoreboardStrip } from "@/components/live/scoreboard-strip";
+import { useScoreboard } from "@/lib/live";
 import { DateSelector } from "./date-selector";
 import { DisclaimerText } from "./disclaimer";
 
@@ -34,8 +37,14 @@ function SideLink({ item, collapsed, pathname }: { item: NavItem; collapsed: boo
     >
       <Icon className={cn("h-[18px] w-[18px] shrink-0", active ? "text-accent" : "text-faint")} aria-hidden />
       {collapsed ? <span className="sr-only">{item.label}</span> : <span className="truncate">{item.label}</span>}
+      {item.href === "/live" && <NavLiveDot />}
     </DLink>
   );
+}
+
+function NavLiveDot() {
+  const q = useScoreboard();
+  return (q.data?.live_count ?? 0) > 0 ? <LiveDot className="ml-auto" /> : null;
 }
 
 function LogoutButton({ className }: { className?: string }) {
@@ -141,6 +150,8 @@ export function AppShell({ children }: { children: ReactNode }) {
           {/* Below the desktop breakpoint the persistent notice sits under the top bar so it never collides with the bottom nav. */}
           <DisclaimerText className="border-t border-line/60 bg-bg px-3 py-1 text-[11px] leading-[14px] text-muted lg:hidden" />
         </header>
+
+        <ScoreboardStrip />
 
         <main className="min-w-0 flex-1 px-3 pb-28 pt-4 md:px-5 lg:pb-14">
           <div className="mx-auto w-full max-w-[1640px]">{children}</div>

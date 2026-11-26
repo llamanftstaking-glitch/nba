@@ -13,6 +13,7 @@ characters by shortening lists (never by cutting a value in half) and marked whe
 | Quantitative | get_player_markets (projection, p10/p90, readiness), get_model_readiness, get_existing_research_candidates, get_existing_parlay_research, inspect_research_validation (audit mode), evaluate_combination (joint probability for 2 to 6 evaluated selections; read-only), get_correlation_research, get_research_edition |
 | Learning | get_model_error_history, get_paper_testing_results, get_settled_research_records |
 | Operations | get_agent_status, get_data_provider_health, get_system_health, get_ai_budget_status, get_recent_events, get_briefings |
+| Live | get_live_scoreboard, get_live_game_state, get_live_boxscore, get_live_player_statistics, get_live_play_by_play, get_live_rotation_history, get_live_team_statistics, get_followed_games, get_followed_players, get_pregame_projection_comparison, get_paper_research_progress |
 | Memory | recall_memory, remember *(write: its own memory only)* |
 | Jobs | request_research_job *(write: queues `availability_watch` or `market_watch`, at most once per 10 minutes each)* |
 

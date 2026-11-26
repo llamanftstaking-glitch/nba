@@ -20,6 +20,9 @@ import { Label, Panel } from "@/components/ui/panel";
 import { EmptyState, QueryView } from "@/components/ui/states";
 import { Tabs } from "@/components/ui/tabs";
 import { api } from "@/lib/api";
+import { FollowButton, FreshnessMark, StatusChip } from "@/components/live/common";
+import { MilestoneRow } from "@/components/live/milestones";
+import { live } from "@/lib/live";
 import { cn } from "@/lib/cn";
 import { DLink } from "@/lib/date";
 import { fmtDate, fmtDateTimeET, fmtNum, fmtPct, fmtTimeET, HISTORY_STATS, statLabel, titleCase } from "@/lib/format";
@@ -254,6 +257,66 @@ function GameLog({ id }: { id: string }) {
   );
 }
 
+/** Compact "Live now" block: the player's observed line, game status, follow toggle and tracking thresholds. */
+function LiveNow({ id, name }: { id: string; name: string }) {
+  const q = useQuery({ queryKey: ["live", "player", id], queryFn: () => live.player(id), refetchInterval: (x) => (x.state.data?.live ? 20_000 : false), retry: false });
+  const d = q.data;
+  if (!d) return null;
+  const l = d.live;
+  const line = l?.line ?? null;
+  return (
+    <section className="rounded-lg bg-card p-4 ring-1 ring-inset ring-line/60" aria-label="Live" data-testid="player-live" data-live={l ? "1" : "0"}>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="font-display text-[17px] font-semibold uppercase tracking-wide text-ink">{l ? "Live now" : "Following"}</h2>
+        <FollowButton kind="player" refId={Number(id)} followed={d.followed} label={name} />
+      </div>
+      {l ? (
+        <>
+          <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
+            <DLink href={`/games/${encodeURIComponent(l.game_id)}?tab=live`} className="text-sm font-semibold text-ink hover:underline" data-testid="player-live-game">
+              {l.label}
+            </DLink>
+            <StatusChip g={{ status: l.status, status_label: l.status_label, period_label: l.period_label, clock: l.clock, tipoff_utc: null }} />
+            <FreshnessMark f={l} long />
+          </div>
+          {line ? (
+            <dl className="num mt-3 grid grid-cols-4 gap-x-3 gap-y-2 sm:grid-cols-8" data-testid="player-live-line">
+              {(
+                [
+                  ["MIN", line.minutes],
+                  ["PTS", line.pts],
+                  ["REB", line.reb],
+                  ["AST", line.ast],
+                  ["3PM", line.fg3m],
+                  ["STL", line.stl],
+                  ["BLK", line.blk],
+                  ["PF", line.pf],
+                ] as const
+              ).map(([k, v]) => (
+                <div key={k}>
+                  <dt className="text-2xs font-medium uppercase text-muted">{k}</dt>
+                  <dd className="font-display text-2xl font-semibold leading-7 text-ink">{v ?? "—"}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : (
+            <p className="mt-2 text-sm text-muted">No line has been published for this player yet.</p>
+          )}
+        </>
+      ) : (
+        <p className="mt-1 text-sm text-muted">No game in progress for this player right now.</p>
+      )}
+      {d.milestones.length > 0 && (
+        <ul className="mt-2 divide-y divide-line/20 border-t border-line/50" data-testid="player-live-milestones">
+          {d.milestones.map((m) => (
+            <MilestoneRow key={m.id} m={m} />
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 function View({ d, id }: { d: PlayerDetail; id: string }) {
   const p = d.player;
   const [open, setOpen] = useState<Prop | null>(null);
@@ -301,6 +364,8 @@ function View({ d, id }: { d: PlayerDetail; id: string }) {
           )}
         </div>
       </section>
+
+      <LiveNow id={id} name={p.name} />
 
       <section aria-label="Averages">
         <QueryView query={averages} rows={2}>

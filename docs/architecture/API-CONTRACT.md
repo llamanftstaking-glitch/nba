@@ -450,3 +450,76 @@ role may start conversations, send messages, edit memory, run briefings or view/
 * The client must downscale before upload: longest side at most 1568 px, re-encoded as JPEG (quality about 0.85) unless the
   original is already small, so each image is well under the limit.
 * New tool label that can appear in the stream: "Evaluating the combination" (`evaluate_combination`).
+
+---
+
+## GIZER LIVE (observed in-game data) — added 2026-11-26
+
+All under `/api/v1`, session required; follow/milestone writes need the owner role and CSRF. GET and POST only.
+Everything is an **observation our server polled** (about every 15 s while a game is in progress): never call it
+real-time. Every game-shaped object carries freshness: `observed_at`, `provider_updated_at`, `age_s`, `stale`
+(true when a game in progress has not been observed for 90 s), `feed` (`ok`|`stale`|`not_started`). When `stale`
+is true show "Delayed — last update <time>" and keep showing the last values. A `null` number means the source has
+not published it: show "—", never 0.
+
+### Scoreboard
+`GET /live/scoreboard?date=YYYY-MM-DD` (default today ET) → `{date, prev, next, today, live_count, server_time, poll_note,
+games:[GameRow]}`. `GameRow` = `{game_id, label, game_date, tipoff_utc, venue, status, status_label, period,
+period_label ("Q1".."Q4","OT","2OT",""), clock (only while live), home:{team_id, abbr, name, score, linescores:[..]},
+away:{…}, version, followed, favorite_team, …freshness}`.
+`status` ∈ `scheduled|live|halftime|end_period|overtime|final|delayed|postponed|suspended|cancelled`. A game is `live`
+only when the provider says so. Followed games/favourite teams sort first, then live, halftime, scheduled, final.
+`GET /live/games` is the same.
+
+### Game centre
+* `GET /live/games/{id}` → `GameRow` + `{mode: "pregame"|"live"|"final"|status, team_stats, leaders:{home:{pts,reb,ast:{player_id,name,value}|null},away},
+  momentum:{lead_changes, ties, largest_lead:{home,away}, runs:[{team:"home"|"away", points, start_s, end_s}], note, points:<count>},
+  last_plays:[Play] (newest first, 8), plays_count, summaries:[{kind:"q1"|"half"|"q3"|"final", text, created_at}], poll_note, notes[]}`
+* `GET /live/games/{id}/boxscore?sort=<column>&order=asc|desc` → `{game_id, status, period, available, home:{team_id, abbr, name,
+  players:[BoxRow], totals:{…}}, away:{…}, notes[], …freshness}`. `BoxRow` = `{espn_athlete_id, player_id|null, team_id, name,
+  position, jersey, headshot_url, starter, role:"starter"|"bench"|null, dnp, ejected, on_court:true|false|null, minutes, pts, reb, ast,
+  stl, blk, tov, pf, fgm, fga, fg3m, fg3a, ftm, fta, oreb, dreb, plus_minus, pra, pr, pa, ra, fg_pct, fg3_pct, ft_pct,
+  true_shooting_pct, foul_trouble:true|false|null, pregame:{proj_min, pts, reb, ast, fg3m, published_at}|null}`.
+  `on_court: null` means not determinable: show nothing, not "bench". `player_id: null` means no profile link.
+  Sort client-side as well (every column sortable); `sort` is offered for convenience.
+* `GET /live/games/{id}/play-by-play?filter=all|scoring|fouls|substitutions&team_id=&player_id=&after_sequence=&order=desc|asc&limit=&offset=`
+  → `{game_id, total, items:[Play], note, …freshness}`. `Play` = `{event_id, sequence, period, clock, elapsed_s, team_id,
+  team_side:"home"|"away"|null, kind (made|missed|free_throw|rebound|turnover|foul|substitution|timeout|period|review|jumpball|other),
+  type_text, text, scoring, score_value, home_score, away_score, player_ids[], provider_at, ingested_at, corrected}`.
+  `text` is the source's wording; never add commentary. Use `after_sequence` to fetch only new plays.
+* `GET /live/games/{id}/rotations` → `{game_id, status, period, elapsed_s, home:{team_id, abbr, determinable, problems[], note,
+  players:[{espn_athlete_id, player_id, name, starter, role, on_court, stints:[{start_s, end_s|null}], minutes_by_period:{"1":..},
+  minutes, pf, foul_trouble, proj_min, minutes_vs_projection}]}, away:{…}, notes[]}`. When `determinable` is false show the `note`
+  and no timeline for that team. Timeline x-axis is game seconds: quarters are 720 s, overtime periods 300 s.
+* `GET /live/games/{id}/team-stats` → `{game_id, home:{team_id,abbr}, away:{…}, available, items:[{key, label, home, away,
+  home_value, away_value}], not_published[]}`. `home`/`away` are the published strings (e.g. "24-50"); `*_value` drive the bars.
+* `GET /live/games/{id}/momentum` → `{points:[{t, period, home, away, diff}], lead_changes, ties, largest_lead, runs, note}`
+  (`diff` = home − away after each scoring event). Label it "Score progression (observed)". No win probability exists.
+* `GET /live/games/{id}/stream` → `text/event-stream` (GET, so `EventSource` works with cookies): `data: <GameRow json>` whenever
+  the game's `version` changes and at least every ~15 s; comment lines `: keep-alive` between; `event: end` after 5 minutes —
+  reconnect. On each `data`, refetch whichever tab is open if `version` increased. On error use backoff (1 s, 2 s, 5 s, 10 s)
+  and show "Reconnecting…"; fall back to polling `GET /live/games/{id}` every 15 s if the stream cannot be opened.
+
+### Players, watchlist, milestones
+* `GET /live/players/{player_id}?date=` → `{player_id, name, headshot_url, date, followed, live:{game_id, label, status, status_label,
+  period, period_label, clock, line:BoxRow, …freshness}|null, milestones:[Milestone]}`
+* `GET /live/watchlist?date=` → `{date, games:[GameRow], players:[{player_id, name, team_abbr, headshot_url, live|null, milestones[]}],
+  teams:[{team_id, abbr, name}], counts}`
+* `POST /live/watchlist/follow` and `POST /live/watchlist/unfollow` body `{kind:"game"|"player"|"team", ref_id}` → `{following, kind, ref_id}`
+* `GET /live/milestones?date=` → `{date, items:[Milestone + player_name], stats:[…]}`; `POST /live/milestones` body `{player_id, stat, threshold,
+  date?, notify?}`; `POST /live/milestones/{id}/delete`. `Milestone` = `{id, player_id, stat (pts|reb|ast|fg3m|stl|blk|min|pra|pr|pa|ra|double_double),
+  threshold, game_date, notify, current|null, remaining|null, reached, reached_at, reached_value, game_status, observed_at, note}`.
+  Present it as "tracking": current, threshold, remaining, game status, freshness. Never as a likelihood. Reached milestones also
+  appear in `GET /jarvis/events?kind=milestone_reached` (`detail.notify` says whether the owner wants a notification).
+
+### Paper research tracker
+`GET /live/research-tracker?date=` → `{date, total, notes[], items:[{ticket_id, kind, engine, structure, classification, created_at,
+status:"pending"|"settled", settlement:{result, settled_at, reason}|null, legs:[{label, market, side, line, game_id, game_label,
+subject_id, current|null, current_basis, difference_to_line|null, game_status, status_label, period_label, clock,
+observation:"not_started"|"in_progress"|"final_awaiting_settlement"|…, observed_at, stale}]}]}`.
+Show each leg's line and current value side by side. Do not colour or word a leg as winning/losing/hit/miss while
+`observation` is not settled; only `settlement.result` is an outcome. No wagering language.
+
+### JARVIS
+Live tools exist server-side; in the stream their labels include "Reading the live scoreboard", "Reading the live box score",
+"Reading the play-by-play", "Reading live rotations". Context for the JARVIS panel on a game page is still `{game_id}`.

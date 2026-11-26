@@ -28,6 +28,7 @@ import {
   Bot,
   Boxes,
   Wallet,
+  Radio,
 } from "lucide-react";
 import type { ComponentType } from "react";
 import { JarvisMark } from "@/components/jarvis/mark";
@@ -40,6 +41,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     title: "Command Center",
     items: [
+      { href: "/live", label: "Live Games", icon: Radio },
       { href: "/jarvis", label: "JARVIS", icon: JarvisMark },
       { href: "/", label: "Overview", icon: LayoutDashboard },
       { href: "/games", label: "Today's Games", icon: CalendarDays },
@@ -88,6 +90,8 @@ export const NAV_GROUPS: NavGroup[] = [
 export const EXTRA_PAGES: NavItem[] = [
   { href: "/admin", label: "Operations Admin", icon: Activity },
   { href: "/admin/ai-budget", label: "AI Budget", icon: Wallet },
+  { href: "/live/following", label: "My Following", icon: Radio },
+  { href: "/live/research-tracker", label: "Research Tracker", icon: Radio },
   { href: "/exposure", label: "Shared-Risk Monitor", icon: Network },
   { href: "/markets", label: "Markets", icon: BarChart3 },
   { href: "/simulations", label: "Simulations", icon: ClipboardList },

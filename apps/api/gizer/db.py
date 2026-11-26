@@ -687,6 +687,122 @@ class JarvisEvent(Base):
     acknowledged_at: Mapped[datetime | None] = _ts()
 
 
+# ---------------------------------------------------------------- GIZER LIVE (observed in-game state)
+class LiveGame(Base):
+    """Current observed state of one game. Mutable by design: it is an observation feed, not research.
+    Pregame research (predictions, selections, editions) is never touched by live ingestion."""
+    __tablename__ = "live_games"
+    game_id: Mapped[str] = mapped_column(String(12), primary_key=True)
+    espn_event_id: Mapped[str] = mapped_column(String(16), index=True)
+    game_date: Mapped[date] = mapped_column(Date, index=True)
+    status: Mapped[str] = mapped_column(String(12), index=True)   # scheduled|live|halftime|end_period|overtime|final|delayed|postponed|suspended|cancelled
+    provider_status: Mapped[str] = mapped_column(String(40))
+    period: Mapped[int] = mapped_column(Integer, default=0)
+    clock: Mapped[str | None] = mapped_column(String(12))
+    home_score: Mapped[int | None] = mapped_column(Integer)
+    away_score: Mapped[int | None] = mapped_column(Integer)
+    linescores: Mapped[dict] = mapped_column(JS, default=dict)    # {"home": [..], "away": [..]}
+    team_stats: Mapped[dict] = mapped_column(JS, default=dict)    # {"home": {...}, "away": {...}} as published
+    version: Mapped[int] = mapped_column(Integer, default=0)      # bumped whenever anything observable changed
+    plays_count: Mapped[int] = mapped_column(Integer, default=0)
+    summaries_done: Mapped[list] = mapped_column(JS, default=list)
+    provider: Mapped[str] = mapped_column(String(24), default="espn")
+    provider_updated_at: Mapped[datetime | None] = _ts()          # latest event time the source reported
+    observed_at: Mapped[datetime] = _ts(default=utcnow)           # last successful poll
+    changed_at: Mapped[datetime] = _ts(default=utcnow)
+    detail_at: Mapped[datetime | None] = _ts()                    # last successful box/play-by-play fetch
+    final_detail_done: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class LivePlayerBox(Base):
+    __tablename__ = "live_player_box"
+    game_id: Mapped[str] = mapped_column(String(12), primary_key=True)
+    espn_athlete_id: Mapped[str] = mapped_column(String(16), primary_key=True)
+    player_id: Mapped[int | None] = mapped_column(BigInteger, index=True)     # null = not matched to a canonical player
+    team_id: Mapped[int] = mapped_column(BigInteger, index=True)
+    name: Mapped[str] = mapped_column(String(96))
+    position: Mapped[str | None] = mapped_column(String(6))
+    jersey: Mapped[str | None] = mapped_column(String(4))
+    starter: Mapped[bool | None] = mapped_column(Boolean)
+    dnp: Mapped[bool] = mapped_column(Boolean, default=False)
+    ejected: Mapped[bool] = mapped_column(Boolean, default=False)
+    on_court: Mapped[bool | None] = mapped_column(Boolean)                    # null = not determinable; never assumed
+    minutes: Mapped[float | None] = mapped_column(Float)
+    pts: Mapped[int | None] = mapped_column(Integer)
+    reb: Mapped[int | None] = mapped_column(Integer)
+    ast: Mapped[int | None] = mapped_column(Integer)
+    stl: Mapped[int | None] = mapped_column(Integer)
+    blk: Mapped[int | None] = mapped_column(Integer)
+    tov: Mapped[int | None] = mapped_column(Integer)
+    pf: Mapped[int | None] = mapped_column(Integer)
+    fgm: Mapped[int | None] = mapped_column(Integer)
+    fga: Mapped[int | None] = mapped_column(Integer)
+    fg3m: Mapped[int | None] = mapped_column(Integer)
+    fg3a: Mapped[int | None] = mapped_column(Integer)
+    ftm: Mapped[int | None] = mapped_column(Integer)
+    fta: Mapped[int | None] = mapped_column(Integer)
+    oreb: Mapped[int | None] = mapped_column(Integer)
+    dreb: Mapped[int | None] = mapped_column(Integer)
+    plus_minus: Mapped[int | None] = mapped_column(Integer)
+    updated_at: Mapped[datetime] = _ts(default=utcnow)
+
+
+class LivePlay(Base):
+    """One play-by-play event. Unique per (game, provider event id); a provider correction keeps the old wording."""
+    __tablename__ = "live_plays"
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    game_id: Mapped[str] = mapped_column(String(12), index=True)
+    event_id: Mapped[str] = mapped_column(String(24))
+    sequence: Mapped[int] = mapped_column(Integer)
+    period: Mapped[int] = mapped_column(Integer)
+    clock: Mapped[str | None] = mapped_column(String(12))
+    elapsed_s: Mapped[float | None] = mapped_column(Float)        # game seconds elapsed at the event
+    team_id: Mapped[int | None] = mapped_column(BigInteger)
+    kind: Mapped[str] = mapped_column(String(16), index=True)     # made|missed|free_throw|rebound|turnover|foul|substitution|timeout|period|review|jumpball|other
+    type_text: Mapped[str] = mapped_column(String(64))
+    text: Mapped[str] = mapped_column(Text)
+    scoring: Mapped[bool] = mapped_column(Boolean, default=False)
+    score_value: Mapped[int] = mapped_column(Integer, default=0)
+    home_score: Mapped[int | None] = mapped_column(Integer)
+    away_score: Mapped[int | None] = mapped_column(Integer)
+    athlete_ids: Mapped[list] = mapped_column(JS, default=list)   # provider athlete ids, in the order published
+    player_ids: Mapped[list] = mapped_column(JS, default=list)    # canonical ids where matched (null entries kept)
+    provider_at: Mapped[datetime | None] = _ts()
+    ingested_at: Mapped[datetime] = _ts(default=utcnow)
+    revision: Mapped[int] = mapped_column(Integer, default=0)
+    corrections: Mapped[list] = mapped_column(JS, default=list)
+    __table_args__ = (UniqueConstraint("game_id", "event_id", name="uq_live_play_event"),
+                      Index("ix_live_plays_game_seq", "game_id", "sequence"))
+
+
+class LiveFollow(Base):
+    __tablename__ = "live_follows"
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    owner: Mapped[str] = mapped_column(String(120), index=True)
+    kind: Mapped[str] = mapped_column(String(8))                  # game|player|team
+    ref_id: Mapped[str] = mapped_column(String(24))
+    created_at: Mapped[datetime] = _ts(default=utcnow)
+    __table_args__ = (UniqueConstraint("owner", "kind", "ref_id", name="uq_live_follow"),)
+
+
+class LiveMilestone(Base):
+    """An owner-defined tracking threshold. Progress toward it is an observation, never a forecast."""
+    __tablename__ = "live_milestones"
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    owner: Mapped[str] = mapped_column(String(120), index=True)
+    player_id: Mapped[int] = mapped_column(BigInteger, index=True)
+    stat: Mapped[str] = mapped_column(String(16))
+    threshold: Mapped[float] = mapped_column(Float)
+    game_date: Mapped[date] = mapped_column(Date, index=True)
+    notify: Mapped[bool] = mapped_column(Boolean, default=True)
+    reached_at: Mapped[datetime | None] = _ts()
+    reached_value: Mapped[float | None] = mapped_column(Float)
+    created_at: Mapped[datetime] = _ts(default=utcnow)
+    deleted_at: Mapped[datetime | None] = _ts()
+
+
+LIVE_TABLES = [LiveGame, LivePlayerBox, LivePlay, LiveFollow, LiveMilestone]
+
 JARVIS_TABLES = [AiBudgetPolicy, AiUsage, JarvisConversation, JarvisMessage, JarvisToolCall, JarvisMemory, JarvisBriefing,
                  JarvisEvent]
 

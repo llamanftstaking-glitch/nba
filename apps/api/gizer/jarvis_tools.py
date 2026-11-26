@@ -562,6 +562,122 @@ def t_request_job(a: JobRequest, ctx):
             "result_available": "Call the matching read tool again in about a minute."}
 
 
+# ------------------------------------------------------------------ GIZER LIVE (observed in-game data)
+class _P:
+    """Stand-in principal for calling live routes as functions: the tool runs for the conversation's owner."""
+
+    def __init__(self, email):
+        self.email, self.role = email or "", "owner"
+
+
+class LiveGameArg(Args):
+    game_id: str = Field(max_length=24, description="Game id, e.g. from get_live_scoreboard or page context.")
+
+
+def t_live_scoreboard(a: DateArg, ctx):
+    from .api_live import live_scoreboard
+    return live_scoreboard(a.date, _P(ctx.get("owner")))
+
+
+def t_live_game_state(a: LiveGameArg, ctx):
+    from .api_live import live_game
+    return live_game(a.game_id, _P(ctx.get("owner")))
+
+
+class LiveBox(Args):
+    game_id: str = Field(max_length=24)
+    min_fouls: int | None = Field(None, ge=1, le=6, description="Only players with at least this many personal fouls.")
+    on_court_only: bool = False
+
+
+def _slim_box(r: dict) -> dict:
+    keep = ("player_id", "name", "role", "on_court", "dnp", "minutes", "pts", "reb", "ast", "fg3m", "stl", "blk", "tov", "pf", "fgm", "fga",
+            "fg3a", "ftm", "fta", "plus_minus", "pra", "foul_trouble", "true_shooting_pct", "pregame")
+    return {k: r.get(k) for k in keep}
+
+
+def t_live_boxscore(a: LiveBox, ctx):
+    from .api_live import live_boxscore
+    d = live_boxscore(a.game_id, sort="minutes", order="desc")
+    for side in ("home", "away"):
+        rows = [r for r in d[side]["players"] if not r["dnp"]]
+        if a.min_fouls:
+            rows = [r for r in rows if (r["pf"] or 0) >= a.min_fouls]
+        if a.on_court_only:
+            rows = [r for r in rows if r["on_court"] is True]
+        d[side]["players"] = [_slim_box(r) for r in rows]
+    return d
+
+
+class LivePlayerArg(Args):
+    player_id: int = Field(ge=1)
+    date: str | None = Field(None, pattern=r"^\d{4}-\d{2}-\d{2}$")
+
+
+def t_live_player(a: LivePlayerArg, ctx):
+    from .api_live import live_player
+    return live_player(a.player_id, a.date, _P(ctx.get("owner")))
+
+
+class LivePlaysArg(Args):
+    game_id: str = Field(max_length=24)
+    filter: Literal["all", "scoring", "fouls", "substitutions"] = "all"
+    period: int | None = Field(None, ge=1, le=10, description="Only plays from this period (3 = third quarter).")
+    player_id: int | None = Field(None, ge=1)
+    limit: int = Field(40, ge=1, le=80)
+
+
+def t_live_plays(a: LivePlaysArg, ctx):
+    from .api_live import live_plays
+    d = live_plays(a.game_id, filter=a.filter, team_id=None, player_id=a.player_id, after_sequence=None, order="desc", limit=500, offset=0)
+    rows = [r for r in d["items"] if a.period is None or r["period"] == a.period]
+    d["total"] = len(rows)
+    d["items"] = [{k: r[k] for k in ("period", "clock", "team_side", "kind", "text", "scoring", "home_score", "away_score", "corrected")}
+                  for r in rows[:a.limit]]
+    d["order"] = "newest first"
+    return d
+
+
+def t_live_rotations(a: LiveGameArg, ctx):
+    from .api_live import live_rotations
+    return live_rotations(a.game_id)
+
+
+def t_live_team_stats(a: LiveGameArg, ctx):
+    from .api_live import live_team_stats
+    return live_team_stats(a.game_id)
+
+
+def t_followed(a: DateArg, ctx):
+    from .api_live import live_watchlist
+    return live_watchlist(a.date, _P(ctx.get("owner")))
+
+
+def t_pregame_comparison(a: LiveGameArg, ctx):
+    """Pregame projection beside what has been observed, per player. Meaningful as a comparison once the game is final."""
+    from .api_live import live_boxscore
+    d = live_boxscore(a.game_id, sort="minutes", order="desc")
+    out = {"game_id": d["game_id"], "status": d["status"], "period": d["period"], "observed_at": d.get("observed_at"), "stale": d.get("stale")}
+    for side in ("home", "away"):
+        rows = []
+        for r in d[side]["players"]:
+            pre = r.get("pregame")
+            if r["dnp"] or not pre:
+                continue
+            rows.append({"player_id": r["player_id"], "name": r["name"], "role": r["role"],
+                         "minutes": {"projected": pre.get("proj_min"), "actual": r["minutes"]},
+                         **{st: {"projected": pre.get(st), "actual": r[st]} for st in ("pts", "reb", "ast", "fg3m") if pre.get(st) is not None}})
+        out[side] = {"abbr": d[side]["abbr"], "players": rows}
+    out["note"] = ("Projections are the last ones published before tipoff and are never changed. While the game is in progress "
+                   "the actual values are partial, so a shortfall is expected and is not a forecast error yet.")
+    return out
+
+
+def t_paper_progress(a: DateArg, ctx):
+    from .api_live import live_research_tracker
+    return live_research_tracker(a.date, limit=25)
+
+
 def memory_dict(m: JarvisMemory) -> dict:
     return {"id": m.id, "category": m.category, "status": m.status, "subject_type": m.subject_type, "subject_id": m.subject_id,
             "text": m.text, "sources": m.sources, "observed_on": m.observed_on, "created_by": m.created_by, "created_at": m.created_at}
@@ -618,6 +734,17 @@ TOOLS: list[Tool] = [
     _t("get_model_error_history", "Loading backtests", "Backtest runs and forecast-error metrics per model.", NoArgs, t_backtests, "learning"),
     _t("get_paper_testing_results", "Loading paper results", "Settled paper-testing results: record, calibration and breakdowns. Simulated units, not money.", Results, t_paper_results, "learning"),
     _t("get_settled_research_records", "Loading paper tickets", "Paper tickets by status.", Tickets, t_paper_tickets, "learning"),
+    _t("get_live_scoreboard", "Reading the live scoreboard", "Observed scores, period, clock and status for every game on a date, with how fresh each observation is. Use for 'what is happening tonight'.", DateArg, t_live_scoreboard, "live"),
+    _t("get_live_game_state", "Reading the live game", "One game's observed state: score by quarter, leaders, team statistics, score-progression facts (lead changes, largest leads, runs), latest plays and automatic period summaries.", LiveGameArg, t_live_game_state, "live"),
+    _t("get_live_boxscore", "Reading the live box score", "Observed player statistics for a game (minutes, points, rebounds, assists, fouls, shooting, plus/minus), on-court status where derivable, with the pregame projection beside each player. Can filter by fouls or to players on the court.", LiveBox, t_live_boxscore, "live"),
+    _t("get_live_player_statistics", "Reading the player's live line", "One player's observed line in today's game with game status, plus the owner's tracking thresholds for him.", LivePlayerArg, t_live_player, "live"),
+    _t("get_live_play_by_play", "Reading the play-by-play", "Recorded game events (source wording), newest first; filter by type, period or player. Use for 'what happened in the third quarter'.", LivePlaysArg, t_live_plays, "live"),
+    _t("get_live_rotation_history", "Reading live rotations", "Who is on the court and each player's stints and minutes by quarter, derived from starters and substitution events; says so when it cannot be derived.", LiveGameArg, t_live_rotations, "live"),
+    _t("get_live_team_statistics", "Reading live team statistics", "Published team totals for both sides (shooting, rebounds, assists, turnovers, fouls, paint and fast-break points).", LiveGameArg, t_live_team_stats, "live"),
+    _t("get_followed_games", "Loading followed games", "The owner's watchlist: followed games, followed players with their live lines and tracking thresholds, favourite teams.", DateArg, t_followed, "live"),
+    _t("get_followed_players", "Loading followed players", "Same watchlist as get_followed_games; use when the question is about followed players and their live lines.", DateArg, t_followed, "live"),
+    _t("get_pregame_projection_comparison", "Comparing with pregame projections", "Per player: pregame projected minutes/points/rebounds/assists beside what has been observed so far.", LiveGameArg, t_pregame_comparison, "live"),
+    _t("get_paper_research_progress", "Reading paper research progress", "Paper tickets for a date with each leg's line beside its observed statistic and settlement status. Observation only.", DateArg, t_paper_progress, "live"),
     _t("get_agent_status", "Checking the research agents", "The 18 agent roles with last run, status, last report and errors.", NoArgs, t_agent_status, "operations"),
     _t("get_data_provider_health", "Checking data providers", "Provider status, data freshness, coverage and warnings.", NoArgs, t_data_health, "operations"),
     _t("get_system_health", "Checking system health", "Worker/scheduler heartbeats, schedule, recent jobs and pause state.", NoArgs, t_system_status, "operations"),

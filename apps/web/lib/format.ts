@@ -191,3 +191,18 @@ export function classLabel(c: string | null | undefined): string {
   if (!c) return "—";
   return CLASSIFICATION_LABELS[c] ?? titleCase(c);
 }
+
+export function fmtClockET(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return `${d.toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit", second: "2-digit" })} ET`;
+}
+
+/** "12s ago" / "3 min ago" from an age in seconds. */
+export function fmtAge(age: number | null | undefined): string | null {
+  if (!isNum(age)) return null;
+  if (age < 90) return `${Math.max(0, Math.round(age))}s ago`;
+  if (age < 5400) return `${Math.round(age / 60)} min ago`;
+  return `${(age / 3600).toFixed(1)} h ago`;
+}

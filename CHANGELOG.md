@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.0 — 2026-11-26 (GIZER LIVE)
+* Live game data: a dedicated `live` service polls scoreboard, box score and play-by-play (about every 15 s during
+  games) and stores observations with timestamps, corrections and freshness.
+* Game centre data: line scores, team statistics, sortable player box with pregame projection beside it, play-by-play
+  with filters, rotations and on-court status derived from substitutions (only when consistent), observed score
+  progression, deterministic end-of-quarter / halftime / final summaries.
+* Watchlist (games, players, teams), tracking thresholds with events when reached, paper research tracker.
+* Ten JARVIS live tools; JARVIS describes observed games and gives no in-game probability.
+* Migration `0005_live`. Evidence and limits: docs/operations/LIVE-VALIDATION.md.
+
 ## 0.5.1 — 2026-11-26 (JARVIS images)
 * JARVIS accepts up to three images per message (attach, paste, drag-and-drop; downsized in the browser), reads a
   parlay or pick slip, and checks each leg against stored records. New read-only tool `evaluate_combination`

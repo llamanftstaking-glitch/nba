@@ -1,6 +1,6 @@
 # Project state
 
-_Last updated: 2026-11-26, after JARVIS (0.5.0)._
+_Last updated: 2026-11-26, GIZER LIVE backend complete; live interface in progress._
 
 ## Status
 | Area | Status |
@@ -14,6 +14,9 @@ _Last updated: 2026-11-26, after JARVIS (0.5.0)._
 | Page audit 2026-11-25 (bounded lists, pagination, collapsed diagnostics, non-blank defaults) | IMPLEMENTED, TESTED (128 backend tests, 2,103 frontend smoke checks), VERIFIED locally against a live-data slate; mobile screenshots at real volume not reviewed |
 | JARVIS backend (budget controller, 39 tools, conversation loop, memory, events, briefings, admin API) | IMPLEMENTED, TESTED with a scripted provider (143 backend tests). Real Claude API NOT VERIFIED: needs `ANTHROPIC_API_KEY` on Server M, then `gizer jarvis-verify --ping` |
 | JARVIS interface (`/jarvis`, side panel with page context, `/admin/ai-budget`) | IMPLEMENTED, TESTED (2,315 frontend smoke checks against the mock); streaming through the web proxy VERIFIED locally against the real backend with a scripted provider. Mid-stream disconnect and very long conversations NOT VERIFIED |
+| JARVIS image attachments and `evaluate_combination` (0.5.1) | IMPLEMENTED, TESTED, DEPLOYED. Real Claude API still NOT VERIFIED (the server's key was rejected by the provider) |
+| GIZER LIVE backend (ingestion, API, JARVIS live tools) | IMPLEMENTED, TESTED on real captured payloads (154 backend tests), VERIFIED against real games in progress on the development machine. NOT VERIFIED on Server M |
+| GIZER LIVE interface | IN PROGRESS |
 | Lineup projection without loaded history (last ESPN box score) and `gizer quickstart` | IMPLEMENTED, TESTED, rehearsed on an empty database; not yet run on Server M |
 | Minutes model `minutes_blend 1.0.0` | Candidate — failed its gate (5.40 vs 5.34 minutes MAE for the best baseline) |
 | Models | team_game, player_reb, player_ast, player_fg3m, player_stl, player_tov in production; player_pts, player_blk, player_pra, player_pr, player_pa, player_ra are candidates (failed the gate) |

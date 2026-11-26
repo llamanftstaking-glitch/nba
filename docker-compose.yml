@@ -78,6 +78,14 @@ services:
     mem_limit: 512m
     cpus: 0.5
 
+  # GIZER LIVE: polls the public scoreboard / box score / play-by-play feed and stores observations.
+  # A separate, small process so long research jobs can never delay live scores.
+  live:
+    <<: *api
+    command: ["gizer", "live"]
+    mem_limit: 256m
+    cpus: 0.5
+
   web:
     build: ./apps/web
     image: gizer-nba-web:${GIZER_VERSION:-local}
