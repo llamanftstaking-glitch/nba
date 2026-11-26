@@ -808,6 +808,140 @@ function largeRoute(method, path, q) {
   return undefined;
 }
 
+
+// ---------- JARVIS (assistant, memory, briefings, AI budget) ----------
+const VIEWER = { email: "viewer@fixture.test", role: "viewer" };
+const J = { state: "ready", convId: 40, msgId: 900, memId: 60, briefId: 80, reqId: 3000 };
+const J_MODELS = { standard: "FIXTURE-sonnet-model", deep: "FIXTURE-opus-model", light: "FIXTURE-haiku-model" };
+const J_MSG = { ready: "FIXTURE: assistant ready; model provider reachable.", provider_unavailable: "FIXTURE: no provider key is configured on the server.", budget_limited: "FIXTURE: the lifetime AI budget has reached its suspend line.", paused: "FIXTURE: AI requests are paused by the owner." };
+const POLICY = { lifetime_cap_usd: 100, suspend_at_usd: 95, daily_cap_usd: 5, allocations: { sonnet: 60, haiku: 15, opus: 15, dev: 10 }, per_request_cap_usd: { standard: 0.5, deep: 2, light: 0.1 }, paused: false, buffer_released: false, notifications: true, updated_at: iso(600), updated_by: USER.email };
+const SPEND = { spent: 12.3456, today: 0.4321 };
+const jarvisState = () => { const st = POLICY.paused ? "paused" : J.state; return { state: st, message: J_MSG[st], models: J_MODELS, models_verified: true, budget: { spent_usd: +SPEND.spent.toFixed(4), remaining_usd: +(POLICY.lifetime_cap_usd - SPEND.spent).toFixed(4), usable_usd: +(POLICY.suspend_at_usd - SPEND.spent).toFixed(4), today_usd: +SPEND.today.toFixed(4), state: st === "budget_limited" ? "budget_limited" : st === "paused" ? "paused" : "ok" }, daily_cap_usd: POLICY.daily_cap_usd, lifetime_cap_usd: POLICY.lifetime_cap_usd }; };
+const CONVS = [];
+function resolveContext(c = {}) {
+  const out = {};
+  const g = allGames().find((x) => x.id === c.game_id) ?? LG.games.find((x) => x.id === c.game_id);
+  if (g) out.game = { game_id: g.id, label: g.label, date: g.date };
+  const p = PLAYERS.find((x) => String(x.id) === String(c.player_id));
+  if (p) out.player = { player_id: p.id, name: p.name, team: p.team_abbr };
+  const k = KALSHI.find((x) => x.ticker === c.ticker);
+  if (k) out.kalshi_market = { ticker: k.ticker, title: k.title };
+  if (c.selection_id != null && SEL_BY_ID.has(Number(c.selection_id))) out.selection = { record_id: Number(c.selection_id) };
+  if (c.combo_id != null && Object.values(C).some((x) => x.uid === c.combo_id)) out.combination = { record_id: c.combo_id };
+  if (c.date) out.date = c.date;
+  if (c.page) out.page = c.page;
+  return out;
+}
+const convRef = ({ messages, tool_activity, ...c }) => c;
+const SUGGESTIONS = [
+  { label: "FIXTURE: Today's slate overview", text: "Give me the slate overview for today." },
+  { label: "FIXTURE: Injury changes that matter", text: "Which injury changes are material today?" },
+  { label: "Budget status", text: "/budget" },
+  { label: "System health", text: "/health" },
+  { label: "FIXTURE: Biggest Kalshi moves", text: "Which Kalshi contracts moved most today?" },
+];
+const MEMORY = [
+  { id: ++J.memId, category: "research", status: "verified", subject_type: "player", subject_id: 9001, text: "FIXTURE memory: FIXTURE Player A has started every game in the stored sample.", sources: ["FIXTURE box scores"], observed_on: TODAY, created_by: "jarvis", created_at: iso(300) },
+  { id: ++J.memId, category: "preference", status: "preference", subject_type: null, subject_id: null, text: "FIXTURE memory: the owner prefers tables over prose for slate summaries.", sources: [], observed_on: null, created_by: USER.email, created_at: iso(900) },
+];
+const BRIEFINGS = [
+  { id: ++J.briefId, kind: "morning", date: TODAY, text: "## FIXTURE morning briefing\n\n- 3 games on the slate\n- **1** material injury change\n\n| Game | Lineups |\n|---|---|\n| DET @ ORL | projected |", generator: "FIXTURE-haiku-model", cost_usd: 0.0123, created_at: iso(400) },
+  { id: ++J.briefId, kind: "overnight", date: TODAY, text: "FIXTURE overnight briefing: no settled paper tickets changed overnight.", generator: "deterministic", cost_usd: 0, created_at: iso(700) },
+];
+const J_EVENTS = [
+  { id: 1, kind: "availability", severity: "alert", title: "FIXTURE Player F (ORL): Questionable → Out", detail: "FIXTURE ankle; 3 research records to reassess.", game_date: TODAY, occurred_at: iso(150) },
+  { id: 2, kind: "lineup", severity: "notice", title: "FIXTURE: DET projected lineup updated", detail: null, game_date: TODAY, occurred_at: iso(75) },
+  { id: 3, kind: "system", severity: "info", title: "FIXTURE: afternoon edition published", detail: "FIXTURE detail.", game_date: TODAY, occurred_at: iso(45) },
+];
+const BREQS = Array.from({ length: 6 }, (_, i) => ({ id: ++J.reqId, at: iso(30 + i * 40), status: ["settled", "settled", "released", "reserved", "assumed", "settled"][i], bucket: ["sonnet", "haiku", "opus", "sonnet", "sonnet", "dev"][i], model: Object.values(J_MODELS)[i % 3], task: ["jarvis.chat", "briefing.morning", "jarvis.deep", "jarvis.chat", "jarvis.chat", "dev.eval"][i], reserved_usd: 0.05 + i / 100, actual_usd: i === 2 || i === 3 ? null : 0.031 + i / 200, input_tokens: 4200 + i * 100, output_tokens: 600 + i * 10, cache_read_tokens: i % 2 ? 3000 : 0, cache_write_tokens: 0, attempt: 1, routing: { handler: "model" }, error: i === 2 ? "FIXTURE: provider timeout; reservation released." : null, conversation_id: null }));
+const usage = (key, n, u) => ({ key, requests: n, usd: u, input_tokens: n * 4200, output_tokens: n * 610, cache_read_tokens: n * 1500, cache_write_tokens: n * 200 });
+function aiBudget() {
+  const st = jarvisState();
+  return { policy: POLICY, spent_usd: st.budget.spent_usd, pending_usd: 0.12, remaining_usd: st.budget.remaining_usd, usable_usd: st.budget.usable_usd, today_usd: st.budget.today_usd, month_usd: 9.87, state: st.budget.state,
+    checkpoints: [10, 25, 50, 75, 90].map((pct) => ({ pct, usd: pct, reached: SPEND.spent >= pct })),
+    buckets: [["sonnet", 8.1], ["haiku", 1.9], ["opus", 1.6], ["dev", 0.75]].map(([bucket, used_usd]) => ({ bucket, allocation_usd: POLICY.allocations[bucket], used_usd })),
+    by_model: [usage(J_MODELS.standard, 210, 8.1), usage(J_MODELS.light, 340, 1.9), usage(J_MODELS.deep, 9, 1.6)], by_task: [usage("jarvis.chat", 190, 7.2), usage("briefing.morning", 60, 1.1), usage("jarvis.deep", 9, 1.6)], by_agent: [usage("jarvis", 199, 8.8), usage("briefing-writer", 300, 2.4)],
+    requests: 559, input_tokens: 2347800, output_tokens: 340990, cache_read_tokens: 838500, cache_write_tokens: 111800, cache_savings_usd: 2.2641, avg_usd_per_day: 0.8817, est_days_remaining: 94,
+    daily: Array.from({ length: 30 }, (_, i) => ({ date: shift(TODAY, -(29 - i)), requests: 10 + (i * 7) % 30, usd: +(0.2 + ((i * 37) % 100) / 100).toFixed(4) })),
+    prices: { [J_MODELS.standard]: { in: 3, out: 15, cache_read: 0.3, cache_write: 3.75 }, [J_MODELS.light]: { in: 1, out: 5, cache_read: 0.1, cache_write: 1.25 }, [J_MODELS.deep]: { in: 15, out: 75, cache_read: 1.5, cache_write: 18.75 } },
+    notes: ["FIXTURE note: prices are per million tokens as configured on the server.", "FIXTURE note: requests stop at the suspend line unless the safety buffer is released."], assistant: st };
+}
+const OWNER_ONLY = () => ({ __status: 403, ...err("forbidden", "FIXTURE: this area is available to the owner account only.") });
+function jarvisRoute(method, path, q, body, role) {
+  const owner = role === "owner";
+  if (path === "/__mock/jarvis") { if (method === "POST" && body.state) J.state = body.state; return { state: J.state }; }
+  if (method === "GET") {
+    if (path === "/jarvis/state") return jarvisState();
+    if (path === "/jarvis/suggestions") { const ctx = resolveContext(Object.fromEntries(q)); return { context: ctx, items: [...(ctx.game ? [{ label: `FIXTURE: What matters in ${ctx.game.label}?`, text: `What matters most in ${ctx.game.label}?` }] : []), ...(ctx.player ? [{ label: `FIXTURE: ${ctx.player.name} minutes outlook`, text: `What is the minutes outlook for ${ctx.player.name}?` }] : []), ...SUGGESTIONS] }; }
+    if (path === "/jarvis/tools") return { items: [{ name: "get_slate", label: "FIXTURE: Reading the slate", group: "slate", description: "FIXTURE", writes: false }], total: 1, note: "FIXTURE note." };
+    if (path === "/jarvis/conversations") return { items: [...CONVS].sort((a, b) => b.updated_at.localeCompare(a.updated_at)).slice(0, Number(q.get("limit") ?? 30)).map(convRef) };
+    const cm = path.match(/^\/jarvis\/conversations\/(\d+)$/);
+    if (cm) return CONVS.find((c) => String(c.id) === cm[1]) ?? { __status: 404, ...err("not_found", "FIXTURE: conversation not found.") };
+    if (path === "/jarvis/memory") return { items: MEMORY };
+    if (path === "/jarvis/briefings") return { items: BRIEFINGS };
+    if (path === "/jarvis/events") return { items: J_EVENTS };
+    if (path === "/admin/ai-budget") return owner ? aiBudget() : OWNER_ONLY();
+    if (path === "/admin/ai-budget/requests") return owner ? { items: BREQS.slice(0, Number(q.get("limit") ?? 50)) } : OWNER_ONLY();
+  }
+  if (method === "POST") {
+    if (!owner && (path.startsWith("/jarvis/") || path === "/admin/ai-budget")) return OWNER_ONLY();
+    if (path === "/jarvis/conversations") { const now = new Date().toISOString(); const c = { id: ++J.convId, title: null, context: resolveContext(body.context), created_at: now, updated_at: now, messages: [], tool_activity: [] }; CONVS.push(c); return convRef(c); }
+    const dm = path.match(/^\/jarvis\/conversations\/(\d+)\/delete$/);
+    if (dm) { const i = CONVS.findIndex((c) => String(c.id) === dm[1]); if (i < 0) return { __status: 404, ...err("not_found", "FIXTURE: conversation not found.") }; CONVS.splice(i, 1); return { deleted: true }; }
+    if (path === "/jarvis/memory") { if (!body.text || !body.category) return { __status: 422, ...err("invalid", "FIXTURE: category and text are required.") }; const m = { id: ++J.memId, category: body.category, status: body.status ?? (body.category === "preference" ? "preference" : "hypothesis"), subject_type: body.subject_type ?? null, subject_id: body.subject_id ?? null, text: String(body.text), sources: [], observed_on: null, created_by: USER.email, created_at: new Date().toISOString() }; MEMORY.unshift(m); return m; }
+    const mm = path.match(/^\/jarvis\/memory\/(\d+)\/delete$/);
+    if (mm) { const i = MEMORY.findIndex((m) => String(m.id) === mm[1]); if (i >= 0) MEMORY.splice(i, 1); return { deleted: true }; }
+    if (path === "/jarvis/briefings/run") { if (body.kind === "postgame") return { created: false, reason: "FIXTURE: no games are final yet, so there is nothing to brief." }; const b = { id: ++J.briefId, kind: body.kind, date: TODAY, text: `FIXTURE ${body.kind} briefing generated on request.`, generator: "deterministic", cost_usd: 0, created_at: new Date().toISOString() }; BRIEFINGS.unshift(b); return { created: true, id: b.id, generator: b.generator, cost_usd: 0 }; }
+    if (path === "/admin/ai-budget") {
+      if (body.lifetime_cap_usd !== undefined && body.lifetime_cap_usd > 100) return { __status: 422, ...err("invalid", "FIXTURE: the lifetime cap cannot exceed the authorised $100.") };
+      const cap = body.lifetime_cap_usd ?? POLICY.lifetime_cap_usd;
+      if (body.allocations && Object.values(body.allocations).reduce((a, b) => a + b, 0) > cap) return { __status: 422, ...err("invalid", "FIXTURE: allocations exceed the lifetime cap.") };
+      Object.assign(POLICY, body, { updated_at: new Date().toISOString(), updated_by: USER.email });
+      return POLICY;
+    }
+  }
+  return undefined;
+}
+/** Streaming reply for POST /jarvis/conversations/{id}/messages (text/event-stream). */
+function jarvisStream(res, conv, body) {
+  res.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-store, no-transform", Connection: "keep-alive", "X-Accel-Buffering": "no" });
+  const text = String(body.text ?? "");
+  const now = () => new Date().toISOString();
+  conv.messages.push({ id: ++J.msgId, role: "user", text, model: null, stop_reason: null, sources: [], cost_usd: null, created_at: now(), tool_calls: [] });
+  if (!conv.title) conv.title = text.slice(0, 60);
+  conv.updated_at = now();
+  const emit = (e) => res.write(`data: ${JSON.stringify(e)}\n\n`);
+  const finish = (model, answer, cost, sources) => { const m = { id: ++J.msgId, role: "assistant", text: answer, model, stop_reason: "end_turn", sources, cost_usd: cost, created_at: now(), tool_calls: [] }; conv.messages.push(m); conv.updated_at = now(); emit({ type: "done", message_id: m.id, model, cost_usd: cost, sources, stop_reason: "end_turn" }); res.end(); };
+  const slash = text.trim().startsWith("/");
+  if (text.includes("trigger-budget-error")) {
+    emit({ type: "status", state: "processing", routing: { handler: "model", mode: "standard", reason: "FIXTURE" }, model: J_MODELS.standard });
+    return setTimeout(() => { J.state = "budget_limited"; emit({ type: "error", code: "lifetime_cap", message: "FIXTURE: the lifetime AI budget cap has been reached; no model request was sent.", state: "budget_limited", cost_usd: 0 }); res.end(); }, 150);
+  }
+  if (text.includes("trigger-drop")) { emit({ type: "status", state: "processing", routing: { handler: "model" }, model: J_MODELS.standard }); emit({ type: "text", delta: "FIXTURE partial " }); return setTimeout(() => res.destroy(), 150); }
+  if (slash) {
+    emit({ type: "status", state: "processing", routing: { handler: "command", tool: "budget_status", reason: "FIXTURE: slash command" }, model: "deterministic" });
+    emit({ type: "tool_start", id: "t1", tool: "budget_status", label: "FIXTURE: Reading the AI budget ledger", args: {} });
+    return setTimeout(() => { emit({ type: "tool_end", id: "t1", tool: "budget_status", ok: true, ms: 12 }); const st = jarvisState(); const ans = `**FIXTURE budget**\n\n- Spent: $${st.budget.spent_usd.toFixed(2)}\n- Remaining: $${st.budget.remaining_usd.toFixed(2)}`; emit({ type: "text", delta: ans }); finish("deterministic", ans, 0, [{ tool: "budget_status", label: "FIXTURE: Reading the AI budget ledger", args: {} }]); }, 120);
+  }
+  if (jarvisState().state !== "ready") { emit({ type: "error", code: jarvisState().state === "paused" ? "paused" : "provider_unavailable", message: jarvisState().message, state: jarvisState().state }); return res.end(); }
+  const deep = body.mode === "deep", model = deep ? J_MODELS.deep : J_MODELS.standard, cost = deep ? 0.2145 : 0.0312;
+  const parts = ["## FIXTURE slate summary\n\n", "Three games are on the slate. ", "**One** material injury change was recorded.\n\n", "| Game | Lineup status | Qualified |\n", "|---|---|---|\n| DET @ ORL | projected | 2 |\n", "| LAL @ DEN | confirmed | 1 |\n\n", "- Source data is `FIXTURE` only\n- Figures come from stored records"];
+  const sources = [{ tool: "get_slate", label: "FIXTURE: Reading the slate", args: { date: TODAY } }, { tool: "get_injury_changes", label: "FIXTURE: Inspecting the injury report", args: { date: TODAY, material: true } }];
+  const steps = [
+    () => emit({ type: "status", state: "processing", routing: { handler: "model", mode: deep ? "deep" : "standard", reason: "FIXTURE" }, model }),
+    () => emit({ type: "tool_start", id: "t1", tool: "get_slate", label: sources[0].label, args: sources[0].args }),
+    () => emit({ type: "tool_end", id: "t1", tool: "get_slate", ok: true, ms: 41 }),
+    () => emit({ type: "tool_start", id: "t2", tool: "get_injury_changes", label: sources[1].label, args: sources[1].args }),
+    () => emit({ type: "tool_end", id: "t2", tool: "get_injury_changes", ok: true, ms: 67 }),
+    ...parts.map((delta) => () => emit({ type: "text", delta })),
+    () => emit({ type: "usage", cost_usd: cost, total_cost_usd: cost, input_tokens: 4200, output_tokens: 310, cache_read_tokens: 3000 }),
+    () => { SPEND.spent += cost; SPEND.today += cost; conv.tool_activity.push(...sources.map((x, i) => ({ ...x, ok: true, error: null, ms: i ? 67 : 41, truncated: false, at: now() }))); finish(model, parts.join(""), cost, sources); },
+  ];
+  let i = 0;
+  const tick = () => { if (res.destroyed) return; steps[i++](); if (i < steps.length) setTimeout(tick, 110); };
+  tick();
+}
+
 // ---------- handlers ----------
 const summaryNow = () => SUMMARY;
 
@@ -1141,16 +1275,29 @@ const server = http.createServer((req, res) => {
     if (path === "/health") return send(res, 200, { status: "ok" });
     if (path === "/health/ready") return send(res, 200, { status: "degraded", checks: { database: true, worker: true, scheduler: false } });
     if (path === "/auth/login" && method === "POST") {
-      if (body.email === USER.email && body.password === PASSWORD) {
-        return send(res, 200, { user: USER, csrf: CSRF }, { "Set-Cookie": "gizer_session=fixture-session; HttpOnly; Path=/; SameSite=Lax" });
-      }
+      const who = body.password === PASSWORD ? (body.email === USER.email ? USER : body.email === VIEWER.email ? VIEWER : null) : null;
+      if (who) return send(res, 200, { user: who, csrf: CSRF }, { "Set-Cookie": `gizer_session=${who.role === "owner" ? "fixture-session" : "fixture-viewer"}; HttpOnly; Path=/; SameSite=Lax` });
       return send(res, 401, err("unauthenticated", "FIXTURE: invalid credentials."));
     }
-    const authed = /(?:^|;\s*)gizer_session=fixture-session(?:;|$)/.test(req.headers.cookie ?? "");
-    if (!authed) return send(res, 401, err("unauthenticated", "FIXTURE: session cookie missing."));
+    const cookie = req.headers.cookie ?? "";
+    const role = /(?:^|;\s*)gizer_session=fixture-session(?:;|$)/.test(cookie) ? "owner" : /(?:^|;\s*)gizer_session=fixture-viewer(?:;|$)/.test(cookie) ? "viewer" : null;
+    if (!role) return send(res, 401, err("unauthenticated", "FIXTURE: session cookie missing."));
+    if (method !== "GET" && method !== "POST") return send(res, 405, err("method_not_allowed", "FIXTURE: the API only allows GET and POST."));
     if (method === "POST" && req.headers["x-csrf-token"] !== CSRF) return send(res, 403, err("csrf", "FIXTURE: missing or invalid X-CSRF-Token."));
-    if (path === "/auth/me") return send(res, 200, { user: USER, csrf: CSRF });
+    if (path === "/auth/me") return send(res, 200, { user: role === "owner" ? USER : VIEWER, csrf: CSRF });
     if (path === "/auth/logout") return send(res, 200, { ok: true }, { "Set-Cookie": "gizer_session=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax" });
+
+    const sm = method === "POST" ? path.match(/^\/jarvis\/conversations\/(\d+)\/messages$/) : null;
+    if (sm) {
+      if (role !== "owner") return send(res, 403, err("forbidden", "FIXTURE: this area is available to the owner account only."));
+      const conv = CONVS.find((c) => String(c.id) === sm[1]);
+      if (!conv) return send(res, 404, err("not_found", "FIXTURE: conversation not found."));
+      return jarvisStream(res, conv, body);
+    }
+    if (path.startsWith("/jarvis/") || path.startsWith("/admin/ai-budget") || path === "/__mock/jarvis") {
+      const jr = jarvisRoute(method, path, url.searchParams, body, role);
+      if (jr !== undefined) { const st = jr.__status ?? 200; delete jr.__status; return send(res, st, jr); }
+    }
 
     const out = route(method, path, url.searchParams, body);
     const status = out.__status ?? 200;

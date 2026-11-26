@@ -310,7 +310,7 @@ export default function AiBudgetPage() {
       ) : forbidden ? (
         <div role="alert" className="rounded-lg bg-card p-5 ring-1 ring-inset ring-warn/40" data-testid="budget-forbidden">
           <p className="font-display text-lg font-semibold uppercase tracking-wide text-warn">Owner access required</p>
-          <p className="mt-1 text-sm text-soft">{q.error.message}</p>
+          <p className="mt-1 text-sm text-soft">{(q.error as ApiError).message}</p>
         </div>
       ) : q.isError ? (
         <ErrorState error={q.error} onRetry={() => void q.refetch()} />
