@@ -44,10 +44,10 @@ const DISCLAIMER = "Research and paper testing only. No outcome is guaranteed. N
 // The mandated footer sentence "No outcome is guaranteed" stays; it is removed before the vocabulary scan.
 const FORBIDDEN = [/\block\b/i, /\blocks\b/i, /guaranteed/i, /guarantee\b/i, /free money/i, /risk[- ]free/i, /can(?:[’']?t|not) lose/i, /sure thing/i, /sharp money/i, /smart money/i, /insider/i, /real[- ]?time/i, /live odds/i];
 
-const NAV = ["/jarvis", "/", "/games", "/picks", "/player-props", "/kalshi-intelligence", "/lineups", "/parlays", "/parlays/same-game", "/players", "/minutes", "/players/compare", "/players/history", "/matchups", "/injuries", "/builder", "/tickets", "/research/daily", "/results", "/performance", "/research-lab", "/agents", "/models", "/data-health", "/settings"];
-const OTHER = ["/kalshi-intelligence/KXFIX-A-PTS25", "/kalshi-intelligence/KXFIX-A-DD", "/games/FIX-G1", "/games/FIX-G2", "/players/9001", "/players/9004", "/players/compare?ids=9001,9005", "/teams", "/teams/1", "/exposure", "/markets", "/simulations", "/backtesting", "/admin", "/admin/ai-budget"];
+const NAV = ["/live", "/jarvis", "/", "/games", "/picks", "/player-props", "/kalshi-intelligence", "/lineups", "/parlays", "/parlays/same-game", "/players", "/minutes", "/players/compare", "/players/history", "/matchups", "/injuries", "/builder", "/tickets", "/research/daily", "/results", "/performance", "/research-lab", "/agents", "/models", "/data-health", "/settings"];
+const OTHER = ["/kalshi-intelligence/KXFIX-A-PTS25", "/kalshi-intelligence/KXFIX-A-DD", "/games/FIX-G1", "/games/FIX-G2", "/players/9001", "/players/9004", "/players/compare?ids=9001,9005", "/teams", "/teams/1", "/exposure", "/markets", "/simulations", "/backtesting", "/admin", "/admin/ai-budget", "/live/following", "/live/research-tracker", "/games/FIX-G1?tab=boxscore", "/games/FIX-G1?tab=plays", "/games/FIX-G1?tab=rotations", "/games/FIX-G1?tab=overview"];
 // The ten pages captured at every viewport for design review.
-const GALLERY = [["/", "overview"], ["/games", "games"], ["/lineups", "lineups"], ["/player-props", "player-props"], ["/players/9001", "player-profile"], ["/games/FIX-G1", "game"], ["/parlays", "parlays"], ["/results", "results"], ["/agents", "agents"], ["/data-health", "data-health"], ["/kalshi-intelligence", "kalshi"], ["/kalshi-intelligence/KXFIX-A-PTS25", "kalshi-detail"], ["/minutes", "minutes"], ["/injuries", "injuries"], ["/jarvis", "jarvis"], ["/admin/ai-budget", "ai-budget"]];
+const GALLERY = [["/", "overview"], ["/games", "games"], ["/lineups", "lineups"], ["/player-props", "player-props"], ["/players/9001", "player-profile"], ["/games/FIX-G1", "game"], ["/parlays", "parlays"], ["/results", "results"], ["/agents", "agents"], ["/data-health", "data-health"], ["/kalshi-intelligence", "kalshi"], ["/kalshi-intelligence/KXFIX-A-PTS25", "kalshi-detail"], ["/minutes", "minutes"], ["/injuries", "injuries"], ["/jarvis", "jarvis"], ["/admin/ai-budget", "ai-budget"], ["/live", "live"], ["/games/FIX-G1?tab=overview", "live-game"], ["/games/FIX-G1?tab=boxscore", "live-boxscore"], ["/games/FIX-G1?tab=rotations", "live-rotations"]];
 const VIEWPORTS = [[1920, 1080], [1440, 900], [1280, 800], [1024, 768], [768, 1024], [430, 932], [390, 844]];
 
 let passed = 0;
@@ -64,7 +64,8 @@ const slug = (route) => (route === "/" ? "overview" : route.replace(/^\//, "").r
 const bodyText = (page) => page.evaluate(() => document.body.innerText);
 
 async function settle(page) {
-  await page.waitForLoadState("networkidle").catch(() => {});
+  // a game page keeps an event stream open, so the network never goes idle there
+  await page.waitForLoadState("networkidle", { timeout: /\/games\/[^/?]+/.test(page.url()) ? 2500 : 30000 }).catch(() => {});
   await page.waitForFunction(() => !document.querySelector('[data-state="loading"]'), null, { timeout: 15000 }).catch(() => {});
   await page.waitForTimeout(200);
 }
@@ -113,6 +114,7 @@ async function visit(page, route, label, errors) {
   check(`[${label}] ${route} shows no error state`, (await page.locator('[data-state="error"]').count()) === 0);
   check(`[${label}] ${route} finished loading`, (await page.locator('[data-state="loading"]').count()) === 0);
   check(`[${label}] ${route} shows the research notice`, text.includes(DISCLAIMER));
+  check(`[${label}] ${route} shows the scoreboard strip`, (await page.locator('[data-testid="scoreboard-strip"]').count()) === 1);
   const scan = text.split(DISCLAIMER).join(" ");
   const hit = FORBIDDEN.find((re) => re.test(scan));
   check(`[${label}] ${route} has no forbidden vocabulary`, !hit, hit ? `${hit} near "${scan.slice(Math.max(0, scan.search(hit) - 30), scan.search(hit) + 40).replace(/\s+/g, " ")}"` : "");
@@ -140,6 +142,284 @@ function watch(page) {
     errors.push(`console: ${t}`);
   });
   return errors;
+}
+
+
+/** Moves the mock's scripted game (FIX-G1): phase 0 scheduled, 1 live Q1, 2 halftime, 3 live Q3, 4 final. */
+const mockLive = (page, body) => page.evaluate((b) => fetch("/api/v1/__mock/live", { method: "POST", credentials: "include", headers: { "Content-Type": "application/json", "X-CSRF-Token": "fixture-csrf-token" }, body: JSON.stringify(b) }).then((r) => r.json()), body);
+const OUTCOME_WORDS = /\b(winning|losing|wins?|loses?|won|lost|hit|hits|miss|missed|misses|cashed|cashing|on pace|bet|wager|stake)\b/i;
+
+/** GIZER LIVE: strip, /live, the game centre, following, thresholds, research tracker, player block. */
+async function liveFlow(page, label, errors, shot) {
+  const isMobile = label === "mobile";
+  const go = async (route) => {
+    await page.goto(`${BASE}${route}`, { waitUntil: "domcontentloaded" });
+    await settle(page);
+  };
+  const strip = page.locator('[data-testid="scoreboard-strip"]');
+  const g1 = '[data-game-id="FIX-G1"]';
+  errors.length = 0;
+
+  // --- before tipoff: nothing pulses, the game page opens on Research ---
+  await mockLive(page, { phase: 0, stale: false, streamError: false });
+  await go("/live");
+  check(`[${label}] live: three strip cards, none marked live before tipoff`, (await strip.locator('[data-testid="strip-card"]').count()) === 3 && (await page.locator('[data-testid="live-dot"]').count()) === 0);
+  check(`[${label}] live: scheduled card shows the tipoff in ET and no score`, /\d{1,2}:\d{2}\s?(AM|PM) ET/.test(await strip.locator(`${g1}`).innerText()) && !/\b0\b/.test(await strip.locator(`${g1}`).innerText()));
+  check(`[${label}] live: "no game has started" is stated, with upcoming and final sections`, (await page.locator('[data-testid="live-not-started"]').count()) + (await page.locator('[data-testid="live-upcoming"]').count()) >= 1 && (await page.locator('[data-testid="live-card"]').count()) === 3);
+  check(`[${label}] live: the polling note is shown once and is worded as delayed observations`, (await page.locator('[data-testid="poll-note"]').count()) === 1 && /delayed observations/.test(await page.locator('[data-testid="poll-note"]').innerText()));
+  await go("/games/FIX-G1");
+  check(`[${label}] game centre: six tabs, Research selected before tipoff`, (await page.locator('[role="tablist"][aria-label="Game centre"] [role="tab"]').count()) === 6 && (await page.locator('[data-tab="research"][aria-selected="true"]').count()) === 1 && (await page.locator('[data-testid="score-header"]').getAttribute("data-status")) === "scheduled");
+  check(`[${label}] game centre: no score and no LIVE marker before tipoff`, (await page.locator('[data-testid="score-header"] [data-testid="live-dot"]').count()) === 0 && !/\b0\b/.test(await page.locator('[data-testid="score-header"]').innerText()));
+
+  // --- live Q1 ---
+  await mockLive(page, { phase: 1 });
+  await go("/live");
+  check(`[${label}] live: one pulsing LIVE marker on the strip card, with period, clock and freshness`, (await strip.locator(`${g1} [data-testid="live-dot"]`).count()) === 1 && /Q1/.test(await strip.locator(g1).innerText()) && /6:12/.test(await strip.locator(g1).innerText()) && (await strip.locator(`${g1} [data-testid="freshness"][data-stale="0"]`).count()) === 1);
+  check(`[${label}] live: strip shows the observed score`, /14/.test(await strip.locator(g1).innerText()) && /12/.test(await strip.locator(g1).innerText()));
+  check(`[${label}] live: Live section holds the game with a line score and leaders`, (await page.locator(`[data-testid="live-live"] [data-testid="live-card"]`).count()) === 1 && (await page.locator('[data-testid="live-live"] [data-testid="line-score"]').count()) === 1 && (await page.locator('[data-testid="live-live"] [data-testid="live-leaders"]').count()) <= 1 && (await page.locator('[data-testid="live-upcoming"] [data-testid="live-card"]').count()) >= 1);
+  if (!isMobile) check(`[${label}] live: sidebar shows the live dot beside Live Games`, (await page.locator('[data-testid="sidebar"] nav a[href^="/live"] [data-testid="live-dot"]').count()) === 1);
+  await shot("live");
+
+  // day navigation on /live
+  const dayText = () => page.locator("main h1").first().locator("xpath=..").innerText();
+  await page.click('[data-testid="live-prev"]');
+  await page.waitForFunction(() => document.querySelectorAll('[data-testid="live-card"]').length !== 3 || !document.querySelector('[data-testid="live-live"]'), null, { timeout: 8000 }).catch(() => {});
+  await settle(page);
+  check(`[${label}] live: Previous day shows that day's finished games`, (await page.locator('[data-testid="live-live"]').count()) === 0 && (await page.locator('[data-testid="live-final"] [data-testid="live-card"]').count()) >= 1 && !(await page.locator('[data-testid="live-today"]').isDisabled()));
+  await page.click('[data-testid="live-today"]');
+  await page.locator('[data-testid="live-live"]').waitFor({ timeout: 8000 }).catch(() => {});
+  await page.click('[data-testid="live-next"]');
+  await page.locator('[data-state="empty"]').waitFor({ timeout: 8000 }).catch(() => {});
+  check(`[${label}] live: a day with no games states exactly that`, /No games on /.test(await page.locator("main").innerText()));
+  await page.click('[data-testid="live-today"]');
+  await page.locator('[data-testid="live-live"]').waitFor({ timeout: 8000 }).catch(() => {});
+  check(`[${label}] live: Today returns to the current slate`, (await page.locator('[data-testid="live-card"]').count()) === 3 && (await page.locator('[data-testid="live-today"]').isDisabled()));
+
+  // strip: day switch, collapse remembered, navigation
+  await page.click('[data-testid="strip-yesterday"]');
+  await page.waitForFunction(() => !document.querySelector('[data-testid="scoreboard-strip"] [data-game-id="FIX-G1"]'), null, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] strip: Yesterday swaps the cards`, (await strip.locator(g1).count()) === 0 && (await strip.locator('[data-testid="strip-card"]').count()) >= 1);
+  await page.click('[data-testid="strip-today"]');
+  await strip.locator(g1).waitFor({ timeout: 8000 }).catch(() => {});
+  await page.click('[data-testid="strip-tomorrow"]');
+  await strip.locator('[data-testid="strip-empty"]').waitFor({ timeout: 8000 }).catch(() => {});
+  check(`[${label}] strip: Tomorrow with no games says so`, (await strip.locator('[data-testid="strip-empty"]').count()) === 1);
+  await page.click('[data-testid="strip-today"]');
+  await strip.locator(g1).waitFor({ timeout: 8000 }).catch(() => {});
+  await page.click('[data-testid="strip-toggle"]');
+  check(`[${label}] strip: collapses`, (await strip.getAttribute("data-collapsed")) === "1" && (await strip.locator('[data-testid="strip-card"]:visible').count()) === 0);
+  await go("/games");
+  check(`[${label}] strip: collapsed state is remembered across pages`, (await strip.getAttribute("data-collapsed")) === "1");
+  await page.click('[data-testid="strip-toggle"]');
+  check(`[${label}] strip: expands again`, (await strip.getAttribute("data-collapsed")) === "0" && (await strip.locator('[data-testid="strip-card"]:visible').count()) >= 1);
+  if (isMobile) {
+    const sc = await page.evaluate(() => { const e = document.querySelector('[data-testid="strip-scroll"]'); const c = getComputedStyle(e); return { snap: c.scrollSnapType, ox: c.overflowX }; });
+    check(`[${label}] strip: horizontal snap carousel on a phone`, /x/.test(sc.snap) && /auto|scroll/.test(sc.ox), JSON.stringify(sc));
+  }
+  await Promise.all([page.waitForURL((u) => u.pathname === "/games/FIX-G1"), strip.locator(g1).click()]);
+  await settle(page);
+  check(`[${label}] strip: a card opens the game centre on the live view`, new URL(page.url()).searchParams.get("tab") === "live" && (await page.locator('[data-tab="overview"][aria-selected="true"]').count()) === 1 && (await page.locator('[data-testid="live-overview"]').count()) === 1);
+
+  // --- score header + stream ---
+  const header = page.locator('[data-testid="score-header"]');
+  check(`[${label}] game centre: header shows the observed score, LIVE, Q1 and the clock`, /14/.test(await header.innerText()) && /12/.test(await header.innerText()) && /LIVE/i.test(await header.innerText()) && /Q1/.test(await header.innerText()) && (await header.locator('[data-testid="live-dot"]').count()) === 1 && (await header.locator('[data-testid="freshness"][data-stale="0"]').count()) === 1);
+  check(`[${label}] game centre: header is sticky`, (await header.evaluate((e) => { let n = e; while (n && n !== document.body) { if (getComputedStyle(n).position === "sticky") return true; n = n.parentElement; } return false; })));
+  check(`[${label}] overview: leaders, last plays with the source wording, a corrected play`, (await page.locator('[data-testid="leaders"]').count()) === 1 && (await page.locator('[data-testid="last-plays"] [data-testid="play"]').count()) === 8 && /FIXTURE: .* (makes|misses|rebound|foul|enters|turnover)/.test(await page.locator('[data-testid="last-plays"]').innerText()));
+  check(`[${label}] overview: a leader the source has not published shows the marker, not a zero`, (await page.locator('[data-testid="leaders"] [aria-label="not available"]').count()) >= 1);
+  check(`[${label}] overview: team comparison bars, unpublished stats listed, null as the marker`, (await page.locator('[data-testid="team-bar"]').count()) === 4 && /Bench points/.test(await page.locator('[data-testid="not-published"]').innerText()) && (await page.locator('[data-testid="team-bars"] [aria-label="not available"]').count()) >= 1);
+  await page.locator('[data-testid="progression"] svg path').first().waitFor({ timeout: 8000 }).catch(() => {});
+  check(`[${label}] overview: score progression chart renders with its facts and no win-probability wording`, (await page.locator('[data-testid="progression"] svg path').count()) >= 1 && /lead changes/i.test(await page.locator('[data-testid="progression-facts"]').innerText()) && /No win probability is computed/.test(await page.locator('[data-testid="live-overview"]').innerText()));
+  await shot("live-overview", { fullPage: true });
+  const nav0 = await page.evaluate(() => performance.getEntriesByType("navigation").length + ":" + performance.timeOrigin);
+  const v0 = await header.getAttribute("data-version");
+  await mockLive(page, { phase: 3 });
+  await page.waitForFunction(() => /70/.test(document.querySelector('[data-testid="score-header"]')?.innerText ?? ""), null, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] stream: the score header updates without a reload`, /70/.test(await header.innerText()) && /66/.test(await header.innerText()) && /Q3/.test(await header.innerText()) && (await header.getAttribute("data-version")) !== v0 && (await page.evaluate(() => performance.getEntriesByType("navigation").length + ":" + performance.timeOrigin)) === nav0);
+  await page.waitForFunction(() => /52-49/.test(document.querySelector('[data-testid="summaries"]')?.innerText ?? ""), null, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] stream: a new version refreshes the tab data (stored summary appears)`, /FIXTURE summary/.test(await page.locator('[data-testid="summaries"]').innerText().catch(() => "")));
+  // stream failure → Reconnecting → recovery
+  await mockLive(page, { streamError: true });
+  await page.locator('[data-testid="stream-state"]').waitFor({ timeout: 8000 }).catch(() => {});
+  check(`[${label}] stream: a dropped stream shows "Reconnecting…"`, /Reconnecting/.test(await page.locator('[data-testid="stream-state"]').innerText().catch(() => "")));
+  await mockLive(page, { streamError: false, phase: 3 });
+  await page.locator('[data-testid="stream-state"]').waitFor({ state: "detached", timeout: 16000 }).catch(() => {});
+  check(`[${label}] stream: it recovers on its own and the marker goes away`, (await page.locator('[data-testid="stream-state"]').count()) === 0 && /70/.test(await header.innerText()));
+  const streamErrs = errors.filter((e) => !/503|ERR_|Failed to load resource|EventSource|network/i.test(e));
+  check(`[${label}] stream: only the expected connection errors were logged`, streamErrs.length === 0, streamErrs.join(" | "));
+  errors.length = 0;
+
+  // --- tabs ---
+  const tab = async (id) => {
+    await page.click(`[role="tablist"][aria-label="Game centre"] [data-tab="${id}"]`);
+    await page.waitForFunction((t) => new URLSearchParams(location.search).get("tab") === t, id, { timeout: 5000 }).catch(() => {});
+    await settle(page);
+  };
+  await tab("boxscore");
+  check(`[${label}] tabs: Box Score sets ?tab=boxscore and renders both teams`, new URL(page.url()).searchParams.get("tab") === "boxscore" && (await page.locator('[data-testid="box-team"]').count()) === 2);
+  if (!isMobile) {
+    const col = (team, key) => page.locator(`[data-testid="box-team"][data-team="${team}"] [data-testid="box-row"] [data-col="${key}"]`).allInnerTexts().then((a) => a.map((x) => (x.trim() === "—" ? null : Number(x))));
+    const desc = (a) => { const v = a.filter((x) => x !== null); return v.every((x, i) => i === 0 || v[i - 1] >= x) && a.indexOf(null) === -1 ? true : v.every((x, i) => i === 0 || v[i - 1] >= x) && a.slice(a.indexOf(null)).every((x) => x === null); };
+    check(`[${label}] box: starters first, a divider before the bench, a did-not-play row, team totals`, (await page.locator('[data-testid="box-team"][data-team="DET"] [data-bench-start="1"]').count()) === 1 && (await page.locator('[data-testid="box-team"][data-team="DET"] [data-testid="box-dnp"]').count()) === 1 && /Did not play/.test(await page.locator('[data-testid="box-team"][data-team="DET"] [data-testid="box-dnp"]').innerText()) && (await page.locator('[data-testid="box-team"][data-team="DET"] table [data-testid="box-totals"]').count()) === 1);
+    check(`[${label}] box: on-court dots and a foul marker while live`, (await page.locator('[data-testid="box-table"] [data-testid="on-court"]').count()) >= 4 && (await page.locator('[data-testid="box-table"] [data-testid="foul-trouble"]').count()) >= 1);
+    check(`[${label}] box: a stat the source did not publish shows the marker, never 0`, (await page.locator('[data-testid="box-team"][data-team="DET"] [data-testid="box-row"] [data-col="blk"]').nth(2).innerText()).trim() === "—" && (await page.locator('[data-testid="box-team"][data-team="DET"] [data-testid="box-row"] [data-col="plus_minus"]').nth(1).innerText()).trim() === "—");
+    await page.locator('[data-testid="box-team"][data-team="DET"] [data-sort="reb"]').click();
+    const reb = await col("DET", "reb");
+    check(`[${label}] box: sorts by rebounds, descending`, desc(reb) && (await page.locator('[data-testid="box-team"][data-team="DET"] th[aria-sort="descending"]').count()) === 1, reb.join(","));
+    await page.locator('[data-testid="box-team"][data-team="DET"] [data-sort="blk"]').click();
+    const blk = await col("DET", "blk");
+    check(`[${label}] box: sorts by a second column, missing values last`, desc(blk) && blk[blk.length - 1] === null && (await page.locator('[data-testid="box-team"][data-team="ORL"] th[aria-sort="descending"]').count()) === 1, blk.join(","));
+    await page.locator('[data-testid="box-team"][data-team="DET"] [data-sort="blk"]').click();
+    const asc = (await col("DET", "blk")).filter((x) => x !== null);
+    check(`[${label}] box: a second click reverses the order`, asc.every((x, i) => i === 0 || asc[i - 1] <= x), asc.join(","));
+    await page.locator('[data-testid="box-pregame"]').check();
+    check(`[${label}] box: pregame projection columns are optional and labelled`, (await page.locator('[data-testid="box-team"][data-team="DET"] [data-sort^="pre"], [data-testid="box-team"][data-team="DET"] [data-sort^="proj"]').count()) >= 1);
+    const scroller = await page.locator('[data-testid="box-table"]').first().evaluate((e) => getComputedStyle(e.parentElement).overflowX);
+    check(`[${label}] box: the table scrolls inside its own box with a sticky player column`, /auto|scroll/.test(scroller) && (await page.locator('[data-testid="box-table"] tbody th').first().evaluate((e) => getComputedStyle(e).position)) === "sticky");
+  } else {
+    check(`[${label}] box: player cards instead of a table on a phone`, (await page.locator('[data-testid="box-card"]:visible').count()) === 14 && (await page.locator('[data-testid="box-table"]:visible').count()) === 0);
+    await page.locator('[data-testid="box-card"] button').first().click();
+    check(`[${label}] box: a card expands to the full stat line`, (await page.locator('[data-testid="box-card-detail"]').count()) === 1 && /FG/i.test(await page.locator('[data-testid="box-card-detail"]').innerText()));
+    check(`[${label}] box: a stat the source did not publish shows the marker on a card`, (await page.locator('[data-testid="box-cards"] [aria-label="not available"]').count()) + ((await page.locator('[data-testid="box-cards"]').first().innerText()).includes("—") ? 1 : 0) >= 1);
+  }
+  await shot("live-boxscore", { fullPage: true });
+  const ob = await overflow(page);
+  check(`[${label}] box: no horizontal page overflow`, !ob, ob ? JSON.stringify(ob) : "");
+
+  await tab("plays");
+  const plays = page.locator('[data-testid="plays-tab"] [data-testid="play"]');
+  check(`[${label}] plays: first page of 40 of 80, newest first, grouped by period`, (await plays.count()) === 40 && /40 of 80 plays/.test(await page.locator('[data-testid="plays-count"]').innerText()) && (await plays.first().getAttribute("data-seq")) === "80" && (await page.locator('[data-testid="plays-period"]').count()) >= 2);
+  await page.click('[data-testid="plays-more"]');
+  await page.waitForFunction(() => document.querySelectorAll('[data-testid="plays-tab"] [data-testid="play"]').length === 80, null, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] plays: "more" loads the next page and the control goes away at the end`, (await plays.count()) === 80 && (await page.locator('[data-testid="plays-more"]').count()) === 0 && (await page.locator('[data-testid="play-corrected"]').count()) === 1);
+  await mockLive(page, { phase: 4 });
+  await page.waitForFunction(() => document.querySelectorAll('[data-testid="plays-tab"] [data-testid="play"]').length > 80, null, { timeout: 10000 }).catch(() => {});
+  check(`[${label}] plays: new plays arrive incrementally without a reload`, (await plays.count()) === 120 && (await plays.first().getAttribute("data-seq")) === "120" && /Final/i.test(await header.innerText()) && (await header.locator('[data-testid="live-dot"]').count()) === 0, `${await plays.count()} plays`);
+  const pf = page.locator('[data-testid="plays-tab"] [role="tablist"]');
+  await pf.locator('[data-tab="scoring"]').click();
+  await page.waitForFunction(() => { const a = [...document.querySelectorAll('[data-testid="plays-tab"] [data-testid="play"]')]; return a.length > 0 && a.every((e) => ["made", "free_throw"].includes(e.dataset.kind)); }, null, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] plays: Scoring filter`, (await plays.count()) > 0 && (await plays.evaluateAll((a) => a.every((e) => ["made", "free_throw"].includes(e.dataset.kind)))));
+  await pf.locator('[data-tab="fouls"]').click();
+  await page.waitForFunction(() => { const a = [...document.querySelectorAll('[data-testid="plays-tab"] [data-testid="play"]')]; return a.length > 0 && a.every((e) => e.dataset.kind === "foul"); }, null, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] plays: Fouls filter`, (await plays.count()) === 15 && (await plays.evaluateAll((a) => a.every((e) => e.dataset.kind === "foul"))), `${await plays.count()}`);
+  await pf.locator('[data-tab="substitutions"]').click();
+  await page.waitForFunction(() => { const a = [...document.querySelectorAll('[data-testid="plays-tab"] [data-testid="play"]')]; return a.length > 0 && a.every((e) => e.dataset.kind === "substitution"); }, null, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] plays: Substitutions filter`, (await plays.count()) === 15 && /enters the game/.test(await plays.first().innerText()));
+  await pf.locator('[data-tab="all"]').click();
+  await page.locator('[data-testid="plays-team"]').selectOption({ index: 1 });
+  await page.waitForFunction(() => /of 60 plays/.test(document.querySelector('[data-testid="plays-count"]')?.innerText ?? ""), null, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] plays: team filter`, /of 60 plays/.test(await page.locator('[data-testid="plays-count"]').innerText()), await page.locator('[data-testid="plays-count"]').innerText());
+  await shot("live-plays");
+
+  await mockLive(page, { phase: 3 });
+  await go("/games/FIX-G1?tab=rotations");
+  check(`[${label}] rotations: a timeline with stints for the determinable team`, (await page.locator('[data-testid="rotation-team"][data-determinable="1"] [data-testid="rotation-row"]').count()) === 7 && (await page.locator('[data-testid="rotation-team"][data-determinable="1"] [data-testid="stint"]').count()) >= 10 && (await page.locator('[data-testid="rotation-team"][data-determinable="1"] [data-testid="rotation-table"]').count()) === 1);
+  check(`[${label}] rotations: the other team says its stints cannot be determined and draws nothing`, /cannot be determined/.test(await page.locator('[data-testid="rotation-team"][data-determinable="0"] [data-testid="rotation-note"]').innerText()) && (await page.locator('[data-testid="rotation-team"][data-determinable="0"] [data-testid="stint"]').count()) === 0);
+  await shot("live-rotations", { fullPage: true });
+  const orot = await overflow(page);
+  check(`[${label}] rotations: no horizontal page overflow`, !orot, orot ? JSON.stringify(orot) : "");
+  await tab("research");
+  check(`[${label}] tabs: Research keeps the pregame research page`, (await page.locator('[data-testid="game-page"]').count()) === 1 && (await page.locator("#kalshi").count()) === 1);
+  await tab("jarvis");
+  check(`[${label}] tabs: JARVIS tab offers game questions`, (await page.locator('[data-testid="game-jarvis"]').count()) === 1 && (await page.locator('[data-testid="game-jarvis"] button').count()) >= 4);
+  await go("/games/FIX-G1");
+  check(`[${label}] game centre: Overview is the default while the game is live`, (await page.locator('[data-tab="overview"][aria-selected="true"]').count()) === 1);
+
+  // --- halftime and stale: never a pulsing LIVE ---
+  await mockLive(page, { phase: 2, stale: true });
+  await go("/games/FIX-G1?tab=overview");
+  check(`[${label}] halftime: Halftime is shown without the pulsing LIVE marker`, /Halftime/i.test(await header.innerText()) && (await header.locator('[data-testid="live-dot"]').count()) === 0 && (await strip.locator(`${g1} [data-testid="live-dot"]`).count()) === 0);
+  check(`[${label}] stale: "Delayed — last update HH:MM:SS ET" in the header`, /Delayed — last update \d{1,2}:\d{2}:\d{2}\s?(AM|PM)? ?ET/.test(await header.locator('[data-testid="freshness"][data-stale="1"]').innerText().catch(() => "")), await header.locator('[data-testid="freshness"]').innerText().catch(() => "none"));
+  check(`[${label}] stale: the strip card says Delayed too`, /Delayed/.test(await strip.locator(`${g1} [data-testid="freshness"][data-stale="1"]`).innerText().catch(() => "")));
+  await shot("live-stale");
+  await mockLive(page, { phase: 3, stale: false });
+
+  // --- follow / unfollow persists ---
+  await go("/live");
+  check(`[${label}] follow: nothing is followed to begin with`, (await page.locator('[data-testid="live-following"]').count()) === 0);
+  const fb = page.locator(`[data-testid="live-card"]:has(a[href*="FIX-G1"]) [data-testid="follow-btn"]`);
+  await fb.click();
+  await page.locator('[data-testid="live-following"] [data-testid="live-card"]').waitFor({ timeout: 8000 }).catch(() => {});
+  await page.reload();
+  await settle(page);
+  check(`[${label}] follow: the game is in Following after a reload, starred on the strip`, (await page.locator('[data-testid="live-following"] [data-testid="live-card"]').count()) === 1 && (await page.locator('[data-testid="live-following"] [data-testid="follow-btn"]').getAttribute("data-on")) === "1" && (await strip.locator(`${g1} [aria-label="Following"]`).count()) === 1 && (await strip.locator('[data-testid="strip-card"]').first().getAttribute("data-game-id")) === "FIX-G1");
+
+  // --- tracking thresholds ---
+  await go("/live/following");
+  check(`[${label}] following: the followed game is listed; notifications are off by default`, (await page.locator('[data-testid="following-games"] [data-testid="following-game"]').count()) === 1 && (await page.locator('[data-testid="notify-setting"]').getAttribute("data-on")) === "0");
+  await page.locator('[data-testid="milestone-form"] [data-testid="player-search"] input').fill("Player A");
+  await page.locator('[data-testid="milestone-pick"]').first().click();
+  await page.selectOption('select[name="milestone_stat"]', "pts");
+  await page.fill('input[name="milestone_threshold"]', "5");
+  await page.locator('input[name="milestone_notify"]').check();
+  await page.click('[data-testid="milestone-add"]');
+  await page.locator('[data-testid="milestone"]').first().waitFor({ timeout: 8000 }).catch(() => {});
+  await page.reload();
+  await settle(page);
+  const ms = page.locator('[data-testid="watchlist-players"] [data-testid="milestone"]');
+  const msText = (await ms.first().innerText().catch(() => "")).replace(/\s+/g, " ");
+  check(`[${label}] threshold: created, persists after a reload, shows current value and "reached" as an observation`, (await ms.count()) === 1 && (await ms.first().getAttribute("data-reached")) === "1" && /Threshold reached/.test(msText) && !OUTCOME_WORDS.test(msText), msText);
+  await page.fill('input[name="milestone_threshold"]', "0");
+  const addDisabled = await page.locator('[data-testid="milestone-add"]').isDisabled();
+  check(`[${label}] threshold: a player and a positive value are required before adding`, addDisabled);
+  // notifications: off by default; when the browser grants permission, a reached threshold with "notify" shows one toast
+  await page.context().grantPermissions(["notifications"]).catch(() => {});
+  await page.click('[data-testid="notify-toggle"]');
+  await page.waitForTimeout(600);
+  if ((await page.locator('[data-testid="notify-setting"]').getAttribute("data-on")) === "1") {
+    await page.locator('[data-testid="live-toast"]').first().waitFor({ timeout: 8000 }).catch(() => {});
+    check(`[${label}] notifications: one in-app toast for the reached threshold`, (await page.locator('[data-testid="live-toast"]').count()) === 1 && /reached 5 pts/.test(await page.locator('[data-testid="live-toast"]').innerText()));
+    await page.reload();
+    await settle(page);
+    await page.waitForTimeout(800);
+    check(`[${label}] notifications: the same event is not shown twice`, (await page.locator('[data-testid="live-toast"]').count()) === 0 && (await page.locator('[data-testid="notify-setting"]').getAttribute("data-on")) === "1");
+    await page.click('[data-testid="notify-toggle"]');
+    check(`[${label}] notifications: can be turned off again`, (await page.locator('[data-testid="notify-setting"]').getAttribute("data-on")) === "0");
+  } else {
+    check(`[${label}] notifications: without browser permission the setting stays off and says why`, /permission was not granted|does not support/.test(await page.locator("main").innerText()));
+  }
+  await shot("live-following", { fullPage: true });
+
+  // --- player page live block ---
+  await go("/players/9001");
+  const pl = page.locator('[data-testid="player-live"]');
+  check(`[${label}] player: "Live now" block with the game, the observed line, freshness and the threshold`, (await pl.getAttribute("data-live")) === "1" && /Live now/i.test(await pl.innerText()) && (await pl.locator('[data-testid="player-live-game"]').getAttribute("href")).includes("/games/FIX-G1") && (await pl.locator('[data-testid="player-live-line"]').count()) === 1 && (await pl.locator('[data-testid="freshness"]').count()) === 1 && (await pl.locator('[data-testid="milestone"]').count()) === 1);
+  await go("/players/9004");
+  check(`[${label}] player: no live block content for a player who is not playing`, (await page.locator('[data-testid="player-live"][data-live="1"]').count()) === 0);
+
+  // --- research tracker ---
+  await go("/live/research-tracker");
+  const legs = page.locator('[data-testid="tracker-leg"]');
+  const legText = (await legs.allInnerTexts()).join(" ").replace(/\s+/g, " ");
+  check(`[${label}] tracker: paper tickets with legs, current observed value and distance to the line`, (await page.locator('[data-testid="tracker-ticket"]').count()) >= 1 && (await legs.count()) >= 1 && /In progress|Not started/i.test(legText));
+  const badWord = legText.match(OUTCOME_WORDS);
+  check(`[${label}] tracker: no leg is worded as an outcome or a wager while unsettled`, !badWord, badWord ? `"${badWord[0]}" in: ${legText.slice(Math.max(0, badWord.index - 40), badWord.index + 40)}` : "");
+  check(`[${label}] tracker: legs carry no outcome colour while unsettled`, (await legs.evaluateAll((a) => a.every((e) => !/text-(accent|bad)|bg-(accent|bad)/.test(e.className) && ![...e.querySelectorAll("*")].some((c) => /\b(text-bad|bg-bad)/.test(String(c.className)))))));
+  check(`[${label}] tracker: notes explain that outcomes come only from settlement`, /settled/.test(await page.locator('[data-testid="tracker-notes"]').innerText()));
+  await shot("live-tracker", { fullPage: true });
+
+  // --- clean up: delete the threshold, unfollow ---
+  await go("/live/following");
+  await page.locator('[data-testid="milestone-delete"]').first().click();
+  if (await page.locator('[data-testid="milestone-delete"]').count()) await page.locator('[data-testid="milestone-delete"]').first().click().catch(() => {});
+  await page.waitForFunction(() => !document.querySelector('[data-testid="milestone"]'), null, { timeout: 8000 }).catch(() => {});
+  await page.reload();
+  await settle(page);
+  check(`[${label}] threshold: deleted and stays deleted after a reload`, (await page.locator('[data-testid="milestone"]').count()) === 0);
+  await page.locator('[data-testid="following-game"] [data-testid="follow-btn"]').first().click();
+  await page.waitForFunction(() => !document.querySelector('[data-testid="following-game"]'), null, { timeout: 8000 }).catch(() => {});
+  await page.reload();
+  await settle(page);
+  check(`[${label}] follow: unfollow persists after a reload`, (await page.locator('[data-testid="following-game"]').count()) === 0);
+  await go("/live");
+  check(`[${label}] follow: /live no longer has a Following section`, (await page.locator('[data-testid="live-following"]').count()) === 0);
+
+  // --- final ---
+  await mockLive(page, { phase: 4 });
+  await go("/games/FIX-G1");
+  check(`[${label}] final: Final in the header, Overview by default, four periods in the line score, no LIVE marker`, /Final/i.test(await header.innerText()) && /104/.test(await header.innerText()) && (await page.locator('[data-tab="overview"][aria-selected="true"]').count()) === 1 && (await page.locator('[data-testid="live-dot"]').count()) === 0);
+  await mockLive(page, { phase: 0, stale: false, streamError: false });
+  check(`[${label}] live flows raised no unexpected page/console errors`, errors.length === 0, errors.slice(0, 4).join(" | "));
+  errors.length = 0;
 }
 
 async function runViewport(browser, label, viewport) {
@@ -178,13 +458,13 @@ async function runViewport(browser, label, viewport) {
     check(`[${label}] bottom nav targets are at least 44px`, small === 0, `${small} too small`);
     await page.click('[data-testid="more-button"]');
     await page.waitForSelector('[role="dialog"]');
-    check(`[${label}] More sheet lists the navigation groups`, (await page.locator('[role="dialog"] a').count()) >= 25 && /JARVIS/.test(await page.locator('[role="dialog"]').innerText()) && /Kalshi Markets/.test(await page.locator('[role="dialog"]').innerText()) && /Minutes Intelligence/.test(await page.locator('[role="dialog"]').innerText()));
+    check(`[${label}] More sheet lists the navigation groups`, (await page.locator('[role="dialog"] a').count()) >= 26 && /Live Games/.test(await page.locator('[role="dialog"]').innerText()) && /JARVIS/.test(await page.locator('[role="dialog"]').innerText()) && /Kalshi Markets/.test(await page.locator('[role="dialog"]').innerText()) && /Minutes Intelligence/.test(await page.locator('[role="dialog"]').innerText()));
     await shot("more-sheet");
     await page.keyboard.press("Escape");
   } else {
     const side = await page.locator('[data-testid="sidebar"]').innerText();
     check(`[${label}] sidebar has the four groups`, ["COMMAND CENTER", "PLAYER INTELLIGENCE", "MY RESEARCH", "SYSTEM"].every((g) => side.toUpperCase().includes(g)));
-    check(`[${label}] sidebar has 25 destinations incl. JARVIS, Kalshi Markets and Minutes Intelligence`, (await page.locator('[data-testid="sidebar"] nav a').count()) === 25 && (await page.locator('[data-testid="sidebar"] nav a').first().innerText()).trim() === "JARVIS" && /Kalshi Markets/.test(side) && /Minutes Intelligence/.test(side));
+    check(`[${label}] sidebar has 26 destinations led by Live Games, incl. JARVIS, Kalshi Markets and Minutes Intelligence`, (await page.locator('[data-testid="sidebar"] nav a').count()) === 26 && (await page.locator('[data-testid="sidebar"] nav a').first().innerText()).trim() === "Live Games" && /JARVIS/.test(side) && /Kalshi Markets/.test(side) && /Minutes Intelligence/.test(side));
     check(`[${label}] brand caption present`, /PARLAY COMMAND CENTER/i.test(side));
   }
 
@@ -943,6 +1223,8 @@ async function runViewport(browser, label, viewport) {
   check(`[${label}] JARVIS and budget flows raised no unexpected page/console errors`, errors.filter((e) => !/status of (422|500)|ERR_|Failed to fetch|network/i.test(e)).length === 0, errors.join(" | "));
   errors.length = 0;
 
+  await liveFlow(page, label, errors, shot);
+
   // --- redirects ---
   for (const [from, to] of [["/today", "/"], ["/research", "/research/daily"], ["/props", "/player-props"]]) {
     await page.goto(`${BASE}${from}`);
@@ -965,7 +1247,7 @@ async function runViewport(browser, label, viewport) {
  */
 async function largeSlate(browser) {
   const LIMITS = [[1440, 900, 12000], [390, 844, 15000]];
-  const routes = [...NAV, "/games/FIX-L1", "/players/9001", "/kalshi-intelligence/KXFIX-L-20000-pts-5", "/markets", "/simulations", "/backtesting", "/exposure", "/admin/ai-budget"];
+  const routes = [...NAV, "/games/FIX-L1", "/players/9001", "/kalshi-intelligence/KXFIX-L-20000-pts-5", "/markets", "/simulations", "/backtesting", "/exposure", "/admin/ai-budget", "/live/following", "/live/research-tracker", "/games/FIX-G1?tab=boxscore", "/games/FIX-G1?tab=plays", "/games/FIX-G1?tab=rotations"];
   for (const [width, height, maxHeight] of LIMITS) {
     const tag = `large ${width}`;
     console.log(`\n== large slate ${width}x${height} ==`);
@@ -976,6 +1258,7 @@ async function largeSlate(browser) {
     const toggle = (on) => page.evaluate((v) => fetch("/api/v1/__mock/large", { method: "POST", credentials: "include", headers: { "Content-Type": "application/json", "X-CSRF-Token": "fixture-csrf-token" }, body: JSON.stringify({ on: v }) }).then((r) => r.json()), on);
     try {
       check(`[${tag}] large-slate mode switched on`, (await toggle(true)).large === true);
+      await mockLive(page, { phase: 4, stale: false, streamError: false }); // the scripted game is final: the longest box score, play list and rotation chart
       const sel = [];
       page.on("request", (r) => {
         const u = new URL(r.url());
@@ -989,6 +1272,7 @@ async function largeSlate(browser) {
         check(`[${tag}] ${route} shows no error state`, m.err === 0);
         const o = await overflow(page);
         check(`[${tag}] ${route} has no horizontal overflow`, !o, o ? JSON.stringify(o) : "");
+        if (route === "/live") check(`[${tag}] /live lists the nine-game slate and the strip scrolls inside its own box`, (await page.locator('[data-testid="live-card"]').count()) === 9 && (await page.locator('[data-testid="strip-card"]').count()) === 9);
         if (route === "/players/compare") check(`[${tag}] compare is not blank on first load`, m.chars > 400 && (await page.locator('[data-testid="compare-table"]').count()) === 1, `${m.chars} chars`);
         if (route === "/players/history") check(`[${tag}] history is not blank on first load`, m.chars > 400 && (await page.locator('[data-testid="history-quick-link"]').count()) >= 10, `${m.chars} chars`);
         if (route === "/picks") check(`[${tag}] picks renders at most five rows per game`, (await page.locator('[data-testid="selection-row"]').count()) === 45);
@@ -1014,6 +1298,7 @@ async function largeSlate(browser) {
       check(`[${tag}] large slate raised no page/console errors`, errors.length === 0, errors.slice(0, 3).join(" | "));
     } finally {
       await toggle(false).catch(() => {});
+      await mockLive(page, { phase: 0 }).catch(() => {});
       await context.close();
     }
   }
@@ -1028,6 +1313,7 @@ async function gallery(browser) {
     const page = await context.newPage();
     const errors = watch(page);
     await login(page);
+    await mockLive(page, { phase: 3, stale: false, streamError: false });
     for (const [route, name] of GALLERY) {
       await page.goto(`${BASE}${route}`);
       await settle(page);
@@ -1048,6 +1334,7 @@ async function gallery(browser) {
     check(`[${tag}] props drawer opens`, (await page.locator('[data-testid="prop-drawer"] [data-testid="history-chart"]').count()) === 1);
     await page.waitForTimeout(200);
     await page.screenshot({ path: join(SHOTS, `${tag}-player-props-drawer.png`), fullPage: false });
+    await mockLive(page, { phase: 0 });
     check(`[${tag}] gallery raised no page/console errors`, errors.length === 0, errors.join(" | "));
     await context.close();
   }
@@ -1066,6 +1353,36 @@ async function viewerRole(browser) {
   await settle(page);
   const t = await page.locator('[data-testid="budget-forbidden"]').innerText().catch(() => "");
   check("[viewer] /admin/ai-budget shows the 403 message from the server", /Owner access required/i.test(t) && t.includes("FIXTURE: this area is available to the owner account only.") && (await page.locator('[data-testid="ai-budget"]').count()) === 0, t);
+  await page.goto(`${BASE}/live`);
+  await settle(page);
+  await page.locator('[data-testid="live-card"] [data-testid="follow-btn"]').first().click();
+  await page.locator('[data-testid="follow-error"]').waitFor({ timeout: 8000 }).catch(() => {});
+  const fe = await page.locator('[data-testid="follow-error"]').innerText().catch(() => "");
+  await page.reload();
+  await settle(page);
+  check("[viewer] following is refused with the server's 403 message and nothing is followed", fe.includes("FIXTURE: following requires the owner account.") && (await page.locator('[data-testid="live-following"]').count()) === 0, fe);
+  await context.close();
+}
+
+/** The PWA manifest and icons are public static files; no service worker is registered. */
+async function pwa(browser) {
+  console.log("\n== pwa ==");
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await context.newPage();
+  const res = await page.request.get(`${BASE}/manifest.webmanifest`, { maxRedirects: 0 });
+  const m = res.status() === 200 ? await res.json().catch(() => null) : null;
+  check("[pwa] manifest is served without a session", res.status() === 200 && m !== null, `status ${res.status()}`);
+  check("[pwa] manifest: name, start_url /live, standalone, theme colours", m?.name === "GIZER NBA" && m?.start_url === "/live" && m?.display === "standalone" && Boolean(m?.theme_color) && Boolean(m?.background_color), JSON.stringify(m)?.slice(0, 200));
+  let iconsOk = Array.isArray(m?.icons) && m.icons.length >= 2;
+  for (const ic of m?.icons ?? []) {
+    const r = await page.request.get(`${BASE}${ic.src}`, { maxRedirects: 0 });
+    iconsOk = iconsOk && r.status() === 200 && /image\/png/.test(r.headers()["content-type"] ?? "");
+  }
+  check("[pwa] manifest icons are static PNG files that load", iconsOk);
+  await page.goto(`${BASE}/login`);
+  const head = await page.evaluate(() => ({ manifest: document.querySelector('link[rel="manifest"]')?.getAttribute("href"), apple: document.querySelector('link[rel="apple-touch-icon"]')?.getAttribute("href"), capable: document.querySelector('meta[name="apple-mobile-web-app-capable"], meta[name="mobile-web-app-capable"]')?.getAttribute("content"), sw: "serviceWorker" in navigator ? navigator.serviceWorker.getRegistrations().then((r) => r.length) : 0 }));
+  check("[pwa] pages link the manifest and the iOS home-screen meta", head.manifest === "/manifest.webmanifest" && Boolean(head.apple) && head.capable === "yes", JSON.stringify(head));
+  check("[pwa] no service worker is registered", (await page.evaluate(() => ("serviceWorker" in navigator ? navigator.serviceWorker.getRegistrations().then((r) => r.length) : 0))) === 0);
   await context.close();
 }
 
@@ -1076,6 +1393,7 @@ try {
     await runViewport(browser, "mobile", { width: 390, height: 844 });
   }
   if (!process.env.SMOKE_ONLY || process.env.SMOKE_ONLY === "flows") await viewerRole(browser);
+  if (!process.env.SMOKE_ONLY || process.env.SMOKE_ONLY === "flows") await pwa(browser);
   if (!process.env.SMOKE_ONLY || process.env.SMOKE_ONLY === "large") await largeSlate(browser);
   if (!process.env.SMOKE_ONLY || process.env.SMOKE_ONLY === "gallery") await gallery(browser);
 } finally {

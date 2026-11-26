@@ -8,6 +8,7 @@ import { ClassificationBadge } from "@/components/classification-badge";
 import { PlayerAvatar } from "@/components/player-avatar";
 import { ProbabilityDisplay } from "@/components/prob";
 import { StatusDot } from "@/components/ui/badge";
+import { Collapsible } from "@/components/ui/collapsible";
 import { linkButton, textLink } from "@/components/ui/button";
 import { NA, Val } from "@/components/ui/na";
 import { BulletList, Label } from "@/components/ui/panel";
@@ -287,7 +288,7 @@ function CompactGroup({ label, list, ladder, perGroup }: { label: string; list: 
  * Compact rows grouped by stat/kind: contract title, market price, move since first observation, volume.
  * Each group shows its first `perGroup` rows (a real slate has hundreds of contracts per game).
  */
-export function KalshiCompactList({ rows, ladder = false, perGroup = 5, mainLineFirst = false }: { rows: KalshiMarketRow[]; ladder?: boolean; perGroup?: number; mainLineFirst?: boolean }) {
+export function KalshiCompactList({ rows, ladder = false, perGroup = 5, mainLineFirst = false, maxGroups }: { rows: KalshiMarketRow[]; ladder?: boolean; perGroup?: number; mainLineFirst?: boolean; maxGroups?: number }) {
   const groups = useMemo(() => {
     const m = new Map<string, KalshiMarketRow[]>();
     for (const r of rows) {
@@ -312,11 +313,24 @@ export function KalshiCompactList({ rows, ladder = false, perGroup = 5, mainLine
     }
     return [...m.entries()];
   }, [rows, ladder, mainLineFirst]);
+  const head = maxGroups ? groups.slice(0, maxGroups) : groups;
+  const rest = maxGroups ? groups.slice(maxGroups) : [];
   return (
-    <div className="grid gap-x-6 gap-y-4 lg:grid-cols-2" data-testid="kalshi-compact">
-      {groups.map(([label, list]) => (
-        <CompactGroup key={label} label={label} list={list} ladder={ladder} perGroup={perGroup} />
-      ))}
+    <div data-testid="kalshi-compact">
+      <div className="grid gap-x-6 gap-y-4 lg:grid-cols-2">
+        {head.map(([label, list]) => (
+          <CompactGroup key={label} label={label} list={list} ladder={ladder} perGroup={perGroup} />
+        ))}
+      </div>
+      {rest.length > 0 && (
+        <Collapsible title={`${rest.length} more contract ${rest.length === 1 ? "group" : "groups"}`} right={rest.map(([l]) => l).slice(0, 3).join(" · ")} className="mt-3" testId="kalshi-more-groups">
+          <div className="grid gap-x-6 gap-y-4 px-3 pb-3 lg:grid-cols-2">
+            {rest.map(([label, list]) => (
+              <CompactGroup key={label} label={label} list={list} ladder={ladder} perGroup={perGroup} />
+            ))}
+          </div>
+        </Collapsible>
+      )}
     </div>
   );
 }

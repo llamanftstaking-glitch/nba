@@ -14,6 +14,7 @@ import { Sheet } from "@/components/ui/sheet";
 import { Brand } from "./brand";
 import { JarvisLauncher, JarvisPanelProvider } from "@/components/jarvis/panel";
 import { LiveDot } from "@/components/live/common";
+import { MilestoneWatcher } from "@/components/live/notifications";
 import { ScoreboardStrip } from "@/components/live/scoreboard-strip";
 import { useScoreboard } from "@/lib/live";
 import { DateSelector } from "./date-selector";
@@ -152,6 +153,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </header>
 
         <ScoreboardStrip />
+        <MilestoneWatcher />
 
         <main className="min-w-0 flex-1 px-3 pb-28 pt-4 md:px-5 lg:pb-14">
           <div className="mx-auto w-full max-w-[1640px]">{children}</div>

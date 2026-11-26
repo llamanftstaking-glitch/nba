@@ -2,8 +2,9 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell, Star, Target, Users } from "lucide-react";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { FollowButton, FreshnessMark, Score, StatusChip, TeamMark } from "@/components/live/common";
+import { useNotifySetting } from "@/components/live/notifications";
 import { LiveNav } from "@/components/live/live-nav";
 import { MilestoneRow, milestoneStat } from "@/components/live/milestones";
 import { PlayerAvatar } from "@/components/player-avatar";
@@ -12,70 +13,16 @@ import { Button } from "@/components/ui/button";
 import { Field, Input, Select } from "@/components/ui/field";
 import { PageHeader, Panel } from "@/components/ui/panel";
 import { EmptyState, QueryView } from "@/components/ui/states";
-import { ApiError, http } from "@/lib/api";
+import { ApiError } from "@/lib/api";
 import { DLink } from "@/lib/date";
 import { live, MILESTONE_STATS, type BoxRow } from "@/lib/live";
 import { useTeams } from "@/lib/queries";
 
-const NOTIFY_KEY = "gizer.live.notify";
-const SHOWN_KEY = "gizer.live.notified";
-type EventRow = { id: number; kind: string; title: string; detail: unknown; occurred_at: string };
-
 /** Optional browser notifications for reached thresholds. Works only while the app is open in a tab. */
 function Notifications() {
-  const [on, setOn] = useState(false);
+  const { on, set } = useNotifySetting();
   const [msg, setMsg] = useState<string | null>(null);
-  const [toasts, setToasts] = useState<EventRow[]>([]);
-  const shown = useRef<Set<number>>(new Set());
-  useEffect(() => {
-    try {
-      setOn(window.localStorage.getItem(NOTIFY_KEY) === "1" && typeof Notification !== "undefined" && Notification.permission === "granted");
-      shown.current = new Set(JSON.parse(window.localStorage.getItem(SHOWN_KEY) ?? "[]") as number[]);
-    } catch {
-      /* storage unavailable */
-    }
-  }, []);
-  const events = useQuery({ queryKey: ["jarvis", "events", "milestone_reached"], queryFn: () => http.get<{ items: EventRow[] }>("/jarvis/events", { kind: "milestone_reached", limit: 20 }), refetchInterval: on ? 30_000 : false, enabled: on });
-  useEffect(() => {
-    if (!on || !events.data) return;
-    const fresh = events.data.items.filter((e) => !shown.current.has(e.id) && (e.detail as { notify?: boolean } | null)?.notify === true);
-    if (fresh.length === 0) return;
-    for (const e of fresh) {
-      shown.current.add(e.id);
-      try {
-        new Notification("GIZER NBA — threshold reached", { body: e.title, tag: `milestone-${e.id}` });
-      } catch {
-        /* the in-app toast still shows */
-      }
-    }
-    setToasts((t) => [...fresh, ...t].slice(0, 4));
-    try {
-      window.localStorage.setItem(SHOWN_KEY, JSON.stringify([...shown.current].slice(-200)));
-    } catch {
-      /* ignore */
-    }
-  }, [on, events.data]);
-  const toggle = async () => {
-    setMsg(null);
-    if (on) {
-      setOn(false);
-      try {
-        window.localStorage.setItem(NOTIFY_KEY, "0");
-      } catch {
-        /* ignore */
-      }
-      return;
-    }
-    if (typeof Notification === "undefined") return setMsg("This browser does not support notifications.");
-    const perm = Notification.permission === "granted" ? "granted" : await Notification.requestPermission();
-    if (perm !== "granted") return setMsg("Notification permission was not granted in the browser.");
-    setOn(true);
-    try {
-      window.localStorage.setItem(NOTIFY_KEY, "1");
-    } catch {
-      /* ignore */
-    }
-  };
+  const toggle = async () => setMsg(await set(!on));
   return (
     <Panel title="Browser notifications for reached thresholds" icon={Bell}>
       <div className="flex flex-wrap items-center justify-between gap-3" data-testid="notify-setting" data-on={on ? "1" : "0"}>
@@ -85,18 +32,6 @@ function Notifications() {
         </Button>
       </div>
       {msg && <p role="alert" className="mt-2 text-sm text-warn">{msg}</p>}
-      {toasts.length > 0 && (
-        <ul className="fixed bottom-20 right-3 z-40 space-y-2 lg:bottom-12" aria-live="polite" data-testid="live-toasts">
-          {toasts.map((t) => (
-            <li key={t.id} className="flex max-w-xs items-start gap-2 rounded-md bg-raised px-3 py-2 text-sm text-ink shadow-lg ring-1 ring-line">
-              <span className="min-w-0 flex-1 break-words">{t.title}</span>
-              <button type="button" aria-label="Dismiss" className="text-muted hover:text-ink" onClick={() => setToasts((x) => x.filter((y) => y.id !== t.id))}>
-                ×
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
     </Panel>
   );
 }

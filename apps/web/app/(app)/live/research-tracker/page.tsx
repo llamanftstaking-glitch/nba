@@ -1,6 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { Pagination } from "@/components/ui/pagination";
 import { ClipboardList } from "lucide-react";
 import { ClassificationBadge } from "@/components/classification-badge";
 import { LiveNav } from "@/components/live/live-nav";
@@ -12,6 +14,7 @@ import { DLink } from "@/lib/date";
 import { fmtClockET, fmtDateTimeET, fmtLine, fmtSigned, titleCase } from "@/lib/format";
 import { live, type TrackerItem } from "@/lib/live";
 
+const PER_PAGE = 6;
 const OBS: Record<string, string> = { not_started: "Game not started", in_progress: "Game in progress", final_awaiting_settlement: "Game final — awaiting settlement", settled: "Settled" };
 
 function TicketCard({ t }: { t: TrackerItem }) {
@@ -75,6 +78,7 @@ function TicketCard({ t }: { t: TrackerItem }) {
 }
 
 export default function ResearchTrackerPage() {
+  const [offset, setOffset] = useState(0);
   const q = useQuery({ queryKey: ["live", "tracker"], queryFn: () => live.tracker(), refetchInterval: 30_000 });
   return (
     <div className="space-y-5">
@@ -88,11 +92,14 @@ export default function ResearchTrackerPage() {
                 Tickets saved to the paper ledger for today’s games are listed here with their observed values once games begin.
               </EmptyState>
             ) : (
-              <div className="grid gap-4 2xl:grid-cols-2">
-                {d.items.map((t) => (
-                  <TicketCard key={t.ticket_id} t={t} />
-                ))}
-              </div>
+              <>
+                <div className="grid gap-4 2xl:grid-cols-2">
+                  {d.items.slice(offset, offset + PER_PAGE).map((t) => (
+                    <TicketCard key={t.ticket_id} t={t} />
+                  ))}
+                </div>
+                <Pagination offset={offset} limit={PER_PAGE} total={d.items.length} onChange={setOffset} />
+              </>
             )}
             {d.notes.length > 0 && (
               <ul className="space-y-0.5 text-xs text-muted" data-testid="tracker-notes">

@@ -225,7 +225,7 @@ export function OverviewTab({ c }: { c: GameCenter }) {
       <div className="grid gap-4 xl:grid-cols-2">
         <Panel title="Leaders">
           {c.leaders ? (
-            <div className="grid grid-cols-2 gap-3" data-testid="leaders">
+            <div className="grid gap-3 sm:grid-cols-2" data-testid="leaders">
               <LeadersBlock abbr={c.away.abbr} l={c.leaders.away} />
               <LeadersBlock abbr={c.home.abbr} l={c.leaders.home} />
             </div>

@@ -879,7 +879,7 @@ function jarvisRoute(method, path, q, body, role) {
     if (cm) return CONVS.find((c) => String(c.id) === cm[1]) ?? { __status: 404, ...err("not_found", "FIXTURE: conversation not found.") };
     if (path === "/jarvis/memory") return { items: MEMORY };
     if (path === "/jarvis/briefings") return { items: BRIEFINGS };
-    if (path === "/jarvis/events") return { items: J_EVENTS };
+    if (path === "/jarvis/events") return q.get("kind") === "milestone_reached" ? { items: LV.milestones.map(milestoneView).filter((m) => m.reached).map((m) => ({ id: 5000 + m.id, kind: "milestone_reached", severity: "notice", title: `FIXTURE: ${m.player_name} reached ${m.threshold} ${m.stat}`, detail: { notify: m.notify, milestone_id: m.id }, game_date: TODAY, occurred_at: m.reached_at })) } : { items: J_EVENTS };
     if (path === "/admin/ai-budget") return owner ? aiBudget() : OWNER_ONLY();
     if (path === "/admin/ai-budget/requests") return owner ? { items: BREQS.slice(0, Number(q.get("limit") ?? 50)) } : OWNER_ONLY();
   }
@@ -963,6 +963,158 @@ function jarvisStream(res, conv, body) {
   let i = 0;
   const tick = () => { if (res.destroyed) return; steps[i++](); if (i < steps.length) setTimeout(tick, 110); };
   tick();
+}
+
+
+// ---------- GIZER LIVE (observed in-game data) ----------
+// FIX-G1 is a scripted game. POST /api/v1/__mock/live {phase, stale, streamError} moves it:
+// 0 scheduled → 1 live Q1 → 2 halftime → 3 live Q3 → 4 final. Follows and milestones persist in memory.
+const LV = { phase: 0, stale: false, streamError: false, version: 1, follows: { game: new Set(), player: new Set(), team: new Set() }, milestones: [], msId: 300, streams: new Set() };
+const PH = [
+  { status: "scheduled", label: "Scheduled", period: null, pl: "", clock: null, home: null, away: null, hl: [], al: [], plays: 0, elapsed: 0, f: 0 },
+  { status: "live", label: "Live", period: 1, pl: "Q1", clock: "6:12", home: 14, away: 12, hl: [14], al: [12], plays: 12, elapsed: 348, f: 0.12 },
+  { status: "halftime", label: "Halftime", period: 2, pl: "Q2", clock: null, home: 52, away: 49, hl: [28, 24], al: [25, 24], plays: 60, elapsed: 1440, f: 0.5 },
+  { status: "live", label: "Live", period: 3, pl: "Q3", clock: "4:05", home: 70, away: 66, hl: [28, 24, 18], al: [25, 24, 17], plays: 80, elapsed: 1915, f: 0.66 },
+  { status: "final", label: "Final", period: 4, pl: "Q4", clock: null, home: 104, away: 99, hl: [28, 24, 26, 26], al: [25, 24, 22, 28], plays: 120, elapsed: 2880, f: 1 },
+];
+const fresh = (started) => (LV.stale && started ? { observed_at: iso(4), provider_updated_at: iso(4.2), age_s: 240, stale: true, feed: "stale" } : { observed_at: iso(0.15), provider_updated_at: iso(0.3), age_s: 9, stale: false, feed: started ? "ok" : "not_started" });
+function liveRow(g) {
+  const ph = g.id === "FIX-G1" ? PH[LV.phase] : g.id === "FIX-G3" || g.status === "final" ? { ...PH[4], home: g.home_points ?? 112, away: g.away_points ?? 107 } : PH[0];
+  const started = ph.status !== "scheduled";
+  return { game_id: g.id, label: g.label, game_date: g.date, tipoff_utc: g.tipoff_utc, venue: g.venue, status: ph.status, status_label: ph.label, period: ph.period, period_label: ph.pl, clock: ph.clock,
+    home: { team_id: g.home.id, abbr: g.home.abbr, name: g.home.name, score: ph.home, linescores: ph.hl }, away: { team_id: g.away.id, abbr: g.away.abbr, name: g.away.name, score: ph.away, linescores: ph.al },
+    version: g.id === "FIX-G1" ? LV.version : 1, followed: LV.follows.game.has(g.id), favorite_team: LV.follows.team.has(g.home.id) || LV.follows.team.has(g.away.id), ...fresh(started), _ph: ph };
+}
+const pubRow = ({ _ph, ...r }) => r;
+const POLL_NOTE = "FIXTURE: scores are read from a public feed by the server about every 15 seconds while games are in progress. They are delayed observations.";
+function scoreboard(date) {
+  const games = (GAMES[date] ?? []).map(liveRow);
+  const rank = (r) => (r.followed || r.favorite_team ? 0 : r.status === "live" ? 1 : r.status === "halftime" ? 2 : r.status === "scheduled" ? 3 : 4);
+  games.sort((a, b) => rank(a) - rank(b));
+  return { date, prev: shift(date, -1), next: shift(date, 1), today: TODAY, live_count: games.filter((r) => ["live", "overtime", "halftime", "end_period"].includes(r.status)).length, server_time: new Date().toISOString(), poll_note: POLL_NOTE, games: games.map(pubRow) };
+}
+const liveGame = (id) => allGames().find((g) => g.id === id);
+const LNAMES = { away: ["FIXTURE Player A", "FIXTURE Player G", "FIXTURE DET S3", "FIXTURE DET S4", "FIXTURE DET S5", "FIXTURE DET R6", "FIXTURE DET R7", "FIXTURE DET R8"], home: ["FIXTURE ORL S1", "FIXTURE ORL S2", "FIXTURE ORL S3", "FIXTURE ORL S4", "FIXTURE ORL S5", "FIXTURE Player B", "FIXTURE ORL R7", "FIXTURE ORL R8"] };
+const LPID = { "FIXTURE Player A": 9001, "FIXTURE Player B": 9002 };
+function boxTeam(g, side, ph) {
+  const t = g[side];
+  const live = ph.status === "live";
+  const players = LNAMES[side].map((name, i) => {
+    const starter = i < 5, dnp = i === 7, k = dnp ? 0 : ph.f * (starter ? 1 : 0.5);
+    const n = (base) => (dnp ? null : Math.round(base * k));
+    const pts = n(26 - i * 3), reb = n(9 - i), ast = n(8 - i), fgm = n(9 - i), fga = n(18 - i), fg3m = n(3), fg3a = n(7), ftm = n(4), fta = n(5), pf = dnp ? null : i === 3 ? Math.min(5, Math.ceil(ph.f * 5)) : Math.round(ph.f * 2);
+    return { espn_athlete_id: `${t.abbr}-${i}`, player_id: LPID[name] ?? null, team_id: t.id, name, position: ["G", "G", "F", "F", "C", "G", "F", "C"][i], jersey: String(i + 1), headshot_url: HEAD[LPID[name]] ?? null, starter, role: starter ? "starter" : "bench", dnp, ejected: false,
+      on_court: dnp ? false : !live ? null : i === 4 ? null : starter, minutes: dnp ? null : +(34 * k).toFixed(0) * 1, pts, reb, ast, stl: n(2), blk: i === 2 ? null : n(1), tov: n(3), pf, fgm, fga, fg3m, fg3a, ftm, fta, oreb: n(2), dreb: n(6),
+      plus_minus: i === 1 ? null : dnp ? null : Math.round((side === "home" ? 5 : -5) * ph.f + (i % 3) - 1), pra: dnp ? null : pts + reb + ast, pr: dnp ? null : pts + reb, pa: dnp ? null : pts + ast, ra: dnp ? null : reb + ast,
+      fg_pct: dnp || !fga ? null : +((fgm / fga) * 100).toFixed(1), fg3_pct: null, ft_pct: dnp || !fta ? null : +((ftm / fta) * 100).toFixed(1), true_shooting_pct: dnp || !fga ? null : +((pts / (2 * (fga + 0.44 * fta))) * 100).toFixed(1),
+      foul_trouble: dnp ? null : i === 3 && pf >= 3, pregame: i < 3 ? { proj_min: 33 - i, pts: 24 - i * 3, reb: 8 - i, ast: 7 - i, fg3m: 2.1, published_at: iso(300) } : null };
+  });
+  const sum = (k) => players.reduce((a, r) => a + (r[k] ?? 0), 0);
+  return { team_id: t.id, abbr: t.abbr, name: t.name, players, totals: Object.fromEntries(["pts", "reb", "ast", "stl", "blk", "tov", "pf", "fgm", "fga", "fg3m", "fg3a", "ftm", "fta", "oreb", "dreb"].map((k) => [k, sum(k)])) };
+}
+function livePlays(g, ph) {
+  const out = [];
+  let h = 0, a = 0;
+  const kinds = ["made", "missed", "rebound", "foul", "substitution", "made", "turnover", "free_throw"];
+  for (let i = 1; i <= ph.plays; i++) {
+    const elapsed = Math.round((ph.elapsed * i) / Math.max(1, ph.plays)), period = Math.min(4, Math.floor((elapsed - 1) / 720) + 1), left = period * 720 - elapsed;
+    const side = i % 2 ? "home" : "away", kind = kinds[i % kinds.length], t = g[side], name = LNAMES[side][i % 5];
+    const scoring = kind === "made" || kind === "free_throw", val = kind === "made" ? 2 : kind === "free_throw" ? 1 : 0;
+    if (scoring) side === "home" ? (h += val) : (a += val);
+    const text = { made: `FIXTURE: ${name} makes jump shot`, missed: `FIXTURE: ${name} misses jump shot`, rebound: `FIXTURE: ${name} defensive rebound`, foul: `FIXTURE: ${name} personal foul`, substitution: `FIXTURE: ${LNAMES[side][5]} enters the game for ${name}`, turnover: `FIXTURE: ${name} bad pass turnover`, free_throw: `FIXTURE: ${name} makes free throw 1 of 1` }[kind];
+    out.push({ event_id: `${g.id}-${i}`, sequence: i, period, clock: `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`, elapsed_s: elapsed, team_id: t.id, team_side: side, kind, type_text: kind, text, scoring, score_value: val, home_score: h, away_score: a, player_ids: LPID[name] ? [LPID[name]] : [], provider_at: iso(1), ingested_at: iso(0.9), corrected: i === 5 });
+  }
+  return out;
+}
+function liveCenter(g) {
+  const r = liveRow(g), ph = r._ph, started = ph.status !== "scheduled";
+  const plays = livePlays(g, ph);
+  const lead = (side) => { const p = boxTeam(g, side, ph).players[0]; return { pts: { player_id: p.player_id, name: p.name, value: p.pts }, reb: { player_id: p.player_id, name: p.name, value: p.reb }, ast: side === "home" ? null : { player_id: p.player_id, name: p.name, value: p.ast } }; };
+  return { ...pubRow(r), mode: !started ? "pregame" : ph.status === "final" ? "final" : "live", team_stats: {}, leaders: started ? { home: lead("home"), away: lead("away") } : null,
+    momentum: started ? { lead_changes: 3, ties: 2, largest_lead: { home: 7, away: 4 }, runs: [{ team: "home", points: 8, start_s: 100, end_s: 220 }], note: "FIXTURE: observed scoring events only. No win probability is computed.", points: plays.filter((p) => p.scoring).length } : null,
+    last_plays: [...plays].reverse().slice(0, 8), plays_count: plays.length,
+    summaries: LV.phase >= 2 && g.id === "FIX-G1" ? [{ kind: "half", text: "FIXTURE summary: ORL led 52-49 at the half; FIXTURE Player A had the most points for DET.", created_at: iso(5) }] : [], poll_note: POLL_NOTE, notes: ["FIXTURE note: pregame research is unchanged by anything observed during the game.", "FIXTURE note: a value the source has not published is shown as missing."] };
+}
+function liveSub(g, sub, q) {
+  const r = liveRow(g), ph = r._ph, started = ph.status !== "scheduled";
+  if (sub === "boxscore") return { game_id: g.id, status: ph.status, period: ph.period, available: started, home: boxTeam(g, "home", ph), away: boxTeam(g, "away", ph), notes: ["FIXTURE note: on-court status is derived from substitutions; unknown is shown as unknown."], ...fresh(started) };
+  if (sub === "play-by-play") {
+    let items = livePlays(g, ph);
+    const f = q.get("filter") || "all";
+    if (f === "scoring") items = items.filter((p) => p.scoring);
+    if (f === "fouls") items = items.filter((p) => p.kind === "foul");
+    if (f === "substitutions") items = items.filter((p) => p.kind === "substitution");
+    if (q.get("team_id")) items = items.filter((p) => String(p.team_id) === q.get("team_id"));
+    if (q.get("player_id")) items = items.filter((p) => p.player_ids.map(String).includes(q.get("player_id")));
+    const total = items.length;
+    if (q.get("after_sequence")) items = items.filter((p) => p.sequence > Number(q.get("after_sequence")));
+    if ((q.get("order") || "desc") === "desc") items = [...items].reverse();
+    const limit = Number(q.get("limit") ?? 50), offset = Number(q.get("offset") ?? 0);
+    return { game_id: g.id, total, items: items.slice(offset, offset + limit), note: "FIXTURE note: play text is the source's wording.", ...fresh(started) };
+  }
+  if (sub === "rotations") {
+    const el = ph.elapsed;
+    const team = (side, determinable) => ({ team_id: g[side].id, abbr: g[side].abbr, determinable, problems: determinable ? [] : ["FIXTURE: a substitution event is missing"], note: determinable ? "FIXTURE: derived from the published starting five and substitution events." : "FIXTURE: on-court stints cannot be determined for this team because the substitution chain is incomplete.",
+      players: determinable && started ? LNAMES[side].slice(0, 7).map((name, i) => { const starter = i < 5; const stints = starter ? [{ start_s: 0, end_s: Math.min(el, 420) }, ...(el > 600 ? [{ start_s: 600, end_s: ph.status === "live" ? null : el }] : [])] : el > 420 ? [{ start_s: 420, end_s: Math.min(el, 600) }] : []; const mins = +(stints.reduce((a2, x) => a2 + ((x.end_s ?? el) - x.start_s), 0) / 60).toFixed(1); return { espn_athlete_id: `${g[side].abbr}-${i}`, player_id: LPID[name] ?? null, name, starter, role: starter ? "starter" : "bench", on_court: ph.status === "live" ? starter : null, stints, minutes_by_period: { 1: +(Math.min(mins, 10)).toFixed(1) }, minutes: mins, pf: i === 3 ? 4 : 1, foul_trouble: i === 3, proj_min: i < 3 ? 33 - i : null, minutes_vs_projection: i < 3 ? +(mins - (33 - i)).toFixed(1) : null }; }) : [] });
+    return { game_id: g.id, status: ph.status, period: ph.period, elapsed_s: el, home: team("home", true), away: team("away", false), notes: ["FIXTURE note: projected minutes are the pregame projection, kept as published."] };
+  }
+  if (sub === "team-stats") return { game_id: g.id, home: { team_id: g.home.id, abbr: g.home.abbr }, away: { team_id: g.away.id, abbr: g.away.abbr }, available: started, items: started ? [{ key: "fg", label: "FIXTURE Field goals", home: "20-44", away: "18-45", home_value: 20, away_value: 18 }, { key: "fgpct", label: "FIXTURE Field goal %", home: "45", away: "40", home_value: 45, away_value: 40 }, { key: "reb", label: "FIXTURE Rebounds", home: "24", away: "21", home_value: 24, away_value: 21 }, { key: "tov", label: "FIXTURE Turnovers", home: null, away: "7", home_value: null, away_value: 7 }] : [], not_published: ["FIXTURE Bench points"] };
+  if (sub === "momentum") { const pts = livePlays(g, ph).filter((p) => p.scoring).map((p) => ({ t: p.elapsed_s, period: p.period, home: p.home_score, away: p.away_score, diff: p.home_score - p.away_score })); return { points: pts, lead_changes: 3, ties: 2, largest_lead: { home: 7, away: 4 }, runs: [{ team: "home", points: 8, start_s: 100, end_s: 220 }], note: "FIXTURE: observed scoring events only. No win probability is computed." }; }
+  return undefined;
+}
+function milestoneView(m) {
+  const g = GAMES_TODAY[0], ph = liveRow(g)._ph, started = ph.status !== "scheduled";
+  const row = started ? [...boxTeam(g, "home", ph).players, ...boxTeam(g, "away", ph).players].find((r) => r.player_id === m.player_id) : null;
+  const current = row ? (m.stat === "min" ? row.minutes : row[m.stat] ?? null) : null;
+  const reached = current != null && current >= m.threshold;
+  return { ...m, player_name: PLAYERS.find((p) => p.id === m.player_id)?.name ?? "FIXTURE player", current, remaining: current == null ? null : Math.max(0, +(m.threshold - current).toFixed(1)), reached, reached_at: reached ? iso(1) : null, reached_value: reached ? current : null, game_status: row ? ph.status : null, observed_at: row ? fresh(true).observed_at : null, note: row ? null : "FIXTURE: no game in progress for this player." };
+}
+function playerLive(pid) {
+  const p = PLAYERS.find((x) => String(x.id) === String(pid));
+  if (!p) return null;
+  const g = GAMES_TODAY[0], r = liveRow(g), ph = r._ph, started = ph.status !== "scheduled";
+  const line = started ? [...boxTeam(g, "home", ph).players, ...boxTeam(g, "away", ph).players].find((x) => x.player_id === p.id) ?? null : null;
+  return { player_id: p.id, name: p.name, headshot_url: HEAD[p.id] ?? null, date: TODAY, followed: LV.follows.player.has(p.id), live: line ? { game_id: g.id, label: g.label, status: ph.status, status_label: ph.label, period: ph.period, period_label: ph.pl, clock: ph.clock, line, ...fresh(true) } : null, milestones: LV.milestones.filter((m) => m.player_id === p.id).map(milestoneView) };
+}
+function liveRoute(method, path, q, body, role) {
+  const date = q.get("date") || TODAY;
+  if (path === "/__mock/live") { if (method === "POST") { for (const k of ["phase", "stale", "streamError"]) if (body[k] !== undefined) LV[k] = body[k]; LV.version++; if (LV.streamError) for (const r of LV.streams) r.destroy(); } return { phase: LV.phase, stale: LV.stale, streamError: LV.streamError, version: LV.version }; }
+  if (method === "GET") {
+    if (path === "/live/scoreboard" || path === "/live/games") return LARGE && date === TODAY ? { ...scoreboard(date), live_count: 0, games: LG.games.map((g) => pubRow(liveRow({ ...g, status: "scheduled" }))) } : scoreboard(date);
+    const gm = path.match(/^\/live\/games\/([^/]+)(?:\/([a-z-]+))?$/);
+    if (gm && gm[2] !== "stream") { const g = liveGame(decodeURIComponent(gm[1])); if (!g) return { __status: 404, ...err("not_found", "FIXTURE: game not found in the live feed.") }; return gm[2] ? (liveSub(g, gm[2], q) ?? { __status: 404, ...err("not_found", "FIXTURE: unknown live resource.") }) : liveCenter(g); }
+    const pm = path.match(/^\/live\/players\/(\d+)$/);
+    if (pm) return playerLive(pm[1]) ?? { __status: 404, ...err("not_found", "FIXTURE: player not found.") };
+    if (path === "/live/watchlist") { const ids = new Set([...LV.follows.player, ...LV.milestones.map((m) => m.player_id)]); const players = [...ids].map((id) => playerLive(id)).filter(Boolean).map((p) => ({ player_id: p.player_id, name: p.name, team_abbr: PLAYERS.find((x) => x.id === p.player_id)?.team_abbr ?? null, headshot_url: p.headshot_url, live: p.live, milestones: p.milestones })); const games = scoreboard(date).games.filter((r) => r.followed || r.favorite_team); return { date, games, players, teams: Object.values(T).filter((t) => LV.follows.team.has(t.id)).map((t) => ({ team_id: t.id, abbr: t.abbr, name: t.name })), counts: { games: games.length, players: players.length, teams: LV.follows.team.size } }; }
+    if (path === "/live/milestones") return { date, items: LV.milestones.map(milestoneView), stats: ["pts", "reb", "ast", "fg3m", "stl", "blk", "min", "pra", "pr", "pa", "ra", "double_double"] };
+    if (path === "/live/research-tracker") {
+      const g = GAMES_TODAY[0], ph = liveRow(g)._ph, started = ph.status !== "scheduled";
+      const rows = started ? [...boxTeam(g, "home", ph).players, ...boxTeam(g, "away", ph).players] : [];
+      const items = tickets.filter((t) => t.game_date === TODAY).map((t) => ({ ticket_id: t.id, kind: t.kind, engine: t.engine, structure: t.structure, classification: t.classification, created_at: t.created_at, status: t.settlement ? "settled" : "pending", settlement: t.settlement ? { result: t.settlement.result, settled_at: t.settlement.settled_at, reason: null } : null,
+        legs: t.legs.map((l) => { const sel0 = SEL_BY_ID.get(l.selection_id); const row = rows.find((r) => r.player_id === sel0?.subject_id); const stat = l.market.replace("player_", ""); const current = row && l.game_id === g.id ? (row[stat] ?? null) : null; const lr = l.game_id === g.id ? liveRow(g) : liveRow(liveGame(l.game_id) ?? g); return { label: l.label, market: l.market, side: l.side, line: l.line, game_id: l.game_id, game_label: l.game_label, subject_id: sel0?.subject_id ?? null, current, current_basis: current == null ? null : "FIXTURE live box score", difference_to_line: current == null || l.line == null ? null : +(current - l.line).toFixed(1), game_status: lr.status, status_label: lr.status_label, period_label: lr.period_label, clock: lr.clock, observation: lr.status === "scheduled" ? "not_started" : lr.status === "final" ? "final_awaiting_settlement" : "in_progress", observed_at: lr.status === "scheduled" ? null : lr.observed_at, stale: lr.stale }; }) }));
+      return { date, total: items.length, notes: ["FIXTURE note: a leg has an outcome only once its ticket is settled.", "FIXTURE note: current values are observations from the box score."], items };
+    }
+  }
+  if (method === "POST" && path.startsWith("/live/")) {
+    if (role !== "owner") return { __status: 403, ...err("forbidden", "FIXTURE: following requires the owner account.") };
+    const fm = path.match(/^\/live\/watchlist\/(follow|unfollow)$/);
+    if (fm) { const set = LV.follows[body.kind]; if (!set) return { __status: 422, ...err("invalid", "FIXTURE: unknown kind.") }; const ref = body.kind === "game" ? String(body.ref_id) : Number(body.ref_id); fm[1] === "follow" ? set.add(ref) : set.delete(ref); LV.version++; return { following: fm[1] === "follow", kind: body.kind, ref_id: body.ref_id }; }
+    if (path === "/live/milestones") { if (!PLAYERS.some((p) => p.id === Number(body.player_id)) || typeof body.threshold !== "number" || body.threshold <= 0) return { __status: 422, ...err("invalid", "FIXTURE: a known player and a threshold above zero are required.") }; const m = { id: ++LV.msId, player_id: Number(body.player_id), stat: body.stat, threshold: body.threshold, game_date: body.date ?? TODAY, notify: Boolean(body.notify) }; LV.milestones.push(m); return milestoneView(m); }
+    const dm = path.match(/^\/live\/milestones\/(\d+)\/delete$/);
+    if (dm) { const i = LV.milestones.findIndex((m) => String(m.id) === dm[1]); if (i >= 0) LV.milestones.splice(i, 1); return { deleted: true }; }
+  }
+  return undefined;
+}
+/** GET /live/games/{id}/stream — text/event-stream of GameRow on version change, keep-alives between. */
+function liveStream(res, g) {
+  if (LV.streamError) { res.writeHead(503, { "Content-Type": "application/json" }); return res.end(JSON.stringify(err("unavailable", "FIXTURE: stream unavailable."))); }
+  res.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-store, no-transform", Connection: "keep-alive", "X-Accel-Buffering": "no" });
+  LV.streams.add(res);
+  let sent = -1, n = 0;
+  const tick = () => { if (res.destroyed) return; const r = pubRow(liveRow(g)); const v = `${LV.version}:${LV.phase}:${LV.stale}`; if (v !== sent) { sent = v; res.write(`data: ${JSON.stringify(r)}\n\n`); } else if (++n % 5 === 0) res.write(": keep-alive\n\n"); };
+  tick();
+  const iv = setInterval(tick, 400);
+  res.on("close", () => { clearInterval(iv); LV.streams.delete(res); });
 }
 
 // ---------- handlers ----------
@@ -1322,6 +1474,9 @@ const server = http.createServer((req, res) => {
       if (!String(body.text ?? "").trim() && imgs.length === 0) return send(res, 422, err("invalid", "FIXTURE: text is required when no image is attached."));
       return jarvisStream(res, conv, body);
     }
+    const st = method === "GET" ? path.match(/^\/live\/games\/([^/]+)\/stream$/) : null;
+    if (st) { const g = liveGame(decodeURIComponent(st[1])); if (!g) return send(res, 404, err("not_found", "FIXTURE: game not found.")); return liveStream(res, g); }
+    if (path.startsWith("/live/") || path === "/__mock/live") { const lr = liveRoute(method, path, url.searchParams, body, role); if (lr !== undefined) { const code = lr.__status ?? 200; delete lr.__status; return send(res, code, lr); } }
     const im = method === "GET" ? path.match(/^\/jarvis\/messages\/(\d+)\/images\/(\d+)$/) : null;
     if (im) {
       const img = role === "owner" ? IMAGE_STORE.get(im[1])?.[Number(im[2])] : null;

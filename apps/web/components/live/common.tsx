@@ -55,7 +55,7 @@ export function StatusChip({ g, className }: { g: Pick<GameRow, "status" | "stat
 }
 
 /** "updated 9s ago", or "Delayed — last update HH:MM:SS ET" when the feed is stale. Scheduled games show nothing. */
-export function FreshnessMark({ f, long = false, className }: { f: Freshness & { status?: string }; long?: boolean; className?: string }) {
+export function FreshnessMark({ f, long = false, short = false, className }: { f: Freshness & { status?: string }; long?: boolean; short?: boolean; className?: string }) {
   if (f.stale) {
     return (
       <span className={cn("inline-flex items-center gap-1 text-xs font-semibold text-warn", className)} data-testid="freshness" data-stale="1">
@@ -66,8 +66,8 @@ export function FreshnessMark({ f, long = false, className }: { f: Freshness & {
   if (f.feed === "not_started" || f.status === "scheduled") return null;
   const age = fmtAge(f.age_s);
   return (
-    <span className={cn("num text-xs text-muted", className)} data-testid="freshness" data-stale="0">
-      {age ? `updated ${age}` : "update time —"}
+    <span className={cn("num whitespace-nowrap text-xs text-muted", className)} data-testid="freshness" data-stale="0" title={age ? `Last observed ${age}` : undefined}>
+      {age ? (short ? age : `updated ${age}`) : short ? "" : "update time —"}
     </span>
   );
 }

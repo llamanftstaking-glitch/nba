@@ -13,7 +13,7 @@ const KEY = "gizer.scoreboard.collapsed";
 
 function Card({ g }: { g: GameRow }) {
   return (
-    <DLink href={`/games/${encodeURIComponent(g.game_id)}?tab=live`} className="flex w-[168px] shrink-0 snap-start flex-col gap-1 rounded-md bg-card px-2.5 py-2 ring-1 ring-inset ring-line/60 hover:ring-accent/50" data-testid="strip-card" data-game-id={g.game_id} data-status={g.status}>
+    <DLink href={`/games/${encodeURIComponent(g.game_id)}?tab=live`} className={cn("flex shrink-0 snap-start flex-col gap-1 rounded-md bg-card px-2.5 py-2 ring-1 ring-inset ring-line/60 hover:ring-accent/50", g.followed || g.favorite_team ? "w-[190px]" : "w-[168px]")} data-testid="strip-card" data-game-id={g.game_id} data-status={g.status}>
       {([g.away, g.home] as const).map((t) => (
         <span key={t.abbr} className="flex items-center gap-2">
           <TeamMark team={t} size={20} />
@@ -24,8 +24,8 @@ function Card({ g }: { g: GameRow }) {
       <span className="mt-0.5 flex items-center justify-between gap-1">
         <StatusChip g={g} />
         <span className="flex items-center gap-1">
-          <FreshnessMark f={g} className="text-[11px]" />
-          {(g.followed || g.favorite_team) && <Star className="h-3 w-3 fill-accent text-accent" aria-label="Following" />}
+          <FreshnessMark f={g} short className="text-[11px]" />
+          {(g.followed || g.favorite_team) && <Star className="h-3 w-3 shrink-0 fill-accent text-accent" aria-label="Following" />}
         </span>
       </span>
     </DLink>
@@ -63,7 +63,7 @@ export function ScoreboardStrip() {
   }, [collapsed]);
   const d = q.data;
   const liveCount = d?.live_count ?? 0;
-  const dayBtn = "inline-flex min-h-[44px] items-center rounded px-2 text-xs font-medium md:min-h-0 md:h-6";
+  const dayBtn = "inline-flex min-h-[44px] items-center rounded px-1.5 text-xs font-medium sm:px-2 md:min-h-0 md:h-6";
   const which = !d ? "today" : d.date === d.today ? "today" : d.date < d.today ? "yesterday" : "tomorrow";
   const prominent = pathname === "/";
   return (
@@ -72,7 +72,7 @@ export function ScoreboardStrip() {
         <DLink href="/live" className="flex shrink-0 items-center gap-1.5 font-display text-[15px] font-semibold uppercase tracking-wide text-ink">
           {liveCount > 0 && <LiveDot />}
           Scores
-          {d && <span className="num font-sans text-xs font-normal normal-case text-muted">{liveCount > 0 ? `${liveCount} in progress` : `${d.games.length} game${d.games.length === 1 ? "" : "s"}`}</span>}
+          {d && <span className="num hidden font-sans text-xs font-normal normal-case text-muted sm:inline">{liveCount > 0 ? `${liveCount} in progress` : `${d.games.length} game${d.games.length === 1 ? "" : "s"}`}</span>}
         </DLink>
         <span className="flex-1" />
         {!collapsed && d && (

@@ -342,7 +342,7 @@ function GameView({ d }: { d: GameDetail }) {
           {(k) => (
             <>
               <KalshiSyncStatus sync={k.sync} className="mb-3 text-xs" />
-              <KalshiCompactList rows={k.items} perGroup={3} mainLineFirst />
+              <KalshiCompactList rows={k.items} perGroup={3} mainLineFirst maxGroups={4} />
               <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
                 <span>
                   {k.total > k.items.length ? `Showing the ${k.items.length} highest-volume of ${k.total} contracts. ` : ""}Market prices in cents as observed at the last sync. A market price is not a model probability.
@@ -563,6 +563,7 @@ export default function GamePage() {
   return (
     <div>
       {row && <ScoreHeader g={row} stream={stream.state} />}
+      {!row && <h1 className="sr-only">Game research</h1>}
       <div className="mb-3 mt-3 flex flex-wrap items-center gap-3">
         <DLink href="/games" className={textLink}>
           <ArrowLeft className="h-3 w-3" aria-hidden /> All games
