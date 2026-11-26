@@ -9,6 +9,7 @@ import { Val } from "@/components/ui/na";
 import { PageHeader, Panel } from "@/components/ui/panel";
 import { EmptyState, QueryView } from "@/components/ui/states";
 import { api, ApiError } from "@/lib/api";
+import { DLink } from "@/lib/date";
 import { fmtDateTimeET, fmtInt } from "@/lib/format";
 import type { Operations } from "@/lib/types";
 
@@ -73,7 +74,7 @@ export default function AdminPage() {
   const ready = useQuery({ queryKey: ["ready"], queryFn: api.ready, refetchInterval: 30_000 });
   return (
     <div className="space-y-4">
-      <PageHeader title="Operations Admin" sub="Owner-only controls. Pausing affects research jobs only; this system has no execution path." />
+      <PageHeader title="Operations Admin" sub="Owner-only controls. Pausing affects research jobs only; this system has no execution path."  right={<DLink href="/admin/ai-budget" className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline">AI budget →</DLink>} />
       <Panel title="Service readiness">
         <QueryView query={ready} rows={1}>
           {(r) => (
