@@ -406,7 +406,8 @@ def evaluate_game(ctx: SlateContext, g: Game, edition_key: str) -> dict:
                 if mv is None:
                     continue
                 mu = float(getattr(r, f"mu_{stat}"))
-                dist = {"family": "nbinom", "mu": mu, "r": mv.params["dispersion_r"]}
+                dist = M.player_dist(mu, float(getattr(r, f"rate_{stat}")),
+                                     None if pd.isna(r.min_sd) else float(r.min_sd), mv.params)
                 qs = M.dist_quantiles(dist)
                 feats = {"proj_min": float(r.proj_min), "rate": float(getattr(r, f"rate_{stat}")),
                          "n_games": int(r.n_games), "l10": float(getattr(r, f"l10_{stat}")),
@@ -423,7 +424,9 @@ def evaluate_game(ctx: SlateContext, g: Game, edition_key: str) -> dict:
         pp = player_pred.get((pid, stat))
         pl = ctx.players.get(pid)
         fam = f"player_{stat}"
-        cal = (ctx.evals[fam].metrics.get("calibration") if ctx.evals[fam] else None) or []
+        # 1.1+ evaluations carry over/under calibration across many lines; 1.0 only near the last-10 average
+        ev_m = ctx.evals[fam].metrics if ctx.evals[fam] else {}
+        cal = ev_m.get("calibration_lines") or ev_m.get("calibration") or []
         for q in qs:
             prob = proj = None
             support, oppose = [], []

@@ -106,6 +106,40 @@ def test_walk_forward_is_chronological():
     assert m["gate_checks"]["enough_observations"] is (m["n_eval"] >= M.GATE["min_eval_obs"])
 
 
+
+def test_player_dispersion_includes_minutes_uncertainty():
+    """1.1.0: a player with volatile minutes gets a wider distribution than one with steady minutes (same mean)."""
+    prm = {"dispersion_r0": 20.0, "minutes_var_k": 1.0, "min_sd_fill": 5.0}
+    steady = M.player_dist(20.0, 0.6, 1.0, prm)
+    volatile = M.player_dist(20.0, 0.6, 9.0, prm)
+    assert volatile["r"] < steady["r"]  # smaller r = more variance for a negative binomial
+    assert M.player_dist(20.0, 0.6, None, prm)["r"] == M.player_dist(20.0, 0.6, 5.0, prm)["r"]  # missing sd -> fill
+    # a 1.0.0 parameter set keeps its single dispersion
+    assert M.player_dist(20.0, 0.6, 9.0, {"dispersion_r": 7.5}) == {"family": "nbinom", "mu": 20.0, "r": 7.5}
+
+
+def test_dispersion_is_fitted_on_calibration_period_only():
+    f = M.build_player_backtest_frame(synth_frame(n_games=80))
+    t1, t2 = M._split_dates(f["game_date"])
+    cal = f[(f["game_date"] >= t1) & (f["game_date"] < t2)]
+    res = M.backtest_player_stat(f, "pts", with_gbm=False)
+    assert res["metrics"]["dispersion"] == M.fit_player_dispersion(cal, "pts")
+    # changing evaluation-period outcomes must not change the fitted dispersion
+    g = f.copy()
+    g.loc[g["game_date"] >= t2, "pts"] = g.loc[g["game_date"] >= t2, "pts"] * 3
+    assert M.backtest_player_stat(g, "pts", with_gbm=False)["metrics"]["dispersion"] == res["metrics"]["dispersion"]
+
+
+def test_line_calibration_covers_both_sides_and_high_probabilities():
+    f = M.build_player_backtest_frame(synth_frame(n_games=80))
+    m = M.backtest_player_stat(f, "pts", with_gbm=False)["metrics"]
+    lines = m["calibration_lines"]
+    # over and under at every pseudo-line: twice the observations per offset, symmetric around 0.5
+    assert sum(r["n"] for r in lines) == 2 * len(M.CAL_LINE_OFFSETS) * m["n_eval"]
+    assert sum(r["n"] for r in lines if r["lo"] >= 0.6) > sum(r["n"] for r in m["calibration"] if r["lo"] >= 0.6)
+    # the promotion-gate ECE is still computed on the original single pseudo-line table
+    assert m["ece"] == M.ece(m["calibration"])
+
 CORR = {"team_home_away": 0.25, "own_team": {s: 0.15 for s in S.PLAYER_STATS}, "opp_team": {s: 0.02 for s in S.PLAYER_STATS},
         "same_player": {S._key(a, b): 0.3 for a in S.PLAYER_STATS for b in S.PLAYER_STATS if a != b},
         "teammate": {S._key(a, b): -0.05 for a in S.PLAYER_STATS for b in S.PLAYER_STATS},
