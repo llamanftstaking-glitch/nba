@@ -36,6 +36,16 @@ function contextFor(path: string): { label: string; detail: string } {
   return { label: "Today's slate", detail: shortDate(SNAPSHOT) }
 }
 
+function titleFor(path: string) {
+  if (path.startsWith('/a/game')) return 'Cavaliers 102, Knicks 121, Final'
+  if (path.startsWith('/a/scores')) return `Scores, ${shortDate(SNAPSHOT)}`
+  if (path.startsWith('/a/player')) return 'Player profile'
+  if (path.startsWith('/a/markets')) return 'Market watch'
+  if (path.startsWith('/a/research')) return 'Research'
+  if (path.startsWith('/a/jarvis')) return 'JARVIS'
+  return `Today, ${shortDate(SNAPSHOT)}`
+}
+
 // ---- search -----------------------------------------------------------------------------------
 type Hit = { key: string; group: string; title: string; sub: string; to: string | null; abbr?: string; player?: { headshot_url?: string | null } }
 
@@ -168,6 +178,9 @@ export default function ConceptA() {
   }, [])
   useEffect(() => {
     window.scrollTo(0, 0)
+    const prev = document.title
+    document.title = `${titleFor(pathname)} \u00b7 GIZER NBA`
+    return () => { document.title = prev }
   }, [pathname])
 
   const shell = useMemo<ShellCtx>(() => ({ portal, openAssistant: () => setAssistant(true), openSearch: () => setSearch(true) }), [portal])

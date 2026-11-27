@@ -11,9 +11,9 @@ const fact = Object.fromEntries(convo.facts.map((f) => [f.key, f.value])) as Rec
 const state = data.jarvis.state as { models: Record<string, string>; budget: { spent_usd: number; today_usd: number }; lifetime_cap_usd: number; daily_cap_usd: number }
 
 const MODES = [
-  { key: 'quick', label: 'Quick answers', hint: 'Short replies from stored records' },
-  { key: 'standard', label: 'Standard', hint: 'The everyday setting' },
-  { key: 'deep', label: 'Deep review', hint: 'Slower, for audits and long reads' },
+  { key: 'quick', label: 'Quick answers', short: 'Quick', hint: 'Short replies from stored records' },
+  { key: 'standard', label: 'Standard', short: 'Standard', hint: 'The everyday setting' },
+  { key: 'deep', label: 'Deep review', short: 'Deep', hint: 'Slower, for audits and long reads' },
 ] as const
 
 const sections = answer.text.split('\n\n').map((p) => {
@@ -34,7 +34,7 @@ const rows: [string, string, string][] = [
 
 function Conversation({ compact }: { compact?: boolean }) {
   return (
-    <article className={clsx('convo', compact && 'convo-compact')}>
+    <article className={clsx('convo', compact && 'convo-compact')} tabIndex={compact ? undefined : 0} aria-label="Sample conversation">
       <p className="convo-flag">
         <Slot>Sample conversation</Slot> Written by hand for this prototype from stored records. Not a recorded exchange and not model output.
       </p>
@@ -143,7 +143,8 @@ function Composer({ context, onClearContext }: { context: ReactNode; onClearCont
         <div className="seg seg-s" role="radiogroup" aria-label="Answer depth">
           {MODES.map((m) => (
             <button key={m.key} type="button" role="radio" aria-checked={mode === m.key} className={clsx(mode === m.key && 'is-on')} title={`${m.hint}. Model: ${state.models[m.key]}`} onClick={() => setMode(m.key)}>
-              {m.label}
+              <span className="mode-full">{m.label}</span>
+              <span className="mode-short" aria-hidden="true">{m.short}</span>
             </button>
           ))}
         </div>

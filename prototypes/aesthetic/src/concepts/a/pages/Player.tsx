@@ -85,9 +85,6 @@ function FormChart({ p, stat }: { p: FeaturedPlayer; stat: 'pts' | 'min' }) {
         {avg != null && (
           <g>
             <line x1={pad.l} x2={pad.l + iw} y1={y(avg)} y2={y(avg)} className="c-avg" />
-            <text x={pad.l + 4} y={y(avg) - 6} className="c-note">
-              Season average {avg.toFixed(1)}
-            </text>
           </g>
         )}
         <text x={pad.l} y={h - 4} className="c-axis">
@@ -115,6 +112,11 @@ function FormChart({ p, stat }: { p: FeaturedPlayer; stat: 'pts' | 'min' }) {
         <span className="key-item">
           <span className="key-miss" aria-hidden="true" /> missed game, never counted as zero
         </span>
+        {avg != null && (
+          <span className="key-item">
+            <span className="key-avg" aria-hidden="true" /> season average {avg.toFixed(1)}
+          </span>
+        )}
         {est && (
           <span className="key-item">
             <span className="key-tick key-tick-h" aria-hidden="true" /> projection {est.mean.toFixed(1)}, range {est.lo} to {est.hi}

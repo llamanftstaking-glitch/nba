@@ -37,7 +37,7 @@ function PriceChart({ ticker }: { ticker: string }) {
       handleScroll: false,
       handleScale: false,
     })
-    const s = chart.addSeries(LineSeries, { color: '#12161a', lineWidth: 2, pointMarkersVisible: true, pointMarkersRadius: 4, lastValueVisible: true, priceLineVisible: false, priceFormat: { type: 'price', precision: 3, minMove: 0.005 } })
+    const s = chart.addSeries(LineSeries, { color: '#12161a', lineWidth: 2, pointMarkersVisible: true, pointMarkersRadius: 4, lastValueVisible: false, priceLineVisible: false, priceFormat: { type: 'price', precision: 3, minMove: 0.005 } })
     s.setData(series.filter((o) => o.price != null).map((o) => ({ time: Math.floor(new Date(o.at).getTime() / 1000) as UTCTimestamp, value: o.price as number })))
     chart.timeScale().fitContent()
     return () => chart.remove()
@@ -81,6 +81,12 @@ function Detail({ m }: { m: KalshiMarket }) {
       {d ? (
         <>
           <PriceChart ticker={m.ticker} />
+          <p className="chart-credit">
+            Chart drawn with{' '}
+            <a className="link" href="https://www.tradingview.com/lightweight-charts/" target="_blank" rel="noreferrer">
+              TradingView Lightweight Charts
+            </a>
+          </p>
           <Note>
             {d.series.length} polled observations, {stampET(d.series[0].at)} to {stampET(d.series[d.series.length - 1].at)}. The first one is our first observation, not an opening price. Sync is stale: nothing has been polled since.
           </Note>
@@ -212,8 +218,8 @@ export default function Markets() {
   const selected = list.items.find((m) => m.ticker === sel) ?? list.items[0]
   const view = state !== 'data' ? state : rows.length === 0 ? 'empty' : 'data'
   const clear = () => { setKind('all'); setGame('all'); setQ(''); setState('data') }
-  const Th = ({ k, label }: { k: SortKey; label: string }) => (
-    <th scope="col" className="r" aria-sort={sort.key === k ? (sort.dir === 1 ? 'descending' : 'ascending') : undefined}>
+  const Th = ({ k, label, cls }: { k: SortKey; label: string; cls?: string }) => (
+    <th scope="col" className={clsx('r', cls)} aria-sort={sort.key === k ? (sort.dir === 1 ? 'descending' : 'ascending') : undefined}>
       <button type="button" className={clsx('th-sort', sort.key === k && 'is-sorted')} onClick={() => setSort((s) => (s.key === k ? { key: k, dir: s.dir === 1 ? -1 : 1 } : { key: k, dir: 1 }))}>
         {label}
         {sort.key === k && (sort.dir === 1 ? <ArrowDown size={13} aria-hidden="true" /> : <ArrowUp size={13} aria-hidden="true" />)}
@@ -261,7 +267,7 @@ export default function Markets() {
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter by player, team or contract" />
         </label>
         <p className="filters-count">
-          {view === 'data' ? rows.length : 0} of {list.items.length} shown. The snapshot holds the {list.items.length} highest-volume of {list.total.toLocaleString('en-US')} contracts.
+          {view === 'loading' || view === 'slow' ? 'Waiting for the list.' : `${view === 'data' ? rows.length : 0} of ${list.items.length} shown.`} The snapshot holds the {list.items.length} highest-volume of {list.total.toLocaleString('en-US')} contracts.
         </p>
       </div>
 
@@ -272,13 +278,13 @@ export default function Markets() {
               <thead>
                 <tr>
                   <th scope="col" className="sticky-col">Contract</th>
-                  <Th k="threshold" label="Line" />
+                  <Th k="threshold" label="Line" cls="mk-line" />
                   <Th k="price" label="Price" />
-                  <th scope="col" className="r">First obs.</th>
+                  <th scope="col" className="r">First</th>
                   <Th k="change_since_first" label="Change" />
                   <Th k="volume" label="Volume" />
                   <Th k="spread" label="Spread" />
-                  <th scope="col" className="r">Last observed</th>
+                  <th scope="col" className="r">Last obs.</th>
                 </tr>
               </thead>
               {view === 'data' && (
@@ -291,7 +297,7 @@ export default function Markets() {
                           <span className="mk-game">{m.game_label}</span>
                         </button>
                       </th>
-                      <td className="r">{m.threshold ?? NA}</td>
+                      <td className="r mk-line">{m.threshold ?? NA}</td>
                       <td className="r strong">{cents(m.price)}</td>
                       <td className="r">{cents(m.first_observed)}</td>
                       <td className="r">
@@ -306,12 +312,30 @@ export default function Markets() {
               )}
             </table>
           </div>
+          {view === 'slow' && (
+            <div className="mk-state" role="status">
+              <span className="mk-progress" aria-hidden="true" />
+              <h2 className="h-sub">Still loading. This list is large.</h2>
+              <p>
+                The server holds {list.total.toLocaleString('en-US')} contracts for this slate and has not answered after 8 seconds. The sync status above is current; only the table is waiting.
+              </p>
+              <div className="mk-actions">
+                <button type="button" className="btn btn-line" onClick={() => setState('data')}>
+                  <RefreshCw size={16} aria-hidden="true" /> Try again
+                </button>
+                <button type="button" className="btn" onClick={() => setState('loading')}>
+                  Keep waiting
+                </button>
+              </div>
+              <p className="muted">After 30 seconds the request is dropped and the error state is shown.</p>
+            </div>
+          )}
           {view === 'loading' && (
             <div className="mk-state" role="status">
               <span className="mk-progress" aria-hidden="true" />
               <h2 className="h-sub">Loading contracts</h2>
               <p>Asking the server for the {tinyDate(list.date)} slate. The header and filters stay usable, and the last sync time above stays visible.</p>
-              <p className="muted">If this takes longer than 8 seconds the page stops waiting and offers a retry. No placeholder rows.</p>
+              <p className="muted">After 8 seconds this becomes &ldquo;Still loading. This list is large.&rdquo; with a retry. No placeholder rows.</p>
             </div>
           )}
           {view === 'empty' && (
@@ -348,9 +372,9 @@ export default function Markets() {
       <div className="designstates">
         <span className="label">Design states</span>
         <div className="seg seg-s" role="group" aria-label="Preview a page state">
-          {['data', 'loading', 'empty', 'error'].map((s) => (
+          {['data', 'loading', 'slow', 'empty', 'error'].map((s) => (
             <button key={s} type="button" className={clsx(state === s && 'is-on')} aria-pressed={state === s} onClick={() => setState(s)}>
-              {s === 'data' ? 'Snapshot data' : s[0].toUpperCase() + s.slice(1)}
+              {s === 'data' ? 'Snapshot data' : s === 'slow' ? 'Loading, past deadline' : s[0].toUpperCase() + s.slice(1)}
             </button>
           ))}
         </div>
