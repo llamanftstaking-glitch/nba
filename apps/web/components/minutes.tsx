@@ -210,7 +210,7 @@ export function MinutesTable({ rows, sort, onSort }: { rows: MinutesRow[]; sort:
   );
   return (
     <>
-      <div className="hidden xl:block" data-testid="minutes-table">
+      <div className="hidden overflow-x-auto xl:block" data-testid="minutes-table" role="region" aria-label="Player minutes" tabIndex={0}>
         <table className="w-full table-auto border-collapse">
           <caption className="sr-only">Player minutes</caption>
           <thead>

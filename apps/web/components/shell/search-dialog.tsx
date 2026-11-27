@@ -9,7 +9,7 @@ import { PlayerAvatar } from "@/components/player-avatar";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { useDateHref } from "@/lib/date";
-import { ALL_PAGES, SHORTCUTS } from "@/lib/nav";
+import { ALL_PAGES } from "@/lib/nav";
 import { useReturnFocus } from "@/components/ui/sheet";
 import { useDebounced } from "@/lib/use-debounced";
 
@@ -20,10 +20,7 @@ const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 /** Pages whose label, workspace or keywords contain every typed word. Label matches rank first. */
 function matchPages(q: string): Hit[] {
   const words = norm(q).split(" ").filter(Boolean);
-  const all = [
-    ...ALL_PAGES.map((p) => ({ href: p.href, label: p.label, group: p.workspace.label, keywords: p.keywords ?? "" })),
-    ...SHORTCUTS.map((s) => ({ href: s.href, label: s.label, group: "JARVIS", keywords: "briefing morning read" })),
-  ];
+  const all = ALL_PAGES.map((p) => ({ href: p.href, label: p.label, group: p.group === "Also" ? "More pages" : p.group, keywords: p.keywords ?? "" }));
   const scored = all
     .map((p) => {
       const label = norm(p.label);

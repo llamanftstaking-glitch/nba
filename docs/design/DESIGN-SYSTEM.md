@@ -83,7 +83,7 @@ Sizes are in `rem`. **Nothing renders below 13px** (asserted on every route by t
 | Sub | `.h-sub` | 18 / 1.3 | 92, 650 | row titles, contract names |
 | Body | `text-base` | 16 / 1.5 | 100, 400 | prose, inputs on phones |
 | Dense | `text-sm` | 15 / 1.4 | 100 | table cells and controls on desktop |
-| Secondary | `text-xs` | 14 / 1.25 | 100 | captions, notes, the workspace row on desktop |
+| Secondary | `text-xs` | 14 / 1.25 | 100 | captions, notes |
 | Small | `text-2xs` | 13 / 1.125 | 100 | the floor: intervals, units, sub-labels |
 | Scoreboard label | `.slot`, `thead th` | 13 / 1.2 | 100, 650–700, uppercase, +0.05–0.06em | table column heads and the status slot only |
 
@@ -120,22 +120,33 @@ status slot and team names. Labels above fields and values are sentence case.
 | `Sheet` | `ui/sheet.tsx` | Radix Dialog: focus in, trapped, returned; Escape and the scrim close it. Bottom sheet on phones, right drawer from 768px. |
 | `Collapsible` | `ui/collapsible.tsx` | Native `<details>` on a hairline. |
 | `Meter`, `ShareBar` | `ui/meter.tsx` | A 4px bar on a rule, always with a label and a value. |
-| Shell | `shell/app-shell.tsx`, `all-pages.tsx`, `search-dialog.tsx` | See §6. |
+| Shell | `shell/app-shell.tsx`, `search-dialog.tsx` | See §6. |
 
 Row actions: a table row is never a button. The row's name is a real `<button>` or link in a row-header cell; a
 click elsewhere on the row is a pointer convenience on top of it.
 
-## 6. Navigation model
+## 6. Shell and navigation
 
-Five workspaces in the top bar (Today, Games, Players, Markets, Research), plus Ask JARVIS, All pages and the
-account control. A workspace row under the bar lists every page of the current workspace. The sixth group,
-Intelligence & System, is opened from All pages. Phones get a five-item bottom tab bar whose fifth item, More,
-opens the full grouped list. The complete destination table is in `docs/architecture/FRONTEND-IA.md` §1 and the
-machine-readable list is `apps/web/lib/nav-destinations.json`.
+**The menu is the one on main** (owner instruction, 2026-11-27): a left sidebar with the groups Command Center,
+Player Intelligence, My Research and System, in the same order, with the same labels, URLs and icons. This system
+only decides how it looks. The complete list is in `docs/architecture/FRONTEND-IA.md` §1; the code is
+`apps/web/lib/nav.ts` and `components/shell/app-shell.tsx`.
 
-Rules: at most five primary workspaces; every page is listed in exactly one group; a new page is added to the
-JSON list (the smoke test then requires it to be reachable by click on desktop and on a phone); no page is
-reachable only by URL; every route has its own document title; detail pages have a breadcrumb.
+| Part | Rule |
+|---|---|
+| Sidebar | Sheet ground with a hairline on its right edge; 252px, or a 60px icon rail when collapsed. No boxes around entries. |
+| Group title | The same text as main, 13px bold ink, sentence case as written. Not uppercase, not tracked. |
+| Entry | 36px tall, 15px, icon (18px, tertiary ink) then label in secondary ink. Hover: band. |
+| Current entry | A 4px ink bar on the left edge, the band behind it, bold ink label and icon. No glow, no ring, no coloured fill. |
+| Icons | The lucide icon each entry had on main. Here they identify the entries of a menu the owner already knows; elsewhere the "no icon beside a heading" rule stands. |
+| Live dot | Orange, beside Live Games, only while a game is live. |
+| Top bar | Slim, sheet ground: date control, search, Ask JARVIS (ink button), account. Sticky from 768px. |
+| Phone | Bottom bar Home, Games, Props, Parlays, More; the current tab has a 3px ink top rule and bold label. More opens a sheet with the same groups plus "Also", each row at least 44px, the current row marked as in the sidebar. |
+| Breadcrumb | On detail pages only: `List page / this record`. |
+
+Rules: the menu's groups, order, names and URLs change only by owner decision, and the smoke test fails if they
+differ from main; no page is reachable only by URL; every route has its own document title; the skip link stays the
+first Tab stop.
 
 ## 7. State patterns
 
@@ -155,7 +166,7 @@ reachable only by URL; every route has its own document title; detail pages have
 * One focus style: a 2px ink outline with 2px offset on everything focusable, native controls included. There is
   no global `outline: none`.
 * Skip link first in the Tab order. One `h1` per route. A distinct `document.title` per route.
-* Every overlay is a Radix Dialog (JARVIS panel, All pages / More, search, every `Sheet`).
+* Every overlay is a Radix Dialog (JARVIS panel, the More sheet, search, every `Sheet`).
 * Tables are tables: caption, scoped headers, `aria-sort`; rows are rows.
 * Targets ≥ 44px on touch layouts for buttons, tabs, navigation and sheet rows.
 * Colour is never the only signal: the leading team is heavier as well as darker; moves carry an arrow and a
@@ -165,7 +176,7 @@ reachable only by URL; every route has its own document title; detail pages have
 
 Grids of identical bordered cards. Boxes inside boxes. Glow, gradient washes or coloured rings as decoration.
 Uppercase tracked micro-labels as the default label style. Monospace for ordinary numbers. Text below 13px. Icons
-or badges that carry no information (an icon beside every heading, a navigation icon per link). Empty states that
+or badges that carry no information (an icon beside every heading; the sidebar icons are kept by owner decision, §6). Empty states that
 keep a frame. Skeletons with no words. Orange on anything observed. Green and red for price moves. Team colours
 outside scoreboards and game charts. The product vocabulary forbidden by `CLAUDE.md`.
 

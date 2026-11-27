@@ -48,19 +48,27 @@ const NAV = ["/live", "/jarvis", "/cortex", "/", "/games", "/picks", "/player-pr
 const OTHER = ["/kalshi-intelligence/KXFIX-A-PTS25", "/kalshi-intelligence/KXFIX-A-DD", "/games/FIX-G1", "/games/FIX-G2", "/players/9001", "/players/9004", "/players/compare?ids=9001,9005", "/teams", "/teams/1", "/exposure", "/markets", "/simulations", "/backtesting", "/admin", "/admin/ai-budget", "/live/following", "/live/research-tracker", "/games/FIX-G1?tab=boxscore", "/games/FIX-G1?tab=plays", "/games/FIX-G1?tab=rotations", "/games/FIX-G1?tab=overview", "/cortex?tab=encyclopedia", "/cortex?tab=playbook", "/cortex?tab=statistics", "/cortex?tab=player-dna", "/cortex?tab=player-dna&player=9001", "/cortex?tab=team-dna", "/cortex?tab=team-dna&team=1", "/cortex?tab=coach-dna", "/cortex?tab=coach-dna&team=1", "/cortex?tab=research", "/cortex?tab=sources", "/cortex?tab=coverage", "/cortex?tab=evaluations", "/cortex/fix-shot-clock"];
 // The ten pages captured at every viewport for design review.
 const GALLERY = [["/", "overview"], ["/games", "games"], ["/lineups", "lineups"], ["/player-props", "player-props"], ["/players/9001", "player-profile"], ["/games/FIX-G1", "game"], ["/parlays", "parlays"], ["/results", "results"], ["/agents", "agents"], ["/data-health", "data-health"], ["/kalshi-intelligence", "kalshi"], ["/kalshi-intelligence/KXFIX-A-PTS25", "kalshi-detail"], ["/minutes", "minutes"], ["/injuries", "injuries"], ["/jarvis", "jarvis"], ["/admin/ai-budget", "ai-budget"], ["/live", "live"], ["/games/FIX-G1?tab=overview", "live-game"], ["/games/FIX-G1?tab=boxscore", "live-boxscore"], ["/games/FIX-G1?tab=rotations", "live-rotations"], ["/cortex", "cortex"], ["/cortex?tab=encyclopedia", "cortex-encyclopedia"], ["/cortex/fix-shot-clock", "cortex-record"], ["/cortex?tab=player-dna&player=9001", "cortex-player"], ["/cortex?tab=team-dna&team=1", "cortex-team"]];
-// The navigation list (lib/nav-destinations.json) is the source of truth for the shell. The list on
-// `main` (the 27-link sidebar plus the 9 pages it hid) is read from git so the test proves nothing was lost.
+// Owner instruction (2026-11-27): the menu stays exactly as on main. lib/nav-destinations.json mirrors
+// main:apps/web/lib/nav.ts, which is read from git here so the test can prove the sidebar is identical:
+// the same groups, order, labels and hrefs, the same extra pages and the same phone tabs.
 const NAVDATA = JSON.parse(readFileSync(join(HERE, "..", "lib", "nav-destinations.json"), "utf8"));
-const DESTINATIONS = NAVDATA.workspaces.flatMap((w) => w.pages.map((p) => ({ ...p, workspace: w.id, workspaceLabel: w.label, primary: w.primary })));
-let LEGACY = null;
+const flat = (groups) => groups.map((g) => `${g.title}: ${g.items.map((i) => `${i.label} -> ${i.href}`).join(" | ")}`).join(" || ");
+const pairs = (block) => [...block.matchAll(/href:\s*"([^"]+)"\s*,\s*label:\s*"([^"]+)"/g)].map((m) => ({ href: m[1], label: m[2] }));
+let MAIN = null;
 try {
   const { execSync } = require("node:child_process");
   const old = execSync("git show main:apps/web/lib/nav.ts", { cwd: HERE, stdio: ["ignore", "pipe", "ignore"] }).toString();
-  LEGACY = [...old.matchAll(/href:\s*"([^"]+)"\s*,\s*label:\s*"([^"]+)"/g)].map((m) => ({ href: m[1], label: m[2] })).filter((x, i, a) => !["Home", "Games", "Props", "Parlays"].includes(x.label) || a.findIndex((y) => y.href === x.href) === i);
-  LEGACY = LEGACY.filter((x, i, a) => a.findIndex((y) => y.href === x.href) === i);
+  const g = old.slice(old.indexOf("export const NAV_GROUPS"), old.indexOf("export const EXTRA_PAGES"));
+  MAIN = {
+    groups: [...g.matchAll(/title:\s*"([^"]+)",\s*items:\s*\[([\s\S]*?)\],\s*\}/g)].map((m) => ({ title: m[1], items: pairs(m[2]) })),
+    extra: pairs(old.slice(old.indexOf("export const EXTRA_PAGES"), old.indexOf("export const MOBILE_NAV"))),
+    mobile: pairs(old.slice(old.indexOf("export const MOBILE_NAV"), old.indexOf("const ALL_HREFS"))),
+  };
 } catch {
-  LEGACY = null; // not a git checkout, or no main branch: the comparison is reported as not run
+  MAIN = null; // not a git checkout, or no main branch: reported as a failed check below, never skipped silently
 }
+const SIDEBAR = NAVDATA.groups.flatMap((g) => g.items);
+const DESTINATIONS = [...SIDEBAR, ...NAVDATA.extra];
 const VIEWPORTS = [[1920, 1080], [1440, 900], [1280, 800], [1024, 768], [768, 1024], [430, 932], [390, 844]];
 
 let passed = 0;
@@ -195,8 +203,7 @@ async function liveFlow(page, label, errors, shot) {
   check(`[${label}] live: one pulsing LIVE marker on the strip card, with period, clock and freshness`, (await strip.locator(`${g1} [data-testid="live-dot"]`).count()) === 1 && /Q1/.test(await strip.locator(g1).innerText()) && /6:12/.test(await strip.locator(g1).innerText()) && (await strip.locator(`${g1} [data-testid="freshness"][data-stale="0"]`).count()) === 1);
   check(`[${label}] live: strip shows the observed score`, /14/.test(await strip.locator(g1).innerText()) && /12/.test(await strip.locator(g1).innerText()));
   check(`[${label}] live: Live section holds the game with a line score and leaders`, (await page.locator(`[data-testid="live-live"] [data-testid="live-card"]`).count()) === 1 && (await page.locator('[data-testid="live-live"] [data-testid="line-score"]').count()) === 1 && (await page.locator('[data-testid="live-live"] [data-testid="live-leaders"]').count()) <= 1 && (await page.locator('[data-testid="live-upcoming"] [data-testid="live-card"]').count()) >= 1);
-  if (!isMobile) check(`[${label}] live: the Games workspace row shows the live dot beside Live Games, and the top bar beside Games`, (await page.locator('[data-testid="subnav"] a[data-nav-href="/live"] [data-testid="live-dot"]').count()) === 1 && (await page.locator('[data-testid="primary-nav"] a[data-workspace="games"] [data-testid="live-dot"]').count()) === 1);
-  else check(`[${label}] live: the bottom tab bar shows the live dot beside Games`, (await page.locator('[data-testid="bottom-nav"] a[data-workspace="games"] [data-testid="live-dot"]').count()) === 1);
+  if (!isMobile) check(`[${label}] live: sidebar shows the live dot beside Live Games`, (await page.locator('[data-testid="sidebar"] nav a[href^="/live"] [data-testid="live-dot"]').count()) === 1);
   await shot("live");
 
   // day navigation on /live
@@ -723,29 +730,27 @@ async function runViewport(browser, label, viewport) {
     check(`[${label}] ${route} has no horizontal overflow`, !o, o ? JSON.stringify(o) : "");
   }
 
-  // --- navigation: nothing lost, everything reachable by click ---
+  // --- navigation: the menu is the one on main, restyled ---
   await visit(page, "/", label, errors);
   const hrefs = DESTINATIONS.map((d) => d.href);
   if (label === "desktop") {
-    check(`[nav] the destination list has no duplicates and at most five primary workspaces`, new Set(hrefs).size === hrefs.length && NAVDATA.workspaces.filter((w) => w.primary).length === 5, `${hrefs.length} destinations`);
-    check(`[nav] the list on main could be read from git`, Array.isArray(LEGACY) && LEGACY.length === 36, LEGACY ? `${LEGACY.length} destinations on main` : "git show main:apps/web/lib/nav.ts failed");
-    if (LEGACY) {
-      const missing = LEGACY.filter((o) => !hrefs.includes(o.href));
-      check(`[nav] every destination on main (27 sidebar links + 9 hidden pages) is still a destination`, missing.length === 0 && hrefs.length >= LEGACY.length, `before ${LEGACY.length}, after ${hrefs.length}; missing: ${missing.map((m) => m.href).join(", ") || "none"}`);
-      const renamed = LEGACY.filter((o) => DESTINATIONS.find((d) => d.href === o.href)?.label !== o.label);
-      check(`[nav] every destination keeps the label it had on main`, renamed.length === 0, renamed.map((r) => `${r.href} "${r.label}"`).join(", "));
+    check(`[nav] main's nav.ts could be read from git: 4 groups (11, 6, 5, 5), 9 extra pages, 4 phone tabs`, MAIN !== null && MAIN.groups.map((g) => g.items.length).join(",") === "11,6,5,5" && MAIN.extra.length === 9 && MAIN.mobile.length === 4, MAIN ? `${MAIN.groups.map((g) => g.items.length).join(",")} / ${MAIN.extra.length} / ${MAIN.mobile.length}` : "git show main:apps/web/lib/nav.ts failed");
+    if (MAIN) {
+      check(`[nav] the navigation list is identical to main: same group titles, order, labels and hrefs`, flat(NAVDATA.groups) === flat(MAIN.groups), flat(NAVDATA.groups).slice(0, 200));
+      check(`[nav] the extra pages and the phone tabs are identical to main`, flat([{ title: "x", items: NAVDATA.extra }]) === flat([{ title: "x", items: MAIN.extra }]) && flat([{ title: "m", items: NAVDATA.mobile }]) === flat([{ title: "m", items: MAIN.mobile }]));
     }
   }
-  const pathOf = () => new URL(page.url()).pathname;
   if (isMobile) {
     const nav = (await page.locator('[data-testid="bottom-nav"]').innerText()).replace(/\s+/g, " ").trim();
-    check(`[${label}] bottom nav is Today | Games | Players | Research | More (five items)`, nav === "Today Games Players Research More" && (await page.locator('[data-testid="bottom-nav"] a, [data-testid="bottom-nav"] button').count()) === 5, nav);
+    check(`[${label}] bottom nav is Home | Games | Props | Parlays | More`, nav === "Home Games Props Parlays More", nav);
+    if (MAIN) check(`[${label}] bottom nav tabs point where main's did`, (await page.locator('[data-testid="bottom-nav"] a').evaluateAll((a) => a.map((e) => `${e.innerText.trim()} -> ${new URL(e.href).pathname}`).join(" | "))) === MAIN.mobile.map((m) => `${m.label} -> ${m.href}`).join(" | "));
     const small = await page.evaluate(() => [...document.querySelectorAll('[data-testid="bottom-nav"] a, [data-testid="bottom-nav"] button')].filter((e) => e.getBoundingClientRect().height < 44).length);
     check(`[${label}] bottom nav targets are at least 44px`, small === 0, `${small} too small`);
     await page.click('[data-testid="more-button"]');
     await page.waitForSelector('[role="dialog"]');
-    const listed = await page.locator('[role="dialog"] a[data-nav-href]').evaluateAll((a) => a.map((e) => e.getAttribute("data-nav-href")));
-    check(`[${label}] More sheet lists every destination, grouped by workspace`, hrefs.every((h) => listed.includes(h)) && listed.length === hrefs.length && (await page.locator('[role="dialog"] [data-workspace]').count()) === NAVDATA.workspaces.length && /CORTEX/.test(await page.locator('[role="dialog"]').innerText()) && /Live Games/.test(await page.locator('[role="dialog"]').innerText()) && /JARVIS/.test(await page.locator('[role="dialog"]').innerText()) && /Kalshi Markets/.test(await page.locator('[role="dialog"]').innerText()) && /Minutes Intelligence/.test(await page.locator('[role="dialog"]').innerText()), `${listed.length} of ${hrefs.length}`);
+    const sheet = await page.locator('[role="dialog"] [data-nav-group]').evaluateAll((gs) => gs.map((g) => ({ title: g.getAttribute("data-nav-group"), items: [...g.querySelectorAll("a[data-nav-href]")].map((e) => ({ label: e.innerText.trim(), href: e.getAttribute("data-nav-href") })) })));
+    const want = MAIN ? [...MAIN.groups, { title: "Also", items: MAIN.extra }] : [];
+    check(`[${label}] More sheet lists main's four groups and "Also" with the same entries in the same order`, MAIN !== null && flat(sheet) === flat(want) && (await page.locator('[role="dialog"] a').count()) >= 36, flat(sheet).slice(0, 200));
     const smallRows = await page.locator('[role="dialog"] a[data-nav-href]').evaluateAll((a) => a.filter((e) => e.getBoundingClientRect().height < 44).length);
     check(`[${label}] More sheet rows are at least 44px tall`, smallRows === 0, `${smallRows} too small`);
     const inside = await page.evaluate(() => document.querySelector('[role="dialog"]')?.contains(document.activeElement));
@@ -756,76 +761,74 @@ async function runViewport(browser, label, viewport) {
     await page.keyboard.press("Escape");
     await page.waitForFunction(() => !document.querySelector('[role="dialog"]') && document.activeElement?.getAttribute("data-testid") === "more-button", null, { timeout: 3000 }).catch(() => {});
     check(`[${label}] More sheet: Escape closes it and focus returns to More`, (await page.locator('[role="dialog"]').count()) === 0 && (await page.evaluate(() => document.activeElement?.getAttribute("data-testid"))) === "more-button");
-    // every destination, by tapping it in the More sheet
     let reached = 0;
     const failed = [];
     for (const d of DESTINATIONS) {
       await page.click('[data-testid="more-button"]');
-      await page.locator(`[data-testid="all-pages"] a[data-nav-href="${d.href}"]`).click();
+      await page.locator(`[data-testid="more-sheet"] a[data-nav-href="${d.href}"]`).click();
       const ok = await page.waitForFunction((h) => location.pathname === h, d.href, { timeout: 10000 }).then(() => true).catch(() => false);
       await page.locator("main h1").first().waitFor({ state: "attached", timeout: 10000 }).catch(() => {});
-      if (ok && (await page.locator('[data-testid="all-pages"]').count()) === 0 && (await page.locator("main h1").count()) > 0) reached++;
+      if (ok && (await page.locator('[data-testid="more-sheet"]').count()) === 0 && (await page.locator("main h1").count()) > 0) reached++;
       else failed.push(d.href);
     }
-    check(`[${label}] all ${DESTINATIONS.length} destinations are reachable by tapping them in the More sheet`, reached === DESTINATIONS.length, `reached ${reached}; failed: ${failed.join(", ")}`);
+    check(`[${label}] all ${DESTINATIONS.length} entries (27 sidebar + 9 extra) open when tapped in the More sheet`, DESTINATIONS.length === 36 && reached === 36, `reached ${reached}; failed: ${failed.join(", ")}`);
     await page.goto(`${BASE}/kalshi-intelligence`);
     await settle(page);
-    check(`[${label}] a page outside the four tabs marks More as current and still shows its workspace row`, (await page.locator('[data-testid="more-button"]').evaluate((e) => /font-bold/.test(e.className))) && (await page.locator('[data-testid="subnav"][data-workspace="markets"] a[aria-current="page"]').innerText()).trim() === "Kalshi Markets");
+    check(`[${label}] a page outside the four tabs marks More as current`, await page.locator('[data-testid="more-button"]').evaluate((e) => /font-bold/.test(e.className)));
+    check(`[${label}] the workspace tabs and the All pages menu are gone`, (await page.locator('[data-testid="primary-nav"], [data-testid="subnav"], [data-testid="all-pages-button"], [data-testid="all-pages"]').count()) === 0);
   } else {
-    const primary = await page.locator('[data-testid="primary-nav"] a').allInnerTexts();
-    check(`[${label}] top bar has the five workspaces, Today first`, primary.map((t) => t.trim()).join("|") === "Today|Games|Players|Markets|Research", primary.join("|"));
-    check(`[${label}] top bar has the wordmark, search, All pages, Ask JARVIS and the account control`, (await page.locator('[data-testid="topbar"] a[href="/"] [aria-label^="GIZER NBA"]').count()) === 1 && (await page.locator('[data-testid="search-trigger"]:visible').count()) === 1 && (await page.locator('[data-testid="all-pages-button"]:visible').count()) === 1 && (await page.locator('[data-testid="jarvis-launcher"]:visible').count()) === 1 && (await page.locator('[data-testid="account-button"]:visible').count()) === 1);
-    // every destination of a primary workspace: click the workspace, then the page in its row
+    const side = await page.locator('[data-testid="sidebar"]').innerText();
+    const shown = await page.locator('[data-testid="sidebar"] nav [data-nav-group]').evaluateAll((gs) => gs.map((g) => ({ title: g.firstElementChild.innerText.trim(), items: [...g.querySelectorAll("a")].map((e) => ({ label: e.innerText.trim(), href: new URL(e.href).pathname })) })));
+    check(`[${label}] sidebar has the four groups`, ["COMMAND CENTER", "PLAYER INTELLIGENCE", "MY RESEARCH", "SYSTEM"].every((g) => side.toUpperCase().includes(g)));
+    check(`[${label}] sidebar has 27 destinations led by Live Games, incl. JARVIS, CORTEX, Kalshi Markets and Minutes Intelligence`, (await page.locator('[data-testid="sidebar"] nav a').count()) === 27 && (await page.locator('[data-testid="sidebar"] nav a').first().innerText()).trim() === "Live Games" && /JARVIS/.test(side) && (await page.locator('[data-testid="sidebar"] nav a').nth(2).innerText()).trim() === "CORTEX" && /Kalshi Markets/.test(side) && /Minutes Intelligence/.test(side));
+    check(`[${label}] the rendered sidebar is identical to main: group titles, order, labels and hrefs`, MAIN !== null && flat(shown) === flat(MAIN.groups), flat(shown).slice(0, 240));
+    check(`[${label}] every sidebar entry keeps its icon`, (await page.locator('[data-testid="sidebar"] nav a svg').count()) === 27);
+    check(`[${label}] brand caption present`, /PARLAY COMMAND CENTER/i.test(side));
+    check(`[${label}] the workspace tabs, the workspace row and the All pages menu are gone`, (await page.locator('[data-testid="primary-nav"], [data-testid="subnav"], [data-testid="all-pages-button"], [data-testid="all-pages"]').count()) === 0);
+    check(`[${label}] slim top bar keeps the date selector, search, Ask JARVIS and the account control`, (await page.locator('[data-testid="topbar"] [data-testid="date-selector"]:visible').count()) === 1 && (await page.locator('[data-testid="search-trigger"]:visible').count()) === 1 && (await page.locator('[data-testid="jarvis-launcher"]:visible').count()) === 1 && (await page.locator('[data-testid="account-button"]:visible').count()) === 1);
+    const labelsSmall = await page.locator('[data-testid="sidebar"] nav a, [data-testid="sidebar"] nav [data-nav-group] > div:first-child').evaluateAll((a) => a.filter((e) => parseFloat(getComputedStyle(e).fontSize) < 13).length);
+    const glow = await page.locator('[data-testid="sidebar"] nav a[aria-current="page"]').evaluate((e) => getComputedStyle(e).boxShadow);
+    check(`[${label}] sidebar labels are at least 13px and the current item has no glow`, labelsSmall === 0 && glow === "none", `${labelsSmall} small; shadow ${glow}`);
+    // every sidebar entry, by clicking it
     let reached = 0;
     const failed = [];
-    for (const w of NAVDATA.workspaces.filter((x) => x.primary)) {
-      await page.locator(`[data-testid="primary-nav"] a[data-workspace="${w.id}"]`).click();
-      await page.waitForFunction((h) => location.pathname === h, w.href, { timeout: 10000 }).catch(() => {});
-      const row = await page.locator('[data-testid="subnav"] a[data-nav-href]').evaluateAll((a) => a.map((e) => e.getAttribute("data-nav-href")));
-      if (!w.pages.every((p) => row.includes(p.href)) || row.length !== w.pages.length) failed.push(`${w.id} row lists ${row.length} of ${w.pages.length}`);
-      for (const p of w.pages) {
-        const link = page.locator(`[data-testid="subnav"] a[data-nav-href="${p.href}"]`);
-        const visible = await link.evaluate((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.left >= 0 && r.right <= window.innerWidth; }).catch(() => false);
-        await link.click();
-        const ok = await page.waitForFunction((h) => location.pathname === h, p.href, { timeout: 10000 }).then(() => true).catch(() => false);
-        await page.locator("main h1").first().waitFor({ state: "attached", timeout: 10000 }).catch(() => {});
-        const current = await page.locator('[data-testid="subnav"] a[aria-current="page"]').getAttribute("data-nav-href").catch(() => null);
-        const ws = await page.locator('[data-testid="primary-nav"] a[aria-current="true"]').getAttribute("data-workspace").catch(() => null);
-        if (ok && visible && current === p.href && ws === w.id && (await page.locator("main h1").count()) > 0) reached++;
-        else failed.push(`${p.href}${visible ? "" : " (link not in view)"}`);
-      }
-    }
-    const nPrimary = DESTINATIONS.filter((d) => d.primary).length;
-    check(`[${label}] every page of the five workspaces (${nPrimary}) is reachable by click from the top bar and the workspace row, and is marked current there`, reached === nPrimary, `reached ${reached}; failed: ${failed.join(", ")}`);
-    // All pages menu: every destination, including the Intelligence & System group
-    await page.click('[data-testid="all-pages-button"]');
-    await page.waitForSelector('[data-testid="all-pages"]');
-    const listed = await page.locator('[data-testid="all-pages"] a[data-nav-href]').evaluateAll((a) => a.map((e) => e.getAttribute("data-nav-href")));
-    check(`[${label}] All pages menu lists every destination, grouped by workspace`, hrefs.every((h) => listed.includes(h)) && listed.length === hrefs.length && (await page.locator('[data-testid="all-pages"] [data-workspace]').count()) === NAVDATA.workspaces.length, `${listed.length} of ${hrefs.length}`);
-    await shot("all-pages");
-    await page.keyboard.press("Escape");
-    await page.locator('[data-testid="all-pages-button"]').focus();
-    await page.keyboard.press("Enter");
-    await page.waitForSelector('[data-testid="all-pages"]');
-    const inside = await page.evaluate(() => document.querySelector('[data-testid="all-pages"]')?.contains(document.activeElement));
-    await page.locator('[data-testid="all-pages"] a[data-nav-href="/admin/ai-budget"]').focus();
-    await page.keyboard.press("Enter");
-    const kb = await page.waitForFunction(() => location.pathname === "/admin/ai-budget", null, { timeout: 10000 }).then(() => true).catch(() => false);
-    check(`[${label}] All pages menu opens from the keyboard, holds focus, and Enter on a link navigates`, inside === true && kb && (await page.locator('[data-testid="all-pages"]').count()) === 0);
-    reached = 0;
-    failed.length = 0;
-    for (const d of DESTINATIONS) {
-      await page.click('[data-testid="all-pages-button"]');
-      await page.locator(`[data-testid="all-pages"] a[data-nav-href="${d.href}"]`).click();
+    for (const d of SIDEBAR) {
+      await page.locator(`[data-testid="sidebar"] nav a[data-nav-href="${d.href}"]`).click();
       const ok = await page.waitForFunction((h) => location.pathname === h, d.href, { timeout: 10000 }).then(() => true).catch(() => false);
       await page.locator("main h1").first().waitFor({ state: "attached", timeout: 10000 }).catch(() => {});
-      if (ok && (await page.locator('[data-testid="all-pages"]').count()) === 0 && (await page.locator("main h1").count()) > 0) reached++;
+      const current = await page.locator('[data-testid="sidebar"] nav a[aria-current="page"]').evaluateAll((a) => a.map((e) => e.getAttribute("data-nav-href")).join(","));
+      if (ok && current === d.href && (await page.locator("main h1").count()) > 0) reached++;
+      else failed.push(`${d.href} (current: ${current})`);
+    }
+    check(`[${label}] all 27 sidebar entries open by click and exactly one is marked current each time`, SIDEBAR.length === 27 && reached === 27, `reached ${reached}; failed: ${failed.join(", ")}`);
+    // the nine extra pages, reached the way main reached them
+    await page.goto(`${BASE}/settings`);
+    await settle(page);
+    const fromSettings = await page.locator("main a").evaluateAll((a) => a.map((e) => new URL(e.href).pathname));
+    check(`[${label}] Settings still links all nine extra pages`, NAVDATA.extra.every((x) => fromSettings.includes(x.href)), NAVDATA.extra.filter((x) => !fromSettings.includes(x.href)).map((x) => x.href).join(", "));
+    reached = 0;
+    failed.length = 0;
+    for (const d of NAVDATA.extra) {
+      await page.goto(`${BASE}/settings`);
+      await settle(page);
+      await page.locator(`main a[href^="${d.href}"]`).first().click();
+      const ok = await page.waitForFunction((h) => location.pathname === h, d.href, { timeout: 10000 }).then(() => true).catch(() => false);
+      await page.locator("main h1").first().waitFor({ state: "attached", timeout: 10000 }).catch(() => {});
+      if (ok && (await page.locator("main h1").count()) > 0) reached++;
       else failed.push(d.href);
     }
-    check(`[${label}] all ${DESTINATIONS.length} destinations are reachable by click from the All pages menu`, reached === DESTINATIONS.length, `reached ${reached}; failed: ${failed.join(", ")}`);
-    await page.goto(`${BASE}/data-health`);
+    check(`[${label}] all nine extra pages open by click from Settings`, reached === 9, `reached ${reached}; failed: ${failed.join(", ")}`);
+    await page.goto(`${BASE}/live`);
     await settle(page);
-    check(`[${label}] a System page shows the System row with itself marked current`, (await page.locator('[data-testid="subnav"][data-workspace="system"] a[data-nav-href]').count()) === NAVDATA.workspaces.find((w) => w.id === "system").pages.length && (await page.locator('[data-testid="subnav"] a[aria-current="page"]').innerText()).trim() === "Data Health");
+    check(`[${label}] /live keeps its sub-navigation to My following and the Research tracker`, (await page.locator('[data-testid="live-nav"] a').evaluateAll((a) => a.map((e) => new URL(e.href).pathname).join(","))) === "/live,/live/following,/live/research-tracker");
+    await page.locator('button[aria-label="Collapse navigation"]').click();
+    const w1 = await page.locator('[data-testid="sidebar"]').evaluate((e) => Math.round(e.getBoundingClientRect().width));
+    await page.reload();
+    await settle(page);
+    const w2 = await page.locator('[data-testid="sidebar"]').evaluate((e) => Math.round(e.getBoundingClientRect().width));
+    check(`[${label}] sidebar collapses to an icon rail, keeps all 27 links with accessible names, and remembers it`, w1 === 60 && w2 === 60 && (await page.locator('[data-testid="sidebar"] nav a').count()) === 27 && (await page.locator('[data-testid="sidebar"] nav a .sr-only').count()) === 27);
+    await page.locator('button[aria-label="Expand navigation"]').click();
+    check(`[${label}] sidebar expands again to 252px`, (await page.locator('[data-testid="sidebar"]').evaluate((e) => Math.round(e.getBoundingClientRect().width))) === 252);
   }
 
   // --- skip link, titles, breadcrumb, search ---
@@ -837,13 +840,15 @@ async function runViewport(browser, label, viewport) {
   await page.keyboard.press("Enter");
   check(`[${label}] skip link is the first Tab stop, becomes visible on focus and moves focus to the main content`, skip.id === "skip-link" && skip.top >= 0 && skip.href === "#main" && (await page.evaluate(() => document.activeElement?.id)) === "main", JSON.stringify(skip));
   if (!isMobile) {
-    await page.evaluate(() => { window.scrollTo(0, 0); document.activeElement?.blur(); });
+    // a fresh load, so the sequential focus starting point is the top of the document, not <main>
+    await page.goto(`${BASE}/player-props`);
+    await settle(page);
     let stops = 0;
-    for (; stops < 40; stops++) {
+    for (; stops < 60; stops++) {
       await page.keyboard.press("Tab");
       if (await page.evaluate(() => Boolean(document.activeElement?.closest("main")))) break;
     }
-    check(`[${label}] with the skip link, the main content is two Tab stops away; without it fewer than 30 (was 43)`, stops < 30, `${stops + 1} stops`);
+    check(`[${label}] the skip link is what bypasses the 27-link sidebar: without it the content is ${stops + 1} Tab stops away, with it two`, stops >= 27 && stops < 60, `${stops + 1} stops`);
   }
   const titles = {};
   for (const r of [...hrefs, "/games/FIX-G1", "/players/9001", "/kalshi-intelligence/KXFIX-A-PTS25", "/cortex/fix-shot-clock", "/teams/1"]) {
@@ -856,12 +861,12 @@ async function runViewport(browser, label, viewport) {
   const seen = Object.values(titles);
   const dup = seen.filter((t, i) => seen.indexOf(t) !== i);
   check(`[${label}] every destination and detail page has its own document title ending in GIZER NBA`, dup.length === 0 && seen.every((t) => / · GIZER NBA$/.test(t)), `${new Set(seen).size} distinct of ${seen.length}; duplicates: ${[...new Set(dup)].join(" | ") || "none"}; e.g. ${titles["/picks"]}`);
-  check(`[${label}] titles name the page: Top Picks, a game by its teams, a player by name`, /^Top Picks · Research · GIZER NBA$/.test(titles["/picks"]) && /Detroit Pistons at Orlando Magic/.test(titles["/games/FIX-G1"]) && /FIXTURE Player A/.test(titles["/players/9001"]), `${titles["/picks"]} | ${titles["/games/FIX-G1"]} | ${titles["/players/9001"]}`);
+  check(`[${label}] titles name the page: Top Picks, a game by its teams, a player by name`, /^Top Picks · Command Center · GIZER NBA$/.test(titles["/picks"]) && /Detroit Pistons at Orlando Magic/.test(titles["/games/FIX-G1"]) && /FIXTURE Player A/.test(titles["/players/9001"]), `${titles["/picks"]} | ${titles["/games/FIX-G1"]} | ${titles["/players/9001"]}`);
   await page.goto(`${BASE}/players/9001`);
   await settle(page);
   const crumb = (await page.locator('[data-testid="breadcrumb"]').innerText().catch(() => "")).replace(/\s+/g, " ");
-  check(`[${label}] a detail page has a breadcrumb back to its workspace and list`, /Players \/ Player Explorer \/ FIXTURE Player A/.test(crumb) && (await page.locator('[data-testid="breadcrumb"] a[href^="/players"]').count()) === 2, crumb);
-  check(`[${label}] a destination page has no breadcrumb (the workspace row marks it)`, (await page.goto(`${BASE}/picks`)) && (await page.locator('[data-testid="breadcrumb"]').count()) === 0);
+  check(`[${label}] a detail page has a breadcrumb back to its list`, /Player Explorer \/ FIXTURE Player A/.test(crumb) && (await page.locator('[data-testid="breadcrumb"] a[href^="/players"]').count()) === 1, crumb);
+  check(`[${label}] a destination page has no breadcrumb (the menu marks it)`, (await page.goto(`${BASE}/picks`)) && (await page.locator('[data-testid="breadcrumb"]').count()) === 0);
   await settle(page);
   // search: a page, then a player, by keyboard
   await page.click('[data-testid="search-trigger"]');
@@ -929,7 +934,7 @@ async function runViewport(browser, label, viewport) {
   await page.keyboard.press("Escape");
   await page.locator('[data-testid="jarvis-panel"]').waitFor({ state: "detached", timeout: 5000 }).catch(() => {});
   check(`[${label}] date selector lists available dates`, (await page.locator('[data-testid="date-selector"] option').count()) >= 3);
-  await page.click('button[aria-label="Previous day"]');
+  await page.locator('button[aria-label="Previous day"]:visible').first().click();
   await page.waitForURL(/date=\d{4}-\d{2}-\d{2}/);
   await settle(page);
   text = await bodyText(page);
@@ -1757,7 +1762,7 @@ async function runViewport(browser, label, viewport) {
   await settle(page);
   if (isMobile) await page.click('[data-testid="more-button"]');
   else await page.click('[data-testid="account-button"]');
-  check(`[${label}] account: the signed-in email is shown beside Log out`, /owner@fixture\.test/.test(await page.locator(isMobile ? '[data-testid="all-pages"]' : '[data-testid="account-menu"]').innerText()));
+  check(`[${label}] account: the signed-in email is shown beside Log out`, /owner@fixture\.test/.test(await page.locator(isMobile ? '[data-testid="more-sheet"]' : '[data-testid="account-menu"]').innerText()));
   await Promise.all([page.waitForURL((u) => u.pathname === "/login"), page.locator('[data-testid="logout"]:visible').click()]);
   await page.goto(`${BASE}/`);
   check(`[${label}] logout clears the session`, new URL(page.url()).pathname === "/login", page.url());

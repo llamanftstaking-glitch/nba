@@ -3,85 +3,90 @@
 Scope: `apps/web` (Next.js 15 App Router). The app is an owner-only research terminal in research /
 paper-testing mode. It renders only what `API-CONTRACT.md` provides and contains no fixture data.
 
-## 1. Navigation model (Courtside shell)
+## 1. Navigation model (the menu from main, Courtside styling)
 
-Source of truth: `apps/web/lib/nav-destinations.json` (read by `lib/nav.ts`, the shell, the All pages menu, the
-phone More sheet, global search and `e2e/smoke.mjs`). **36 destinations in six groups.** Every destination that
-existed in the previous shell (27 sidebar links and the 9 pages that were reachable only from Settings or the More
-sheet) is in this list with the same label and the same URL; the smoke test compares the list with
-`git show main:apps/web/lib/nav.ts` and clicks every one of them.
+Owner instruction, 2026-11-27: **the menu stays exactly as it is on the live site.** The left sidebar keeps the same
+four groups, the same order, the same names, the same URLs and the same icons as `main:apps/web/lib/nav.ts`; only
+its styling changed. The five-workspace top bar, the workspace row and the All pages menu that an earlier revision
+of this stage introduced were removed.
 
-**Desktop (≥ 1024px).** A top bar: wordmark (home), the five workspaces `Today | Games | Players | Markets |
-Research`, global search (`/` or Ctrl/Cmd+K), `All pages`, `Ask JARVIS` (Ctrl/Cmd+J) and the account control
-(email, role, Settings, Log out). Under it, a workspace row that lists **every page of the current workspace** as
-links and holds the slate date control; the current page carries `aria-current="page"`. Pages of the sixth group,
-Intelligence & System, are opened from `All pages` (or search); once on one of them the workspace row lists that
-whole group. Under the row sits the scoreboard strip. The `All pages` menu is a dialog with all six groups and
-every page; it opens from the keyboard and holds focus.
+Source in code: `apps/web/lib/nav.ts` (`NAV_GROUPS`, `EXTRA_PAGES`, `MOBILE_NAV`, `isActive`, icons) and its
+machine-checkable mirror `apps/web/lib/nav-destinations.json`. `e2e/smoke.mjs` reads `main`'s `nav.ts` from git and
+asserts that the JSON and the **rendered** sidebar are identical to it (group titles, order, labels, hrefs), then
+opens every entry.
 
-**Phone and tablet (< 1024px).** A bottom tab bar with five items: `Today | Games | Players | Research | More`.
-`More` opens a sheet with the same grouped list of every page, plus the signed-in email and Log out. The top bar
-keeps the wordmark, search and `Ask`. The workspace row and the date control stay under the top bar.
+**Desktop (≥ 1024px).** Left sidebar, 252px, collapsible to a 60px icon rail (remembered in
+`localStorage["gizer.sidebar.collapsed"]`), with the wordmark and its caption on top. The current entry has an ink
+bar on its left edge, the band behind it and bold weight (`aria-current="page"`); `isActive` marks the most
+specific matching entry, as on main. Live Games shows the pulsing dot only while a game is live. To the right, a
+slim top bar: slate date control, global search (`/` or Ctrl/Cmd+K), Ask JARVIS (Ctrl/Cmd+J) and the account
+control (email, role, Settings, Log out). Under it the scoreboard strip.
 
-**Detail pages** (`/games/[id]`, `/players/[id]`, `/teams/[id]`, `/kalshi-intelligence/[ticker]`,
-`/cortex/[slug]`) show a breadcrumb `Workspace / Page / this record`, and the workspace row marks their parent.
-`/login` is outside the shell.
+| Group | Label | Route |
+|---|---|---|
+| Command Center | Live Games | `/live` |
+|  | JARVIS | `/jarvis` |
+|  | CORTEX | `/cortex` |
+|  | Overview | `/` |
+|  | Today's Games | `/games` |
+|  | Top Picks | `/picks` |
+|  | Player Props | `/player-props` |
+|  | Kalshi Markets | `/kalshi-intelligence` |
+|  | Starting Lineups | `/lineups` |
+|  | Parlay Research | `/parlays` |
+|  | Same-Game Research | `/parlays/same-game` |
+| Player Intelligence | Player Explorer | `/players` |
+|  | Minutes Intelligence | `/minutes` |
+|  | Player Comparison | `/players/compare` |
+|  | Historical Performance | `/players/history` |
+|  | Matchup Intelligence | `/matchups` |
+|  | Injuries & Availability | `/injuries` |
+| My Research | Research Builder | `/builder` |
+|  | Paper Tickets | `/tickets` |
+|  | Daily Editions | `/research/daily` |
+|  | Results | `/results` |
+|  | Strategy Performance | `/performance` |
+| System | Research Lab | `/research-lab` |
+|  | Agent Operations | `/agents` |
+|  | Model Registry | `/models` |
+|  | Data Health | `/data-health` |
+|  | Settings | `/settings` |
 
-**Titles.** Every route sets `document.title`: `Top Picks · Research · GIZER NBA`; a detail page uses its own
-heading (`Detroit Pistons at Orlando Magic · Today's Games · GIZER NBA`).
+27 sidebar destinations. Pages that are not in the sidebar (`EXTRA_PAGES`, as on main), reached from the link list
+at the bottom of Settings, from the phone More sheet under "Also", from in-page links, and from search:
 
-**Skip link.** "Skip to content" is the first Tab stop on every page and moves focus to `<main id="main">`.
+| Label | Route |
+|---|---|
+| Operations Admin | `/admin` |
+| AI Budget | `/admin/ai-budget` |
+| My Following | `/live/following` |
+| Research Tracker | `/live/research-tracker` |
+| Shared-Risk Monitor | `/exposure` |
+| Markets | `/markets` |
+| Simulations | `/simulations` |
+| Backtesting | `/backtesting` |
+| Teams | `/teams` |
 
-| Workspace | Label | Route | Where it was before | API |
-|---|---|---|---|---|
-| Today | Overview | `/` | sidebar: Command Center | `/command-center`, `/live/scoreboard`, `/player-props`, `/combos`, `/kalshi/markets?limit=1` |
-|  | Daily Editions | `/research/daily` | sidebar: My Research | `/editions`, `/editions/{id}` |
-| Games | Today's Games | `/games` | sidebar: Command Center | `/games` |
-|  | Live Games | `/live` | sidebar: Command Center | `/live/scoreboard`, `/live/games/{id}` (leaders) |
-|  | Starting Lineups | `/lineups` | sidebar: Command Center | `/lineups`, `/games/{id}/lineup-history` |
-|  | Matchup Intelligence | `/matchups` | sidebar: Player Intelligence | `/games`, `/games/{id}` |
-|  | Injuries & Availability | `/injuries` | sidebar: Player Intelligence | `/injuries` |
-|  | My Following | `/live/following` | hidden: Settings and More sheet | `/live/watchlist` (+ `follow`, `unfollow`), `/live/milestones` |
-|  | Research Tracker | `/live/research-tracker` | hidden: Settings and More sheet | `/live/research-tracker` |
-| Players | Player Explorer | `/players` | sidebar: Player Intelligence | `/players`; `/players/[id]`: `/players/{id}` + `/averages`, `/threshold`, `/splits`, `/game-logs` |
-|  | Player Props | `/player-props` | sidebar: Command Center | `/player-props`, `/player-props/manual`, `/players/{id}/threshold` |
-|  | Minutes Intelligence | `/minutes` | sidebar: Player Intelligence | `/minutes` |
-|  | Player Comparison | `/players/compare` | sidebar: Player Intelligence | `/players`, `/players/{id}`, `/averages`, `/threshold` |
-|  | Historical Performance | `/players/history` | sidebar: Player Intelligence | `/players` |
-|  | Teams | `/teams` | hidden: Settings and More sheet | `/teams`; `/teams/[id]`: `/teams/{id}` |
-| Markets | Kalshi Markets | `/kalshi-intelligence` | sidebar: Command Center | `/kalshi/markets`; `/kalshi-intelligence/[ticker]`: `/kalshi/markets/{ticker}` |
-|  | Markets | `/markets` | hidden: Settings and More sheet | `/markets` |
-|  | Shared-Risk Monitor | `/exposure` | hidden: Settings and More sheet | `/exposure` |
-| Research | Top Picks | `/picks` | sidebar: Command Center | `/selections` |
-|  | Parlay Research | `/parlays` | sidebar: Command Center | `/combos`, `/selections` |
-|  | Same-Game Research | `/parlays/same-game` | sidebar: Command Center | `/combos?category=sgp`, `/games` |
-|  | Research Builder | `/builder` | sidebar: My Research | `/selections`, `/combos`, `POST /builder/evaluate`, `POST /paper/tickets` |
-|  | Paper Tickets | `/tickets` | sidebar: My Research | `/paper/tickets` |
-|  | Results | `/results` | sidebar: My Research | `/results` |
-|  | Strategy Performance | `/performance` | sidebar: My Research | `/performance/strategies` |
-|  | Simulations | `/simulations` | hidden: Settings and More sheet | `/combos` |
-|  | Backtesting | `/backtesting` | hidden: Settings and More sheet | `/backtests` |
-| Intelligence & System | JARVIS | `/jarvis` | sidebar: Command Center | `/jarvis/*` (`?c=`, `?tab=memory|briefings|events`) |
-|  | CORTEX | `/cortex` | sidebar: Command Center | `/cortex/*` (`?tab=`); `/cortex/[slug]`: `/cortex/concepts/{slug}` |
-|  | Research Lab | `/research-lab` | sidebar: System | `/research-lab` |
-|  | Agent Operations | `/agents` | sidebar: System | `/agents` |
-|  | Model Registry | `/models` | sidebar: System | `/models`, `/backtests` |
-|  | Data Health | `/data-health` | sidebar: System | `/data-health`, `/data-health/providers` |
-|  | Settings | `/settings` | sidebar: System | `/settings` |
-|  | Operations Admin | `/admin` | hidden: Settings and More sheet | `/admin/*` |
-|  | AI Budget | `/admin/ai-budget` | hidden: Settings and More sheet | `/admin/ai-budget` |
+`/live/following` and `/live/research-tracker` are also reached from the sub-navigation on the three `/live*`
+pages, as on main. `/teams/[id]`, `/games/[id]`, `/players/[id]`, `/kalshi-intelligence/[ticker]` and
+`/cortex/[slug]` are detail pages; they show a breadcrumb `List page / this record`. `/login` is outside the shell.
+The API endpoints behind each page are unchanged from main and are listed per page in §3.
 
-Shortcut (not a separate page): `JARVIS Briefings` → `/jarvis?tab=briefings`, listed under Today.
+**Phone and tablet (< 1024px).** Bottom navigation `Home | Games | Props | Parlays | More` (64px, safe-area
+padded), the same four tabs as main. `More` opens a bottom sheet with the four groups plus "Also" (the extra
+pages) in two columns, the signed-in email and Log out. The sheet is a Radix Dialog: focus moves in, is trapped and
+returns to More. The top bar keeps the wordmark, search and Ask; the date control sits under it.
+
+**Added in this stage and kept:** a skip link ("Skip to content", first Tab stop: it is what bypasses the 27
+links); global search over every destination and players; a distinct `document.title` per route
+(`Top Picks · Command Center · GIZER NBA`; a detail page uses its own heading).
 
 Redirects (unchanged): `/today` → `/`, `/research` → `/research/daily`, `/props` → `/player-props`. No URL was
-renamed or removed in this stage.
-
-The research notice ("Research and paper testing only. No outcome is guaranteed. No real-money execution.") is in
-the page footer on every page.
+renamed or removed. The research notice is in the page footer on every page.
 
 ## 2. Global context
 
-* **Date.** Workspace row: previous/next-day arrows and a dropdown of `available_dates`. The selection lives in the URL
+* **Date.** Top bar (under it on phones): previous/next-day arrows and a dropdown of `available_dates`. The selection lives in the URL
   (`?date=YYYY-MM-DD`); `DLink` carries it across pages. Historical dates show the original editions.
 * **Auth.** `middleware.ts` redirects to `/login` without the `gizer_session` cookie (UX only); `lib/api.ts`
   redirects on any `401`; the CSRF token is kept in memory and restored through `/auth/me`.
@@ -91,8 +96,8 @@ the page footer on every page.
 
 > Courtside stage one re-laid out `/`, `/live`, `/games/[id]`, `/picks`, `/kalshi-intelligence` and `/jarvis`
 > (see `docs/design/aesthetic/07-APP-INTEGRATION.md` §3). The data, endpoints, query parameters and behaviours
-> described below are unchanged; where a paragraph says "card", "tile" or "sidebar", read it as the ruled row,
-> the typographic stat or the workspace row that replaced it. Visual rules are in `docs/design/DESIGN-SYSTEM.md`.
+> described below are unchanged; where a paragraph says "card", "tile" or "sidebar", read it as the ruled row
+> or the typographic stat that replaced it; the sidebar is as described in §1. Visual rules are in `docs/design/DESIGN-SYSTEM.md`.
 
 **Overview `/`** — branded heading → compact warnings banner (one line each) → eight summary tiles (games, markets
 analyzed, qualified, combinations, lineups confirmed/projected, prop markets, latest refresh, edition) → game cards

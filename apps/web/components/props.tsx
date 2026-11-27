@@ -192,7 +192,7 @@ const TH = "px-2 pb-2 text-2xs font-semibold text-muted";
 export function MarketTable({ rows, onOpen, caption }: { rows: Prop[]; onOpen: (p: Prop) => void; caption: string }) {
   return (
     <>
-      <div className="hidden xl:block" data-testid="market-table">
+      <div className="hidden overflow-x-auto xl:block" data-testid="market-table" role="region" aria-label={caption} tabIndex={0}>
         <table className="w-full table-auto border-collapse">
           <caption className="sr-only">{caption}</caption>
           <thead>
