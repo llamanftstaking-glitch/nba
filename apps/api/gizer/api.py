@@ -133,6 +133,19 @@ class View:
                          .group_by(Selection.game_id)).all()
         self.game_edition = {r[0]: r[1] for r in rows}
         self._sels = None
+        self._heads: dict[int, str | None] | None = None
+
+    def headshot(self, pid: int | None) -> str | None:
+        """Player photo URLs for the players in this date's selections (one query per request)."""
+        if pid is None:
+            return None
+        if self._heads is None:
+            ids = {x.subject_id for x in self.selections() if x.subject_type == "player" and x.subject_id is not None}
+            self._heads = dict(self.s.execute(select(Player.id, Player.headshot_url).where(Player.id.in_(ids))).all()) if ids else {}
+        if pid not in self._heads:  # a selection from outside this date's current editions
+            p = self.s.get(Player, pid)
+            self._heads[pid] = p.headshot_url if p else None
+        return self._heads[pid]
 
     def lineup_snaps(self) -> dict:
         if getattr(self, "_lus", None) is None:
@@ -175,7 +188,8 @@ class View:
         return {"id": x.id, "key": x.key, "edition_id": x.edition_id, "game_id": x.game_id,
                 "game_label": ev.get("game_label"), "market": x.market, "market_label": ev.get("market_label"),
                 "subject_type": x.subject_type, "subject_id": x.subject_id, "subject_name": x.subject_name,
-                "team_abbr": t.abbr if t else None, "side": x.side, "line": x.line, "price_american": x.price_american,
+                "team_abbr": t.abbr if t else None, "team_logo_url": t.logo_url if t else None,
+                "headshot_url": self.headshot(x.subject_id) if x.subject_type == "player" else None, "side": x.side, "line": x.line, "price_american": x.price_american,
                 "book": x.book, "quote_at": ev.get("quote_at"), "projection": x.projection, "prob": x.prob,
                 "prob_low": x.prob_low, "prob_high": x.prob_high, "breakeven": x.breakeven, "edge": x.edge,
                 "sample_size": x.sample_size, "evidence_score": x.evidence_score,

@@ -1,5 +1,6 @@
 "use client";
 
+import { SubjectMark } from "./subject-mark";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ClassificationBadge } from "@/components/classification-badge";
@@ -34,6 +35,7 @@ export function SelectionRow({ s, showGame = true, showSave = true }: { s: Selec
       <button type="button" aria-expanded={false} onClick={() => setOpen(true)} className={cn("grid min-h-[44px] w-full items-center gap-x-4 gap-y-1.5 py-3 text-left hover:bg-raised/60 md:gap-x-6", ROW_COLS)}>
         <span className="col-span-3 flex min-w-0 items-baseline gap-3 md:col-span-1">
           <span className="num w-5 shrink-0 text-sm text-faint">{s.rank_in_game === null ? "—" : s.rank_in_game}</span>
+          <span className="shrink-0 self-center"><SubjectMark s={s} size={36} /></span>
           <span className="min-w-0">
             <span className="h-sub block break-words text-ink">{s.market_label}</span>
             <span className="flex flex-wrap items-center gap-x-2.5 text-sm text-muted">

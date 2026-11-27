@@ -1,5 +1,6 @@
 "use client";
 
+import { SubjectMark } from "@/components/subject-mark";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 
@@ -129,13 +130,16 @@ function TopPicks({ picks, total, reason }: { picks: Selection[]; total: number;
             {picks.map((s) => (
               <li key={s.id} className="grid grid-cols-[6rem_minmax(0,1fr)_auto] items-center gap-x-4 border-b border-line py-2" data-testid="home-pick">
                 <ProbabilityDisplay prob={s.prob} low={s.prob_low} high={s.prob_high} stack size="lg" />
-                <div className="min-w-0">
+                <div className="flex min-w-0 items-start gap-3">
+                  <span className="mt-0.5 shrink-0"><SubjectMark s={s} size={36} /></span>
+                  <div className="min-w-0">
                   <div className="h-sub break-words text-ink">{s.market_label}</div>
                   <div className="flex flex-wrap items-center gap-x-2.5 text-sm text-muted">
                     <span>{s.game_label}</span>
                     <ClassificationBadge value={s.classification} invalidated={s.invalidated} />
                   </div>
                   <ProbScale prob={s.prob} low={s.prob_low} high={s.prob_high} breakeven={s.breakeven} className="mt-1 hidden !h-4 max-w-[16rem] 2xl:block" />
+                  </div>
                 </div>
                 <div className="num text-right text-base text-ink">
                   <Val v={fmtAmerican(s.price_american)} />

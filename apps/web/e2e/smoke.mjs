@@ -1028,6 +1028,13 @@ async function runViewport(browser, label, viewport) {
   };
   page.on("request", onSelReq);
   await visit(page, "/picks", label, errors);
+  {
+    // owner: keep team logos and player photos; picks show the team logo or the player's photo
+    const marks = await page.evaluate(() => [...document.querySelectorAll('[data-testid="selection-row"]')].map((r) => {
+      const img = r.querySelector("img"); return img ? img.getAttribute("alt") || "photo" : r.querySelector('[data-testid="avatar-fallback"]') ? "initials" : "none";
+    }));
+    check(`[${label}] picks: each team pick shows its team logo and each player pick the player's photo`, marks.includes("Orlando Magic logo") && marks.includes("photo"), JSON.stringify(marks));
+  }
   check(`[${label}] picks: ranked view grouped by game`, (await page.locator('[data-testid="selection-game-group"]').count()) === 2 && (await page.locator('[data-testid="selection-row"]').count()) === 3);
   check(`[${label}] picks: tab counts from the API`, (await page.locator('[data-tab="ranked"]').innerText()).replace(/\s+/g, " ") === "Top picks 3" && (await page.locator('[data-tab="rejected"]').innerText()).replace(/\s+/g, " ") === "Rejected 3" && (await page.locator('[data-tab="stale"]').innerText()).replace(/\s+/g, " ") === "Stale 0");
   await page.click('[data-tab="rejected"]');

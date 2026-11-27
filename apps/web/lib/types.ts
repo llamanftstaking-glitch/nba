@@ -34,6 +34,10 @@ export type Selection = {
   subject_id: number | null;
   subject_name: string;
   team_abbr: string | null;
+  /** Logo of the selection's team, when known. */
+  team_logo_url?: string | null;
+  /** Photo of the player for a player market, when known. */
+  headshot_url?: string | null;
   side: "home" | "away" | "over" | "under";
   line: number | null;
   price_american: number | null;

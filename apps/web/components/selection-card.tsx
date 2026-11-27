@@ -1,5 +1,6 @@
 "use client";
 
+import { SubjectMark } from "./subject-mark";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import type { Selection, SelectionContext } from "@/lib/types";
@@ -142,6 +143,7 @@ export function SelectionCard({
           >
             {r === null ? "—" : `#${r}`}
           </span>
+          <SubjectMark s={s} size={40} />
           <div className="min-w-0 flex-1">
             <h3 className="break-words text-base font-semibold leading-6 text-ink">{s.market_label}</h3>
             {showGame && <p className="text-xs text-muted">{s.game_label}</p>}

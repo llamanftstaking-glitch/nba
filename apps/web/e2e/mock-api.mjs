@@ -62,6 +62,9 @@ function sel(o) {
     subject_id: o.subject_id ?? null,
     subject_name: o.subject_name,
     team_abbr: o.team_abbr ?? null,
+    team_logo_url: (o.team_abbr && T[o.team_abbr]?.logo_url) || null,
+    // HEAD is declared further down; read it when the row is served, not when the module loads
+    get headshot_url() { return o.market.startsWith("player_") && o.subject_id ? (HEAD[o.subject_id] ?? null) : null; },
     side: o.side,
     line: o.line ?? null,
     price_american: o.price_american ?? null,
