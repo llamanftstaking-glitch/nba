@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.7.3 — 2026-11-27 (player props back in top picks: player model 1.1.0)
+* Owner report: top picks had become team bets only. Cause: under the 65% rule (D-037) almost no prop could qualify,
+  because (1) the points, PTS+REB+AST, PTS+REB, PTS+AST and REB+AST models failed validation (overconfident: their
+  80% range caught about 73% of outcomes), and (2) prop calibration was measured at one line near the player's
+  average, so no prop above about 70% could be given an uncertainty interval.
+* Player model `minutes_rate_nb` 1.1.0 (D-040): variance includes the player's own minutes volatility (fitted on the
+  calibration period only); prop intervals use over and under calibration at seven pseudo-lines. Gate unchanged.
+* Development data, walk-forward evaluation: 10 of 11 player families pass the unchanged gate (was 5); blocks still
+  fails on accuracy. Coverage gaps for points-type stats fell from about 0.10 to 0.01–0.02; ECE improved in every
+  family except blocks (0.0070 to 0.0087, still within 0.04).
+* Same 2026-11-25 slate snapshot (21:45 UTC, two games still open), policy 1.2 unchanged: props qualified at 65%+
+  went from 0 to 75 and props in top picks from 0 to 10 (7 of them three-pointers; all Kalshi contracts).
+* NOT VERIFIED: that these probabilities hold forward. The record under 1.1.0 starts with the next settled slate.
+
 ## 0.7.2 — 2026-11-26 (risk policy 1.2: top picks by probability)
 * Top picks now require a model probability of at least 65% and are ordered most likely first (was: ordered by margin
   over the price, which favoured long shots). Combinations and automatic paper tickets are built only from them.
