@@ -112,3 +112,31 @@ underlying game data and re-running settlement, which appends a superseding row 
 package (`--no-build-isolation`). After regenerating, append the pinned line `setuptools==<current pin>` again and
 let the `images` check on GitHub confirm the build (it failed on 2026-11-26 when this line was dropped).
 
+
+## Private repository (owner decision 2026-11-27)
+
+The server reads three things from GitHub: the `production` branch (git fetch), the check results of a commit (GitHub
+API) and the two images (GHCR). While the repository is public none of them needs a login. Before switching it to
+private, give the server read-only access; otherwise updates stop (the site keeps running the deployed version and the
+updater logs `fetch failed`).
+
+1. On GitHub: Settings → Developer settings → Personal access tokens → **Fine-grained tokens** → Generate. Repository
+   access: only `llamanftstaking-glitch/nba`. Permissions: Contents **read-only**, Checks **read-only**, Metadata read-only (automatic).
+   Expiry: up to one year; note the date.
+2. Same page, **Tokens (classic)** → Generate, scope `read:packages` only (GHCR does not accept fine-grained tokens).
+3. On Server M, store the first token in a root-only file (paste it at the hidden prompt, nothing is echoed):
+   ```bash
+   sudo install -d -m 700 /etc/gizer-nba && read -rs T && printf '%s' "$T" | sudo tee /etc/gizer-nba/github-token >/dev/null && sudo chmod 600 /etc/gizer-nba/github-token && unset T
+   ```
+4. Sign the server in to the image registry with the second token (hidden prompt again):
+   ```bash
+   read -rs T && printf '%s' "$T" | sudo docker login ghcr.io -u llamanftstaking-glitch --password-stdin; unset T
+   ```
+5. Switch the repository to private (Settings → General → Danger Zone → Change visibility), then set both packages
+   `nba-api` and `nba-web` to private (Packages → package settings → Change visibility).
+6. Check on the server: `cd /opt/gizer-nba && sudo bash scripts/auto-update.sh` then `bash scripts/auto-update.sh status`.
+   Expect no `fetch failed` line and `registry pulls  : working`.
+
+The git remote of `/opt/gizer-nba` stays `https://github.com/llamanftstaking-glitch/nba.git`; the token is added at
+fetch time only. A manual `git pull` on the server then needs the same token (or use the updater). Rotate a token by
+repeating step 3 or 4. Never paste a token in chat, a screenshot, the repository or `.env`.

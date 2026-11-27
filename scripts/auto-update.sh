@@ -83,6 +83,18 @@ main() {
     start_history
   }
 
+  # Private repository: a read-only GitHub token kept in a root-only file on the server (never in the repository,
+  # never printed). It is passed to git through environment variables and to curl through a file descriptor, so it
+  # does not appear in the process list. Without the file the script works as before (public repository).
+  local TOKEN_FILE="${GIZER_AU_TOKEN_FILE:-/etc/gizer-nba/github-token}" GH_TOKEN=""
+  if [ -r "$TOKEN_FILE" ]; then GH_TOKEN="$(tr -d '[:space:]' < "$TOKEN_FILE")"; fi
+  if [ -n "$GH_TOKEN" ]; then
+    export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0="http.https://github.com/.extraheader"
+    GIT_CONFIG_VALUE_0="Authorization: Basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 | tr -d '\n')"
+    export GIT_CONFIG_VALUE_0
+  fi
+  gh_auth() { if [ -n "$GH_TOKEN" ]; then printf 'Authorization: Bearer %s\n' "$GH_TOKEN"; fi; }
+
   git fetch -q origin "$BRANCH" 2>/dev/null || { log "fetch failed (network or branch '$BRANCH' missing); nothing done"; return 0; }
   local cur new
   cur="$(git rev-parse HEAD)"; new="$(git rev-parse "origin/$BRANCH")"
@@ -99,7 +111,7 @@ main() {
 
   # Gate: every check on this exact commit must have completed successfully.
   local verdict
-  verdict="$(curl -fsS -m 30 -H 'Accept: application/vnd.github+json' \
+  verdict="$(curl -fsS -m 30 -H 'Accept: application/vnd.github+json' -H @<(gh_auth) \
       "${GIZER_AU_API:-https://api.github.com}/repos/$REPO/commits/$new/check-runs?per_page=100" 2>/dev/null \
     | python3 -c '
 import json, sys

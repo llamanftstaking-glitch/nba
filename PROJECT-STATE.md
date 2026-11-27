@@ -56,7 +56,7 @@ starters for 1,444. No playoffs, no historical odds, no play-by-play. See DATA-S
 
 First-deployment commands and the daily rhythm are in DEPLOYMENT.md and RUNBOOK.md.
 
-## Project Aesthetic (2026-11-27) — IN PROGRESS, design branch only
-Stage one of the "Courtside" redesign is TESTED on `feature/project-aesthetic` against the fixture API (smoke 3688/0)
-and is waiting for owner approval of the real-app screenshots in `docs/design/aesthetic/screenshots/app/`. It is not on
-`main` and not deployed. Remaining weaknesses and the unverified list are in `docs/design/aesthetic/07-APP-INTEGRATION.md`.
+## Project Aesthetic (2026-11-27) — owner approved, releasing as 0.8.0
+The "Courtside" redesign was approved by the owner with two conditions, both met: the sidebar menu stays exactly as on
+production (asserted by the smoke suite against `main`), and team logos and player photos stay (picks now show them
+too). Remaining weaknesses and the unverified list are in `docs/design/aesthetic/07-APP-INTEGRATION.md`.

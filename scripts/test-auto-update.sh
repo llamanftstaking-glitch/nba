@@ -78,6 +78,8 @@ STUB
 cat > "$T/bin/curl" <<'STUB'
 #!/usr/bin/env bash
 S="$GIZER_TEST_STATE"; url="${*: -1}"; echo "curl $url" >> "$S/calls.log"
+for a in "$@"; do case "$a" in @*) h="$(cat "${a#@}" 2>/dev/null)"; case "$h" in "Authorization: Bearer "*) echo "curl-auth ${h#Authorization: Bearer }" >> "$S/calls.log" ;; esac ;; esac; done
+printf '%s\n' "$*" | grep -q 'Bearer' && echo "TOKEN-IN-ARGV" >> "$S/calls.log"
 case "$url" in
   *check-runs*) cat "$S/checks.json" ;;
   *health/ready*) if grep -qxF "$(cat "$S/running" 2>/dev/null)" "$S/bad"; then echo '{"status":"starting"}'; else echo '{"status":"ready"}'; fi ;;
@@ -240,6 +242,15 @@ setup; publish "$B"; echo slow > "$T/state/pull_mode"; EXTRA_ENV="GIZER_AU_PULL_
 check "timed out once, no retries" [ "$(grep -c 'docker pull' "$T/state/calls.log")" = 1 ]
 check "reason logged" logged "took longer than 1s"
 check "deployed by building" logged "deployed ${B:0:7}: application is ready (images built)"
+
+echo "13b. private repository: token file is used for the checks API and never appears in argv or the log"
+setup; publish "$B"; echo "  ghp_testtoken123  " > "$T/state/token"; EXTRA_ENV="GIZER_AU_TOKEN_FILE=$T/state/token" run auto-update.sh
+check "checks API received the token" grep -qx "curl-auth ghp_testtoken123" "$T/state/calls.log"
+check "token never passed as a command-line argument" no grep -q "TOKEN-IN-ARGV" "$T/state/calls.log"
+check "token not in the update log or output" no grep -rq "ghp_testtoken123" "$T/server/.auto-update/update.log" "$T/state/out.txt"
+check "still deployed release B" head_is "$B"
+setup; publish "$B"; run auto-update.sh
+check "without a token file no Authorization header is sent" no grep -q "curl-auth" "$T/state/calls.log"
 
 echo "14. status"
 setup; publish "$B"; run auto-update.sh; run auto-update.sh status; sed 's/^/      | /' "$T/state/out.txt"
