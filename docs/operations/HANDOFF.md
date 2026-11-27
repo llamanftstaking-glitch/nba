@@ -9,7 +9,7 @@ its rules are not repeated here. Status words are used as defined there.
 |---|---|
 | Production (`production` branch, Server M, https://nba.gizergroup.com) | `91cee9e` = 0.7.3, DEPLOYED by the updater (all GitHub checks green). Includes risk policy 1.2 and player model 1.1.0 |
 | Player props back in top picks (0.7.3, D-040) | IMPLEMENTED, TESTED on development data (161 backend tests pass; on the 2026-11-25 snapshot, props in top picks went from 0 to 10). **Not active on production until the owner runs the evaluation job below.** Forward accuracy NOT VERIFIED |
-| Project Aesthetic "Courtside" redesign (`feature/project-aesthetic`) | IN PROGRESS. Owner approved the design **on condition that the left sidebar menu stays exactly as on production** (same four groups, order, names, icons), restyled light. Sidebar restored; full browser smoke run in progress. NOT merged, NOT deployed |
+| Project Aesthetic "Courtside" redesign, 0.8.0 | Owner APPROVED (sidebar kept exactly as before; team logos and player photos kept and added to picks). Merged to `main`; smoke 3697/0, backend 164/0 |
 | GIZER LIVE | DEPLOYED. First real live-game check: tonight's games (2026-11-27). NOT VERIFIED on a real game yet |
 | JARVIS, CORTEX | DEPLOYED and answering (budget: USD 100 lifetime, D-024) |
 
@@ -36,10 +36,10 @@ its rules are not repeated here. Status words are used as defined there.
    systemctl list-timers | grep gizer
    ```
    A reboot of Server M has never been tested; someone should watch it.
-3. Review the sidebar screenshots of the redesign when they arrive, then approve or ask for changes.
+3. Done: redesign approved.
 4. Still open from earlier: change the site password (`bash scripts/reset-owner.sh` on the server), delete the old
-   Anthropic API key in the Console, decide whether the repository stays public (the updater and image pulls rely
-   on public access today).
+   Anthropic API key in the Console, make the repository private (owner decided): follow `RUNBOOK.md` → "Private repository" BEFORE
+   flipping it, or the server stops receiving updates.
 
 ## Branches
 
@@ -76,3 +76,9 @@ cd nba && git checkout main && git pull
 ```
 Backend setup and tests need a local Postgres (see `README.md`); frontend: `cd apps/web && npm ci && npm run build`.
 Never put `.env`, the API key or passwords in the repository or in chat.
+
+## Note on CI (2026-11-27)
+The secret scan on `d002c8e` reported one finding in `prototypes/aesthetic/src/data/dataset.json`: the string
+`20261125-v1-afternoon`, an edition key (a public identifier), matched the generic "api key" pattern. Reviewed: not
+a credential. The scanner configuration was not changed. With the owner's go-ahead, production was promoted from the
+next commit, whose own checks passed; `d002c8e` itself was never promoted.
