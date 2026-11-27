@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased — Project Aesthetic stage one (branch `feature/project-aesthetic`, not deployed)
+* "Courtside" design applied to the real app: light theme, Archivo Variable, five workspaces (Today, Games, Players,
+  Markets, Research) with an All pages menu and a mobile More sheet. All 36 previous destinations keep their URLs.
+* Hand-redesigned: home, live board, game page, top picks, Kalshi markets, JARVIS, games list, login, shell. The other
+  routes inherit the new tokens and primitives and are not yet redesigned.
+* TESTED on the fixture API only: typecheck, lint, build, `npm audit` (0 high), browser smoke 3688 passed, 0 failed.
+  NOT VERIFIED: production data, real devices, Safari/Firefox, screen readers. No backend change.
+* Decisions D-038 (typeface) and D-039 (Radix Dialog). Details: `docs/design/aesthetic/07-APP-INTEGRATION.md`.
+
 ## 0.7.2 — 2026-11-26 (risk policy 1.2: top picks by probability)
 * Top picks now require a model probability of at least 65% and are ordered most likely first (was: ordered by margin
   over the price, which favoured long shots). Combinations and automatic paper tickets are built only from them.

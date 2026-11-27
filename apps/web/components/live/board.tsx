@@ -15,7 +15,7 @@ const SIZES: Record<Size, { row: string; mark: number; markSm: number; name: str
     mark: 48,
     markSm: 36,
     name: "text-[2.5rem] xl:text-[2.75rem]",
-    abbr: "text-[2rem]",
+    abbr: "text-[2rem] md:text-[2.5rem]",
     q: "text-base md:text-xl",
     total: "text-[3.25rem] md:text-[4.5rem]",
     bar: "w-1.5 md:w-2",
@@ -101,9 +101,12 @@ export function StackedBoard({ g, size, head, className }: { g: Pick<GameRow, "h
                       <span className="hidden truncate text-sm text-muted lg:inline">{t.name}</span>
                     </span>
                   ) : (
+                    // The hero sits in a 7/12 column: the full name is set large only where any team's name fits
+                    // (2xl); below that the abbreviation is large and the full name sits under it, never cut off.
                     <span className="min-w-0">
-                      <span className={cn("team-name hidden truncate lg:block", S.name, behind && "!font-semibold text-faint")}>{t.name}</span>
-                      <span className={cn("team-name block lg:hidden", S.abbr, behind && "!font-semibold text-faint")}>{t.abbr}</span>
+                      <span className={cn("team-name hidden truncate", size === "hero" ? "2xl:block" : "lg:block", S.name, behind && "!font-semibold text-faint")}>{t.name}</span>
+                      <span className={cn("team-name block", size === "hero" ? "2xl:hidden" : "lg:hidden", S.abbr, behind && "!font-semibold text-faint")}>{t.abbr}</span>
+                      {size === "hero" && <span className="hidden truncate text-sm text-muted md:block 2xl:hidden">{t.name}</span>}
                     </span>
                   )}
                 </th>
