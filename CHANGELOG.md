@@ -9,7 +9,7 @@
 * Owner request on approval: keep team logos and player photos. All existing logos and photos are kept; picks now
   also show the player's photo or the team logo (selections carry `team_logo_url` and `headshot_url`, an additive
   API change), with the existing letters/initials fallback.
-* TESTED on the fixture API: typecheck, lint, build, `npm audit` (0 high), full browser smoke. NOT VERIFIED:
+* TESTED on the fixture API: typecheck, lint, build, `npm audit` (0 high), browser smoke 3697 passed, 0 failed, backend 164 passed. NOT VERIFIED:
   production data, real devices, Safari/Firefox, screen readers.
 * Decisions D-038 (typeface) and D-039 (Radix Dialog). Details: `docs/design/aesthetic/07-APP-INTEGRATION.md`.
 
