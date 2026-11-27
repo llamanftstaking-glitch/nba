@@ -1,5 +1,6 @@
 "use client";
 
+import { LiveNav } from "@/components/live/live-nav";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell, Star, Target, Users } from "lucide-react";
 import { useState, type FormEvent } from "react";
@@ -110,6 +111,7 @@ export default function FollowingPage() {
   return (
     <div className="space-y-9">
       <PageHeader title="My Following" sub="Followed games, your player watchlist with tracking thresholds, and favourite teams." />
+      <LiveNav />
       <QueryView query={q} rows={6}>
         {(w) => (
           <div className="space-y-5">

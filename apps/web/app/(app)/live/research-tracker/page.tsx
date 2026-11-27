@@ -1,5 +1,6 @@
 "use client";
 
+import { LiveNav } from "@/components/live/live-nav";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Pagination } from "@/components/ui/pagination";
@@ -83,6 +84,7 @@ export default function ResearchTrackerPage() {
   return (
     <div className="space-y-9">
       <PageHeader title="Research Tracker" sub="Open paper tickets beside what has been observed so far: each leg’s line and current value. An outcome exists only once a ticket is settled." />
+      <LiveNav />
       <QueryView query={q} rows={5}>
         {(d) => (
           <>

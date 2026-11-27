@@ -1,5 +1,6 @@
 "use client";
 
+import { LiveNav } from "@/components/live/live-nav";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -109,6 +110,7 @@ export default function LivePage() {
           ) : undefined
         }
       />
+      <LiveNav />
       <QueryView query={q} rows={6}>
         {(sb) => {
           if (sb.games.length === 0) {
