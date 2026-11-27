@@ -33,7 +33,7 @@ MIN_PROJ_MINUTES = 10.0
 TEAM_DECAY = 0.96
 TEAM_PRIOR_GAMES = 6.0
 
-PLAYER_MODEL = ("minutes_rate_nb", "1.0.0")
+PLAYER_MODEL = ("minutes_rate_nb", "1.1.0")  # 1.1: dispersion includes minutes uncertainty (D-040)
 TEAM_MODEL = ("efficiency_normal", "1.0.0")
 SCIENTIST_PLAYER = "agent-11-player-projection-scientist"
 SCIENTIST_TEAM = "agent-12-team-projection-scientist"
@@ -178,6 +178,62 @@ def prob_over(dist: dict, line: float) -> tuple[float, float]:
     return float(sps.norm.sf(line, dist["mu"], dist["sd"])), 0.0
 
 
+def player_dist(mu: float, rate: float, min_sd: float | None, params: dict) -> dict:
+    """Count distribution of one player stat. From 1.1.0 the variance includes the player's own minutes uncertainty:
+    Var = mu + mu^2 / r0 + k * rate^2 * min_sd^2, expressed as a per-player negative binomial. Model versions
+    without `minutes_var_k` (1.0.0) keep their single dispersion."""
+    if "minutes_var_k" not in params:
+        return {"family": "nbinom", "mu": mu, "r": params["dispersion_r"]}
+    r = player_r(np.array([mu], float), np.array([rate], float),
+                 np.array([np.nan if min_sd is None else min_sd], float), params)[0]
+    return {"family": "nbinom", "mu": mu, "r": float(r)}
+
+
+def player_r(mu: np.ndarray, rate: np.ndarray, min_sd: np.ndarray, params: dict) -> np.ndarray:
+    sd = np.where(np.isfinite(min_sd), min_sd, params["min_sd_fill"])
+    mu = np.maximum(mu, 1e-6)
+    extra = mu ** 2 / params["dispersion_r0"] + params["minutes_var_k"] * rate ** 2 * sd ** 2
+    return np.clip(mu ** 2 / np.maximum(extra, 1e-9), 0.3, 1e6)
+
+
+R0_GRID = tuple(float(x) for x in np.geomspace(0.5, 200, 25))
+K_GRID = tuple(x / 4 for x in range(0, 13))  # 0 .. 3
+
+
+def fit_player_dispersion(cal: pd.DataFrame, stat: str) -> dict:
+    """Maximum likelihood over a fixed grid, on the calibration period only (never the evaluation period)."""
+    y = cal[stat].to_numpy(float)
+    mu, rate, msd = (cal[f"mu_{stat}"].to_numpy(float), cal[f"rate_{stat}"].to_numpy(float),
+                     cal["min_sd"].to_numpy(float))
+    fill = float(np.nanmedian(msd)) if np.isfinite(msd).any() else 0.0
+    best = None
+    for r0 in R0_GRID:
+        for k in K_GRID:
+            prm = {"dispersion_r0": r0, "minutes_var_k": k, "min_sd_fill": fill}
+            r = player_r(mu, rate, msd, prm)
+            ll = float(sps.nbinom.logpmf(y, r, r / (r + np.maximum(mu, 1e-6))).sum())
+            if best is None or ll > best[0]:
+                best = (ll, prm)
+    return best[1]
+
+
+CAL_LINE_OFFSETS = (-0.5, -0.3, -0.15, 0.0, 0.15, 0.3, 0.5)
+
+
+def line_calibration(y: np.ndarray, l10: np.ndarray, n_: np.ndarray, p_: np.ndarray) -> list[dict]:
+    """Calibration of over AND under probabilities at several pseudo-lines around each player's last-10 average
+    (floor(l10 * (1 + offset)) + 0.5). It supplies out-of-sample evidence across the whole probability range, so a
+    high-probability prop can be given an interval. Pseudo-lines, not market lines."""
+    ps, hs = [], []
+    for off in CAL_LINE_OFFSETS:
+        line = np.floor(np.maximum(l10 * (1 + off), 0)) + 0.5
+        over = sps.nbinom.sf(np.floor(line), n_, p_)
+        hit = (y > line).astype(float)
+        ps += [over, 1 - over]
+        hs += [hit, 1 - hit]
+    return calibration_table(np.concatenate(ps), np.concatenate(hs))
+
+
 def fit_nb_dispersion(y: np.ndarray, mu: np.ndarray) -> float:
     """Method of moments for Var = mu + mu^2 / r. Returns a large r (≈Poisson) if no overdispersion."""
     excess = float(np.sum((y - mu) ** 2 - mu))
@@ -245,7 +301,8 @@ def backtest_player_stat(f: pd.DataFrame, stat: str, with_gbm: bool = True) -> d
     t1, t2 = _split_dates(f["game_date"])
     train, cal, ev = f[f["game_date"] < t1], f[(f["game_date"] >= t1) & (f["game_date"] < t2)], f[f["game_date"] >= t2]
     y_ev, mu_ev = ev[stat].to_numpy(float), ev[f"mu_{stat}"].to_numpy(float)
-    r = fit_nb_dispersion(cal[stat].to_numpy(float), cal[f"mu_{stat}"].to_numpy(float))
+    disp = fit_player_dispersion(cal, stat)
+    r = disp["dispersion_r0"]
 
     def err(pred):
         e = y_ev - pred
@@ -264,7 +321,8 @@ def backtest_player_stat(f: pd.DataFrame, stat: str, with_gbm: bool = True) -> d
         gbm.fit(fit[cols].astype(float), fit[stat].astype(float))
         models["challenger_gbm_poisson"] = err(gbm.predict(ev[cols].astype(float)))
 
-    n_, p_ = r, r / (r + np.maximum(mu_ev, 1e-6))
+    n_ = player_r(mu_ev, ev[f"rate_{stat}"].to_numpy(float), ev["min_sd"].to_numpy(float), disp)
+    p_ = n_ / (n_ + np.maximum(mu_ev, 1e-6))
     lo, hi = sps.nbinom.ppf(0.1, n_, p_), sps.nbinom.ppf(0.9, n_, p_)
     cov = float(np.mean((y_ev >= lo) & (y_ev <= hi)))
     # For discrete counts the nominal "80%" interval covers more than 80%; compare with the model's own
@@ -286,6 +344,8 @@ def backtest_player_stat(f: pd.DataFrame, stat: str, with_gbm: bool = True) -> d
         "brier_baseline_constant": float(np.mean((base_p - hit) ** 2)),
         "log_loss": float(-np.mean(hit * np.log(pc) + (1 - hit) * np.log(1 - pc))),
         "ece": ece(table), "calibration": table,
+        "calibration_lines": line_calibration(y_ev, ev[f"l10_{stat}"].to_numpy(float), n_, p_),
+        "dispersion": disp,
         "pseudo_line_note": "over/under calibration uses floor(last-10 average)+0.5 as a pseudo-line; "
                             "it is a forecasting test, not a market backtest",
         "filters": {"min_prior_games": MIN_PRIOR_GAMES, "min_projected_minutes": MIN_PROJ_MINUTES},
@@ -509,7 +569,8 @@ def run_all_backtests(register: bool = True) -> dict:
         if register:
             with session_scope() as s:
                 mv = register_model(s, f"player_{st}", *PLAYER_MODEL,
-                                    {"dispersion_r": res["metrics"]["dispersion_r"], "decay": DECAY,
+                                    {"dispersion_r": res["metrics"]["dispersion_r"], **res["metrics"]["dispersion"],
+                                     "decay": DECAY,
                                      "prior_minutes": PRIOR_MINUTES}, res["periods"], PLAYER_LIMITS, SCIENTIST_PLAYER)
                 evl = ModelEvaluation(model_version_id=mv.id, family=mv.family, model_name=mv.name, kind="walk_forward",
                                       period=res["periods"]["evaluation"], n_obs=res["metrics"]["n_eval"],

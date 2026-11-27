@@ -65,7 +65,7 @@ def render() -> str:
                     continue
                 out += ["", f"80% interval coverage {_f(m['coverage_80'])} (model-expected {_f(m.get('coverage_80_expected'))}); "
                         f"Brier {_f(m['brier'], 4)} vs constant baseline {_f(m['brier_baseline_constant'], 4)}; log loss {_f(m['log_loss'], 4)}; "
-                        f"ECE {_f(m['ece'], 4)}; dispersion r = {_f(m['dispersion_r'], 2)}.", "", m["pseudo_line_note"] + ".", ""]
+                        f"ECE {_f(m['ece'], 4)}; dispersion r = {_f(m['dispersion_r'], 2)}" + (f"; minutes-variance weight k = {_f(m['dispersion']['minutes_var_k'], 2)}" if m.get("dispersion") else "") + ".", "", m["pseudo_line_note"] + ".", ""]
             out += ["Calibration (evaluation period):", "", "| Predicted bin | n | Mean predicted | Observed | 95% CI |", "|---|---|---|---|---|"]
             out += [f"| {r['lo']:.1f}–{r['hi']:.1f} | {r['n']} | {_f(r['predicted'])} | {_f(r['observed'])} | "
                     + (f"{r['ci'][0]:.3f}–{r['ci'][1]:.3f}" if r["ci"] else "—") + " |" for r in m["calibration"] if r["n"]]
