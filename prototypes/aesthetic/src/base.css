@@ -1,0 +1,8 @@
+/* Shared shell only. Deliberately almost empty: each concept owns its entire look inside
+   its own root class (.concept-a / .concept-b / .concept-c). Do not add design here. */
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}

@@ -1,0 +1,14 @@
+/* Concept B (Professional Intelligence Terminal). Every selector in this file MUST start with .concept-b
+   (see README.md in this folder). Placeholder styles only: replace them. */
+.concept-b {
+  min-height: 100vh;
+  font: 14px/1.5 system-ui, sans-serif;
+}
+.concept-b .placeholder {
+  padding: 24px;
+}
+.concept-b .placeholder nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}

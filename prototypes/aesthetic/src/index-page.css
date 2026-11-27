@@ -1,0 +1,19 @@
+.proto-index {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 48px 24px;
+  background: #f4f4f2;
+  color: #1b1b1b;
+  font: 16px/1.5 system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+.proto-index * { box-sizing: border-box; }
+.proto-index main { max-width: 760px; margin: 0 auto; }
+.proto-index h1 { font-size: 22px; margin: 0 0 8px; }
+.proto-index .notice { margin: 0 0 28px; padding: 12px 14px; border: 1px solid #c9c9c4; background: #fff; }
+.proto-index ul { list-style: none; margin: 0 0 28px; padding: 0; }
+.proto-index li { border-top: 1px solid #c9c9c4; padding: 14px 0; }
+.proto-index li:last-child { border-bottom: 1px solid #c9c9c4; }
+.proto-index a { color: #0b3d91; }
+.proto-index .concept-link { font-weight: 600; font-size: 18px; }
+.proto-index .pages { margin-top: 6px; font-size: 14px; display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.proto-index .meta { font-size: 13px; color: #555; }

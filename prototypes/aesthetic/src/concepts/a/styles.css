@@ -1,0 +1,14 @@
+/* Concept A (Premium Sports Editorial). Every selector in this file MUST start with .concept-a
+   (see README.md in this folder). Placeholder styles only: replace them. */
+.concept-a {
+  min-height: 100vh;
+  font: 14px/1.5 system-ui, sans-serif;
+}
+.concept-a .placeholder {
+  padding: 24px;
+}
+.concept-a .placeholder nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}

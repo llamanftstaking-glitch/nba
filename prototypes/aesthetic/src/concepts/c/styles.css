@@ -1,0 +1,14 @@
+/* Concept C (JARVIS-First). Every selector in this file MUST start with .concept-c
+   (see README.md in this folder). Placeholder styles only: replace them. */
+.concept-c {
+  min-height: 100vh;
+  font: 14px/1.5 system-ui, sans-serif;
+}
+.concept-c .placeholder {
+  padding: 24px;
+}
+.concept-c .placeholder nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
