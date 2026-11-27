@@ -1,11 +1,12 @@
 # Changelog
 
 ## Unreleased — Project Aesthetic stage one (branch `feature/project-aesthetic`, not deployed)
-* "Courtside" design applied to the real app: light theme, Archivo Variable, five workspaces (Today, Games, Players,
-  Markets, Research) with an All pages menu and a mobile More sheet. All 36 previous destinations keep their URLs.
+* "Courtside" design applied to the real app: light theme, Archivo Variable. Owner condition: the left sidebar keeps
+  the production menu exactly (same four groups, order, names and icons) and the phone bar keeps Home, Games, Props,
+  Parlays and More. All 36 destinations keep their URLs; the smoke suite compares the menu with `main` entry by entry.
 * Hand-redesigned: home, live board, game page, top picks, Kalshi markets, JARVIS, games list, login, shell. The other
   routes inherit the new tokens and primitives and are not yet redesigned.
-* TESTED on the fixture API only: typecheck, lint, build, `npm audit` (0 high), browser smoke 3688 passed, 0 failed.
+* TESTED on the fixture API only: typecheck, lint, build, `npm audit` (0 high), browser smoke 3695 passed, 0 failed (after the sidebar was restored).
   NOT VERIFIED: production data, real devices, Safari/Firefox, screen readers. No backend change.
 * Decisions D-038 (typeface) and D-039 (Radix Dialog). Details: `docs/design/aesthetic/07-APP-INTEGRATION.md`.
 
