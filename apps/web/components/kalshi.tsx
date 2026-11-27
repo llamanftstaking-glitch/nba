@@ -27,12 +27,10 @@ export const POLL_NOTE = "Polled periodically — not a continuous feed.";
 export function KalshiSyncStatus({ sync, className }: { sync: KalshiSync; className?: string }) {
   return (
     <p className={cn("flex flex-wrap items-center gap-x-3 gap-y-1 text-sm", className)} data-testid="kalshi-sync" data-stale={sync.stale ? "1" : "0"}>
-      <StatusDot tone={sync.stale ? "warn" : "neutral"} className={sync.stale ? "text-warn" : undefined}>
-        {sync.stale ? "Stale" : "Synced"}
-      </StatusDot>
+      <span className={cn("slot", sync.stale ? "text-warn" : "text-ink")}>{sync.stale ? "Stale" : "Synced"}</span>
       <span className="num text-muted">
         Last sync {fmtDateTimeET(sync.last_sync_at) ?? "—"}
-        {sync.age_minutes !== null ? ` · ${Math.round(sync.age_minutes)} min ago` : ""} · polled about every {sync.poll_minutes} min
+        {sync.age_minutes !== null ? `, ${Math.round(sync.age_minutes)} min ago` : ""}, polled about every {sync.poll_minutes} min
       </span>
       <span className="text-muted">{sync.note}</span>
     </p>
@@ -40,8 +38,8 @@ export function KalshiSyncStatus({ sync, className }: { sync: KalshiSync; classN
 }
 
 /**
- * A price move. Direction is shown with an arrow and a sign; colour is the neutral data hue (up) or
- * slate (down) because a market move is neither good nor bad.
+ * A price move. Direction is shown with an arrow and a sign, in ink: a market move is observed,
+ * and it is neither good nor bad, so it is never green, red or the estimate colour.
  */
 export function PriceMove({ v, className }: { v: number | null | undefined; className?: string }) {
   const t = fmtCentsMove(v);
@@ -49,7 +47,7 @@ export function PriceMove({ v, className }: { v: number | null | undefined; clas
   const up = v > 0;
   const flat = Math.round(v * 1000) === 0;
   return (
-    <span className={cn("num inline-flex items-center gap-0.5 whitespace-nowrap", flat ? "text-muted" : up ? "text-info" : "text-muted", className)} data-move={flat ? "flat" : up ? "up" : "down"}>
+    <span className={cn("num inline-flex items-center gap-0.5 whitespace-nowrap", flat ? "text-faint" : "text-ink", className)} data-move={flat ? "flat" : up ? "up" : "down"}>
       {!flat && (up ? <ArrowUp className="h-3 w-3" aria-hidden /> : <ArrowDown className="h-3 w-3" aria-hidden />)}
       {t}
     </span>
@@ -60,7 +58,7 @@ export function TrackedOnlyTag({ m }: { m: Pick<KalshiMarketRow, "interpretation
   if (m.interpretation === "normalized") return null;
   return (
     <span
-      className="inline-flex items-center whitespace-nowrap rounded bg-raised px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-wide text-muted"
+      className="inline-flex items-center whitespace-nowrap text-2xs font-bold text-muted"
       title={m.interpretation_note ?? (m.interpretation === "unmatched" ? "Not matched to a GIZER market" : "Contract type not evaluated by GIZER")}
       data-testid="tracked-only"
     >
@@ -94,8 +92,8 @@ export function KalshiCard({ m, onOpen }: { m: KalshiMarketRow; onOpen: (m: Kals
   const [open, setOpen] = useState(false);
   const tracked = m.interpretation !== "normalized";
   return (
-    <article className={cn("rounded-lg bg-card ring-1 ring-inset ring-line/60", tracked && "opacity-80")} data-testid="kalshi-card" data-ticker={m.ticker}>
-      <button type="button" aria-expanded={open} onClick={() => setOpen((v) => !v)} className="flex min-h-[44px] w-full items-center gap-3 p-3 text-left" data-testid="kalshi-card-toggle">
+    <article className="border-b border-line" data-testid="kalshi-card" data-ticker={m.ticker}>
+      <button type="button" aria-expanded={open} onClick={() => setOpen((v) => !v)} className="flex min-h-[44px] w-full items-center gap-3 py-3 text-left" data-testid="kalshi-card-toggle">
         <span className="min-w-0 flex-1">
           <span className={cn("block break-words text-base font-semibold", tracked ? "text-soft" : "text-ink")}>{m.title}</span>
           <span className="block break-words text-xs text-muted">{sub(m)}</span>
@@ -110,7 +108,7 @@ export function KalshiCard({ m, onOpen }: { m: KalshiMarketRow; onOpen: (m: Kals
         {open ? <ChevronUp className="h-4 w-4 shrink-0 text-faint" aria-hidden /> : <ChevronDown className="h-4 w-4 shrink-0 text-faint" aria-hidden />}
       </button>
       {open && (
-        <div className="space-y-3 border-t border-line/50 p-3">
+        <div className="space-y-3 pb-4">
           {tracked && m.interpretation_note && <p className="text-xs text-muted">{m.interpretation_note}</p>}
           <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm sm:grid-cols-4">
             {(
@@ -126,7 +124,7 @@ export function KalshiCard({ m, onOpen }: { m: KalshiMarketRow; onOpen: (m: Kals
               ] as [string, ReactNode][]
             ).map(([label, value]) => (
               <div key={label} className="min-w-0">
-                <dt className="text-2xs font-medium uppercase text-muted">{label}</dt>
+                <dt className="text-2xs font-medium text-muted">{label}</dt>
                 <dd className="text-ink">{value}</dd>
               </div>
             ))}
@@ -143,18 +141,18 @@ export function KalshiCard({ m, onOpen }: { m: KalshiMarketRow; onOpen: (m: Kals
   );
 }
 
-const TH = "px-2 pb-2 text-2xs font-semibold uppercase tracking-wide text-muted";
+const TH = "px-2";
 
 /** Kalshi contract table (xl and up) with expandable cards below that width. */
 export function KalshiTable({ rows, onOpen }: { rows: KalshiMarketRow[]; onOpen: (m: KalshiMarketRow) => void }) {
   return (
     <>
-      <div className="hidden xl:block" data-testid="kalshi-table">
+      <div className="hidden overflow-x-auto xl:block" data-testid="kalshi-table" role="region" aria-label="Kalshi contracts" tabIndex={0}>
         <table className="w-full table-auto border-collapse">
           <caption className="sr-only">Kalshi contracts</caption>
           <thead>
-            <tr className="border-b border-line text-left">
-              <th scope="col" className={TH}>Contract</th>
+            <tr className="text-left">
+              <th scope="col" className={cn(TH, "sticky-col")}>Contract</th>
               <th scope="col" className={TH}>Threshold</th>
               <th scope="col" className={cn(TH, "text-right")}>First</th>
               <th scope="col" className={cn(TH, "text-right")}>Price</th>
@@ -172,30 +170,34 @@ export function KalshiTable({ rows, onOpen }: { rows: KalshiMarketRow[]; onOpen:
             {rows.map((m) => {
               const tracked = m.interpretation !== "normalized";
               return (
+                // The row stays a row so its cells keep their column headers. The contract name is the
+                // real button; a click anywhere on the row is a pointer convenience on top of it.
                 <tr
                   key={m.ticker}
-                  tabIndex={0}
-                  role="button"
-                  aria-label={`Open market detail for ${m.title}`}
                   onClick={() => onOpen(m)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      onOpen(m);
-                    }
-                  }}
-                  className={cn("cursor-pointer border-b border-line/40 align-middle last:border-0 hover:bg-raised/40", tracked && "opacity-75")}
+                  className={cn("cursor-pointer border-b border-line align-middle hover:bg-raised/60")}
                   data-testid="kalshi-row"
                   data-ticker={m.ticker}
                   data-interpretation={m.interpretation}
                 >
-                  <td className="px-2 py-2">
-                    <span className={cn("block text-sm font-semibold leading-5", tracked ? "text-soft" : "text-ink")}>{m.title}</span>
-                    <span className="flex flex-wrap items-center gap-x-2 text-xs text-muted">
+                  <th scope="row" className="sticky-col px-2 py-2.5 text-left font-normal">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpen(m);
+                      }}
+                      aria-label={`Open market detail for ${m.title}`}
+                      className={cn("block text-left text-base font-semibold leading-snug hover:underline", tracked ? "text-muted" : "text-ink")}
+                      data-testid="kalshi-row-open"
+                    >
+                      {m.title}
+                    </button>
+                    <span className="flex flex-wrap items-center gap-x-2 text-sm text-faint">
                       {sub(m)}
                       <TrackedOnlyTag m={m} />
                     </span>
-                  </td>
+                  </th>
                   <td className="px-2 py-2">
                     <Threshold m={m} />
                   </td>
@@ -233,7 +235,7 @@ export function KalshiTable({ rows, onOpen }: { rows: KalshiMarketRow[]; onOpen:
           </tbody>
         </table>
       </div>
-      <div className="space-y-2 xl:hidden">
+      <div className="border-t-2 border-ink xl:hidden">
         {rows.map((m) => (
           <KalshiCard key={m.ticker} m={m} onOpen={onOpen} />
         ))}
@@ -247,16 +249,16 @@ function CompactGroup({ label, list, ladder, perGroup }: { label: string; list: 
   const shown = all ? list : list.slice(0, perGroup);
   return (
     <div className="min-w-0" data-testid="kalshi-group">
-      <div className="flex items-baseline justify-between border-b border-line/50 pb-1 text-2xs font-semibold uppercase tracking-wide text-muted">
+      <div className="flex items-baseline justify-between border-b border-line pb-1 text-2xs font-semibold text-muted">
         <span>
           {label} · {list.length}
         </span>
         <span>Market price · move · volume</span>
       </div>
-      <ul className="divide-y divide-line/30">
+      <ul className="divide-y divide-line">
         {shown.map((m, idx) => (
           <li key={m.ticker} className={cn(!all && idx >= 3 && "hidden md:block")}>
-            <DLink href={`/kalshi-intelligence/${encodeURIComponent(m.ticker)}`} className={cn("flex min-h-[44px] items-center gap-3 py-1.5 hover:bg-raised/40", m.interpretation !== "normalized" && "opacity-75")} data-testid="kalshi-compact-row">
+            <DLink href={`/kalshi-intelligence/${encodeURIComponent(m.ticker)}`} className={cn("flex min-h-[44px] items-center gap-3 py-1.5 hover:bg-raised/40")} data-testid="kalshi-compact-row">
               <span className="min-w-0 flex-1">
                 <span className="block break-words text-sm font-medium text-ink">{ladder ? (m.comparator ?? m.title) : m.title}</span>
                 {ladder && <span className="block break-words text-xs text-muted">{m.title}</span>}
@@ -276,7 +278,7 @@ function CompactGroup({ label, list, ladder, perGroup }: { label: string; list: 
         ))}
       </ul>
       {list.length > 3 && (
-        <button type="button" className={cn("mt-1 inline-flex min-h-[44px] items-center text-xs font-medium text-accent hover:underline md:min-h-0", list.length <= perGroup && "md:hidden")} aria-expanded={all} onClick={() => setAll((v) => !v)} data-testid="kalshi-group-more">
+        <button type="button" className={cn("mt-1 inline-flex min-h-[44px] items-center text-xs font-medium link md:min-h-0", list.length <= perGroup && "md:hidden")} aria-expanded={all} onClick={() => setAll((v) => !v)} data-testid="kalshi-group-more">
           {all ? "Show fewer" : `Show all ${list.length}`}
         </button>
       )}
@@ -338,7 +340,7 @@ export function KalshiCompactList({ rows, ladder = false, perGroup = 5, mainLine
 function Stat({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="min-w-0">
-      <dt className="text-2xs font-medium uppercase tracking-wide text-muted">{label}</dt>
+      <dt className="text-2xs font-medium text-muted">{label}</dt>
       <dd className="num text-sm font-medium text-ink">{children}</dd>
     </div>
   );
@@ -368,7 +370,7 @@ export function KalshiDetailView({ d }: { d: KalshiMarketDetail }) {
       {/* ---------- Market data ---------- */}
       <section className="space-y-4" aria-label="Market data" data-testid="kd-market">
         <div>
-          <div className="mb-1 text-2xs font-semibold uppercase tracking-[0.12em] text-info">Market data · Kalshi</div>
+          <div className="mb-1 text-2xs font-semibold text-info">Market data · Kalshi</div>
           <h2 className="break-words text-lg font-semibold leading-6 text-ink">{m.title}</h2>
           <p className="text-sm text-muted">{[m.game_label, m.team_abbr, m.stat_label].filter(Boolean).join(" · ") || "Game not available"}</p>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -377,13 +379,13 @@ export function KalshiDetailView({ d }: { d: KalshiMarketDetail }) {
             <span className="num break-all text-xs text-faint">{m.ticker}</span>
           </div>
           {tracked && (
-            <p className="mt-2 rounded-md bg-raised/60 px-3 py-2 text-sm text-soft" data-testid="kd-tracked-note">
+            <p className="mt-2 border-l-2 border-line py-1 pl-3 text-sm text-soft" data-testid="kd-tracked-note">
               Tracked only — GIZER does not evaluate this contract. {m.interpretation_note ?? ""}
             </p>
           )}
         </div>
 
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-md bg-raised/50 p-3 sm:grid-cols-4">
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-3 border-l-2 border-line py-1 pl-3 sm:grid-cols-4">
           <Stat label="Threshold">{m.comparator ?? "—"}</Stat>
           <Stat label="Exact strike"><Val v={m.threshold} /></Stat>
           <Stat label="Market price"><Val v={fmtCents(m.price)} /></Stat>
@@ -416,7 +418,7 @@ export function KalshiDetailView({ d }: { d: KalshiMarketDetail }) {
           {timeline.length === 0 ? (
             <p className="text-sm text-muted">No availability, lineup or market-status events were recorded for this game.</p>
           ) : (
-            <ul className="divide-y divide-line/30">
+            <ul className="divide-y divide-line">
               {timeline.map((e, i) => (
                 <li key={i} className="grid grid-cols-[auto_1fr] gap-x-3 py-2 text-sm">
                   <span className="mt-1 h-3 border-l-2" style={{ borderColor: TIMELINE_COLORS[e.type] }} aria-hidden />
@@ -441,7 +443,7 @@ export function KalshiDetailView({ d }: { d: KalshiMarketDetail }) {
           <p className="mt-1 text-xs text-muted">Events are shown for context in time order. An event next to a price change does not establish that one caused the other.</p>
         </div>
 
-        <div className="rounded-md bg-raised/50 p-3" data-testid="kd-rules">
+        <div className="border-l-2 border-line py-1 pl-3" data-testid="kd-rules">
           <Label>Contract rules</Label>
           <p className="whitespace-pre-line break-words text-sm text-soft">{d.rules.primary ?? "Primary rules not available."}</p>
           {d.rules.secondary && <p className="mt-2 whitespace-pre-line break-words text-xs text-muted">{d.rules.secondary}</p>}
@@ -458,8 +460,8 @@ export function KalshiDetailView({ d }: { d: KalshiMarketDetail }) {
                 {(["L5", "L10", "L20", "season"] as const).map((k) => {
                   const h = d.history?.[k];
                   return (
-                    <li key={k} className="rounded-md bg-raised/50 px-3 py-2">
-                      <div className="text-2xs font-semibold uppercase text-muted">{k === "season" ? "Season" : k}</div>
+                    <li key={k} className="border-l-2 border-line py-1 pl-3">
+                      <div className="text-2xs font-semibold text-muted">{k === "season" ? "Season" : k}</div>
                       {h ? (
                         <>
                           <div className="num text-sm font-semibold text-ink">
@@ -483,14 +485,14 @@ export function KalshiDetailView({ d }: { d: KalshiMarketDetail }) {
       </section>
 
       {/* ---------- Independent model research ---------- */}
-      <section className="space-y-3 border-t border-line/60 pt-5" aria-label="Independent model research" data-testid="kd-research">
-        <div className="text-2xs font-semibold uppercase tracking-[0.12em] text-accent">Independent model research · GIZER</div>
+      <section className="space-y-3 border-t border-line pt-5" aria-label="Independent model research" data-testid="kd-research">
+        <div className="text-2xs font-semibold text-accent">Independent model research · GIZER</div>
         {tracked ? (
-          <p className="rounded-md bg-raised/40 px-3 py-2.5 text-sm text-muted" data-testid="kd-no-model">
+          <p className="border-l-2 border-line py-1 pl-3 text-sm text-muted" data-testid="kd-no-model">
             No model research is shown for a tracked-only contract.
           </p>
         ) : !r ? (
-          <p className="rounded-md bg-raised/40 px-3 py-2.5 text-sm text-muted" data-testid="kd-no-research">
+          <p className="border-l-2 border-line py-1 pl-3 text-sm text-muted" data-testid="kd-no-research">
             {m.kind === "player" ? "No model research is available for this contract." : "Model research is shown for player contracts only."}
           </p>
         ) : (
@@ -505,7 +507,7 @@ export function KalshiDetailView({ d }: { d: KalshiMarketDetail }) {
               )}
               <StatusDot tone={r.model_ready ? "accent" : "warn"}>{r.model_ready ? "Model ready" : "Model not ready"}</StatusDot>
             </div>
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-md bg-raised/50 p-3 sm:grid-cols-3">
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-3 border-l-2 border-line py-1 pl-3 sm:grid-cols-3">
               <Stat label="Projection [p10–p90]">
                 {r.projection && r.projection.mean !== null ? (
                   <>
@@ -523,14 +525,14 @@ export function KalshiDetailView({ d }: { d: KalshiMarketDetail }) {
             ) : (
               <ul className="space-y-2">
                 {r.selections.map((s) => (
-                  <li key={s.id} className="rounded-md bg-raised/50 p-3" data-testid="kd-selection">
+                  <li key={s.id} className="border-l-2 border-line py-1 pl-3" data-testid="kd-selection">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="text-sm font-semibold capitalize text-ink">{s.side}</span>
                         <ClassificationBadge value={s.classification} />
                       </div>
                       <div className="text-right">
-                        <div className="text-2xs font-medium uppercase text-muted">Model probability [interval]</div>
+                        <div className="text-2xs font-medium text-muted">Model probability [interval]</div>
                         <ProbabilityDisplay prob={s.prob} low={s.prob_low} high={s.prob_high} />
                       </div>
                     </div>
@@ -553,7 +555,7 @@ export function KalshiDetailView({ d }: { d: KalshiMarketDetail }) {
       </section>
 
       {d.notes.length > 0 && (
-        <ul className="space-y-0.5 border-t border-line/60 pt-3 text-xs text-muted" data-testid="kd-notes">
+        <ul className="space-y-0.5 border-t border-line pt-3 text-xs text-muted" data-testid="kd-notes">
           {d.notes.map((n, i) => (
             <li key={i}>· {n}</li>
           ))}

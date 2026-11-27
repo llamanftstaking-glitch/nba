@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, CandlestickChart, FileText, Gauge, HeartPulse, History, Layers, LineChart, ListChecks, Target, Timer, Users } from "lucide-react";
+import { CandlestickChart, FileText, Gauge, HeartPulse, History, Layers, LineChart, ListChecks, Target, Timer, Users } from "lucide-react";
 import { InjuryChangeList } from "@/components/injury-changes";
 import { KalshiCompactList, KalshiSyncStatus } from "@/components/kalshi";
 import { MinutesCompact } from "@/components/minutes";
@@ -52,7 +52,7 @@ function PlayerAverages({ rows, props }: { rows: PlayerProj[]; props: PropRow[] 
   const shown = all ? players : players.slice(0, 10);
   return (
     <div data-testid="player-averages">
-      <div className="hidden grid-cols-[minmax(0,2.2fr)_repeat(4,minmax(0,1fr))] gap-x-3 border-b border-line pb-2 text-2xs font-semibold uppercase tracking-wide text-muted sm:grid">
+      <div className="hidden grid-cols-[minmax(0,2.2fr)_repeat(4,minmax(0,1fr))] gap-x-3 border-b border-line pb-2 text-2xs font-semibold text-muted sm:grid">
         <span>Player · proj min · sample</span>
         {PROJ_STATS.map((k) => (
           <span key={k} className="text-right">
@@ -62,7 +62,7 @@ function PlayerAverages({ rows, props }: { rows: PlayerProj[]; props: PropRow[] 
       </div>
       <ul>
         {shown.map((p) => (
-          <li key={p.id} className="grid grid-cols-4 gap-x-3 gap-y-1 border-b border-line/40 py-2 last:border-0 sm:grid-cols-[minmax(0,2.2fr)_repeat(4,minmax(0,1fr))]">
+          <li key={p.id} className="grid grid-cols-4 gap-x-3 gap-y-1 border-b border-line py-2 last:border-0 sm:grid-cols-[minmax(0,2.2fr)_repeat(4,minmax(0,1fr))]">
             <div className="col-span-4 min-w-0 sm:col-span-1">
               <DLink href={`/players/${p.id}`} className="font-semibold text-ink hover:underline">
                 {p.name}
@@ -77,7 +77,7 @@ function PlayerAverages({ rows, props }: { rows: PlayerProj[]; props: PropRow[] 
               const avg = l10.get(`${p.id}:${k}`);
               return (
                 <div key={k} className="text-left sm:text-right">
-                  <span className="mr-1 text-2xs uppercase text-muted sm:hidden">{statLabel(k)}</span>
+                  <span className="mr-1 text-2xs text-muted sm:hidden">{statLabel(k)}</span>
                   <span className="num text-xs text-muted" title="L10 average (descriptive)">
                     <Val v={fmtNum(avg)} /> /{" "}
                   </span>
@@ -162,8 +162,8 @@ function HistoricalPerformance({ rows: allRows }: { rows: PropRow[] }) {
   if (allRows.length === 0) return <EmptyState title="No player history rows are available for this game." icon={History} />;
   return (
     <div data-testid="game-history">
-      <ul className="divide-y divide-line/30">
-        <li className="hidden grid-cols-[minmax(0,2fr)_1fr_repeat(4,0.7fr)_1.4fr] gap-x-3 pb-2 text-2xs font-semibold uppercase tracking-wide text-muted md:grid" aria-hidden>
+      <ul className="divide-y divide-line">
+        <li className="hidden grid-cols-[minmax(0,2fr)_1fr_repeat(4,0.7fr)_1.4fr] gap-x-3 pb-2 text-2xs font-semibold text-muted md:grid" aria-hidden>
           <span>Player</span>
           <span>Stat · line</span>
           <span className="text-right">L5</span>
@@ -194,7 +194,7 @@ function HistoricalPerformance({ rows: allRows }: { rows: PropRow[] }) {
               ] as const
             ).map(([l, v]) => (
               <span key={l} className="num text-sm text-ink md:text-right">
-                <span className="mr-1 text-2xs uppercase text-muted md:hidden">{l}</span>
+                <span className="mr-1 text-2xs text-muted md:hidden">{l}</span>
                 <Val v={fmtNum(v)} />
               </span>
             ))}
@@ -222,7 +222,7 @@ function Technical({ title, children }: { title: string; children: React.ReactNo
         <span className="text-xs text-muted group-open:hidden">Show</span>
         <span className="hidden text-xs text-muted group-open:inline">Hide</span>
       </summary>
-      <div className="border-t border-line/40 p-3">{children}</div>
+      <div className="border-t border-line p-3">{children}</div>
     </details>
   );
 }
@@ -248,9 +248,9 @@ function GameView({ d }: { d: GameDetail }) {
   const injuries = [...g.injuries.away, ...g.injuries.home];
 
   return (
-    <div className="space-y-5" data-testid="game-page">
+    <div className="space-y-9" data-testid="game-page">
       {/* 1 — matchup header */}
-      <section id="matchup" className="rounded-lg bg-card p-4 ring-1 ring-inset ring-line/60 md:p-5" aria-label="Matchup">
+      <section id="matchup" className="blk p-4 md:p-5" aria-label="Matchup">
         <h2 className="sr-only">
           {g.away.name} at {g.home.name} · game research
         </h2>
@@ -292,7 +292,7 @@ function GameView({ d }: { d: GameDetail }) {
       {/* 3 — lineups */}
       <section aria-label="Starting lineups" id="lineups">
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="flex items-center gap-2 font-display text-[17px] font-semibold uppercase tracking-wide text-ink">
+          <h2 className="flex items-center gap-2 font-display text-lg font-semibold text-ink">
             <Users className="h-[18px] w-[18px] text-accent" aria-hidden />
             Starting lineups
           </h2>
@@ -302,7 +302,7 @@ function GameView({ d }: { d: GameDetail }) {
           </Button>
         </div>
         {history && (
-          <div className="mb-3 rounded-lg bg-card p-4 ring-1 ring-inset ring-line/60">
+          <div className="mb-3 blk p-4">
             <LineupHistoryList gameId={g.id} />
           </div>
         )}
@@ -369,7 +369,7 @@ function GameView({ d }: { d: GameDetail }) {
             return mine.length === 0 ? <p className="text-sm text-muted">No status changes have been recorded for this game.</p> : <InjuryChangeList items={mine} showGame={false} />;
           }}
         </QueryView>
-        <div className="mt-3 border-t border-line/50 pt-3">
+        <div className="mt-3 border-t border-line pt-3">
           <Label>Currently listed · {injuries.length}</Label>
           {injuries.length === 0 ? (
             <p className="text-sm text-muted">No injuries are listed for either team.</p>
@@ -405,7 +405,7 @@ function GameView({ d }: { d: GameDetail }) {
             <SelectionList items={qualifiedSel.slice(0, 5)} showGame={false} />
             {qualifiedSel.length > 5 && (
               <Collapsible title={`${qualifiedSel.length - 5} more qualified`} className="mt-3" testId="game-more-qualified">
-                <ul className="divide-y divide-line/30">
+                <ul className="divide-y divide-line">
                   {qualifiedSel.slice(5).map((x) => (
                     <SelectionRow key={x.id} s={x} showGame={false} />
                   ))}
@@ -416,14 +416,14 @@ function GameView({ d }: { d: GameDetail }) {
         )}
         {watchSel.length > 0 && (
           <Collapsible title={`Watchlist · ${watchSel.length}`} className="mt-3" testId="game-watchlist">
-            <ul className="divide-y divide-line/30">
+            <ul className="divide-y divide-line">
               {watchSel.map((x) => (
                 <SelectionRow key={x.id} s={x} showGame={false} />
               ))}
             </ul>
           </Collapsible>
         )}
-        <div className="mt-4 border-t border-line/50 pt-3">
+        <div className="mt-4 border-t border-line pt-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="num text-sm text-muted" data-testid="game-more-evaluated">
               +{notQualifiedTotal.toLocaleString("en-US")} more evaluated (not qualified)
@@ -434,7 +434,7 @@ function GameView({ d }: { d: GameDetail }) {
             </Button>
           </div>
           {showAll && (
-            <ul className="mt-3 divide-y divide-line/30" data-testid="game-other-selections">
+            <ul className="mt-3 divide-y divide-line" data-testid="game-other-selections">
               {otherSel.map((x) => (
                 <li key={x.id} className="grid gap-x-4 py-1.5 text-sm md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1.4fr)] md:items-baseline">
                   <span className="break-words font-medium text-ink">{x.market_label}</span>
@@ -492,7 +492,7 @@ function GameView({ d }: { d: GameDetail }) {
             {d.unresolved.length === 0 ? <p className="text-sm text-muted">No unresolved questions were recorded.</p> : <BulletList items={d.unresolved} tone="warn" />}
           </div>
         </div>
-        <div className="mt-4 border-t border-line/50 pt-3">
+        <div className="mt-4 border-t border-line pt-3">
           <Label>Head to head</Label>
           {d.h2h.length === 0 ? (
             <p className="text-sm text-muted">No prior meetings in the available data.</p>
@@ -522,7 +522,7 @@ function JarvisTab({ gameId }: { gameId: string }) {
   const state = useJarvisState();
   const chat = useJarvisChat({ conversationId, onConversationId: setConversationId, context });
   return (
-    <div className="flex h-[70dvh] min-h-[420px] flex-col overflow-hidden rounded-lg bg-card ring-1 ring-inset ring-line/60" data-testid="game-jarvis">
+    <div className="flex h-[70dvh] min-h-[420px] flex-col overflow-hidden border-y border-line" data-testid="game-jarvis">
       <JarvisConversationView
         messages={chat.conversation?.messages ?? []}
         live={chat.live}
@@ -566,16 +566,11 @@ export default function GamePage() {
     <div>
       {row && <ScoreHeader g={row} stream={stream.state} />}
       {!row && <h1 className="sr-only">Game research</h1>}
-      <div className="mb-3 mt-3 flex flex-wrap items-center gap-3">
-        <DLink href="/games" className={textLink}>
-          <ArrowLeft className="h-3 w-3" aria-hidden /> All games
-        </DLink>
-        {center.isSuccess && (
-          <div className="min-w-0 flex-1">
-            <Tabs label="Game centre" scroll value={tab} onChange={setTab} items={GAME_TABS.map(([id2, label]) => ({ id: id2, label }))} />
-          </div>
-        )}
-      </div>
+      {center.isSuccess && (
+        <div className="mb-6 mt-4">
+          <Tabs label="Game centre" scroll value={tab} onChange={setTab} items={GAME_TABS.map(([id2, label]) => ({ id: id2, label }))} />
+        </div>
+      )}
       {center.isError && !(center.error instanceof ApiError && center.error.status === 404) && tab !== "research" && <ErrorState error={center.error} onRetry={() => void center.refetch()} />}
       {center.data && row && tab === "overview" && <OverviewTab c={{ ...center.data, ...row }} />}
       {center.data && tab === "boxscore" && <BoxScoreTab id={id} />}

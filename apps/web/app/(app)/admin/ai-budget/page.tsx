@@ -31,7 +31,7 @@ function LifetimeBar({ b }: { b: AiBudget }) {
         </span>
         <span className="num text-muted">cap {usd(cap)} · usable {usd(b.usable_usd)}</span>
       </div>
-      <div className="relative h-4 w-full overflow-hidden rounded-full bg-line/70" role="img" aria-label={`${usd(b.spent_usd)} spent and ${usd(b.pending_usd)} pending of a ${usd(cap)} lifetime cap`}>
+      <div className="relative h-4 w-full overflow-hidden rounded bg-line" role="img" aria-label={`${usd(b.spent_usd)} spent and ${usd(b.pending_usd)} pending of a ${usd(cap)} lifetime cap`}>
         <div className="absolute inset-y-0 left-0 bg-info" style={{ width: pct(b.spent_usd) }} />
         <div className="absolute inset-y-0 bg-info/40" style={{ left: pct(b.spent_usd), width: pct(b.pending_usd) }} />
         {b.checkpoints.map((c) => (
@@ -64,8 +64,8 @@ function Share({ label, used, of, right }: { label: string; used: number; of: nu
         <span className="text-soft">{label}</span>
         <span className="num text-ink">{right}</span>
       </div>
-      <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-line/70" role="img" aria-label={`${label}: ${right}`}>
-        <div className={pct >= 90 ? "h-full rounded-full bg-warn" : "h-full rounded-full bg-info"} style={{ width: `${pct}%` }} />
+      <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-line" role="img" aria-label={`${label}: ${right}`}>
+        <div className={pct >= 90 ? "h-full rounded bg-warn" : "h-full rounded bg-info"} style={{ width: `${pct}%` }} />
       </div>
     </div>
   );
@@ -97,7 +97,7 @@ const REQ_COLUMNS: Column<BudgetRequest>[] = [
 function Toggle({ label, help, on, onChange, confirm, pending, testId, tone }: { label: string; help: ReactNode; on: boolean; onChange: (next: boolean) => void; confirm?: string; pending: boolean; testId: string; tone?: "danger" }) {
   const [armed, setArmed] = useState(false);
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-md bg-raised/40 p-3" data-testid={testId} data-on={on ? "1" : "0"}>
+    <div className="flex flex-wrap items-center justify-between gap-3 border-l-2 border-line py-1 pl-3" data-testid={testId} data-on={on ? "1" : "0"}>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-semibold text-ink">{label}</span>
@@ -163,7 +163,7 @@ function LimitsForm({ policy, onSave, pending, error }: { policy: BudgetPolicy; 
         </div>
       </div>
       {(local || error) && (
-        <p role="alert" className="rounded-md bg-bad/10 px-3 py-2 text-sm text-bad ring-1 ring-inset ring-bad/40" data-testid="budget-form-error">
+        <p role="alert" className="border-l-4 border-bad pl-3 px-3 py-2 text-sm text-bad" data-testid="budget-form-error">
           {local ?? error}
         </p>
       )}
@@ -190,7 +190,7 @@ function View({ b }: { b: AiBudget }) {
   const daily = b.daily.slice(-30);
 
   return (
-    <div className="space-y-5" data-testid="ai-budget">
+    <div className="space-y-9" data-testid="ai-budget">
       <Panel title="Lifetime budget" icon={Wallet} right={<StatusDot tone={b.state === "ok" ? "accent" : "warn"} data-testid="budget-state">{b.state === "ok" ? "Within budget" : titleCase(b.state)}</StatusDot>}>
         <LifetimeBar b={b} />
         <div className="mt-4 grid gap-x-8 gap-y-3 md:grid-cols-2">
@@ -223,7 +223,7 @@ function View({ b }: { b: AiBudget }) {
           ))}
         </div>
         {editing && (
-          <div className="mt-4 border-t border-line/50 pt-4">
+          <div className="mt-4 border-t border-line pt-4">
             <LimitsForm policy={p} onSave={(body) => save.mutate(body)} pending={save.isPending} error={formError} />
           </div>
         )}
@@ -236,11 +236,11 @@ function View({ b }: { b: AiBudget }) {
           <div className="h-56 w-full" role="img" aria-label="Daily model spend in US dollars for the last 30 days." data-testid="budget-chart">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={daily} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-                <CartesianGrid stroke="#1A2732" vertical={false} />
-                <XAxis dataKey="date" tickFormatter={(d: string) => fmtDate(d) ?? d} stroke="#22313E" tickLine={false} tick={{ fill: "#94a3b8", fontSize: 11 }} minTickGap={24} />
-                <YAxis stroke="#22313E" tickLine={false} tick={{ fill: "#94a3b8", fontSize: 11 }} width={44} tickFormatter={(v: number) => `$${v.toFixed(2)}`} />
-                <Tooltip cursor={{ fill: "rgba(148,163,184,0.08)" }} contentStyle={{ background: "#121F2B", border: "1px solid #22313E", borderRadius: 8, fontSize: 12 }} labelStyle={{ color: "#C7D1DD" }} itemStyle={{ color: "#F3F6FA" }} labelFormatter={(d) => fmtDate(String(d), { year: true }) ?? String(d)} formatter={(v) => [typeof v === "number" ? `$${v.toFixed(4)}` : String(v), "Spend"]} />
-                <Bar dataKey="usd" fill="#7DC4F0" radius={[4, 4, 0, 0]} maxBarSize={28} isAnimationActive={false} />
+                <CartesianGrid stroke="#E6E7E2" vertical={false} />
+                <XAxis dataKey="date" tickFormatter={(d: string) => fmtDate(d) ?? d} stroke="#D5D7D1" tickLine={false} tick={{ fill: "#646B72", fontSize: 13 }} minTickGap={24} />
+                <YAxis stroke="#D5D7D1" tickLine={false} tick={{ fill: "#646B72", fontSize: 13 }} width={44} tickFormatter={(v: number) => `$${v.toFixed(2)}`} />
+                <Tooltip cursor={{ fill: "rgba(148,163,184,0.08)" }} contentStyle={{ background: "#FFFFFF", border: "1px solid #D5D7D1", borderRadius: 4, fontSize: 13 }} labelStyle={{ color: "#454C53" }} itemStyle={{ color: "#12161A" }} labelFormatter={(d) => fmtDate(String(d), { year: true }) ?? String(d)} formatter={(v) => [typeof v === "number" ? `$${v.toFixed(4)}` : String(v), "Spend"]} />
+                <Bar dataKey="usd" fill="#1F4E79" radius={[4, 4, 0, 0]} maxBarSize={28} isAnimationActive={false} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -308,8 +308,8 @@ export default function AiBudgetPage() {
       {q.isPending ? (
         <LoadingState rows={6} />
       ) : forbidden ? (
-        <div role="alert" className="rounded-lg bg-card p-5 ring-1 ring-inset ring-warn/40" data-testid="budget-forbidden">
-          <p className="font-display text-lg font-semibold uppercase tracking-wide text-warn">Owner access required</p>
+        <div role="alert" className="border-l-4 border-warn py-1 pl-4" data-testid="budget-forbidden">
+          <p className="font-display text-lg font-semibold text-warn">Owner access required</p>
           <p className="mt-1 text-sm text-soft">{(q.error as ApiError).message}</p>
         </div>
       ) : q.isError ? (

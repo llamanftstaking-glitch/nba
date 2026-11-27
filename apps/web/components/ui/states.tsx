@@ -1,39 +1,50 @@
 "use client";
 
 import type { UseQueryResult } from "@tanstack/react-query";
-import { AlertTriangle, Layers, type LucideIcon } from "lucide-react";
-import type { ReactNode } from "react";
+import type { LucideIcon } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
 import { ApiError } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { Button } from "./button";
 
+/** A quiet placeholder line. Not a frame: it is used only where a real value is about to appear. */
 export function Skeleton({ className }: { className?: string }) {
-  return <div className={cn("animate-pulse rounded-md bg-raised", className)} aria-hidden />;
+  return <div className={cn("h-px bg-line", className)} aria-hidden />;
 }
 
-export function LoadingState({ rows = 4, label = "Loading" }: { rows?: number; label?: string }) {
+/**
+ * Loading: one sentence and a thin moving bar on the section's rule. No grey boxes that guess at
+ * the content. After eight seconds it says so, instead of pulsing for ever.
+ */
+export function LoadingState({ label = "Loading" }: { rows?: number; label?: string }) {
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setSlow(true), 8000);
+    return () => clearTimeout(t);
+  }, []);
   return (
-    <div role="status" aria-label={label} className="space-y-2" data-state="loading">
-      {Array.from({ length: rows }).map((_, i) => (
-        <Skeleton key={i} className={cn("h-10", i % 3 === 2 ? "w-2/3" : "w-full")} />
-      ))}
-      <span className="sr-only">{label}…</span>
+    <div role="status" aria-label={label} className="py-3" data-state="loading">
+      <div className="relative h-0.5 overflow-hidden bg-line" aria-hidden>
+        <div className="absolute inset-y-0 w-1/4 bg-ink motion-safe:animate-[loading-bar_1.4s_ease-in-out_infinite]" />
+      </div>
+      <p className="mt-2 text-xs text-muted">
+        {label}…{slow ? " The server has not answered yet; this is taking longer than usual." : ""}
+      </p>
     </div>
   );
 }
 
-/** Explicit empty state: one honest sentence, never filler content. */
-export function EmptyState({ title, children, icon: Icon = Layers }: { title: string; children?: ReactNode; icon?: LucideIcon }) {
+/** Explicit empty state: one honest sentence set on the page. No frame, no filler. */
+export function EmptyState({ title, children }: { title: string; children?: ReactNode; icon?: LucideIcon }) {
   return (
-    <div className="flex flex-col items-center rounded-md bg-raised/40 px-4 py-6 text-center" data-state="empty">
-      <Icon className="mb-2 h-5 w-5 text-faint" aria-hidden />
-      <p className="max-w-prose text-sm font-medium text-soft">{title}</p>
-      {children && <div className="mx-auto mt-1 max-w-prose text-xs text-muted">{children}</div>}
+    <div className="max-w-[68ch] py-3" data-state="empty">
+      <p className="text-base font-semibold text-ink">{title}</p>
+      {children && <div className="mt-1 text-sm text-muted">{children}</div>}
     </div>
   );
 }
 
-export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
+export function ErrorState({ error, onRetry, title = "Could not load this data" }: { error: unknown; onRetry?: () => void; title?: string }) {
   const message =
     error instanceof ApiError
       ? `${error.message}${error.status ? ` (HTTP ${error.status})` : ""}`
@@ -41,17 +52,14 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
         ? error.message
         : "Unexpected error.";
   return (
-    <div role="alert" className="flex items-start gap-3 rounded-md bg-bad/10 px-4 py-3 ring-1 ring-inset ring-bad/40" data-state="error">
-      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-bad" aria-hidden />
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-bad">Could not load this data</p>
-        <p className="mt-0.5 break-words text-xs text-soft">{message}</p>
-        {onRetry && (
-          <Button className="mt-2" onClick={onRetry}>
-            Retry
-          </Button>
-        )}
-      </div>
+    <div role="alert" className="max-w-[68ch] border-l-4 border-bad py-2 pl-4" data-state="error">
+      <p className="text-base font-bold text-bad">{title}</p>
+      <p className="mt-0.5 break-words text-sm text-soft">{message}</p>
+      {onRetry && (
+        <Button className="mt-3" onClick={onRetry}>
+          Retry
+        </Button>
+      )}
     </div>
   );
 }

@@ -5,7 +5,6 @@ import { Bell, Star, Target, Users } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { FollowButton, FreshnessMark, Score, StatusChip, TeamMark } from "@/components/live/common";
 import { useNotifySetting } from "@/components/live/notifications";
-import { LiveNav } from "@/components/live/live-nav";
 import { MilestoneRow, milestoneStat } from "@/components/live/milestones";
 import { PlayerAvatar } from "@/components/player-avatar";
 import { PlayerSearch } from "@/components/player-search";
@@ -60,7 +59,7 @@ function AddThreshold() {
   return (
     <form onSubmit={submit} className="space-y-3" data-testid="milestone-form">
       {player ? (
-        <div className="flex items-center justify-between gap-2 rounded-md bg-raised/50 px-3 py-2">
+        <div className="flex items-center justify-between gap-2 border-l-2 border-line py-1 pl-3">
           <span className="text-sm font-semibold text-ink" data-testid="milestone-player">{player.name}</span>
           <Button variant="ghost" onClick={() => setPlayer(null)}>
             Change player
@@ -88,7 +87,7 @@ function AddThreshold() {
           <Input type="number" step="0.5" min="0" inputMode="decimal" value={threshold} onChange={(e) => setThreshold(e.target.value)} disabled={stat === "double_double"} name="milestone_threshold" placeholder={stat === "double_double" ? "not needed" : ""} />
         </Field>
         <label className="flex min-h-[44px] cursor-pointer items-center gap-2 text-sm text-soft md:min-h-9">
-          <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} className="h-4 w-4 accent-[rgb(0,229,160)]" name="milestone_notify" />
+          <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} className="h-4 w-4 accent-ink" name="milestone_notify" />
           Notify
         </label>
         <Button type="submit" variant="primary" size="md" disabled={add.isPending} data-testid="milestone-add">
@@ -109,9 +108,8 @@ export default function FollowingPage() {
   const teams = useTeams();
   const [team, setTeam] = useState("");
   return (
-    <div className="space-y-5">
+    <div className="space-y-9">
       <PageHeader title="My Following" sub="Followed games, your player watchlist with tracking thresholds, and favourite teams." />
-      <LiveNav />
       <QueryView query={q} rows={6}>
         {(w) => (
           <div className="space-y-5">
@@ -121,7 +119,7 @@ export default function FollowingPage() {
                   Use the star on a game card or in the game centre to follow it. Games of favourite teams are included automatically.
                 </EmptyState>
               ) : (
-                <ul className="divide-y divide-line/30" data-testid="following-games">
+                <ul className="divide-y divide-line" data-testid="following-games">
                   {w.games.map((g) => (
                     <li key={g.game_id} className="flex flex-wrap items-center gap-x-4 gap-y-1 py-2.5" data-testid="following-game">
                       <DLink href={`/games/${encodeURIComponent(g.game_id)}?tab=live`} className="flex min-w-0 flex-1 items-center gap-2 hover:underline">
@@ -148,7 +146,7 @@ export default function FollowingPage() {
                   Follow a player from their profile, or add a tracking threshold below — that adds the player here.
                 </EmptyState>
               ) : (
-                <ul className="divide-y divide-line/30" data-testid="watchlist-players">
+                <ul className="divide-y divide-line" data-testid="watchlist-players">
                   {w.players.map((p) => (
                     <li key={p.player_id} className="py-3" data-testid="watchlist-player">
                       <div className="flex flex-wrap items-center gap-3">
@@ -172,7 +170,7 @@ export default function FollowingPage() {
                         <FollowButton kind="player" refId={p.player_id} followed label={p.name} compact />
                       </div>
                       {p.milestones.length > 0 && (
-                        <ul className="mt-1 divide-y divide-line/20 pl-12">
+                        <ul className="mt-1 divide-y divide-line pl-12">
                           {p.milestones.map((m) => (
                             <MilestoneRow key={m.id} m={m} />
                           ))}

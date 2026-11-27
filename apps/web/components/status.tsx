@@ -51,7 +51,7 @@ export function FreshnessIndicator({ at, stale = false, label = "Updated", class
       ) : (
         <span aria-label="time not available">{label} —</span>
       )}
-      {stale && <span className="font-semibold uppercase">· stale</span>}
+      {stale && <span className="font-semibold">· stale</span>}
     </span>
   );
 }

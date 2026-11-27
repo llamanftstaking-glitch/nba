@@ -51,11 +51,11 @@ const ROSTER_COLUMNS: Column<Roster>[] = [
 function View({ d }: { d: TeamDetail }) {
   const t = d.team;
   return (
-    <div className="space-y-4">
+    <div className="space-y-9">
       <div className="flex items-center gap-3">
         <TeamLogo team={t} size={44} />
         <div>
-          <h1 className="text-[17px] font-semibold leading-6 text-ink">{t.name}</h1>
+          <h1 className="text-lg font-semibold leading-6 text-ink">{t.name}</h1>
           <p className="num text-xs text-muted">{t.abbr}</p>
         </div>
       </div>
@@ -74,7 +74,7 @@ function View({ d }: { d: TeamDetail }) {
           <Val v={fmtNum(t.pace)} />
         </Tile>
       </div>
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="grid gap-x-12 gap-y-9 xl:grid-cols-2">
         <Panel title="Recent games">
           {d.recent.length === 0 ? <EmptyState title="No recent games in the database." /> : <DataTable columns={RECENT_COLUMNS} rows={d.recent} rowKey={(r, i) => `${r.date}-${i}`} caption="Recent games" dense />}
         </Panel>
@@ -93,7 +93,7 @@ export default function TeamPage() {
   return (
     <div>
       <div className="mb-2 text-xs">
-        <DLink href="/teams" className="text-accent hover:underline">
+        <DLink href="/teams" className="link">
           ← All teams
         </DLink>
       </div>

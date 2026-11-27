@@ -98,7 +98,7 @@ async function parseError(res: Response): Promise<ApiError> {
   return new ApiError(res.status, code, message);
 }
 
-type RequestOptions = { redirectOn401?: boolean };
+type RequestOptions = { redirectOn401?: boolean; signal?: AbortSignal };
 
 async function request<T>(method: "GET" | "POST", path: string, body?: unknown, opts: RequestOptions = {}): Promise<T> {
   const headers: Record<string, string> = { Accept: "application/json" };
@@ -114,8 +114,11 @@ async function request<T>(method: "GET" | "POST", path: string, body?: unknown, 
       headers,
       body: method === "POST" ? JSON.stringify(body ?? {}) : undefined,
       cache: "no-store",
+      signal: opts.signal,
     });
-  } catch {
+  } catch (e) {
+    // A cancelled request (the owner pressed Retry, or left the page) is not a network failure.
+    if (e instanceof DOMException && e.name === "AbortError") throw e;
     throw new ApiError(0, "network_error", "The API could not be reached.");
   }
   if (res.status === 401 && opts.redirectOn401 !== false) {
@@ -126,8 +129,8 @@ async function request<T>(method: "GET" | "POST", path: string, body?: unknown, 
   return (await res.json()) as T;
 }
 
-function get<T>(path: string, params?: Params): Promise<T> {
-  return request<T>("GET", `${path}${qs(params)}`);
+function get<T>(path: string, params?: Params, signal?: AbortSignal): Promise<T> {
+  return request<T>("GET", `${path}${qs(params)}`, undefined, { signal });
 }
 
 async function post<T>(path: string, body?: unknown): Promise<T> {
@@ -247,7 +250,7 @@ export const api = {
   strategies: () => get<StrategiesResponse>("/performance/strategies"),
 
   // Core Intelligence V1
-  kalshiMarkets: (p: KalshiFilters) => get<KalshiMarketsResponse>("/kalshi/markets", p),
+  kalshiMarkets: (p: KalshiFilters, signal?: AbortSignal) => get<KalshiMarketsResponse>("/kalshi/markets", p, signal),
   kalshiMarket: (ticker: string) => get<KalshiMarketDetail>(`/kalshi/markets/${encodeURIComponent(ticker)}`),
   minutes: (p: MinutesFilters) => get<MinutesResponse>("/minutes", p),
   playerMinutes: (id: string | number) => get<PlayerMinutesResponse>(`/players/${id}/minutes`),

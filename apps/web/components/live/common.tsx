@@ -12,10 +12,7 @@ import { isLive, live, useTeamLogos, type Freshness, type GameRow, type LiveTeam
 /** A pulsing dot. Rendered only when a game's status is `live` or `overtime`. */
 export function LiveDot({ className }: { className?: string }) {
   return (
-    <span className={cn("relative inline-flex h-2 w-2", className)} aria-hidden data-testid="live-dot">
-      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60 motion-reduce:animate-none" />
-      <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
-    </span>
+    <span className={cn("inline-block h-2 w-2 shrink-0 rounded-full bg-model motion-safe:animate-[live-pulse_1.6s_ease-in-out_infinite]", className)} aria-hidden data-testid="live-dot" />
   );
 }
 
@@ -40,16 +37,17 @@ export function statusText(g: Pick<GameRow, "status" | "status_label" | "period_
 
 export function StatusChip({ g, className }: { g: Pick<GameRow, "status" | "status_label" | "period_label" | "clock" | "tipoff_utc">; className?: string }) {
   const live = isLive(g.status);
-  const tone = live ? "text-accent" : g.status === "final" || g.status === "scheduled" ? "text-muted" : "text-warn";
+  // The status slot: the one place a scoreboard label is set in capitals. Orange means a game in progress.
+  const tone = live ? "text-model-text" : g.status === "final" ? "text-ink" : g.status === "scheduled" ? "text-muted" : "text-warn";
   return (
-    <span className={cn("inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold", tone, className)} data-testid="status-chip" data-status={g.status}>
+    <span className={cn("slot", tone, className)} data-testid="status-chip" data-status={g.status}>
       {live && (
         <>
           <LiveDot />
-          <span className="uppercase tracking-wide">Live</span>
+          <span>Live</span>
         </>
       )}
-      <span className={cn("num", live && "font-medium text-soft")}>{statusText(g)}</span>
+      <span className={cn("num", live && "text-ink")}>{statusText(g)}</span>
     </span>
   );
 }
@@ -81,7 +79,7 @@ export function useFollow() {
 }
 
 /** Follow / unfollow a game, player or team. A 403 (viewer role) is shown inline. */
-export function FollowButton({ kind, refId, followed, label, compact = false }: { kind: "game" | "player" | "team"; refId: string | number; followed: boolean; label?: string; compact?: boolean }) {
+export function FollowButton({ kind, refId, followed, label, compact = false, collapse = false }: { kind: "game" | "player" | "team"; refId: string | number; followed: boolean; label?: string; compact?: boolean; /** icon only below the md breakpoint */ collapse?: boolean }) {
   const m = useFollow();
   const [optimistic, setOptimistic] = useState<boolean | null>(null);
   const on = optimistic ?? followed;
@@ -98,13 +96,13 @@ export function FollowButton({ kind, refId, followed, label, compact = false }: 
           setOptimistic(!on);
           m.mutate({ kind, ref_id: refId, on: !on }, { onError: () => setOptimistic(null), onSuccess: (r) => setOptimistic(r.following) });
         }}
-        className={cn("inline-flex min-h-[44px] items-center gap-1.5 rounded-md px-2.5 text-sm font-medium ring-1 ring-inset md:min-h-0 md:h-8 md:text-xs", on ? "bg-accent/10 text-ink ring-accent/50" : "bg-raised text-soft ring-line hover:text-ink", compact && "min-h-[44px] w-11 justify-center px-0 md:w-8")}
+        className={cn("inline-flex min-h-[44px] items-center gap-1.5 rounded border px-3 text-sm font-semibold md:min-h-0 md:h-9", on ? "border-ink bg-ink text-bg2" : "border-line-strong bg-bg2 text-ink hover:border-ink", compact && "w-11 justify-center px-0 md:w-9", collapse && "max-md:w-11 max-md:justify-center max-md:px-0")}
         aria-label={`${on ? "Unfollow" : "Follow"} ${label ?? kind}`}
         data-testid="follow-btn"
         data-on={on ? "1" : "0"}
       >
-        <Star className={cn("h-3.5 w-3.5", on ? "fill-accent text-accent" : "text-faint")} aria-hidden />
-        {!compact && (on ? "Following" : "Follow")}
+        <Star className={cn("h-4 w-4", on ? "fill-current" : "")} aria-hidden />
+        {!compact && <span className={collapse ? "max-md:sr-only" : undefined}>{on ? "Following" : "Follow"}</span>}
       </button>
       {err && (
         <span role="alert" className="text-xs text-bad" data-testid="follow-error">
@@ -117,11 +115,11 @@ export function FollowButton({ kind, refId, followed, label, compact = false }: 
 
 export function Score({ v, className }: { v: number | null; className?: string }) {
   return v === null || v === undefined ? (
-    <span className={cn("font-display font-semibold text-muted", className)} title="not available" aria-label="score not available">
+    <span className={cn("score text-faint", className)} title="not available" aria-label="score not available">
       —
     </span>
   ) : (
-    <span className={cn("num font-display font-bold text-ink", className)}>{v}</span>
+    <span className={cn("score", className)}>{v}</span>
   );
 }
 
@@ -130,31 +128,39 @@ export function TeamMark({ team, size = 24 }: { team: Pick<LiveTeam, "abbr" | "n
   return <TeamLogo team={{ abbr: team.abbr, name: team.name, logo_url: logos[team.abbr] ?? null }} size={size} />;
 }
 
+/** A side is ahead when both scores are published and it has more points. Used for weight only, never colour alone. */
+export function leader(g: Pick<GameRow, "home" | "away">): "home" | "away" | null {
+  const h = g.home.score, a = g.away.score;
+  if (h === null || a === null || h === undefined || a === undefined || h === a) return null;
+  return h > a ? "home" : "away";
+}
+
 /** Quarter-by-quarter line score (Q1..Q4, OT columns as needed, total). */
 export function LineScore({ g, className }: { g: Pick<GameRow, "home" | "away">; className?: string }) {
   const n = Math.max(4, g.home.linescores.length, g.away.linescores.length);
   const head = Array.from({ length: n }, (_, i) => (i < 4 ? `Q${i + 1}` : i === 4 ? "OT" : `${i - 3}OT`));
   const cell = (v: number | null | undefined) => (v === null || v === undefined ? <span className="text-faint">—</span> : v);
+  const lead = leader(g);
   return (
-    <table className={cn("num border-collapse text-xs", className)} data-testid="line-score">
+    <table className={cn("num border-collapse text-sm", className)} data-testid="line-score">
       <caption className="sr-only">Line score by period</caption>
       <thead>
-        <tr className="text-2xs uppercase text-muted">
-          <th scope="col" className="pr-3 text-left font-semibold">Team</th>
+        <tr className="!border-t-0 !bg-transparent">
+          <th scope="col" className="!pl-0 pr-4 text-left">Team</th>
           {head.map((h) => (
-            <th key={h} scope="col" className="w-8 text-right font-semibold">{h}</th>
+            <th key={h} scope="col" className="w-10 text-right">{h}</th>
           ))}
-          <th scope="col" className="w-10 text-right font-semibold">T</th>
+          <th scope="col" className="w-12 text-right">T</th>
         </tr>
       </thead>
       <tbody>
-        {([g.away, g.home] as const).map((t) => (
-          <tr key={t.abbr} className="text-soft">
-            <th scope="row" className="pr-3 text-left font-semibold text-ink">{t.abbr}</th>
+        {([["away", g.away], ["home", g.home]] as const).map(([side, t]) => (
+          <tr key={t.abbr} className="border-b border-line text-muted">
+            <th scope="row" className={cn("py-1.5 !pl-0 pr-4 text-left text-base", lead === side ? "font-extrabold text-ink" : "font-semibold text-muted")} style={{ fontStretch: "70%" }}>{t.abbr}</th>
             {head.map((h, i) => (
-              <td key={h} className="text-right">{cell(t.linescores[i])}</td>
+              <td key={h} className={cn("py-1.5 text-right", lead === side && "text-ink")}>{cell(t.linescores[i])}</td>
             ))}
-            <td className="text-right font-semibold text-ink">{cell(t.score)}</td>
+            <td className={cn("py-1.5 text-right", lead === side ? "font-extrabold text-ink" : "font-semibold")}>{cell(t.score)}</td>
           </tr>
         ))}
       </tbody>

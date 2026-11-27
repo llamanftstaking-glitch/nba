@@ -2,35 +2,53 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ---------- Design tokens (see docs/design/DESIGN-SYSTEM.md) ---------- */
+/* ---------- Courtside design tokens (see docs/design/DESIGN-SYSTEM.md) ----------
+   Light theme only. Triplets so Tailwind's /opacity modifiers work.
+   Token NAMES are kept from the previous system so every page re-themes at once:
+   bg = paper, bg-2 = sheet, card = paper (sections are unboxed), elevated = band. */
 :root {
-  color-scheme: dark;
-  --bg: 6 10 16; /* #060A10 page */
-  --bg-2: 10 17 25; /* #0A1119 sidebar, top bar */
-  --card: 13 23 32; /* #0D1720 cards */
-  --elevated: 18 31 43; /* #121F2B inner surfaces, hover */
-  --border: 34 49 62; /* #22313E the one border colour */
-  --text: 243 246 250; /* #F3F6FA */
-  --text-soft: 199 209 221; /* #C7D1DD long-form body text (derived) */
-  --text-2: 148 163 184; /* #94A3B8 secondary */
-  --text-3: 100 116 139; /* #64748B muted: placeholders, disabled, decorative only */
-  --accent: 0 229 160; /* #00E5A0 emerald, used sparingly */
-  --accent-dim: 6 40 31;
-  --teal: 0 191 166; /* #00BFA6 */
-  --warn: 245 185 66; /* #F5B942 */
-  --warn-dim: 51 39 11;
-  --error: 240 82 82; /* #F05252 */
-  --error-dim: 58 21 24;
-  --data: 125 196 240; /* #7DC4F0 neutral data hue: evidence meter, chart series (derived) */
-  --data-dim: 16 42 59;
-  --fs-body: 15px; /* primary content: 15px mobile, 14px desktop */
+  color-scheme: light;
+  --bg: 245 245 241; /* #F5F5F1 paper: page ground */
+  --bg-2: 255 255 255; /* #FFFFFF sheet: top bar, dialogs, inputs */
+  --card: 245 245 241; /* #F5F5F1 same as paper: a section has no box */
+  --elevated: 236 237 232; /* #ECEDE8 band: table head, selected row, inset field */
+  --border: 213 215 209; /* #D5D7D1 rule: hairlines */
+  --border-strong: 100 107 114; /* #646B72 control boundaries (5.40:1 on sheet) */
+  --rule-2: 180 184 177; /* #B4B8B1 heavier hairline under a table head */
+  --text: 18 22 26; /* #12161A ink */
+  --text-soft: 42 48 55; /* #2A3037 long-form body */
+  --text-2: 69 76 83; /* #454C53 secondary text (7.97:1 on paper) */
+  --text-3: 100 107 114; /* #646B72 tertiary text, never below 13px (4.94:1 on paper, 4.59:1 on band) */
+  --accent: 18 22 26; /* #12161A emphasis is ink: primary buttons, active states, links */
+  --accent-dim: 236 237 232;
+  --model: 232 71 28; /* #E8471C rim orange, graphics only: estimate ticks, the live dot */
+  --model-text: 181 51 11; /* #B5330B the same hue for text (5.58:1 on paper) */
+  --teal: 95 107 118; /* #5F6B76 second neutral series */
+  --warn: 138 82 0; /* #8A5200 caution text (5.9:1 on paper) */
+  --warn-dim: 244 234 213;
+  --error: 168 22 43; /* #A8162B failure text (7.3:1 on paper) */
+  --error-dim: 246 224 227;
+  --data: 31 78 121; /* #1F4E79 neutral data hue: evidence meter, single chart series */
+  --data-dim: 225 234 242;
+  --gutter: 16px;
+  --bar-h: 56px;
+  --chrome-h: 0px;
 }
 @media (min-width: 768px) {
   :root {
-    --fs-body: 14px;
+    --gutter: 24px;
+    --bar-h: 64px;
+  }
+}
+@media (min-width: 1100px) {
+  :root {
+    --gutter: 32px;
   }
 }
 
+html {
+  scroll-padding-top: 140px;
+}
 html,
 body {
   background: rgb(var(--bg));
@@ -38,36 +56,170 @@ body {
 }
 
 body {
-  font-size: var(--fs-body);
-  line-height: 1.45;
+  font-size: 1rem;
+  line-height: 1.5;
+  font-stretch: 100%;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   overflow-x: hidden;
-  /* one restrained brand wash behind the header; not repeated anywhere else */
-  background-image: radial-gradient(1200px 380px at 60% -180px, rgb(var(--teal) / 0.07), transparent 70%);
-  background-repeat: no-repeat;
 }
 
-/* Statistics use Inter with tabular figures; monospace is not used for ordinary numbers. */
-.num {
+/* Statistics use the text face with tabular figures; monospace is not used for ordinary numbers. */
+.num,
+table {
   font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum" 1, "cv11" 1;
 }
 
+/* One focus style for everything focusable, native form controls included. */
 :focus-visible {
-  outline: 2px solid rgb(var(--accent));
+  outline: 2px solid rgb(var(--text));
   outline-offset: 2px;
-}
-
-input:focus,
-select:focus {
-  outline: none;
+  border-radius: 2px;
 }
 
 select {
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a3b8'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2312161a'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 9px center;
+  background-position: right 10px center;
+}
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: rgb(var(--text));
+}
+
+/* ---------- box-score table treatment: every table inherits it ---------- */
+@layer base {
+  thead th {
+    font-size: 0.8125rem;
+    line-height: 1.2;
+    font-weight: 650;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgb(var(--text-2));
+    white-space: nowrap;
+  }
+  thead tr {
+    background: rgb(var(--elevated));
+    border-bottom: 1px solid rgb(var(--rule-2));
+  }
+  thead th {
+    padding-top: 9px;
+    padding-bottom: 9px;
+  }
+  thead th:first-child,
+  tbody > tr > :first-child {
+    padding-left: 8px;
+  }
+  thead th:last-child,
+  tbody > tr > :last-child {
+    padding-right: 8px;
+  }
+  th[aria-sort="ascending"],
+  th[aria-sort="descending"] {
+    color: rgb(var(--text));
+    font-weight: 800;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    text-wrap: balance;
+  }
+}
+
+@layer components {
+  /* type scale */
+  .h-page {
+    font-size: 1.875rem;
+    line-height: 1;
+    font-stretch: 70%;
+    font-weight: 750;
+    letter-spacing: -0.005em;
+  }
+  .h-section {
+    font-size: 1.375rem;
+    line-height: 1.2;
+    font-stretch: 80%;
+    font-weight: 700;
+  }
+  .h-sub {
+    font-size: 1.125rem;
+    line-height: 1.3;
+    font-stretch: 92%;
+    font-weight: 650;
+  }
+  @media (min-width: 768px) {
+    .h-page {
+      font-size: 2.5rem;
+    }
+    .h-section {
+      font-size: 1.5rem;
+    }
+  }
+  /* scoreboard label: table heads and the status slot only */
+  .slot {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8125rem;
+    line-height: 1.2;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+  }
+  .model {
+    color: rgb(var(--model-text));
+  }
+  .link {
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 4px;
+    text-decoration-color: rgb(var(--rule-2));
+  }
+  .link:hover {
+    text-decoration-color: rgb(var(--text));
+  }
+  /* a ruled block: what used to be a bordered card */
+  .blk {
+    border-top: 1px solid rgb(var(--border));
+  }
+  /* score numerals and team names: the condensed, heavy end of the family */
+  .score {
+    font-stretch: 62%;
+    font-weight: 800;
+    line-height: 0.9;
+    font-variant-numeric: tabular-nums;
+  }
+  .team-name {
+    font-stretch: 62%;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.005em;
+    line-height: 0.95;
+  }
+  .sticky-col {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: rgb(var(--bg));
+  }
+  thead .sticky-col {
+    background: rgb(var(--elevated));
+    z-index: 2;
+  }
+  @media (max-width: 767px) {
+    .sticky-col {
+      box-shadow: 1px 0 0 rgb(var(--rule-2));
+    }
+  }
+}
+
+/* The condensed width belongs to the display role. */
+.font-display {
+  font-stretch: 75%;
 }
 
 .no-scrollbar::-webkit-scrollbar {
@@ -77,6 +229,24 @@ select {
   scrollbar-width: none;
 }
 
+@keyframes live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+@keyframes loading-bar {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation: none !important;
@@ -84,8 +254,15 @@ select {
   }
 }
 
-.recharts-surface:focus,
-.recharts-wrapper:focus,
-.recharts-wrapper *:focus {
+/* Charts are not focus targets: their text alternative sits beside them. */
+.recharts-surface,
+.recharts-wrapper {
   outline: none;
+}
+
+@media (forced-colors: active) {
+  .blk,
+  thead tr {
+    border-color: CanvasText;
+  }
 }

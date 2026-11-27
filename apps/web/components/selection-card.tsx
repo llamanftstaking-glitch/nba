@@ -18,7 +18,7 @@ import { fmtAmerican, fmtDateTimeET, fmtInt, fmtLine, fmtNum, fmtPct, fmtSignedP
 function Cell({ label, children, className }: { label: string; children: ReactNode; className?: string }) {
   return (
     <div className={cn("min-w-0", className)}>
-      <dt className="text-2xs font-medium uppercase tracking-wide text-muted">{label}</dt>
+      <dt className="text-2xs font-medium text-muted">{label}</dt>
       <dd className="text-sm font-medium text-ink">{children}</dd>
     </div>
   );
@@ -27,8 +27,8 @@ function Cell({ label, children, className }: { label: string; children: ReactNo
 /** Descriptive history shown apart from the model numbers. These are past averages, not predictions. */
 export function HistoricalContext({ c, className, compact = false }: { c: SelectionContext; className?: string; compact?: boolean }) {
   return (
-    <div className={cn("rounded-md bg-raised/50 px-3 py-2", className)} data-testid="historical-context">
-      <div className="mb-1 text-2xs font-semibold uppercase tracking-wide text-muted">Historical context (descriptive)</div>
+    <div className={cn("border-l-2 border-line py-1 pl-3", className)} data-testid="historical-context">
+      <div className="mb-1 text-2xs font-semibold text-muted">Historical context (descriptive)</div>
       <dl className={cn("grid grid-cols-3 gap-x-3 gap-y-1.5", !compact && "sm:grid-cols-6")}>
         <Cell label="L5 avg">
           <Val v={fmtNum(c.l5)} />
@@ -63,16 +63,16 @@ export function HistoricalContext({ c, className, compact = false }: { c: Select
 export function EvidencePanel({ s }: { s: Selection }) {
   const { components, supporting, opposing } = s.evidence;
   return (
-    <div className="space-y-4 border-t border-line/50 p-4" data-testid="evidence-panel">
+    <div className="space-y-4 border-t border-line p-4" data-testid="evidence-panel">
       {s.invalidated && (
-        <p className="rounded-md bg-bad/10 px-3 py-2 text-sm text-bad ring-1 ring-inset ring-bad/40">Invalidated{s.invalidation_reason ? `: ${s.invalidation_reason}` : "."}</p>
+        <p className="border-l-4 border-bad pl-3 px-3 py-2 text-sm text-bad">Invalidated{s.invalidation_reason ? `: ${s.invalidation_reason}` : "."}</p>
       )}
       <div>
         <Label>Evidence components (quality, not probability)</Label>
         {components.length === 0 ? (
           <p className="text-sm text-muted">No evidence components were recorded for this selection.</p>
         ) : (
-          <ul className="divide-y divide-line/40 rounded-md bg-raised/40">
+          <ul className="divide-y divide-line rounded-md bg-raised/40">
             {components.map((c) => (
               <li key={c.name} className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-0.5 px-3 py-2 text-sm">
                 <span className="font-medium text-soft">{c.name}</span>
@@ -132,8 +132,8 @@ export function SelectionCard({
   const r = rank === undefined ? s.rank_in_game : rank;
   const price = fmtAmerican(s.price_american);
   return (
-    <article className={cn("min-w-0 rounded-lg bg-card ring-1 ring-inset", s.invalidated ? "ring-bad/40" : "ring-line/60")} data-testid="selection-card" data-selection-id={s.id}>
-      <div className="p-4">
+    <article className={cn("min-w-0 border-t-2", s.invalidated ? "border-bad" : "border-ink")} data-testid="selection-card" data-selection-id={s.id}>
+      <div className="py-4">
         <div className="flex flex-wrap items-start gap-x-3 gap-y-1.5">
           <span
             className="num inline-flex h-7 min-w-7 items-center justify-center rounded-md bg-raised px-1.5 text-xs font-semibold text-soft"
@@ -161,7 +161,7 @@ export function SelectionCard({
 
         <div className={cn("mt-3 grid gap-x-5 gap-y-3", !compact && "xl:grid-cols-[minmax(170px,0.9fr)_minmax(0,3fr)_minmax(150px,0.9fr)] xl:items-end")}>
           <div>
-            <div className="text-2xs font-medium uppercase tracking-wide text-muted">Model probability [interval]</div>
+            <div className="text-2xs font-medium text-muted">Model probability [interval]</div>
             <ProbabilityDisplay prob={s.prob} low={s.prob_low} high={s.prob_high} size="lg" />
           </div>
           <dl className={cn("grid grid-cols-3 gap-x-4 gap-y-2", compact ? "sm:grid-cols-3" : "sm:grid-cols-6")}>

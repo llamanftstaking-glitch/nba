@@ -89,7 +89,7 @@ export function MilestoneWatcher() {
   return (
     <ul className="fixed bottom-20 right-3 z-40 space-y-2 lg:bottom-12" aria-live="polite" data-testid="live-toasts">
       {toasts.map((t) => (
-        <li key={t.id} className="flex max-w-xs items-start gap-2 rounded-md bg-raised px-3 py-2 text-sm text-ink shadow-lg ring-1 ring-line" data-testid="live-toast">
+        <li key={t.id} className="flex max-w-xs items-start gap-2 rounded-md bg-bg2 px-3 py-2 text-sm text-ink shadow-lg ring-1 ring-line-strong" data-testid="live-toast">
           <span className="min-w-0 flex-1 break-words">{t.title}</span>
           <button type="button" aria-label="Dismiss" className="-m-2 p-2 text-muted hover:text-ink" onClick={() => setToasts((x) => x.filter((y) => y.id !== t.id))}>
             ×

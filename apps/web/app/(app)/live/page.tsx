@@ -1,12 +1,12 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, ChevronLeft, ChevronRight, Radio } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
-import { FollowButton, FreshnessMark, LineScore, Score, StatusChip, TeamMark } from "@/components/live/common";
-import { LiveNav } from "@/components/live/live-nav";
+import { StackedBoard } from "@/components/live/board";
+import { FollowButton, FreshnessMark, StatusChip } from "@/components/live/common";
 import { textLink } from "@/components/ui/button";
-import { PageHeader, SectionTitle } from "@/components/ui/panel";
+import { PageHeader } from "@/components/ui/panel";
 import { EmptyState, QueryView } from "@/components/ui/states";
 import { DLink, useSelectedDate } from "@/lib/date";
 import { fmtDate } from "@/lib/format";
@@ -22,7 +22,7 @@ function LeadersLine({ id }: { id: string }) {
     if (!x || !x.pts) return null;
     return (
       <span className="min-w-0 truncate">
-        <span className="font-semibold text-soft">{abbr}</span> {x.pts.name} <span className="num text-ink">{x.pts.value ?? "—"}</span> pts
+        <span className="font-bold text-ink">{abbr}</span> {x.pts.name} <span className="num font-bold text-ink">{x.pts.value ?? "—"}</span> points
       </span>
     );
   };
@@ -30,42 +30,34 @@ function LeadersLine({ id }: { id: string }) {
   const h = one(c.home.abbr, l.home);
   if (!a && !h) return null;
   return (
-    <div className="flex flex-col gap-0.5 text-xs text-muted" data-testid="live-leaders">
+    <div className="flex flex-col gap-0.5 text-sm text-soft" data-testid="live-leaders">
       {a}
       {h}
     </div>
   );
 }
 
+/** One game as a scoreboard row: status and place, the stacked line score, then what the source says about it. */
 function GameCard({ g }: { g: GameRow }) {
   const started = g.status !== "scheduled" && g.home.score !== null;
   return (
-    <article className="flex flex-col gap-3 rounded-lg bg-card p-4 ring-1 ring-inset ring-line/60" data-testid="live-card" data-game-id={g.game_id} data-status={g.status}>
-      <div className="flex items-center justify-between gap-2">
-        <StatusChip g={g} className="text-sm" />
-        <span className="flex items-center gap-2">
+    <article className="grid gap-x-8 gap-y-2 border-b border-line py-4 md:grid-cols-[minmax(0,13rem)_minmax(0,1fr)] xl:grid-cols-[13rem_minmax(0,34rem)_minmax(0,1fr)]" data-testid="live-card" data-game-id={g.game_id} data-status={g.status}>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 md:block md:space-y-1">
+        <StatusChip g={g} />
+        <div className="md:min-h-[20px]">
           <FreshnessMark f={g} />
-          <FollowButton kind="game" refId={g.game_id} followed={g.followed} label={g.label} compact />
-        </span>
+        </div>
+        <p className="hidden truncate text-sm text-faint md:block">{g.venue ?? "Venue not available"}</p>
       </div>
-      <div className="space-y-1.5">
-        {([g.away, g.home] as const).map((t) => (
-          <div key={t.abbr} className="flex items-center gap-3">
-            <TeamMark team={t} size={32} />
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-base font-semibold text-ink">{t.name}</span>
-            </span>
-            <Score v={t.score} className="text-[34px] leading-8" />
-          </div>
-        ))}
-      </div>
-      {started && <LineScore g={g} className="w-full" />}
-      {started && <LeadersLine id={g.game_id} />}
-      <div className="mt-auto flex items-center justify-between gap-2 border-t border-line/50 pt-2 text-xs text-muted">
-        <span className="min-w-0 truncate">{g.venue ?? "Venue not available"}</span>
-        <DLink href={`/games/${encodeURIComponent(g.game_id)}?tab=live`} className={textLink} data-testid="live-open">
-          Game centre <ArrowRight className="h-3 w-3" aria-hidden />
-        </DLink>
+      <StackedBoard g={g} size="row" />
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 md:col-span-2 xl:col-span-1 xl:border-l xl:border-line xl:pl-8">
+        <div className="min-w-0 space-y-1">
+          {started && <LeadersLine id={g.game_id} />}
+          <DLink href={`/games/${encodeURIComponent(g.game_id)}?tab=live`} className={textLink} data-testid="live-open">
+            Game centre
+          </DLink>
+        </div>
+        <FollowButton kind="game" refId={g.game_id} followed={g.followed} label={g.label} compact />
       </div>
     </article>
   );
@@ -75,12 +67,15 @@ function Section({ title, games, testId }: { title: string; games: GameRow[]; te
   if (games.length === 0) return null;
   return (
     <section data-testid={testId}>
-      <SectionTitle right={<span className="num">{games.length}</span>}>{title}</SectionTitle>
-      <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
-        {games.map((g) => (
-          <GameCard key={g.game_id} g={g} />
-        ))}
+      <div className="flex items-baseline justify-between border-b-2 border-ink pb-2">
+        <h2 className="h-section">{title}</h2>
+        <span className="num text-sm text-muted">
+          {games.length} game{games.length === 1 ? "" : "s"}
+        </span>
       </div>
+      {games.map((g) => (
+        <GameCard key={g.game_id} g={g} />
+      ))}
     </section>
   );
 }
@@ -92,12 +87,12 @@ export default function LivePage() {
   useEffect(() => setDay(selected), [selected]);
   const q = useScoreboard(day);
   const d = q.data;
-  const btn = "inline-flex h-11 items-center gap-1 rounded-md bg-raised px-3 text-sm font-medium text-ink ring-1 ring-inset ring-line hover:bg-line/70 md:h-9";
+  const btn = "inline-flex h-11 items-center gap-1 whitespace-nowrap rounded border border-line-strong bg-bg2 px-3 text-sm font-semibold text-ink hover:border-ink disabled:border-line disabled:text-faint md:h-10";
   return (
-    <div className="space-y-5">
+    <div className="space-y-9">
       <PageHeader
         title="Live Games"
-        sub={d ? `${fmtDate(d.date, { weekday: true, year: true }) ?? d.date}${d.date === d.today ? " · today" : ""} · ${d.live_count} in progress` : "Scores observed by the platform"}
+        sub={d ? `${fmtDate(d.date, { weekday: true, year: true }) ?? d.date}${d.date === d.today ? ", today" : ""}. ${d.live_count} in progress.` : "Scores observed by the platform"}
         right={
           d ? (
             <div className="flex items-center gap-1.5" role="group" aria-label="Day">
@@ -114,12 +109,11 @@ export default function LivePage() {
           ) : undefined
         }
       />
-      <LiveNav />
       <QueryView query={q} rows={6}>
         {(sb) => {
           if (sb.games.length === 0) {
             return (
-              <EmptyState title={`No games on ${fmtDate(sb.date, { weekday: true, year: true }) ?? sb.date}.`} icon={Radio}>
+              <EmptyState title={`No games on ${fmtDate(sb.date, { weekday: true, year: true }) ?? sb.date}.`}>
                 The schedule has no games for this date. Use the day buttons to move to another date.
               </EmptyState>
             );
@@ -132,9 +126,9 @@ export default function LivePage() {
           const other = rest.filter((g) => !isInProgress(g.status) && g.status !== "scheduled" && g.status !== "final");
           const noneStarted = sb.games.every((g) => g.status === "scheduled");
           return (
-            <div className="space-y-6">
+            <div className="space-y-10">
               {noneStarted && (
-                <p className="rounded-md bg-raised/50 px-3 py-2 text-sm text-soft" data-testid="live-not-started">
+                <p className="text-base text-soft" data-testid="live-not-started">
                   Games on this date have not started. Scores, box scores and plays appear after tipoff.
                 </p>
               )}
@@ -143,7 +137,7 @@ export default function LivePage() {
               <Section title="Upcoming" games={upcoming} testId="live-upcoming" />
               <Section title="Delayed, postponed or suspended" games={other} testId="live-other" />
               <Section title="Final" games={finals} testId="live-final" />
-              <p className="text-xs text-muted" data-testid="poll-note">{sb.poll_note}</p>
+              <p className="max-w-[76ch] text-sm text-faint" data-testid="poll-note">{sb.poll_note}</p>
             </div>
           );
         }}

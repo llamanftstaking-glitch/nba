@@ -64,7 +64,7 @@ function ModelReady({ p }: { p: Prop }) {
 function Avg({ label, v }: { label: string; v: number | null }) {
   return (
     <span className="flex flex-col">
-      <span className="text-2xs font-medium uppercase text-muted">{label}</span>
+      <span className="text-2xs font-medium text-muted">{label}</span>
       <span className="num text-sm text-ink">
         <Val v={fmtNum(v)} />
       </span>
@@ -118,7 +118,7 @@ export function PropRow({ p, onOpen, showPlayer = true }: { p: Prop; onOpen?: (p
 export function PropCard({ p, onOpen }: { p: Prop; onOpen: (p: Prop) => void }) {
   const [open, setOpen] = useState(false);
   return (
-    <article className="rounded-lg bg-card ring-1 ring-inset ring-line/60" data-testid="prop-card" data-prop={propKey(p)}>
+    <article className="blk" data-testid="prop-card" data-prop={propKey(p)}>
       <button type="button" aria-expanded={open} onClick={() => setOpen((v) => !v)} className="flex min-h-[44px] w-full items-center gap-3 p-3 text-left" data-testid="prop-card-toggle">
         <PlayerAvatar name={p.player_name} src={p.headshot_url} size={40} />
         <span className="min-w-0 flex-1">
@@ -136,7 +136,7 @@ export function PropCard({ p, onOpen }: { p: Prop; onOpen: (p: Prop) => void }) 
         {open ? <ChevronUp className="h-4 w-4 shrink-0 text-faint" aria-hidden /> : <ChevronDown className="h-4 w-4 shrink-0 text-faint" aria-hidden />}
       </button>
       {open && (
-        <div className="space-y-3 border-t border-line/50 p-3">
+        <div className="space-y-3 border-t border-line p-3">
           <div className="grid grid-cols-4 gap-2">
             <Avg label="L5" v={p.l5} />
             <Avg label="L10" v={p.l10} />
@@ -145,29 +145,29 @@ export function PropCard({ p, onOpen }: { p: Prop; onOpen: (p: Prop) => void }) 
           </div>
           <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
             <div>
-              <dt className="text-2xs font-medium uppercase text-muted">History vs line (descriptive)</dt>
+              <dt className="text-2xs font-medium text-muted">History vs line (descriptive)</dt>
               <dd><HistFrequency p={p} /></dd>
             </div>
             <div>
-              <dt className="text-2xs font-medium uppercase text-muted">Projection [p10–p90]</dt>
+              <dt className="text-2xs font-medium text-muted">Projection [p10–p90]</dt>
               <dd><Projection p={p} /></dd>
             </div>
             <div>
-              <dt className="text-2xs font-medium uppercase text-muted">Proj. minutes</dt>
+              <dt className="text-2xs font-medium text-muted">Proj. minutes</dt>
               <dd className="num text-ink"><Val v={fmtNum(p.proj_min, 0)} /></dd>
             </div>
             <div>
-              <dt className="text-2xs font-medium uppercase text-muted">Availability</dt>
+              <dt className="text-2xs font-medium text-muted">Availability</dt>
               <dd><AvailabilityStatus value={p.availability} /></dd>
             </div>
             <div>
-              <dt className="text-2xs font-medium uppercase text-muted">Lineup</dt>
+              <dt className="text-2xs font-medium text-muted">Lineup</dt>
               <dd className="text-ink">
                 {p.lineup_role ? titleCase(p.lineup_role) : "—"} · <LineupStatusLabel status={p.lineup_status} short />
               </dd>
             </div>
             <div>
-              <dt className="text-2xs font-medium uppercase text-muted">Model</dt>
+              <dt className="text-2xs font-medium text-muted">Model</dt>
               <dd><ModelReady p={p} /></dd>
             </div>
           </dl>
@@ -186,7 +186,7 @@ export function PropCard({ p, onOpen }: { p: Prop; onOpen: (p: Prop) => void }) 
   );
 }
 
-const TH = "px-2 pb-2 text-2xs font-semibold uppercase tracking-wide text-muted";
+const TH = "px-2 pb-2 text-2xs font-semibold text-muted";
 
 /** Player-prop market table (xl and up) with PropCards below that width. Row click opens the research drawer. */
 export function MarketTable({ rows, onOpen, caption }: { rows: Prop[]; onOpen: (p: Prop) => void; caption: string }) {
@@ -213,31 +213,33 @@ export function MarketTable({ rows, onOpen, caption }: { rows: Prop[]; onOpen: (
             {rows.map((p) => (
               <tr
                 key={propKey(p)}
-                tabIndex={0}
-                role="button"
-                aria-label={`Open research for ${p.player_name} ${propMarketName(p.market)}`}
                 onClick={() => onOpen(p)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    onOpen(p);
-                  }
-                }}
-                className="cursor-pointer border-b border-line/40 align-middle last:border-0 hover:bg-raised/40"
+                className="cursor-pointer border-b border-line align-middle last:border-0 hover:bg-raised/40"
                 data-testid="market-row"
                 data-prop={propKey(p)}
               >
-                <td className="px-2 py-2">
+                <th scope="row" className="sticky-col px-2 py-2 text-left font-normal">
                   <span className="flex items-center gap-2.5">
                     <PlayerAvatar name={p.player_name} src={p.headshot_url} size={32} />
                     <span className="min-w-0">
-                      <span className="block text-sm font-semibold leading-5 text-ink">{p.player_name}</span>
-                      <span className="block text-xs text-muted">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onOpen(p);
+                        }}
+                        aria-label={`Open research for ${p.player_name} ${propMarketName(p.market)}`}
+                        className="block text-left text-base font-semibold leading-snug text-ink hover:underline"
+                        data-testid="market-row-open"
+                      >
+                        {p.player_name}
+                      </button>
+                      <span className="block text-sm text-faint">
                         {p.team_abbr} vs {p.opp_abbr}
                       </span>
                     </span>
                   </span>
-                </td>
+                </th>
                 <td className="px-2 py-2">
                   <span className="text-sm text-soft">{propMarketName(p.market)}</span>{" "}
                   <span className="num text-sm font-semibold text-ink">
@@ -327,17 +329,17 @@ export function PropDrawer({ p, onClose, onAddManual }: { p: Prop | null; onClos
           </div>
 
           <Block title="Today's market">
-            <div className="grid grid-cols-2 gap-3 rounded-md bg-raised/50 p-3 sm:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3 border-l-2 border-line py-1 pl-3 sm:grid-cols-3">
               <div>
-                <div className="text-2xs font-medium uppercase text-muted">Line</div>
+                <div className="text-2xs font-medium text-muted">Line</div>
                 <div className="num text-lg font-semibold text-ink"><Val v={fmtLine(p.line)} /></div>
               </div>
               <div>
-                <div className="text-2xs font-medium uppercase text-muted">Over / under</div>
+                <div className="text-2xs font-medium text-muted">Over / under</div>
                 <Prices p={p} />
               </div>
               <div className="col-span-2 sm:col-span-1">
-                <div className="text-2xs font-medium uppercase text-muted">Source</div>
+                <div className="text-2xs font-medium text-muted">Source</div>
                 <div className="text-sm text-ink">{p.book ?? "—"}</div>
                 <OriginTag origin={p.origin} />
               </div>
@@ -349,17 +351,17 @@ export function PropDrawer({ p, onClose, onAddManual }: { p: Prop | null; onClos
           </Block>
 
           <Block title="Model projection">
-            <div className="grid grid-cols-3 gap-3 rounded-md bg-raised/50 p-3">
+            <div className="grid grid-cols-3 gap-3 border-l-2 border-line py-1 pl-3">
               <div>
-                <div className="text-2xs font-medium uppercase text-muted">Projection [p10–p90]</div>
+                <div className="text-2xs font-medium text-muted">Projection [p10–p90]</div>
                 <Projection p={p} />
               </div>
               <div>
-                <div className="text-2xs font-medium uppercase text-muted">Proj. minutes</div>
+                <div className="text-2xs font-medium text-muted">Proj. minutes</div>
                 <div className="num text-sm text-ink"><Val v={fmtNum(p.proj_min, 0)} /></div>
               </div>
               <div>
-                <div className="text-2xs font-medium uppercase text-muted">Model</div>
+                <div className="text-2xs font-medium text-muted">Model</div>
                 <ModelReady p={p} />
                 <div className="text-xs text-muted">{titleCase(p.model_status)}</div>
               </div>
@@ -368,18 +370,18 @@ export function PropDrawer({ p, onClose, onAddManual }: { p: Prop | null; onClos
 
           <Block title="Research selection">
             {p.selection ? (
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-md bg-raised/50 p-3">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-l-2 border-line py-1 pl-3">
                 <div>
                   <div className="text-sm font-medium capitalize text-ink">{p.selection.side}</div>
                   <ClassificationBadge value={p.selection.classification} />
                 </div>
                 <div className="text-right">
-                  <div className="text-2xs font-medium uppercase text-muted">Model probability [interval]</div>
+                  <div className="text-2xs font-medium text-muted">Model probability [interval]</div>
                   <ProbabilityDisplay prob={p.selection.prob} low={p.selection.prob_low} high={p.selection.prob_high} />
                 </div>
               </div>
             ) : (
-              <p className="rounded-md bg-raised/40 px-3 py-2.5 text-sm text-muted">No research selection was evaluated for this market.</p>
+              <p className="border-l-2 border-line py-1 pl-3 text-sm text-muted">No research selection was evaluated for this market.</p>
             )}
           </Block>
 
@@ -462,11 +464,11 @@ export function ManualEntryForm({ markets, prefill, date, onDone }: { markets: P
 
   return (
     <form onSubmit={submit} className="space-y-4" data-testid="manual-form">
-      <p className="rounded-md bg-warn/10 px-3 py-2 text-sm text-soft ring-1 ring-inset ring-warn/30">
+      <p className="border-l-4 border-warn pl-3 px-3 py-2 text-sm text-soft">
         Owner-entered and hypothetical entries are <span className="font-semibold text-warn">not independently verified quotes</span>. They are stored with their origin and shown with that label everywhere they appear.
       </p>
       <fieldset>
-        <legend className="mb-1 text-2xs font-semibold uppercase tracking-wide text-muted">Origin</legend>
+        <legend className="mb-1 text-2xs font-semibold text-muted">Origin</legend>
         <div className="grid gap-2 sm:grid-cols-2">
           {(
             [
@@ -475,7 +477,7 @@ export function ManualEntryForm({ markets, prefill, date, onDone }: { markets: P
             ] as const
           ).map(([value, label, help]) => (
             <label key={value} className={cn("flex min-h-[44px] cursor-pointer items-start gap-2.5 rounded-md px-3 py-2 ring-1 ring-inset", origin === value ? "bg-accent/10 ring-accent/50" : "bg-raised/50 ring-line")}>
-              <input type="radio" name="origin" value={value} checked={origin === value} onChange={() => setOrigin(value)} className="mt-1 accent-[rgb(0,229,160)]" />
+              <input type="radio" name="origin" value={value} checked={origin === value} onChange={() => setOrigin(value)} className="mt-1 accent-ink" />
               <span>
                 <span className="block text-sm font-semibold text-ink">{label}</span>
                 <span className="block text-xs text-muted">{help}</span>
@@ -546,7 +548,7 @@ export function ManualEntryForm({ markets, prefill, date, onDone }: { markets: P
         </Field>
       </div>
       {(localError || apiError) && (
-        <p role="alert" className="rounded-md bg-bad/10 px-3 py-2 text-sm text-bad ring-1 ring-inset ring-bad/40">
+        <p role="alert" className="border-l-4 border-bad pl-3 px-3 py-2 text-sm text-bad">
           {localError ?? apiError}
         </p>
       )}
@@ -575,7 +577,7 @@ export function ManualEntries({ items }: { items: ManualEntry[] }) {
   });
   if (items.length === 0) return <EmptyState title="No manual market entries for this date." />;
   return (
-    <ul className="divide-y divide-line/40" data-testid="manual-entries">
+    <ul className="divide-y divide-line" data-testid="manual-entries">
       {items.map((e) => (
         <li key={e.id} className="flex flex-wrap items-center justify-between gap-3 py-2.5" data-testid="manual-entry" data-withdrawn={e.withdrawn ? "1" : "0"}>
           <div className="min-w-0">

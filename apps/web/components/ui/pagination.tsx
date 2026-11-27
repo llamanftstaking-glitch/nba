@@ -17,7 +17,7 @@ export function Pagination({
   const from = offset + 1;
   const to = Math.min(offset + limit, total);
   return (
-    <nav className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted" aria-label="Pagination">
+    <nav className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm text-muted" aria-label="Pagination">
       <span className="num">
         {from}–{to} of {total}
       </span>

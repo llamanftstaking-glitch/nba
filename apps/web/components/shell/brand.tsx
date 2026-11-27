@@ -1,17 +1,11 @@
-import { SlashMark } from "@/components/ui/panel";
 import { cn } from "@/lib/cn";
 
-/** GIZER NBA wordmark: double-slash emerald mark, italic condensed wordmark, product caption. Pure SVG/CSS. */
-export function Brand({ compact = false, className }: { compact?: boolean; className?: string }) {
+/** GIZER NBA wordmark: the condensed black weight for the name, the regular weight for the league. Type only. */
+export function Brand({ className }: { compact?: boolean; className?: string }) {
   return (
-    <span className={cn("inline-flex items-center gap-2", className)} aria-label="GIZER NBA — Parlay Command Center">
-      <SlashMark className={compact ? "h-5 w-6" : "h-7 w-8"} />
-      <span className={cn("flex-col leading-none", compact ? "hidden min-[480px]:flex" : "flex")}>
-        <span className={cn("font-display font-bold uppercase italic tracking-wide text-ink", compact ? "text-xl" : "text-[26px]")}>
-          GIZER <span className="text-accent">NBA</span>
-        </span>
-        {!compact && <span className="mt-0.5 whitespace-nowrap text-[11px] font-medium uppercase tracking-[0.06em] text-muted">Parlay Command Center</span>}
-      </span>
+    <span className={cn("inline-flex min-h-[44px] items-center gap-1.5 whitespace-nowrap text-[1.375rem] leading-none md:text-2xl", className)} style={{ fontStretch: "62%" }} aria-label="GIZER NBA, home">
+      <span className="font-black tracking-[0.01em]">GIZER</span>
+      <span className="font-normal">NBA</span>
     </span>
   );
 }

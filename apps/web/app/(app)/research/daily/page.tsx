@@ -83,7 +83,7 @@ function DiffList({ rows: allRows, empty }: { rows: DiffRow[]; empty: string }) 
   const rows = all ? allRows : allRows.slice(0, 12);
   return (
     <>
-    <ul className="divide-y divide-line/40">
+    <ul className="divide-y divide-line">
       {rows.map((r, i) => (
         <li key={i} className="grid grid-cols-[auto_1fr] gap-x-2 py-1.5 text-xs">
           <Badge tone={r.kind === "added" ? "info" : r.kind === "removed" ? "bad" : "warn"}>{r.kind}</Badge>
@@ -95,7 +95,7 @@ function DiffList({ rows: allRows, empty }: { rows: DiffRow[]; empty: string }) 
       ))}
     </ul>
       {allRows.length > 12 && (
-        <button type="button" className="mt-1 inline-flex min-h-[44px] items-center text-xs font-medium text-accent hover:underline md:min-h-0" aria-expanded={all} onClick={() => setAll((v) => !v)}>
+        <button type="button" className="mt-1 inline-flex min-h-[44px] items-center text-xs font-medium link md:min-h-0" aria-expanded={all} onClick={() => setAll((v) => !v)}>
           {all ? "Show fewer" : `Show all ${allRows.length} differences`}
         </button>
       )}
@@ -117,13 +117,13 @@ function Diff({ fromId, toId }: { fromId: number; toId: number }) {
       <p className="mb-2 text-xs text-muted" data-testid="edition-diff-note">
         Compared on the bounded edition data: qualified and watchlist selections (up to 150 per edition) and all combinations. Rejected and insufficient selections are not part of this comparison.
       </p>
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-x-12 gap-y-9 lg:grid-cols-2">
       <div>
-        <h3 className="mb-1 text-2xs font-semibold uppercase tracking-wide text-muted">Selections · {diff.selections.length} difference(s)</h3>
+        <h3 className="mb-1 text-2xs font-semibold text-muted">Selections · {diff.selections.length} difference(s)</h3>
         <DiffList rows={diff.selections} empty="No selection differences between these editions." />
       </div>
       <div>
-        <h3 className="mb-1 text-2xs font-semibold uppercase tracking-wide text-muted">Combinations · {diff.combos.length} difference(s)</h3>
+        <h3 className="mb-1 text-2xs font-semibold text-muted">Combinations · {diff.combos.length} difference(s)</h3>
         <DiffList rows={diff.combos} empty="No combination differences between these editions." />
       </div>
       </div>
@@ -139,13 +139,13 @@ function ChangeList({ changes, limit = 5 }: { changes: { type: string; text: str
       <ul className="space-y-0.5 text-sm" data-testid="edition-changes">
         {shown.map((c, i) => (
           <li key={i} className="flex gap-2">
-            <span className="shrink-0 text-2xs font-semibold uppercase leading-5 text-warn">{titleCase(c.type)}</span>
+            <span className="shrink-0 text-2xs font-semibold leading-5 text-warn">{titleCase(c.type)}</span>
             <span className="min-w-0 break-words text-soft">{c.text}</span>
           </li>
         ))}
       </ul>
       {changes.length > limit && (
-        <button type="button" className="mt-1 inline-flex min-h-[44px] items-center text-xs font-medium text-accent hover:underline md:min-h-0" aria-expanded={all} onClick={() => setAll((v) => !v)}>
+        <button type="button" className="mt-1 inline-flex min-h-[44px] items-center text-xs font-medium link md:min-h-0" aria-expanded={all} onClick={() => setAll((v) => !v)}>
           {all ? "Show fewer changes" : `Show all ${changes.length} changes`}
         </button>
       )}
@@ -185,13 +185,13 @@ function FullEdition({ id }: { id: number }) {
               <Label>Selections by classification</Label>
               <ul className="flex flex-wrap gap-2" data-testid="edition-class-counts">
                 {CLASS_ORDER.filter((c) => counts[c] !== undefined).map((c) => (
-                  <li key={c} className="rounded-md bg-raised/50 px-3 py-1.5">
-                    <div className="text-2xs font-medium uppercase tracking-wide text-muted">{classLabel(c)}</div>
+                  <li key={c} className="border-l-2 border-line py-1 pl-3">
+                    <div className="text-2xs font-medium text-muted">{classLabel(c)}</div>
                     <div className="num text-base font-semibold text-ink">{(counts[c] ?? 0).toLocaleString("en-US")}</div>
                   </li>
                 ))}
-                <li className="rounded-md bg-raised/50 px-3 py-1.5">
-                  <div className="text-2xs font-medium uppercase tracking-wide text-muted">Combinations</div>
+                <li className="border-l-2 border-line py-1 pl-3">
+                  <div className="text-2xs font-medium text-muted">Combinations</div>
                   <div className="num text-base font-semibold text-ink">{e.combos.length}</div>
                 </li>
               </ul>
@@ -249,7 +249,7 @@ function FullEdition({ id }: { id: number }) {
                 <p className="text-sm text-muted">Nothing was rejected in this edition.</p>
               ) : (
                 <>
-                  <ul className="divide-y divide-line/30">
+                  <ul className="divide-y divide-line">
                     {rejected.slice(rejOffset, rejOffset + REJECTED_PAGE).map((r, i) => (
                       <li key={`${rejOffset}-${i}`} className="grid gap-x-4 py-1.5 text-sm md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]" data-testid="edition-rejected-row">
                         <span className="break-words font-medium text-ink">{r.label}</span>
@@ -303,7 +303,7 @@ function Editions({ items }: { items: EditionListItem[] }) {
   }, [previous.id, latest.id]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-9">
       <Panel title="Editions for this date" right={<span className="num">{sorted.length}</span>}>
         <ul className="space-y-2">
           {[...sorted].reverse().map((e) => (
@@ -323,11 +323,11 @@ function Editions({ items }: { items: EditionListItem[] }) {
                 <Counts counts={e.counts} />
               </div>
               {e.changes.length > 0 ? (
-                <div className="mt-2 border-t border-line/50 pt-2">
+                <div className="mt-2 border-t border-line pt-2">
                   <ChangeList changes={e.changes} limit={e.id === latest.id ? 5 : 2} />
                 </div>
               ) : (
-                <p className="mt-2 border-t border-line/50 pt-2 text-xs text-muted">No changes recorded against the previous edition.</p>
+                <p className="mt-2 border-t border-line pt-2 text-xs text-muted">No changes recorded against the previous edition.</p>
               )}
             </li>
           ))}

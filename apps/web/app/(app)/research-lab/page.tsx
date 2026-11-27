@@ -28,7 +28,7 @@ function PairTable({ rows }: { rows: Pair[] }) {
     <>
       <DataTable columns={PAIR_COLUMNS} rows={all ? sorted : sorted.slice(0, 15)} rowKey={(_, i) => i} caption="Correlation pairs" dense mobileLimit={6} />
       {rows.length > 15 && (
-        <button type="button" className="mt-2 inline-flex min-h-[44px] items-center text-sm font-medium text-accent hover:underline md:min-h-0" aria-expanded={all} onClick={() => setAll((v) => !v)}>
+        <button type="button" className="mt-2 inline-flex min-h-[44px] items-center text-sm font-medium link md:min-h-0" aria-expanded={all} onClick={() => setAll((v) => !v)}>
           {all ? "Show the 15 strongest" : `Show all ${rows.length} pairs`}
         </button>
       )}
@@ -39,7 +39,7 @@ function PairTable({ rows }: { rows: Pair[] }) {
 
 function FindingCard({ f }: { f: Finding }) {
   return (
-    <article className="rounded-md bg-raised/40 p-3">
+    <article className="border-l-2 border-line py-1 pl-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <h3 className="min-w-0 flex-1 break-words text-sm font-medium text-ink">{f.hypothesis}</h3>
         <StatusBadge value={f.status} />
@@ -49,11 +49,11 @@ function FindingCard({ f }: { f: Finding }) {
       </p>
       <div className="mt-2 grid gap-4 md:grid-cols-2">
         <div>
-          <h4 className="mb-1 text-2xs font-semibold uppercase tracking-wide text-muted">Supporting</h4>
+          <h4 className="mb-1 text-2xs font-semibold text-muted">Supporting</h4>
           {f.supporting.length ? <BulletList items={f.supporting} tone="accent" /> : <p className="text-xs text-muted">None recorded.</p>}
         </div>
         <div>
-          <h4 className="mb-1 text-2xs font-semibold uppercase tracking-wide text-muted">Contradicting</h4>
+          <h4 className="mb-1 text-2xs font-semibold text-muted">Contradicting</h4>
           {f.contradicting.length ? <BulletList items={f.contradicting} tone="warn" /> : <p className="text-xs text-muted">None recorded.</p>}
         </div>
       </div>
@@ -66,7 +66,7 @@ function FindingCard({ f }: { f: Finding }) {
           ] as const
         ).map(([label, v]) => (
           <div key={label}>
-            <dt className="text-2xs uppercase tracking-wide text-muted">{label}</dt>
+            <dt className="text-2xs text-muted">{label}</dt>
             <dd className="break-words text-soft">{v ?? <Val v={null} />}</dd>
           </div>
         ))}
@@ -82,7 +82,7 @@ export default function ResearchLabPage() {
       <PageHeader title="Research Lab" sub="Hypotheses, experiments and correlation estimates. Findings are provisional until an experiment supports them." />
       <QueryView query={q} rows={6}>
         {(d) => (
-          <div className="space-y-4">
+          <div className="space-y-9">
             <Panel title="Findings" right={<span className="num">{d.findings.length}</span>} bodyClassName="space-y-2 p-3">
               {d.findings.length === 0 ? <EmptyState title="No research findings have been recorded.">Findings are written by the research agents when a hypothesis is opened or tested; none has been filed yet. Experiments and correlation estimates are listed below.</EmptyState> : d.findings.map((f) => <FindingCard key={f.finding_uid} f={f} />)}
             </Panel>

@@ -1,6 +1,5 @@
 "use client";
 
-import { ArrowRight, MapPin } from "lucide-react";
 import type { GameCard as Game, GameEnvironment, Selection, TeamRef } from "@/lib/types";
 import { ClassificationBadge, StatusBadge } from "@/components/classification-badge";
 import { ProbabilityDisplay } from "@/components/prob";
@@ -11,6 +10,7 @@ import { NA, Val } from "@/components/ui/na";
 import { Metric } from "@/components/ui/panel";
 import { DLink } from "@/lib/date";
 import { cn } from "@/lib/cn";
+import { teamColor } from "@/lib/team-colors";
 import { fmtAmerican, fmtNum, fmtSigned, fmtTimeET } from "@/lib/format";
 
 /** research_completeness.score is 0–100 (API contract). */
@@ -28,14 +28,14 @@ export function MatchupHeader({ game, size = 36, className }: { game: MatchupGam
       <div className="flex min-w-0 items-center gap-2.5">
         <TeamLogo team={game.away} size={size} />
         <div className="min-w-0">
-          <div className="flex flex-wrap items-baseline gap-x-1.5 font-display text-[22px] font-semibold uppercase leading-6 tracking-wide text-ink">
+          <div className="team-name flex flex-wrap items-baseline gap-x-2 text-[1.75rem] text-ink">
             <span>{game.away.abbr}</span>
             {showScore && <span className="num">{game.away_points}</span>}
-            <span className="text-faint">@</span>
+            <span className="font-normal text-faint">@</span>
             <span>{game.home.abbr}</span>
             {showScore && <span className="num">{game.home_points}</span>}
           </div>
-          <div className="break-words text-xs leading-4 text-muted">
+          <div className="mt-1 break-words text-sm text-muted">
             {game.away.name} at {game.home.name}
           </div>
         </div>
@@ -52,7 +52,7 @@ export function MatchupHeader({ game, size = 36, className }: { game: MatchupGam
 }
 
 export function EnvironmentSummary({ env, home, away }: { env: GameEnvironment | null; home: string; away: string }) {
-  if (!env) return <p className="rounded-md bg-raised/40 px-3 py-2 text-sm text-muted">Game environment projection not available.</p>;
+  if (!env) return <p className="text-sm text-muted">Game environment projection not available.</p>;
   return (
     <dl className="grid grid-cols-3 gap-x-4 gap-y-2">
       <Metric label="Proj. pace">
@@ -77,113 +77,142 @@ export function EnvironmentSummary({ env, home, away }: { env: GameEnvironment |
 
 function PickRow({ s }: { s: Selection }) {
   return (
-    <li className="flex items-start gap-2.5 py-2" data-testid="pick-row">
-      <span className="num mt-0.5 inline-flex h-6 min-w-6 items-center justify-center rounded bg-raised px-1 text-xs font-semibold text-soft">
-        {s.rank_in_game === null ? "—" : `#${s.rank_in_game}`}
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-          <span className="break-words text-sm font-semibold text-ink">{s.market_label}</span>
+    <li className="grid grid-cols-[5.5rem_minmax(0,1fr)] items-start gap-x-4 border-b border-line py-2" data-testid="pick-row">
+      <ProbabilityDisplay prob={s.prob} low={s.prob_low} high={s.prob_high} stack size="lg" />
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
+          <span className="break-words text-base font-semibold text-ink">{s.market_label}</span>
           <ClassificationBadge value={s.classification} invalidated={s.invalidated} />
         </div>
-        <div className="num text-xs text-muted">
-          {s.book ?? "No book"} <Val v={fmtAmerican(s.price_american)} /> · Evidence {s.evidence_score === null ? <NA /> : <span className="text-info">{s.evidence_score}/100</span>}
+        <div className="num text-sm text-muted">
+          {s.rank_in_game === null ? "" : `Rank ${s.rank_in_game} in this game. `}
+          {s.book ?? "No book"} <Val v={fmtAmerican(s.price_american)} />, evidence {s.evidence_score === null ? <NA /> : <span className="text-ink">{s.evidence_score}/100</span>}
         </div>
       </div>
-      <ProbabilityDisplay prob={s.prob} low={s.prob_low} high={s.prob_high} stack className="shrink-0 items-end text-right" />
     </li>
   );
 }
 
+/**
+ * One game as a ruled row: the matchup set like a scoreboard, then what we know about it (lineups,
+ * completeness, the projected environment), then the ranked picks with the model estimate first.
+ */
 export function GameMatchupCard({ game, detailed = false }: { game: Game; detailed?: boolean }) {
   const pct = completenessPct(game.research_completeness.score);
   const missing = game.research_completeness.items.filter((i) => !i.ok);
-  const picks = game.top_picks.slice(0, 5);
+  const picks = game.top_picks.slice(0, detailed ? 5 : 3);
+  const more = game.top_picks.length - picks.length;
   const injuries = game.injuries.away.length + game.injuries.home.length;
+  const showScore = game.home_points != null && game.away_points != null;
+  const env = game.environment;
   return (
-    <article className="flex min-w-0 flex-col rounded-lg bg-card ring-1 ring-inset ring-line/60" data-testid="game-card" data-game-id={game.id}>
-      <div className="p-4 pb-3">
-        <MatchupHeader game={game} />
+    <article className="grid min-w-0 gap-x-10 gap-y-4 border-b border-line py-5 lg:grid-cols-[15rem_minmax(0,1fr)] xl:grid-cols-[15rem_minmax(0,1fr)_minmax(0,1.25fr)]" data-testid="game-card" data-game-id={game.id}>
+      <div className="min-w-0">
+        <div className="mb-2 flex items-baseline gap-3">
+          <span className="slot text-ink">
+            <Val v={fmtTimeET(game.tipoff_utc)} />
+          </span>
+          <StatusBadge value={game.status} />
+        </div>
+        {(["away", "home"] as const).map((side) => (
+          <div key={side} className="flex items-center gap-2.5 py-1">
+            <span className="h-7 w-1 shrink-0" style={{ background: teamColor(game[side].abbr) }} aria-hidden />
+            <TeamLogo team={game[side]} size={28} />
+            <span className="team-name w-12 shrink-0 text-[1.375rem] text-ink">{game[side].abbr}</span>
+            <span className="min-w-0 flex-1 truncate text-sm text-muted">{game[side].name}</span>
+            {showScore && <span className="score text-[1.75rem] text-ink">{side === "away" ? game.away_points : game.home_points}</span>}
+          </div>
+        ))}
+        <p className="mt-2 truncate text-sm text-faint">{game.venue ?? "Venue not available"}</p>
+        <DLink href={`/games/${encodeURIComponent(game.id)}`} className="link mt-1 inline-flex min-h-[44px] items-center text-sm md:min-h-0" data-testid="game-link">
+          Open game research
+        </DLink>
       </div>
 
-      <div className="flex-1 space-y-4 px-4 pb-4">
-        <div>
-          <div className="flex items-baseline justify-between text-xs">
-            <span className="text-muted">Research completeness</span>
-            <span className="num font-semibold text-ink">{pct}%</span>
-          </div>
-          <Meter value={pct} tone={pct >= 80 ? "neutral" : "warn"} label="Research completeness" className="mt-1" />
-          {missing.length > 0 && <p className="mt-1 text-xs text-warn">Missing: {missing.map((m) => m.name).join(", ")}</p>}
-        </div>
-
-        <div className="rounded-md bg-raised/40 px-3 py-2" data-testid="card-lineups">
+      <div className="min-w-0 space-y-3">
+        <div data-testid="card-lineups">
           <div className="flex flex-wrap gap-x-5 gap-y-1">
             {(["away", "home"] as const).map((side) => (
-              <span key={side} className="flex items-center gap-1.5 text-xs text-muted">
+              <span key={side} className="flex items-center gap-1.5 text-sm text-muted">
                 {game[side].abbr} lineup
                 <LineupStatusLabel status={game.lineup?.[side]?.status} short />
               </span>
             ))}
           </div>
-          <div className="num mt-1 text-xs text-muted">
-            {injuries} injuries listed{game.props ? ` · ${game.props.quoted_markets} quoted props · ${game.props.players_projected} players projected` : ""}
+          <div className="num mt-0.5 text-sm text-faint">
+            {injuries} injuries listed{game.props ? `, ${game.props.quoted_markets} quoted props, ${game.props.players_projected} players projected` : ""}
           </div>
         </div>
-
-        <EnvironmentSummary env={game.environment} home={game.home.abbr} away={game.away.abbr} />
-        {detailed && game.environment && game.environment.notes.length > 0 && (
-          <ul className="space-y-0.5 text-xs text-muted">
-            {game.environment.notes.map((n, i) => (
-              <li key={i}>· {n}</li>
+        <div>
+          <div className="flex items-baseline justify-between text-sm">
+            <span className="text-muted">Research completeness</span>
+            <span className="num font-bold text-ink">{pct}%</span>
+          </div>
+          <Meter value={pct} tone={pct >= 80 ? "neutral" : "warn"} label="Research completeness" className="mt-1" />
+          {missing.length > 0 && <p className="mt-1 text-sm text-warn">Missing: {missing.map((m) => m.name).join(", ")}</p>}
+        </div>
+        {env ? (
+          <p className="num text-sm text-muted">
+            <span className="model font-semibold">
+              Projected {game.away.abbr} {fmtNum(env.proj_away_points, 0)}, {game.home.abbr} {fmtNum(env.proj_home_points, 0)}
+            </span>
+            . Total <Val v={fmtNum(env.proj_total)} className="model" />, pace <Val v={fmtNum(env.proj_pace)} className="model" />, margin ({game.home.abbr}) <Val v={fmtSigned(env.proj_margin, 1)} className="model" />
+            <span title="10th–90th percentile of the simulated total">, total p10–p90 {fmtNum(env.total_p10, 0)}–{fmtNum(env.total_p90, 0)}</span>. Model estimate.
+          </p>
+        ) : (
+          <p className="text-sm text-muted">Game environment projection not available.</p>
+        )}
+        {detailed && env && env.notes.length > 0 && (
+          <ul className="space-y-0.5 text-sm text-faint">
+            {env.notes.map((n, i) => (
+              <li key={i}>{n}</li>
             ))}
           </ul>
         )}
-
         {detailed && (
-          <ul className="grid gap-x-4 gap-y-1 text-xs sm:grid-cols-2">
+          <ul className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
             {game.research_completeness.items.map((it) => (
-              <li key={it.name} className="flex min-w-0 gap-1.5">
-                <span className={cn("shrink-0 font-semibold", it.ok ? "text-soft" : "text-warn")}>{it.ok ? "OK" : "Missing"}</span>
+              <li key={it.name} className="flex min-w-0 gap-2">
+                <span className={cn("shrink-0 font-bold", it.ok ? "text-ink" : "text-warn")}>{it.ok ? "OK" : "Missing"}</span>
                 <span className="min-w-0 break-words text-muted">
                   {it.name}
-                  {it.note ? ` — ${it.note}` : ""}
+                  {it.note ? `: ${it.note}` : ""}
                 </span>
               </li>
             ))}
           </ul>
         )}
+      </div>
 
-        <div>
-          <div className="flex items-baseline justify-between">
-            <h3 className="font-display text-[15px] font-semibold uppercase tracking-wide text-soft">Ranked picks</h3>
-            <span className="num text-xs text-muted">
-              {game.n_evaluated} evaluated · {game.n_rejected} rejected
-            </span>
-          </div>
-          {picks.length > 0 ? (
-            <ul className="divide-y divide-line/40">
+      <div className="min-w-0 lg:col-span-2 xl:col-span-1">
+        <div className="flex items-baseline justify-between gap-3 border-b border-rule-2 pb-1.5">
+          <h3 className="text-sm font-bold text-ink">
+            Ranked picks <span className="model font-semibold">model estimate first</span>
+          </h3>
+          <span className="num text-sm text-faint">
+            {game.n_evaluated} evaluated, {game.n_rejected} rejected
+          </span>
+        </div>
+        {picks.length > 0 ? (
+          <>
+            <ul>
               {picks.map((s) => (
                 <PickRow key={s.id} s={s} />
               ))}
             </ul>
-          ) : (
-            <p className="mt-2 rounded-md bg-raised/40 px-3 py-2.5 text-sm text-soft" data-testid="no-picks-reason">
-              <span className="font-semibold">No qualified picks for this game. </span>
-              {game.no_picks_reason ?? "The API did not provide a reason."}
-            </p>
-          )}
-        </div>
+            {more > 0 && (
+              <DLink href={`/games/${encodeURIComponent(game.id)}`} className="link mt-1 inline-flex min-h-[44px] items-center text-sm md:min-h-0">
+                {more} more ranked in this game
+              </DLink>
+            )}
+          </>
+        ) : (
+          <p className="mt-2 max-w-[60ch] text-sm text-soft" data-testid="no-picks-reason">
+            <span className="font-bold text-ink">No qualified picks for this game. </span>
+            {game.no_picks_reason ?? "The API did not provide a reason."}
+          </p>
+        )}
       </div>
-
-      <footer className="flex items-center justify-between gap-3 border-t border-line/50 px-4 py-2.5 text-xs text-muted">
-        <span className="flex min-w-0 items-center gap-1.5">
-          <MapPin className="h-3.5 w-3.5 shrink-0 text-faint" aria-hidden />
-          <span className="truncate">{game.venue ?? "Venue not available"}</span>
-        </span>
-        <DLink href={`/games/${encodeURIComponent(game.id)}`} className="inline-flex min-h-[44px] shrink-0 items-center gap-1 font-semibold text-accent hover:underline md:min-h-0" data-testid="game-link">
-          Open game research <ArrowRight className="h-3.5 w-3.5" aria-hidden />
-        </DLink>
-      </footer>
     </article>
   );
 }

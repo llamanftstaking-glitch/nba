@@ -24,17 +24,17 @@ export default function MarketsPage() {
   const games = useGames(date);
   const health = useDataHealth();
   return (
-    <div className="space-y-4">
+    <div className="space-y-9">
       <PageHeader title="Markets" sub="Current verified quotes per game and the status of the providers that supply them." />
       <QueryView query={games} rows={6} isEmpty={(d) => d.games.length === 0} empty={<EmptyState title="No games are scheduled for this date." />}>
         {(d) => (
-          <div className="grid gap-4 xl:grid-cols-2">
+          <div className="grid gap-x-12 gap-y-9 xl:grid-cols-2">
             {d.games.map((g) => (
               <Panel
                 key={g.id}
                 title={g.label}
                 right={
-                  <DLink href={`/games/${encodeURIComponent(g.id)}`} className="text-accent hover:underline">
+                  <DLink href={`/games/${encodeURIComponent(g.id)}`} className="link">
                     Game research →
                   </DLink>
                 }

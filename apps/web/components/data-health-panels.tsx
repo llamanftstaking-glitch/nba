@@ -60,7 +60,7 @@ const CREDENTIAL: Record<ProviderInfo["credential"], { label: string; tone: "acc
 /** Provider configuration center: status only. No secret values and no key entry field. */
 export function ProviderCenter({ items }: { items: ProviderInfo[] }) {
   return (
-    <ul className="grid gap-4 xl:grid-cols-2" data-testid="provider-center">
+    <ul className="grid gap-x-12 gap-y-9 xl:grid-cols-2" data-testid="provider-center">
       {items.map((p) => {
         const cred = CREDENTIAL[p.credential] ?? CREDENTIAL.missing;
         return (
@@ -79,21 +79,21 @@ export function ProviderCenter({ items }: { items: ProviderInfo[] }) {
             </div>
             <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-4">
               <div>
-                <dt className="text-2xs font-medium uppercase text-muted">Last success</dt>
+                <dt className="text-2xs font-medium text-muted">Last success</dt>
                 <dd><FreshnessIndicator at={p.last_success_at} label="" /></dd>
               </div>
               <div>
-                <dt className="text-2xs font-medium uppercase text-muted">Calls this month</dt>
+                <dt className="text-2xs font-medium text-muted">Calls this month</dt>
                 <dd className="num text-ink">{fmtInt(p.calls_this_month)}</dd>
               </div>
               <div>
-                <dt className="text-2xs font-medium uppercase text-muted">Quota</dt>
+                <dt className="text-2xs font-medium text-muted">Quota</dt>
                 <dd className="num text-ink">
                   {fmtInt(p.quota_used)} / {p.quota_limit === null ? "no limit" : fmtInt(p.quota_limit)}
                 </dd>
               </div>
               <div>
-                <dt className="text-2xs font-medium uppercase text-muted">Monthly cost</dt>
+                <dt className="text-2xs font-medium text-muted">Monthly cost</dt>
                 <dd className="num text-ink">${p.monthly_cost_usd.toFixed(2)}</dd>
               </div>
             </dl>
@@ -104,7 +104,7 @@ export function ProviderCenter({ items }: { items: ProviderInfo[] }) {
             )}
             {p.limitations.length > 0 && (
               <div className="mt-2">
-                <div className="text-2xs font-medium uppercase text-muted">Limitations</div>
+                <div className="text-2xs font-medium text-muted">Limitations</div>
                 <ul className="text-xs text-soft">
                   {p.limitations.map((l, i) => (
                     <li key={i}>· {l}</li>
@@ -113,7 +113,7 @@ export function ProviderCenter({ items }: { items: ProviderInfo[] }) {
               </div>
             )}
             <div className="mt-2">
-              <div className="text-2xs font-medium uppercase text-muted">Setup</div>
+              <div className="text-2xs font-medium text-muted">Setup</div>
               <p className="break-words text-xs text-soft">{p.setup || "No setup instructions provided."}</p>
             </div>
           </li>

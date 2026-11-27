@@ -5,16 +5,16 @@ import { Val } from "@/components/ui/na";
 import { fmtInt, fmtPct, fmtSigned, fmtSignedPct } from "@/lib/format";
 import { cn } from "@/lib/cn";
 
-/** Stat tile: optional icon, label, one prominent value, optional sub-line. */
-export function Tile({ label, children, sub, className, icon: Icon, tone }: { label: string; children: ReactNode; sub?: ReactNode; className?: string; icon?: LucideIcon; tone?: "warn" | "bad" }) {
+/**
+ * A typographic stat: one condensed figure with a plain label under it and an optional note.
+ * No box and no icon. The label comes first in the document so it is read before the value.
+ */
+export function Tile({ label, children, sub, className, tone }: { label: string; children: ReactNode; sub?: ReactNode; className?: string; icon?: LucideIcon; tone?: "warn" | "bad" }) {
   return (
-    <div className={cn("flex min-w-0 gap-4 rounded-lg bg-card px-4 py-3 ring-1 ring-inset", tone === "warn" ? "ring-warn/40" : tone === "bad" ? "ring-bad/40" : "ring-line/60", className)} data-testid="tile">
-      {Icon && <Icon className={cn("mt-0.5 h-5 w-5 shrink-0", tone === "warn" ? "text-warn" : tone === "bad" ? "text-bad" : "text-accent")} aria-hidden />}
-      <div className="min-w-0">
-        <div className="text-2xs font-semibold uppercase tracking-wide text-muted">{label}</div>
-        <div className="num mt-0.5 text-[22px] font-semibold leading-7 text-ink">{children}</div>
-        {sub && <div className="num text-xs text-muted">{sub}</div>}
-      </div>
+    <div className={cn("flex min-w-0 flex-col", className)} data-testid="tile" data-tone={tone}>
+      <div className="order-2 text-sm text-muted">{label}</div>
+      <div className="num order-1 text-[1.75rem] leading-8 text-ink" style={{ fontStretch: "68%", fontWeight: 750 }}>{children}</div>
+      {sub && <div className={cn("num order-3 mt-0.5 text-2xs", tone === "warn" ? "text-warn" : tone === "bad" ? "text-bad" : "text-faint")}>{sub}</div>}
     </div>
   );
 }
@@ -34,9 +34,9 @@ export function SummaryTiles({ s, compact = false }: { s: Summary; compact?: boo
     // Inline figures for use inside a panel: no nested cards.
     const item = (label: string, value: ReactNode, sub: ReactNode) => (
       <div className="min-w-0">
-        <dt className="text-2xs font-semibold uppercase tracking-wide text-muted">{label}</dt>
-        <dd className="num whitespace-nowrap text-xl font-semibold leading-7 text-ink">{value}</dd>
-        <dd className="num text-xs text-muted">{sub}</dd>
+        <dt className="text-sm text-muted">{label}</dt>
+        <dd className="num whitespace-nowrap text-[1.75rem] leading-8 text-ink" style={{ fontStretch: "68%", fontWeight: 750 }}>{value}</dd>
+        <dd className="num text-2xs text-faint">{sub}</dd>
       </div>
     );
     return (
@@ -49,7 +49,7 @@ export function SummaryTiles({ s, compact = false }: { s: Summary; compact?: boo
     );
   }
   return (
-    <div className="grid grid-cols-2 gap-3 md:grid-cols-4 2xl:grid-cols-7">
+    <div className="grid grid-cols-2 gap-x-8 gap-y-5 border-b border-line pb-5 md:grid-cols-4 xl:grid-cols-7">
       <Tile label="Settled" sub={`${fmtInt(s.tickets)} tickets · ${fmtInt(s.unresolved)} unresolved`}>
         {fmtInt(s.settled)}
       </Tile>

@@ -77,7 +77,7 @@ export default function InjuriesPage() {
   const slateGames = useMemo(() => new Set((slate.data?.games ?? []).map((g) => g.label)), [slate.data]);
   const staleCount = (q.data?.items ?? []).filter((i) => i.stale).length;
   return (
-    <div className="space-y-5">
+    <div className="space-y-9">
       <PageHeader
         title="Injury Intelligence Centre"
         sub={
@@ -98,7 +98,7 @@ export default function InjuriesPage() {
         id="status-changes"
         right={
           <label className="flex min-h-[44px] cursor-pointer items-center gap-2 text-sm text-soft md:min-h-0">
-            <input type="checkbox" checked={materialOnly} onChange={(e) => setMaterialOnly(e.target.checked)} className="h-4 w-4 accent-[rgb(0,229,160)]" data-testid="material-toggle" />
+            <input type="checkbox" checked={materialOnly} onChange={(e) => setMaterialOnly(e.target.checked)} className="h-4 w-4 accent-ink" data-testid="material-toggle" />
             Material only
           </label>
         }
@@ -126,7 +126,7 @@ export default function InjuriesPage() {
               {d.changes.length === 0 ? (
                 <EmptyState title="No injury changes recorded." icon={HeartPulse} />
               ) : (
-                <ul className="divide-y divide-line/40">
+                <ul className="divide-y divide-line">
                   {d.changes.map((c, i) => (
                     <li key={i} className="flex flex-wrap items-baseline justify-between gap-x-3 py-2 text-sm">
                       <span className="min-w-0 break-words text-soft">{c.text}</span>
@@ -146,14 +146,14 @@ export default function InjuriesPage() {
                   const n = [...teams.values()].reduce((a, b) => a + b.length, 0);
                   const offSlate = game === OFF_SLATE;
                   return (
-                    <Collapsible key={game} title={<span className="font-display text-[15px] font-semibold uppercase tracking-wide">{game}</span>} right={`${n} listed${offSlate ? ` · ${teams.size} teams` : ""}`} defaultOpen={!offSlate && (slateGames.size === 0 ? idx < 2 : slateGames.has(game))} testId="injury-game-group">
+                    <Collapsible key={game} title={<span className="font-display text-base font-semibold">{game}</span>} right={`${n} listed${offSlate ? ` · ${teams.size} teams` : ""}`} defaultOpen={!offSlate && (slateGames.size === 0 ? idx < 2 : slateGames.has(game))} testId="injury-game-group">
                       <div className="space-y-4" data-testid="injury-game">
                         {[...teams.entries()].map(([team, rows]) => (
                           <div key={team}>
-                            <div className="border-b border-line/50 pb-1 text-2xs font-semibold uppercase tracking-wide text-muted">
+                            <div className="border-b border-line pb-1 text-2xs font-semibold text-muted">
                               {team} · {rows.length}
                             </div>
-                            <ul className="divide-y divide-line/30">
+                            <ul className="divide-y divide-line">
                               {rows.map((r, i) => (
                                 <Row key={`${r.player_name}-${i}`} r={r} />
                               ))}

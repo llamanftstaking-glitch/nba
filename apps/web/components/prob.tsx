@@ -24,17 +24,49 @@ export function ProbabilityDisplay({
   if (p === null) return <NA className={className} />;
   return (
     <span className={cn("num", stack ? "inline-flex flex-col" : "inline-flex flex-wrap items-baseline gap-x-1.5", className)}>
-      <span className={cn("font-semibold text-ink", size === "lg" && "text-xl leading-6")}>{p}</span>
+      <span className={cn("model font-bold", size === "lg" && "score text-[1.75rem]")}>{p}</span>
       {iv ? (
-        <span className="text-xs font-normal text-muted" title="Interval for the model probability">
+        <span className="text-2xs font-normal text-faint" title="Interval for the model probability">
           {iv}
         </span>
       ) : (
-        <span className="text-xs font-normal text-muted" title="interval not available" aria-label="interval not available">
+        <span className="text-2xs font-normal text-faint" title="interval not available" aria-label="interval not available">
           [—]
         </span>
       )}
     </span>
+  );
+}
+
+/**
+ * A model estimate on a ruled 0–100 scale: the orange tick is the estimate, the wash is its interval and
+ * the ink notch is the price break-even. Orange is used for nothing else, so an estimate can never be
+ * mistaken for something observed.
+ */
+export function ProbScale({ prob, low, high, breakeven, className }: { prob: number | null; low: number | null; high: number | null; breakeven?: number | null; className?: string }) {
+  if (prob === null) return <span className={className} />;
+  const pos = (v: number) => `${Math.max(0, Math.min(100, v * 100))}%`;
+  const label = `Model estimate ${fmtPct(prob)}${low !== null && high !== null ? `, interval ${fmtPct(low)} to ${fmtPct(high)}` : ""}${breakeven !== null && breakeven !== undefined ? `, price break-even ${fmtPct(breakeven)}` : ""}`;
+  return (
+    <span className={cn("relative block h-7 border-x border-rule-2", className)} role="img" aria-label={label} data-testid="prob-scale">
+      <span className="absolute inset-x-0 top-1/2 h-px bg-rule-2" />
+      <span className="absolute left-1/2 top-[9px] h-[10px] w-px bg-rule-2" />
+      {low !== null && high !== null && <span className="absolute bottom-2 top-2 bg-model/20" style={{ left: pos(low), width: `${Math.max(0, (high - low) * 100)}%` }} />}
+      {breakeven !== null && breakeven !== undefined && <span className="absolute bottom-[7px] top-[7px] -ml-px w-0.5 bg-ink" style={{ left: pos(breakeven) }} />}
+      <span className="absolute bottom-0.5 top-0.5 -ml-0.5 w-1 bg-model" style={{ left: pos(prob) }} />
+    </span>
+  );
+}
+
+/** The key to the scale, shown once under a list of picks. */
+export function ProbScaleKey({ className }: { className?: string }) {
+  return (
+    <p className={cn("flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-faint", className)} data-testid="prob-key">
+      <span className="inline-flex items-center gap-2"><span className="h-4 w-1 bg-model" aria-hidden /> model estimate</span>
+      <span className="inline-flex items-center gap-2"><span className="h-2.5 w-4 bg-model/20" aria-hidden /> its interval</span>
+      <span className="inline-flex items-center gap-2"><span className="h-3 w-0.5 bg-ink" aria-hidden /> price break-even</span>
+      <span className="text-muted">A model estimate is not an observed hit rate.</span>
+    </p>
   );
 }
 
@@ -53,7 +85,7 @@ export function EvidenceMeter({ score, className }: { score: number | null; clas
         {score === null ? (
           <NA />
         ) : (
-          <span className="num font-medium text-info">
+          <span className="num font-semibold text-ink">
             {score}
             <span className="text-muted">/100</span>
           </span>

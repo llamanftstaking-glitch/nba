@@ -11,7 +11,7 @@ export function LineupHistoryList({ gameId }: { gameId: string }) {
   return (
     <QueryView query={q} rows={2} isEmpty={(d) => d.items.length === 0} empty={<EmptyState title="No lineup changes have been recorded for this game." />}>
       {(d) => (
-        <ul className="divide-y divide-line/40" data-testid="lineup-history">
+        <ul className="divide-y divide-line" data-testid="lineup-history">
           {d.items.map((h, i) => (
             <li key={i} className="grid gap-x-3 gap-y-0.5 py-2 text-sm sm:grid-cols-[9.5rem_3rem_1fr_auto] sm:items-baseline">
               <span className="num text-xs text-muted">{fmtDateTimeET(h.at) ?? "—"}</span>

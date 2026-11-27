@@ -18,7 +18,7 @@ export default function PlayerHistoryIndexPage() {
     return [...m.entries()];
   }, [quick]);
   return (
-    <div className="space-y-5">
+    <div className="space-y-9">
       <PageHeader title="Historical Performance" sub="Open a player’s game-by-game history against any threshold. History is descriptive: counts of past games, not a probability." />
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
         <Panel title={quick.source === "players" ? "Players" : "Players on this slate"} icon={History} right={quick.source === "slate" ? "highest projected minutes first" : undefined}>
@@ -34,7 +34,7 @@ export default function PlayerHistoryIndexPage() {
               <div className="grid gap-x-6 gap-y-4 md:grid-cols-2 2xl:grid-cols-3" data-testid="history-quick">
                 {groups.map(([label, players]) => (
                   <div key={label} className="min-w-0">
-                    <div className="border-b border-line/50 pb-1 text-2xs font-semibold uppercase tracking-wide text-muted">{label}</div>
+                    <div className="border-b border-line pb-1 text-2xs font-semibold text-muted">{label}</div>
                     <ul>
                       {players.map((p) => (
                         <li key={p.id}>

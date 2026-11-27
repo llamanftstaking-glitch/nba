@@ -22,9 +22,9 @@ const STATUSES = ["", "open", "supported", "rejected", "inconclusive"];
 function FindingCard({ f }: { f: Finding }) {
   const limits = asList(f.limitations);
   return (
-    <li className="rounded-lg bg-card p-4 ring-1 ring-inset ring-line/60" data-testid="finding" data-status={f.status}>
+    <li className="blk p-4" data-testid="finding" data-status={f.status}>
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <p className="min-w-0 flex-1 break-words text-[15px] font-semibold text-ink">{f.hypothesis}</p>
+        <p className="min-w-0 flex-1 break-words text-base font-semibold text-ink">{f.hypothesis}</p>
         <Badge tone={STATUS_TONE[f.status] ?? "neutral"}>{f.status === "open" ? "Open hypothesis" : titleCase(f.status)}</Badge>
       </div>
       <p className="num mt-1 text-xs text-muted">
@@ -43,11 +43,11 @@ function FindingCard({ f }: { f: Finding }) {
       </div>
       <dl className="mt-3 grid gap-3 md:grid-cols-2">
         <div>
-          <dt className="text-2xs font-semibold uppercase tracking-wide text-muted">Proposed experiment</dt>
+          <dt className="text-2xs font-semibold text-muted">Proposed experiment</dt>
           <dd className="break-words text-sm text-soft">{f.proposed_experiment ?? "Not recorded."}</dd>
         </div>
         <div>
-          <dt className="text-2xs font-semibold uppercase tracking-wide text-muted">Result</dt>
+          <dt className="text-2xs font-semibold text-muted">Result</dt>
           <dd className="break-words text-sm text-soft">{f.result ?? "No result yet."}</dd>
         </div>
       </dl>
@@ -69,7 +69,7 @@ export function ResearchJournal({ status, onStatus }: { status: string; onStatus
       <QueryView query={q} rows={4}>
         {(d) => (
           <>
-            <p className="rounded-md bg-raised/40 px-3 py-2.5 text-sm text-soft" data-testid="research-note">{d.note}</p>
+            <p className="border-l-2 border-line py-1 pl-3 text-sm text-soft" data-testid="research-note">{d.note}</p>
             {d.items.length === 0 ? (
               <EmptyState title={status ? `No findings with the status “${status}”.` : "No research findings have been recorded yet."} icon={FlaskConical}>
                 Findings are written by the research agents and experiments. Until one is recorded this journal stays empty.
@@ -112,7 +112,7 @@ export function Sources() {
       primary: true,
       cell: (s) =>
         s.url ? (
-          <a href={s.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-start gap-1 break-words font-medium text-ink hover:text-accent hover:underline" data-testid="source-link">
+          <a href={s.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-start gap-1 break-words font-medium text-ink hover:link" data-testid="source-link">
             <span className="min-w-0 break-words">{s.title}</span>
             <ExternalLink className="mt-1 h-3 w-3 shrink-0 text-muted" aria-hidden />
           </a>
@@ -145,7 +145,7 @@ export function Sources() {
               {/* below xl: one card per source, label beside value so long notes stay readable */}
               <ul className="space-y-2.5 xl:hidden" data-testid="source-cards">
                 {d.items.map((s) => (
-                  <li key={s.key} className="rounded-lg bg-card p-3.5 ring-1 ring-inset ring-line/60" data-testid="source-card">
+                  <li key={s.key} className="blk p-3.5" data-testid="source-card">
                     {columns[0]?.cell(s, 0)}
                     <div className="mt-2">
                       <AccessResult s={s} />
@@ -163,7 +163,7 @@ export function Sources() {
                         ] as [string, string | null][]
                       ).map(([label, v]) => (
                         <div key={label} className="grid grid-cols-[6.5rem_minmax(0,1fr)] gap-2">
-                          <dt className="text-2xs font-semibold uppercase tracking-wide text-muted">{label}</dt>
+                          <dt className="text-2xs font-semibold text-muted">{label}</dt>
                           <dd className="min-w-0 break-words text-soft">{v ?? <NA />}</dd>
                         </div>
                       ))}
@@ -193,8 +193,8 @@ export function Coverage({ o }: { o: CortexOverview }) {
             <li key={d.id} className="grid grid-cols-[1.75rem_minmax(0,1fr)_3rem] items-center gap-x-3 gap-y-1 text-sm sm:grid-cols-[1.75rem_minmax(0,16rem)_minmax(0,1fr)_3rem]" data-testid="coverage-row" data-department={d.id} data-records={d.records}>
               <span className="num text-muted">{d.id}</span>
               <span className="min-w-0 break-words text-soft">{d.name}</span>
-              <span className="col-span-3 order-last h-1.5 overflow-hidden rounded-full bg-line/70 sm:order-none sm:col-span-1" role="img" aria-label={`${d.name}: ${d.records} records`}>
-                <span className="block h-full rounded-full bg-info" style={{ width: `${(d.records / max) * 100}%` }} />
+              <span className="col-span-3 order-last h-1.5 overflow-hidden rounded-full bg-line sm:order-none sm:col-span-1" role="img" aria-label={`${d.name}: ${d.records} records`}>
+                <span className="block h-full rounded bg-info" style={{ width: `${(d.records / max) * 100}%` }} />
               </span>
               <span className={`num text-right font-semibold ${d.records === 0 ? "text-muted" : "text-ink"}`}>{fmtInt(d.records)}</span>
             </li>
@@ -210,8 +210,8 @@ export function Coverage({ o }: { o: CortexOverview }) {
               {kinds.map(([k, n]) => (
                 <li key={k} className="grid grid-cols-[6.5rem_minmax(0,1fr)_3rem] items-center gap-3 text-sm">
                   <span className="text-soft">{kindLabel(k)}</span>
-                  <span className="h-1.5 overflow-hidden rounded-full bg-line/70" role="img" aria-label={`${kindLabel(k)}: ${n} records`}>
-                    <span className="block h-full rounded-full bg-teal" style={{ width: `${(n / kindMax) * 100}%` }} />
+                  <span className="h-1.5 overflow-hidden rounded-full bg-line" role="img" aria-label={`${kindLabel(k)}: ${n} records`}>
+                    <span className="block h-full rounded bg-teal" style={{ width: `${(n / kindMax) * 100}%` }} />
                   </span>
                   <span className="num text-right font-semibold text-ink">{fmtInt(n)}</span>
                 </li>
@@ -229,19 +229,19 @@ export function Coverage({ o }: { o: CortexOverview }) {
         </p>
         <dl className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div>
-            <dt className="text-2xs font-semibold uppercase tracking-wide text-muted">Player profiles</dt>
+            <dt className="text-2xs font-semibold text-muted">Player profiles</dt>
             <dd className="num text-lg font-semibold text-ink">{fmtInt(o.player_profiles_available)}</dd>
           </div>
           <div>
-            <dt className="text-2xs font-semibold uppercase tracking-wide text-muted">Team profiles</dt>
+            <dt className="text-2xs font-semibold text-muted">Team profiles</dt>
             <dd className="num text-lg font-semibold text-ink">{fmtInt(o.team_profiles_available)}</dd>
           </div>
           <div>
-            <dt className="text-2xs font-semibold uppercase tracking-wide text-muted">Coaching profiles</dt>
+            <dt className="text-2xs font-semibold text-muted">Coaching profiles</dt>
             <dd className="num text-lg font-semibold text-ink">{fmtInt(o.coaching_profiles_available)}</dd>
           </div>
           <div>
-            <dt className="text-2xs font-semibold uppercase tracking-wide text-muted">Sources opened</dt>
+            <dt className="text-2xs font-semibold text-muted">Sources opened</dt>
             <dd className="num text-lg font-semibold text-ink">
               {fmtInt(o.sources_opened_by_author)} of {fmtInt(o.sources_indexed)}
             </dd>
@@ -263,7 +263,7 @@ function CountTable({ title, data, testId }: { title: string; data: Record<strin
       {rows.length === 0 ? (
         <p className="text-sm text-muted">None.</p>
       ) : (
-        <dl className="divide-y divide-line/30">
+        <dl className="divide-y divide-line">
           {rows.map(([k, n]) => (
             <div key={k} className="flex items-baseline justify-between gap-3 py-1 text-sm">
               <dt className="min-w-0 break-words text-soft">{titleCase(k)}</dt>
@@ -281,7 +281,7 @@ const missText = (m: unknown): string => (typeof m === "string" ? m : JSON.strin
 function RunCard({ r }: { r: BenchmarkRun }) {
   const misses = r.misses ?? [];
   return (
-    <li className="rounded-md bg-raised/30 px-3 py-2.5" data-testid="benchmark-run">
+    <li className="border-l-2 border-line py-1 pl-3" data-testid="benchmark-run">
       <dl className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4 xl:grid-cols-7">
         {(
           [
@@ -295,7 +295,7 @@ function RunCard({ r }: { r: BenchmarkRun }) {
           ] as [string, string | null][]
         ).map(([label, v]) => (
           <div key={label} className="min-w-0">
-            <dt className="text-2xs font-semibold uppercase tracking-wide text-muted">{label}</dt>
+            <dt className="text-2xs font-semibold text-muted">{label}</dt>
             <dd className="num break-words text-sm font-medium text-ink" data-run-field={label}>{v ?? <NA />}</dd>
           </div>
         ))}
@@ -319,8 +319,8 @@ export function Evaluations() {
   if (q.isPending) return <LoadingState rows={6} />;
   if (q.isError && q.error instanceof ApiError && q.error.status === 403) {
     return (
-      <div role="alert" className="rounded-lg bg-card p-5 ring-1 ring-inset ring-warn/40" data-testid="evaluations-forbidden">
-        <p className="font-display text-lg font-semibold uppercase tracking-wide text-warn">Owner access required</p>
+      <div role="alert" className="border-l-4 border-warn py-1 pl-4" data-testid="evaluations-forbidden">
+        <p className="font-display text-lg font-semibold text-warn">Owner access required</p>
         <p className="mt-1 text-sm text-soft">{q.error.message}</p>
       </div>
     );
@@ -330,8 +330,8 @@ export function Evaluations() {
   const pct = d.target > 0 ? Math.min(100, (d.questions / d.target) * 100) : 0;
   return (
     <div className="space-y-5" data-testid="evaluations">
-      <div className="rounded-lg bg-card p-4 ring-1 ring-inset ring-warn/40" data-testid="benchmark-note">
-        <p className="font-display text-[17px] font-semibold uppercase tracking-wide text-warn">
+      <div className="border-l-4 border-warn py-1 pl-4" data-testid="benchmark-note">
+        <p className="font-display text-lg font-semibold text-warn">
           Reviewed by a person: <span className="num" data-testid="reviewed">{fmtInt(d.reviewed_by_a_person)} of {fmtInt(d.questions)}</span>
         </p>
         <p className="mt-1 break-words text-sm text-soft" data-testid="benchmark-note-text">{d.note}</p>
@@ -341,8 +341,8 @@ export function Evaluations() {
           <span className="num text-2xl font-semibold text-ink" data-testid="benchmark-questions">{fmtInt(d.questions)}</span>
           <span className="num text-sm text-muted">target {fmtInt(d.target)} questions</span>
         </div>
-        <div className="mt-2 h-2 overflow-hidden rounded-full bg-line/70" role="img" aria-label={`${d.questions} of ${d.target} questions written`}>
-          <div className="h-full rounded-full bg-info" style={{ width: `${pct}%` }} />
+        <div className="mt-2 h-2 overflow-hidden rounded bg-line" role="img" aria-label={`${d.questions} of ${d.target} questions written`}>
+          <div className="h-full rounded bg-info" style={{ width: `${pct}%` }} />
         </div>
         <div className="mt-4 grid gap-5 md:grid-cols-3">
           <CountTable title="By category" data={d.by_category} testId="benchmark-by-category" />
@@ -370,7 +370,7 @@ export function Evaluations() {
           {d.recent_retrievals.length === 0 ? (
             <p className="text-sm text-soft">No search has been logged.</p>
           ) : (
-            <ul className="divide-y divide-line/30" data-testid="retrievals">
+            <ul className="divide-y divide-line" data-testid="retrievals">
               {d.recent_retrievals.slice(0, 15).map((r, i) => (
                 <li key={i} className="py-2 text-sm" data-testid="retrieval">
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -394,7 +394,7 @@ export function Evaluations() {
             <ul className="space-y-3" data-testid="sample-questions">
               {d.sample_questions.slice(0, 8).map((s) => (
                 <li key={s.id} className="text-sm">
-                  <p className="num text-2xs font-semibold uppercase tracking-wide text-muted">
+                  <p className="num text-2xs font-semibold text-muted">
                     {s.id} · {titleCase(s.category)} · {titleCase(s.type)}
                   </p>
                   <p className="break-words text-ink">{s.question}</p>
@@ -406,7 +406,7 @@ export function Evaluations() {
         </Panel>
       </div>
       <Panel title="How to run" icon={Terminal}>
-        <pre className="overflow-x-auto whitespace-pre-wrap break-words rounded-md bg-bg px-3 py-2 font-mono text-[13px] leading-5 text-soft ring-1 ring-inset ring-line/60" data-testid="how-to-run">{d.how_to_run}</pre>
+        <pre className="overflow-x-auto whitespace-pre-wrap break-words rounded-md bg-bg px-3 py-2 font-mono text-[13px] leading-5 text-soft ring-1 ring-inset ring-line-strong" data-testid="how-to-run">{d.how_to_run}</pre>
         <p className="mt-2 text-xs text-muted">These are commands for the server. Nothing on this page starts a run.</p>
       </Panel>
     </div>

@@ -12,11 +12,11 @@ import { EXTRA_PAGES } from "@/lib/nav";
 export default function SettingsPage() {
   const q = useQuery({ queryKey: ["settings"], queryFn: api.settings });
   return (
-    <div className="space-y-4">
+    <div className="space-y-9">
       <PageHeader title="Settings" sub="Read-only view of the server configuration. Values are changed on the server, not from this terminal." />
       <QueryView query={q} rows={5}>
         {(d) => (
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid gap-x-12 gap-y-9 lg:grid-cols-2">
             <Panel title="Environment">
               <dl className="grid grid-cols-2 gap-3">
                 <Metric label="Environment">
@@ -40,7 +40,7 @@ export default function SettingsPage() {
               {Object.keys(d.providers_configured).length === 0 ? (
                 <p className="text-xs text-muted">No providers are listed.</p>
               ) : (
-                <ul className="divide-y divide-line/40">
+                <ul className="divide-y divide-line">
                   {Object.entries(d.providers_configured).map(([name, ok]) => (
                     <li key={name} className="flex items-center justify-between py-1.5 text-sm">
                       <span className="text-soft">{name}</span>
@@ -60,7 +60,7 @@ export default function SettingsPage() {
         <ul className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-4">
           {EXTRA_PAGES.map((n) => (
             <li key={n.href}>
-              <DLink href={n.href} className="flex h-9 items-center rounded border border-line bg-bg px-2 text-xs text-soft hover:border-line-strong hover:text-ink">
+              <DLink href={n.href} className="link inline-flex min-h-[44px] items-center text-sm md:min-h-9">
                 {n.label}
               </DLink>
             </li>

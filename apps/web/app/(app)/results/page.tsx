@@ -56,7 +56,7 @@ function breakdownColumns(first: string): Column<Row>[] {
       cell: (r) =>
         has(r) ? (
           <span className="num">
-            <Val v={fmtPct(r.s.hit_rate)} /> <span className="block whitespace-nowrap text-2xs text-muted">{ciText(r.s.hit_rate_ci)}</span>
+            <Val v={fmtPct(r.s.hit_rate)} /> <span className="block text-2xs lg:whitespace-nowrap text-muted">{ciText(r.s.hit_rate_ci)}</span>
           </span>
         ) : (
           <NoRec />
@@ -70,7 +70,7 @@ function breakdownColumns(first: string): Column<Row>[] {
       cell: (r) =>
         has(r) ? (
           <span className="num">
-            <Val v={fmtSignedPct(r.s.roi)} /> <span className="block whitespace-nowrap text-2xs text-muted">{ciText(r.s.roi_ci, true)}</span>
+            <Val v={fmtSignedPct(r.s.roi)} /> <span className="block text-2xs lg:whitespace-nowrap text-muted">{ciText(r.s.roi_ci, true)}</span>
           </span>
         ) : (
           <NoRec />
@@ -97,7 +97,7 @@ function ResultsView({ d, offset, setOffset }: { d: ResultsResponse; offset: num
   const calPoints = d.calibration.filter((c) => c.observed !== null);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-9">
       {d.summary.settled === 0 ? (
         <EmptyState title="n=0 — no settled records match these filters.">Hit rate, ROI and drawdown are not reported for an empty sample.</EmptyState>
       ) : (
@@ -112,7 +112,7 @@ function ResultsView({ d, offset, setOffset }: { d: ResultsResponse; offset: num
         <DataTable columns={breakdownColumns("Structure")} rows={structureRows} rowKey={(r) => r.key} caption="Results by structure" dense />
       </Panel>
 
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="grid gap-x-12 gap-y-9 xl:grid-cols-2">
         <Panel title="Calibration · predicted vs observed">
           {calPoints.length === 0 ? (
             <EmptyState title="No calibration buckets with settled records." />
@@ -139,7 +139,7 @@ function ResultsView({ d, offset, setOffset }: { d: ResultsResponse; offset: num
           <EmptyState title="No tickets match these filters." />
         ) : (
           <>
-            <div className="grid gap-4 xl:grid-cols-2">
+            <div className="grid gap-x-12 gap-y-9 xl:grid-cols-2">
               {d.items.map((t) => (
                 <TicketCard key={t.id} t={t} />
               ))}
@@ -149,7 +149,7 @@ function ResultsView({ d, offset, setOffset }: { d: ResultsResponse; offset: num
         )}
       </Panel>
 
-      <p className="rounded-lg bg-card ring-1 ring-inset ring-line/60 px-3 py-2 text-xs text-soft" data-testid="results-disclaimer">
+      <p className="blk px-3 py-2 text-xs text-soft" data-testid="results-disclaimer">
         {d.disclaimer}
       </p>
     </div>
@@ -190,7 +190,7 @@ export default function ResultsPage() {
       <PageHeader title="Results" sub="Settled paper tickets. Losses are listed with the same detail as wins; nothing is filtered out by outcome." />
 
       <form
-        className="mb-3 grid grid-cols-2 gap-2 rounded-lg bg-card ring-1 ring-inset ring-line/60 p-2 md:grid-cols-4 xl:grid-cols-5"
+        className="mb-3 grid grid-cols-2 gap-2 blk p-2 md:grid-cols-4 xl:grid-cols-5"
         onSubmit={(e) => e.preventDefault()}
         aria-label="Result filters"
         data-testid="results-filters"

@@ -1,0 +1,98 @@
+{
+  "note": "Every navigation destination of the app. Source of truth for lib/nav.ts, the All pages menu, the mobile More sheet, global search and the smoke test, which proves nothing was lost against main:apps/web/lib/nav.ts. `was` records where the page lived before the Courtside shell.",
+  "workspaces": [
+    {
+      "id": "today",
+      "label": "Today",
+      "href": "/",
+      "primary": true,
+      "summary": "The slate, the top picks and what changed",
+      "pages": [
+        { "href": "/", "label": "Overview", "was": "sidebar: Command Center", "keywords": "command center home slate dashboard today" },
+        { "href": "/research/daily", "label": "Daily Editions", "was": "sidebar: My Research", "keywords": "edition morning update diff" }
+      ]
+    },
+    {
+      "id": "games",
+      "label": "Games",
+      "href": "/games",
+      "primary": true,
+      "summary": "Scores, lineups, matchups and availability",
+      "pages": [
+        { "href": "/games", "label": "Today's Games", "was": "sidebar: Command Center", "keywords": "slate schedule matchups game research" },
+        { "href": "/live", "label": "Live Games", "was": "sidebar: Command Center", "keywords": "scores scoreboard box score in progress" },
+        { "href": "/lineups", "label": "Starting Lineups", "was": "sidebar: Command Center", "keywords": "starters projected confirmed" },
+        { "href": "/matchups", "label": "Matchup Intelligence", "was": "sidebar: Player Intelligence", "keywords": "team form head to head environment" },
+        { "href": "/injuries", "label": "Injuries & Availability", "was": "sidebar: Player Intelligence", "keywords": "injury report status out questionable" },
+        { "href": "/live/following", "label": "My Following", "was": "hidden: Settings and More sheet", "keywords": "followed games watchlist thresholds notifications favourite teams" },
+        { "href": "/live/research-tracker", "label": "Research Tracker", "was": "hidden: Settings and More sheet", "keywords": "paper tickets in progress legs observed" }
+      ]
+    },
+    {
+      "id": "players",
+      "label": "Players",
+      "href": "/players",
+      "primary": true,
+      "summary": "Profiles, props, minutes and history",
+      "pages": [
+        { "href": "/players", "label": "Player Explorer", "was": "sidebar: Player Intelligence", "keywords": "directory search averages" },
+        { "href": "/player-props", "label": "Player Props", "was": "sidebar: Command Center", "keywords": "prop markets quotes manual entry over under" },
+        { "href": "/minutes", "label": "Minutes Intelligence", "was": "sidebar: Player Intelligence", "keywords": "projected minutes rotation role" },
+        { "href": "/players/compare", "label": "Player Comparison", "was": "sidebar: Player Intelligence", "keywords": "compare side by side" },
+        { "href": "/players/history", "label": "Historical Performance", "was": "sidebar: Player Intelligence", "keywords": "history game log frequency" },
+        { "href": "/teams", "label": "Teams", "was": "hidden: Settings and More sheet", "keywords": "team list roster" }
+      ]
+    },
+    {
+      "id": "markets",
+      "label": "Markets",
+      "href": "/kalshi-intelligence",
+      "primary": true,
+      "summary": "Observed prices, read-only",
+      "pages": [
+        { "href": "/kalshi-intelligence", "label": "Kalshi Markets", "was": "sidebar: Command Center", "keywords": "kalshi market watch contracts prices" },
+        { "href": "/markets", "label": "Markets", "was": "hidden: Settings and More sheet", "keywords": "verified quotes providers odds" },
+        { "href": "/exposure", "label": "Shared-Risk Monitor", "was": "hidden: Settings and More sheet", "keywords": "exposure shared risk correlation" }
+      ]
+    },
+    {
+      "id": "research",
+      "label": "Research",
+      "href": "/picks",
+      "primary": true,
+      "summary": "What the models concluded and how it has done on paper",
+      "pages": [
+        { "href": "/picks", "label": "Top Picks", "was": "sidebar: Command Center", "keywords": "selections ranked qualified watchlist rejected" },
+        { "href": "/parlays", "label": "Parlay Research", "was": "sidebar: Command Center", "keywords": "combinations legs double triple" },
+        { "href": "/parlays/same-game", "label": "Same-Game Research", "was": "sidebar: Command Center", "keywords": "sgp same game combinations" },
+        { "href": "/builder", "label": "Research Builder", "was": "sidebar: My Research", "keywords": "build combination evaluate" },
+        { "href": "/tickets", "label": "Paper Tickets", "was": "sidebar: My Research", "keywords": "paper tickets open settled" },
+        { "href": "/results", "label": "Results", "was": "sidebar: My Research", "keywords": "settled calibration equity" },
+        { "href": "/performance", "label": "Strategy Performance", "was": "sidebar: My Research", "keywords": "hit rate roi by market engine structure" },
+        { "href": "/simulations", "label": "Simulations", "was": "hidden: Settings and More sheet", "keywords": "simulation metadata" },
+        { "href": "/backtesting", "label": "Backtesting", "was": "hidden: Settings and More sheet", "keywords": "backtest walk-forward" }
+      ]
+    },
+    {
+      "id": "system",
+      "label": "Intelligence & System",
+      "href": "/jarvis",
+      "primary": false,
+      "summary": "The assistant, the library and the machinery",
+      "pages": [
+        { "href": "/jarvis", "label": "JARVIS", "was": "sidebar: Command Center", "keywords": "assistant ask conversation memory briefings events" },
+        { "href": "/cortex", "label": "CORTEX", "was": "sidebar: Command Center", "keywords": "knowledge library encyclopedia playbook dna" },
+        { "href": "/research-lab", "label": "Research Lab", "was": "sidebar: System", "keywords": "hypotheses experiments correlations findings" },
+        { "href": "/agents", "label": "Agent Operations", "was": "sidebar: System", "keywords": "jobs agents status" },
+        { "href": "/models", "label": "Model Registry", "was": "sidebar: System", "keywords": "models registry validation" },
+        { "href": "/data-health", "label": "Data Health", "was": "sidebar: System", "keywords": "providers freshness coverage" },
+        { "href": "/settings", "label": "Settings", "was": "sidebar: System", "keywords": "configuration risk policy" },
+        { "href": "/admin", "label": "Operations Admin", "was": "hidden: Settings and More sheet", "keywords": "owner controls pause readiness" },
+        { "href": "/admin/ai-budget", "label": "AI Budget", "was": "hidden: Settings and More sheet", "keywords": "budget spend allocations cap" }
+      ]
+    }
+  ],
+  "shortcuts": [
+    { "workspace": "today", "href": "/jarvis?tab=briefings", "label": "JARVIS Briefings", "note": "A tab of /jarvis, also listed under Today. Not a separate page." }
+  ]
+}

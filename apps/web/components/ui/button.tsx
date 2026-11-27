@@ -5,16 +5,16 @@ type Variant = "primary" | "outline" | "ghost" | "danger";
 type Size = "sm" | "md";
 
 const VARIANTS: Record<Variant, string> = {
-  primary: "bg-accent text-bg font-semibold shadow-accent hover:brightness-110 disabled:bg-accent/30 disabled:text-bg/70 disabled:shadow-none",
-  outline: "bg-raised text-ink ring-1 ring-inset ring-line hover:bg-line/70 disabled:text-faint",
+  primary: "bg-ink text-bg2 font-semibold hover:bg-soft disabled:bg-raised disabled:text-faint",
+  outline: "bg-bg2 text-ink border border-line-strong hover:border-ink hover:bg-raised disabled:text-faint disabled:border-line",
   ghost: "bg-transparent text-muted hover:bg-raised hover:text-ink disabled:text-faint",
-  danger: "bg-bad/10 text-bad ring-1 ring-inset ring-bad/40 hover:bg-bad/20 disabled:opacity-50",
+  danger: "bg-bg2 text-bad border border-bad hover:bg-bad-dim disabled:text-faint disabled:border-line",
 };
 
-// Heights grow to the 44px touch target on small screens.
+// 44px touch targets on small screens, 36–40px on a pointer.
 const SIZES: Record<Size, string> = {
-  sm: "min-h-[44px] px-3 text-sm md:min-h-0 md:h-8 md:px-2.5 md:text-xs",
-  md: "min-h-[44px] px-4 text-sm md:min-h-0 md:h-9",
+  sm: "min-h-[44px] px-3.5 text-sm md:min-h-0 md:h-9 md:px-3",
+  md: "min-h-[44px] px-4 text-sm md:min-h-0 md:h-10",
 };
 
 export function Button({
@@ -28,7 +28,7 @@ export function Button({
     <button
       type={type}
       className={cn(
-        "inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md font-medium transition-colors disabled:cursor-not-allowed",
+        "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded font-semibold transition-colors disabled:cursor-not-allowed",
         VARIANTS[variant],
         SIZES[size],
         className,
@@ -39,5 +39,5 @@ export function Button({
 }
 
 export const linkButton =
-  "inline-flex min-h-[44px] items-center gap-1.5 rounded-md bg-raised px-3 text-sm font-medium text-ink ring-1 ring-inset ring-line hover:bg-line/70 md:min-h-0 md:h-8 md:px-2.5 md:text-xs";
-export const textLink = "inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline";
+  "inline-flex min-h-[44px] items-center gap-2 whitespace-nowrap rounded border border-line-strong bg-bg2 px-3.5 text-sm font-semibold text-ink hover:border-ink hover:bg-raised md:min-h-0 md:h-9 md:px-3";
+export const textLink = "link inline-flex min-h-[44px] items-center gap-1 text-sm text-ink md:min-h-0";

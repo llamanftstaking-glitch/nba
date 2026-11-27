@@ -3,37 +3,36 @@ import { cn } from "@/lib/cn";
 
 export type Tone = "neutral" | "accent" | "accent-solid" | "warn" | "bad" | "info";
 
+// A label is text. Only the top research tier keeps a box, because it is the one label
+// that has to be found at a glance.
 const TONES: Record<Tone, string> = {
-  neutral: "bg-raised text-muted",
-  accent: "bg-accent/10 text-accent ring-1 ring-inset ring-accent/40",
-  "accent-solid": "bg-accent text-bg",
-  warn: "bg-warn/10 text-warn ring-1 ring-inset ring-warn/40",
-  bad: "bg-bad/10 text-bad ring-1 ring-inset ring-bad/40",
-  info: "bg-info/10 text-info ring-1 ring-inset ring-info/30",
+  neutral: "text-muted",
+  accent: "text-ink",
+  "accent-solid": "rounded-sm bg-ink px-1.5 py-px text-bg2",
+  warn: "text-warn",
+  bad: "text-bad",
+  info: "text-info",
 };
 
-/** Boxed label. Reserved for classification and a few true states; ordinary metadata is plain text. */
+/** Classification and a few true states, as a short weighted word. */
 export function Badge({ tone = "neutral", children, className, title }: { tone?: Tone; children: ReactNode; className?: string; title?: string }) {
   return (
-    <span
-      title={title}
-      className={cn("inline-flex items-center whitespace-nowrap rounded px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-wide", TONES[tone], className)}
-    >
+    <span title={title} className={cn("inline-flex items-center whitespace-nowrap text-2xs font-bold", TONES[tone], className)}>
       {children}
     </span>
   );
 }
 
 const DOT: Record<Tone, string> = {
-  neutral: "bg-faint",
-  accent: "bg-accent",
-  "accent-solid": "bg-accent",
+  neutral: "border border-faint bg-transparent",
+  accent: "bg-ink",
+  "accent-solid": "bg-ink",
   warn: "bg-warn",
   bad: "bg-bad",
   info: "bg-info",
 };
 
-/** Status as a small coloured dot plus a text label (the label always carries the meaning). */
+/** Status as a small mark plus a text label (the label always carries the meaning). */
 export function StatusDot({ tone = "neutral", children, className, ...rest }: { tone?: Tone; children: ReactNode } & Omit<HTMLAttributes<HTMLSpanElement>, "children">) {
   return (
     <span {...rest} className={cn("inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-medium text-soft", className)}>

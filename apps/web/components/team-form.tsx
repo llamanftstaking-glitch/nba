@@ -28,7 +28,7 @@ export function TeamFormComparison({ home, away, homeAbbr, awayAbbr }: { home: T
     <table className="w-full border-collapse text-sm" data-testid="team-form">
       <caption className="sr-only">Team form comparison</caption>
       <thead>
-        <tr className="border-b border-line text-2xs uppercase tracking-wide text-muted">
+        <tr className="border-b border-line text-2xs text-muted">
           <th scope="col" className="pb-2 pr-2 text-left font-semibold">Metric</th>
           <th scope="col" className="px-2 pb-2 text-right font-semibold">{awayAbbr}</th>
           <th scope="col" className="pb-2 pl-2 text-right font-semibold">{homeAbbr}</th>
@@ -36,7 +36,7 @@ export function TeamFormComparison({ home, away, homeAbbr, awayAbbr }: { home: T
       </thead>
       <tbody>
         {ROWS.map(([k, label, d]) => (
-          <tr key={k} className="border-b border-line/40 last:border-0">
+          <tr key={k} className="border-b border-line last:border-0">
             <th scope="row" className="py-1.5 pr-2 text-left font-normal text-muted">{label}</th>
             <td className="px-2 py-1.5 text-right font-medium text-ink">{cell(away?.[k], d)}</td>
             <td className="py-1.5 pl-2 text-right font-medium text-ink">{cell(home?.[k], d)}</td>

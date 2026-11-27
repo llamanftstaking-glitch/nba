@@ -39,7 +39,7 @@ export default function CortexPage() {
   const setTab = (t: string) => setParams({ tab: t, department: null, player: null, team: null, status: null });
 
   return (
-    <div className="space-y-4" data-testid="cortex-page">
+    <div className="space-y-9" data-testid="cortex-page">
       <PageHeader
         title="CORTEX"
         sub="The basketball reference library JARVIS reads from: written knowledge records with their sources and verification status, and player and team profiles computed from this platform’s own box scores."

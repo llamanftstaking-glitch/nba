@@ -26,8 +26,8 @@ export function MilestoneRow({ m, showPlayer = false, canDelete = true }: { m: M
               current <span className="text-ink">{m.current ?? "—"}</span> · threshold <span className="text-ink">{m.threshold}</span> · remaining <span className="text-ink">{m.remaining ?? "—"}</span>
             </span>
           </div>
-          <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-line/70" role="img" aria-label={`Current ${m.current ?? "not available"} of threshold ${m.threshold}`}>
-            <div className="h-full rounded-full bg-info" style={{ width: `${pct}%` }} />
+          <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-line" role="img" aria-label={`Current ${m.current ?? "not available"} of threshold ${m.threshold}`}>
+            <div className="h-full rounded bg-info" style={{ width: `${pct}%` }} />
           </div>
           <div className="num mt-0.5 text-xs text-muted">
             {m.reached ? `Threshold reached${m.reached_value !== null ? ` at ${m.reached_value}` : ""}${m.reached_at ? ` · ${fmtClockET(m.reached_at)}` : ""}` : "Tracking"} · game {m.game_status ? titleCase(m.game_status) : "status —"}

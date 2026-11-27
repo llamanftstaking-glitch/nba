@@ -3,62 +3,96 @@
 Scope: `apps/web` (Next.js 15 App Router). The app is an owner-only research terminal in research /
 paper-testing mode. It renders only what `API-CONTRACT.md` provides and contains no fixture data.
 
-## 1. Navigation model (V3)
+## 1. Navigation model (Courtside shell)
 
-Desktop (≥ 1024px): left sidebar with four groups, collapsible to an icon rail.
+Source of truth: `apps/web/lib/nav-destinations.json` (read by `lib/nav.ts`, the shell, the All pages menu, the
+phone More sheet, global search and `e2e/smoke.mjs`). **36 destinations in six groups.** Every destination that
+existed in the previous shell (27 sidebar links and the 9 pages that were reachable only from Settings or the More
+sheet) is in this list with the same label and the same URL; the smoke test compares the list with
+`git show main:apps/web/lib/nav.ts` and clicks every one of them.
 
-| Group | Label | Route | API |
-|---|---|---|---|
-| Command Center | Live Games (first item; pulsing dot only while a game is live) | `/live`, `/live/following`, `/live/research-tracker` | `/live/scoreboard`, `/live/watchlist` (+ `follow`, `unfollow`), `/live/milestones` (+ `/{id}/delete`), `/live/research-tracker`, `/jarvis/events?kind=milestone_reached` |
-| | JARVIS | `/jarvis` (`?c=` conversation, `?tab=memory|briefings|events`) | `/jarvis/state`, `/jarvis/suggestions`, `/jarvis/conversations` (+ `/{id}`, `/{id}/delete`, `/{id}/messages` stream), `/jarvis/memory`, `/jarvis/briefings`, `/jarvis/events` |
-| | CORTEX (knowledge library; under JARVIS) | `/cortex` (`?tab=overview|encyclopedia|playbook|player-dna|team-dna|coach-dna|statistics|research|sources|coverage|evaluations`, plus `department=`, `player=`, `team=`, `status=`), `/cortex/[slug]` | `/cortex/overview`, `/cortex/concepts` (+ `/{slug}`), `/cortex/sources`, `/cortex/players` (+ `/{id}/dna`), `/cortex/teams` (+ `/{id}/dna`), `/cortex/research`, `/cortex/benchmark` (owner) |
-| | Overview (landing) | `/` | `/command-center`, `/player-props`, `/combos` |
-| | Today's Games | `/games` | `/games` |
-| | Top Picks | `/picks` | `/selections` |
-| | Player Props | `/player-props` | `/player-props`, `/player-props/manual` (GET/POST/withdraw), `/players/{id}/threshold`, `/players/{id}/averages` |
-| | Kalshi Markets | `/kalshi-intelligence`, `/kalshi-intelligence/[ticker]` | `/kalshi/markets`, `/kalshi/markets/{ticker}` |
-| | Starting Lineups | `/lineups` | `/lineups`, `/games/{id}/lineup-history` |
-| | Parlay Research | `/parlays` | `/combos`, `/selections` |
-| | Same-Game Research | `/parlays/same-game` | `/combos?category=sgp`, `/games` |
-| Player Intelligence | Player Explorer | `/players`, `/players/[id]` | `/players`, `/players/{id}` + `/averages`, `/threshold`, `/splits`, `/game-logs` |
-| | Minutes Intelligence | `/minutes` | `/minutes` |
-| | Player Comparison | `/players/compare?ids=` | `/players`, `/players/{id}`, `/averages`, `/threshold` |
-| | Historical Performance | `/players/history` | `/players` (deep-links to `/players/[id]#history`) |
-| | Matchup Intelligence | `/matchups` | `/games`, `/games/{id}` |
-| | Injuries & Availability | `/injuries` | `/injuries` |
-| My Research | Research Builder | `/builder` | `/selections`, `/combos`, `POST /builder/evaluate`, `POST /paper/tickets` |
-| | Paper Tickets | `/tickets` | `/paper/tickets` |
-| | Daily Editions | `/research/daily` | `/editions`, `/editions/{id}` |
-| | Results | `/results` | `/results` (+ filter option sources) |
-| | Strategy Performance | `/performance` | `/performance/strategies` |
-| System | Research Lab | `/research-lab` | `/research-lab` |
-| | Agent Operations | `/agents` | `/agents` |
-| | Model Registry | `/models` | `/models`, `/backtests` |
-| | Data Health | `/data-health` | `/data-health`, `/data-health/providers` |
-| | Settings | `/settings` | `/settings` |
+**Desktop (≥ 1024px).** A top bar: wordmark (home), the five workspaces `Today | Games | Players | Markets |
+Research`, global search (`/` or Ctrl/Cmd+K), `All pages`, `Ask JARVIS` (Ctrl/Cmd+J) and the account control
+(email, role, Settings, Log out). Under it, a workspace row that lists **every page of the current workspace** as
+links and holds the slate date control; the current page carries `aria-current="page"`. Pages of the sixth group,
+Intelligence & System, are opened from `All pages` (or search); once on one of them the workspace row lists that
+whole group. Under the row sits the scoreboard strip. The `All pages` menu is a dialog with all six groups and
+every page; it opens from the keyboard and holds focus.
 
-Reachable from Settings ("Operations and research tools"), the mobile "More" sheet and in-page links, but not in
-the sidebar: `/admin`, `/exposure`, `/markets`, `/simulations`, `/backtesting`, `/teams`, `/teams/[id]`,
-`/games/[id]`. `/login` is outside the shell.
+**Phone and tablet (< 1024px).** A bottom tab bar with five items: `Today | Games | Players | Research | More`.
+`More` opens a sheet with the same grouped list of every page, plus the signed-in email and Log out. The top bar
+keeps the wordmark, search and `Ask`. The workspace row and the date control stay under the top bar.
 
-`/live/following` and `/live/research-tracker` are reached from the sub-navigation on `/live` and from the "More" sheet.
-The sidebar has 27 destinations.
+**Detail pages** (`/games/[id]`, `/players/[id]`, `/teams/[id]`, `/kalshi-intelligence/[ticker]`,
+`/cortex/[slug]`) show a breadcrumb `Workspace / Page / this record`, and the workspace row marks their parent.
+`/login` is outside the shell.
 
-Redirects: `/today` → `/`, `/research` → `/research/daily`, `/props` → `/player-props`.
+**Titles.** Every route sets `document.title`: `Top Picks · Research · GIZER NBA`; a detail page uses its own
+heading (`Detroit Pistons at Orlando Magic · Today's Games · GIZER NBA`).
 
-Mobile and tablet (< 1024px): bottom navigation `Home | Games | Props | Parlays | More` (56px, safe-area padded).
-"More" opens a sheet with all four groups plus the extra pages and Log out. The persistent notice sits under the
-top bar; on desktop it is a fixed footer.
+**Skip link.** "Skip to content" is the first Tab stop on every page and moves focus to `<main id="main">`.
+
+| Workspace | Label | Route | Where it was before | API |
+|---|---|---|---|---|
+| Today | Overview | `/` | sidebar: Command Center | `/command-center`, `/live/scoreboard`, `/player-props`, `/combos`, `/kalshi/markets?limit=1` |
+|  | Daily Editions | `/research/daily` | sidebar: My Research | `/editions`, `/editions/{id}` |
+| Games | Today's Games | `/games` | sidebar: Command Center | `/games` |
+|  | Live Games | `/live` | sidebar: Command Center | `/live/scoreboard`, `/live/games/{id}` (leaders) |
+|  | Starting Lineups | `/lineups` | sidebar: Command Center | `/lineups`, `/games/{id}/lineup-history` |
+|  | Matchup Intelligence | `/matchups` | sidebar: Player Intelligence | `/games`, `/games/{id}` |
+|  | Injuries & Availability | `/injuries` | sidebar: Player Intelligence | `/injuries` |
+|  | My Following | `/live/following` | hidden: Settings and More sheet | `/live/watchlist` (+ `follow`, `unfollow`), `/live/milestones` |
+|  | Research Tracker | `/live/research-tracker` | hidden: Settings and More sheet | `/live/research-tracker` |
+| Players | Player Explorer | `/players` | sidebar: Player Intelligence | `/players`; `/players/[id]`: `/players/{id}` + `/averages`, `/threshold`, `/splits`, `/game-logs` |
+|  | Player Props | `/player-props` | sidebar: Command Center | `/player-props`, `/player-props/manual`, `/players/{id}/threshold` |
+|  | Minutes Intelligence | `/minutes` | sidebar: Player Intelligence | `/minutes` |
+|  | Player Comparison | `/players/compare` | sidebar: Player Intelligence | `/players`, `/players/{id}`, `/averages`, `/threshold` |
+|  | Historical Performance | `/players/history` | sidebar: Player Intelligence | `/players` |
+|  | Teams | `/teams` | hidden: Settings and More sheet | `/teams`; `/teams/[id]`: `/teams/{id}` |
+| Markets | Kalshi Markets | `/kalshi-intelligence` | sidebar: Command Center | `/kalshi/markets`; `/kalshi-intelligence/[ticker]`: `/kalshi/markets/{ticker}` |
+|  | Markets | `/markets` | hidden: Settings and More sheet | `/markets` |
+|  | Shared-Risk Monitor | `/exposure` | hidden: Settings and More sheet | `/exposure` |
+| Research | Top Picks | `/picks` | sidebar: Command Center | `/selections` |
+|  | Parlay Research | `/parlays` | sidebar: Command Center | `/combos`, `/selections` |
+|  | Same-Game Research | `/parlays/same-game` | sidebar: Command Center | `/combos?category=sgp`, `/games` |
+|  | Research Builder | `/builder` | sidebar: My Research | `/selections`, `/combos`, `POST /builder/evaluate`, `POST /paper/tickets` |
+|  | Paper Tickets | `/tickets` | sidebar: My Research | `/paper/tickets` |
+|  | Results | `/results` | sidebar: My Research | `/results` |
+|  | Strategy Performance | `/performance` | sidebar: My Research | `/performance/strategies` |
+|  | Simulations | `/simulations` | hidden: Settings and More sheet | `/combos` |
+|  | Backtesting | `/backtesting` | hidden: Settings and More sheet | `/backtests` |
+| Intelligence & System | JARVIS | `/jarvis` | sidebar: Command Center | `/jarvis/*` (`?c=`, `?tab=memory|briefings|events`) |
+|  | CORTEX | `/cortex` | sidebar: Command Center | `/cortex/*` (`?tab=`); `/cortex/[slug]`: `/cortex/concepts/{slug}` |
+|  | Research Lab | `/research-lab` | sidebar: System | `/research-lab` |
+|  | Agent Operations | `/agents` | sidebar: System | `/agents` |
+|  | Model Registry | `/models` | sidebar: System | `/models`, `/backtests` |
+|  | Data Health | `/data-health` | sidebar: System | `/data-health`, `/data-health/providers` |
+|  | Settings | `/settings` | sidebar: System | `/settings` |
+|  | Operations Admin | `/admin` | hidden: Settings and More sheet | `/admin/*` |
+|  | AI Budget | `/admin/ai-budget` | hidden: Settings and More sheet | `/admin/ai-budget` |
+
+Shortcut (not a separate page): `JARVIS Briefings` → `/jarvis?tab=briefings`, listed under Today.
+
+Redirects (unchanged): `/today` → `/`, `/research` → `/research/daily`, `/props` → `/player-props`. No URL was
+renamed or removed in this stage.
+
+The research notice ("Research and paper testing only. No outcome is guaranteed. No real-money execution.") is in
+the page footer on every page.
 
 ## 2. Global context
 
-* **Date.** Top bar: previous/next-day arrows and a dropdown of `available_dates`. The selection lives in the URL
+* **Date.** Workspace row: previous/next-day arrows and a dropdown of `available_dates`. The selection lives in the URL
   (`?date=YYYY-MM-DD`); `DLink` carries it across pages. Historical dates show the original editions.
 * **Auth.** `middleware.ts` redirects to `/login` without the `gizer_session` cookie (UX only); `lib/api.ts`
   redirects on any `401`; the CSRF token is kept in memory and restored through `/auth/me`.
 * **Notice.** "Research and paper testing only. No outcome is guaranteed. No real-money execution." on every page.
 
 ## 3. Page composition
+
+> Courtside stage one re-laid out `/`, `/live`, `/games/[id]`, `/picks`, `/kalshi-intelligence` and `/jarvis`
+> (see `docs/design/aesthetic/07-APP-INTEGRATION.md` §3). The data, endpoints, query parameters and behaviours
+> described below are unchanged; where a paragraph says "card", "tile" or "sidebar", read it as the ruled row,
+> the typographic stat or the workspace row that replaced it. Visual rules are in `docs/design/DESIGN-SYSTEM.md`.
 
 **Overview `/`** — branded heading → compact warnings banner (one line each) → eight summary tiles (games, markets
 analyzed, qualified, combinations, lineups confirmed/projected, prop markets, latest refresh, edition) → game cards

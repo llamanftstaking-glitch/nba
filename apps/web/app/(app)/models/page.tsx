@@ -12,7 +12,7 @@ export default function ModelsPage() {
   const models = useModels();
   const backtests = useBacktests();
   return (
-    <div className="space-y-5">
+    <div className="space-y-9">
       <PageHeader
         title="Model Registry"
         sub="Registered models, their status, data periods, latest evaluation and stated limitations."

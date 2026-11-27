@@ -52,14 +52,14 @@ export default function ComparePage() {
   const players = ids.map((id, i) => ({ id, detail: details[i]?.data, window: averages[i]?.data?.windows.find((w) => w.key === win), recent: recent[i]?.data }));
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-9">
       <PageHeader title="Player Comparison" sub="Compare two or three players over the same window. Averages are descriptive history with their sample sizes." />
       <div className="grid grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-[360px_minmax(0,1fr)]">
         <Panel title="Players" icon={GitCompare}>
           {ids.length > 0 && (
             <ul className="mb-3 space-y-1.5" data-testid="compare-selected">
               {players.map((p) => (
-                <li key={p.id} className="flex items-center gap-2.5 rounded-md bg-raised/50 px-2.5 py-1.5">
+                <li key={p.id} className="flex items-center gap-2.5 border-l-2 border-line py-1 pl-3">
                   <PlayerAvatar name={p.detail?.player.name ?? "?"} src={p.detail?.player.headshot_url} size={28} />
                   <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">{p.detail?.player.name ?? `Player ${p.id}`}</span>
                   <button type="button" aria-label="Remove from comparison" className="inline-flex h-11 w-11 items-center justify-center rounded-md text-muted hover:bg-raised hover:text-ink md:h-8 md:w-8" onClick={() => setIds(ids.filter((x) => x !== p.id))}>
@@ -76,7 +76,7 @@ export default function ComparePage() {
           )}
           {quick.players.length > 0 && (
             <div className="mb-3">
-              <div className="mb-1 text-2xs font-semibold uppercase tracking-wide text-muted">{quick.source === "slate" ? "Slate players" : "Players"}</div>
+              <div className="mb-1 text-2xs font-semibold text-muted">{quick.source === "slate" ? "Slate players" : "Players"}</div>
               <ul className="flex flex-wrap gap-1.5" data-testid="compare-chips">
                 {quick.players.filter((p) => !ids.includes(p.id)).slice(0, 10).map((p) => (
                   <li key={p.id}>
@@ -122,9 +122,9 @@ export default function ComparePage() {
                     <caption className="sr-only">Average per game over the selected window</caption>
                     <thead>
                       <tr className="border-b border-line">
-                        <th scope="col" className="w-16 pb-2 text-left text-2xs font-semibold uppercase tracking-wide text-muted">Stat</th>
+                        <th scope="col" className="w-16 pb-2 text-left text-2xs font-semibold text-muted">Stat</th>
                         {players.map((p) => (
-                          <th key={p.id} scope="col" className="px-1 pb-2 text-right align-bottom">
+                          <th key={p.id} scope="col" className="px-1 pb-2 text-right align-bottom normal-case tracking-normal">
                             <DLink href={`/players/${p.id}`} className="block truncate text-sm font-semibold text-ink hover:underline">
                               {p.detail?.player.name}
                             </DLink>
@@ -138,7 +138,7 @@ export default function ComparePage() {
                     </thead>
                     <tbody>
                       {TABLE_STATS.map((s) => (
-                        <tr key={s} className="border-b border-line/40 last:border-0">
+                        <tr key={s} className="border-b border-line last:border-0">
                           <th scope="row" className="py-1.5 text-left text-xs font-medium text-muted">{statLabel(s)}</th>
                           {players.map((p) => (
                             <td key={p.id} className="num px-1 py-1.5 text-right font-medium text-ink">

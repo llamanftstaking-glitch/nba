@@ -17,7 +17,7 @@ import type { GameCard } from "@/lib/types";
 function MatchupCard({ game }: { game: GameCard }) {
   const q = useQuery({ queryKey: ["game", game.id], queryFn: () => api.game(game.id) });
   return (
-    <article className="rounded-lg bg-card p-4 ring-1 ring-inset ring-line/60" data-testid="matchup-card">
+    <article className="blk p-4" data-testid="matchup-card">
       <MatchupHeader game={game} />
       <div className="mt-4 grid gap-5 lg:grid-cols-[1.2fr_1.4fr_1fr]">
         <div>
@@ -65,7 +65,7 @@ export default function MatchupsPage() {
       <PageHeader title="Matchup Intelligence" sub="Team form, projected environment and head-to-head history for each game on the slate." />
       <QueryView query={q} rows={6} isEmpty={(d) => d.games.length === 0} empty={<EmptyState title="No games are scheduled for this date." icon={Swords} />}>
         {(d) => (
-          <div className="space-y-4">
+          <div className="space-y-9">
             {d.games.map((g) => (
               <MatchupCard key={g.id} game={g} />
             ))}

@@ -16,7 +16,7 @@ export default function KalshiMarketPage() {
         </DLink>
       </div>
       <h1 className="sr-only">Kalshi market detail</h1>
-      <div className="mx-auto max-w-4xl rounded-lg bg-card p-4 ring-1 ring-inset ring-line/60 md:p-6">
+      <div className="mx-auto max-w-4xl blk p-4 md:p-6">
         <KalshiDetailLoader ticker={decodeURIComponent(ticker)} />
       </div>
     </div>

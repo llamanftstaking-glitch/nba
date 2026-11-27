@@ -31,7 +31,7 @@ export function PlayerSearch({ action, placeholder = "Search players by name", e
       ) : items.length === 0 ? (
         <p className="mt-2 text-sm text-muted">No players match “{search}”.</p>
       ) : (
-        <ul className="mt-2 divide-y divide-line/40" data-testid="player-search-results">
+        <ul className="mt-2 divide-y divide-line" data-testid="player-search-results">
           {items.map((p) => (
             <li key={p.id} className="flex items-center gap-4 py-2">
               <PlayerAvatar name={p.name} size={32} />

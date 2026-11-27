@@ -1,9 +1,9 @@
 "use client";
 
-import { ListOrdered } from "lucide-react";
 import { useState } from "react";
-import { SelectionRow, SelectionsByGame } from "@/components/selection-row";
-import { Field, Input, Select } from "@/components/ui/field";
+import { ProbScaleKey } from "@/components/prob";
+import { SelectionHead, SelectionRow, SelectionsByGame } from "@/components/selection-row";
+import { Input, Select } from "@/components/ui/field";
 import { Pagination } from "@/components/ui/pagination";
 import { PageHeader, Panel } from "@/components/ui/panel";
 import { EmptyState, QueryView } from "@/components/ui/states";
@@ -44,46 +44,53 @@ export default function PicksPage() {
   const meta = TABS.find((t) => t[0] === tab) ?? TABS[0];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-9">
       <PageHeader
         title="Top Picks"
-        sub="Qualified selections the model puts at 65% or higher, most likely first, at most five per game. A model probability is an estimate, not an observed hit rate. Other tabs page through every evaluated selection."
+        sub="Qualified selections the model puts at 65% or higher, most likely first, at most five per game. Other tabs page through every evaluated selection."
         right={
           q.data?.edition ? (
-            <span className="text-xs text-muted">
-              {titleCase(q.data.edition.kind)} v{q.data.edition.version} · {fmtDateTimeET(q.data.edition.published_at) ?? "—"}
-            </span>
+            <p className="max-w-[44ch] text-sm text-muted">
+              <span className="slot mr-2 text-ink">Paper research only</span>
+              {titleCase(q.data.edition.kind)} edition v{q.data.edition.version}, published {fmtDateTimeET(q.data.edition.published_at) ?? "—"}.
+            </p>
           ) : undefined
         }
       />
       <Tabs label="Selection view" scroll value={tab} onChange={(v) => { setTab(v); reset(); }} items={TABS.map(([id, label]) => ({ id, label, count: count(id) }))} />
       <div className="grid grid-cols-2 gap-3 sm:max-w-xl">
-        <Field label="Search">
-          <Input type="search" placeholder="Player, team or market" value={text} onChange={(e) => { setText(e.target.value); reset(); }} data-testid="picks-search" />
-        </Field>
-        <Field label="Game">
+        <label>
+          <span className="sr-only">Search selections</span>
+          <Input type="search" placeholder="Search player, team or market" value={text} onChange={(e) => { setText(e.target.value); reset(); }} data-testid="picks-search" />
+        </label>
+        <label>
+          <span className="sr-only">Game</span>
           <Select value={game} onChange={(e) => { setGame(e.target.value); reset(); }}>
             <option value="">All games</option>
             {(games.data?.games ?? []).map((g) => (
               <option key={g.id} value={g.id}>{g.label}</option>
             ))}
           </Select>
-        </Field>
+        </label>
       </div>
-      <Panel title={meta[1]} icon={ListOrdered} right={q.data ? <span className="num">{q.data.items.length} shown · {q.data.total} matching</span> : undefined}>
+      <Panel title={meta[1]} right={q.data ? <span className="num">{q.data.items.length} shown · {q.data.total} matching</span> : undefined}>
         <QueryView query={q} rows={6}>
           {(d) =>
             !d.edition ? (
-              <EmptyState title="No research edition has been published for this date." icon={ListOrdered}>
+              <EmptyState title="No research edition has been published for this date.">
                 Selections appear here after the first edition of the day is published.
               </EmptyState>
             ) : d.items.length === 0 ? (
-              <EmptyState title={search || game ? "No selection matches these filters." : meta[2]} icon={ListOrdered} />
+              <EmptyState title={search || game ? "No selection matches these filters." : meta[2]} />
             ) : ranked ? (
-              <SelectionsByGame items={d.items} perGame={5} />
+              <>
+                <SelectionsByGame items={d.items} perGame={5} />
+                <ProbScaleKey className="mt-5" />
+              </>
             ) : (
               <>
-                <ul className="divide-y divide-line/30" data-testid="picks-list">
+                <SelectionHead />
+                <ul data-testid="picks-list">
                   {d.items.map((s) => (
                     <SelectionRow key={s.id} s={s} />
                   ))}

@@ -11,14 +11,11 @@ export function TeamLogo({ team, size = 28, className }: { team: Pick<TeamRef, "
   if (!team.logo_url || failed) {
     return (
       <span
-        style={box}
+        style={{ ...box, fontSize: Math.max(13, Math.round(size * 0.36)), fontStretch: "70%" }}
         title={team.name}
-        className={cn(
-          "inline-flex shrink-0 items-center justify-center rounded-md bg-raised ring-1 ring-inset ring-line text-[11px] font-semibold text-soft",
-          className,
-        )}
+        className={cn("inline-flex shrink-0 items-center justify-center rounded bg-raised font-extrabold leading-none text-muted", className)}
       >
-        {team.abbr}
+        {size < 30 ? team.abbr.slice(0, 1) : team.abbr}
       </span>
     );
   }

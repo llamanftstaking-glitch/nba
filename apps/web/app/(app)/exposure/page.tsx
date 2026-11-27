@@ -45,8 +45,8 @@ function View({ d }: { d: Exposure }) {
   }
   const sim = d.simulation;
   return (
-    <div className="space-y-4">
-      <p className="rounded-md bg-warn/10 ring-1 ring-inset ring-warn/40 px-3 py-2 text-xs text-warn">
+    <div className="space-y-9">
+      <p className="border-l-4 border-warn pl-3 px-3 py-2 text-xs text-warn">
         Tickets that share a player, team, game or selection tend to win and lose together. Holding more overlapping tickets raises the chance
         that at least one wins without improving the expected aggregate result.
       </p>
@@ -87,7 +87,7 @@ function View({ d }: { d: Exposure }) {
         )}
       </Panel>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-x-12 gap-y-9 lg:grid-cols-2">
         <Panel title="Pairwise ticket dependency">
           {d.pairwise.length === 0 ? (
             <EmptyState title="No pair of tickets shares a leg." />

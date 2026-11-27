@@ -10,7 +10,7 @@ import type { InjuryChange } from "@/lib/types";
 /** Availability status changes: previous → current, what they affect, and where they came from. */
 export function InjuryChangeList({ items, showGame = true }: { items: InjuryChange[]; showGame?: boolean }) {
   return (
-    <ul className="divide-y divide-line/30" data-testid="injury-changes">
+    <ul className="divide-y divide-line" data-testid="injury-changes">
       {items.map((c, i) => {
         const name = <span className="font-semibold text-ink">{c.player_name}</span>;
         return (

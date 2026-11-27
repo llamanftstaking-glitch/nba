@@ -41,7 +41,7 @@ export default function DataHealthPage() {
                 {d.freshness.length === 0 ? <EmptyState title="No freshness checks are reported." /> : <FreshnessTable rows={d.freshness} />}
               </Panel>
               <Panel title="Provider configuration center" right={<span className="num">{providers.data ? `${providers.data.items.filter((p) => p.configured).length} of ${providers.data.items.length} configured` : ""}</span>}>
-                <p className="mb-3 rounded-md bg-raised/50 px-3 py-2 text-sm text-soft">
+                <p className="mb-3 border-l-2 border-line py-1 pl-3 text-sm text-soft">
                   Credentials are set in the server&apos;s <span className="num">.env</span> file and are never shown or entered here. This page only reports whether each credential is present.
                 </p>
                 <QueryView query={providers} rows={4} isEmpty={(p) => p.items.length === 0} empty={<EmptyState title="No providers are reported." />}>

@@ -51,14 +51,14 @@ function Rows({ rows }: { rows: [string, unknown][] }) {
     <>
       <dl className="grid grid-cols-1 gap-x-6 sm:grid-cols-2 xl:grid-cols-3">
         {shown.map(([k, v]) => (
-          <div key={k} className="flex items-baseline justify-between gap-3 border-b border-line/30 py-1 text-xs">
+          <div key={k} className="flex items-baseline justify-between gap-3 border-b border-line py-1 text-xs">
             <dt className="min-w-0 break-words text-muted">{titleCase(k.replace(/\|/g, " × "))}</dt>
             <dd className="shrink-0 text-right text-ink">{scalar(v)}</dd>
           </div>
         ))}
       </dl>
       {rows.length > 12 && (
-        <button type="button" className="mt-1 inline-flex min-h-[44px] items-center text-xs font-medium text-accent hover:underline md:min-h-0" aria-expanded={all} onClick={() => setAll((v) => !v)}>
+        <button type="button" className="mt-1 inline-flex min-h-[44px] items-center text-xs font-medium link md:min-h-0" aria-expanded={all} onClick={() => setAll((v) => !v)}>
           {all ? "Show fewer" : `Show all ${rows.length}`}
         </button>
       )}
@@ -77,13 +77,13 @@ function ObjTable({ rows }: { rows: Rec[] }) {
           <thead>
             <tr className="border-b border-line">
               {cols.map((c) => (
-                <th key={c} scope="col" className="px-1.5 pb-1 text-left text-2xs font-semibold uppercase tracking-wide text-muted">{titleCase(c)}</th>
+                <th key={c} scope="col" className="px-1.5 pb-1 text-left text-2xs font-semibold text-muted">{titleCase(c)}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {shown.map((r, i) => (
-              <tr key={i} className="border-b border-line/30 last:border-0">
+              <tr key={i} className="border-b border-line last:border-0">
                 {cols.map((c) => (
                   <td key={c} className="break-words px-1.5 py-1 align-top text-soft">{isScalar(r[c]) ? scalar(r[c]) : <span className="text-muted">nested</span>}</td>
                 ))}
@@ -93,7 +93,7 @@ function ObjTable({ rows }: { rows: Rec[] }) {
         </table>
       </div>
       {rows.length > 10 && (
-        <button type="button" className="mt-1 inline-flex min-h-[44px] items-center text-xs font-medium text-accent hover:underline md:min-h-0" aria-expanded={all} onClick={() => setAll((v) => !v)}>
+        <button type="button" className="mt-1 inline-flex min-h-[44px] items-center text-xs font-medium link md:min-h-0" aria-expanded={all} onClick={() => setAll((v) => !v)}>
           {all ? "Show fewer rows" : `Show all ${rows.length} rows`}
         </button>
       )}
@@ -119,7 +119,7 @@ export function MetricsDetails({ metrics, depth = 0 }: { metrics: Rec; depth?: n
       ))}
       {nested.map(([k, v]) => (
         <div key={k}>
-          <div className="mb-1 text-2xs font-semibold uppercase tracking-wide text-muted">{titleCase(k)}</div>
+          <div className="mb-1 text-2xs font-semibold text-muted">{titleCase(k)}</div>
           {Array.isArray(v) ? (
             v.length === 0 ? (
               <p className="text-xs text-muted">Empty.</p>
@@ -163,7 +163,7 @@ function Headline({ items }: { items: [string, ReactNode][] }) {
     <dl className="flex flex-wrap gap-x-5 gap-y-1">
       {items.map(([label, value]) => (
         <div key={label} className="min-w-[4.5rem]">
-          <dt className="text-2xs font-medium uppercase tracking-wide text-muted">{label}</dt>
+          <dt className="text-2xs font-medium text-muted">{label}</dt>
           <dd className="text-sm font-semibold text-ink">{value}</dd>
         </div>
       ))}
@@ -179,7 +179,7 @@ export function ModelsTable({ rows }: { rows: ModelItem[] }) {
         const e = m.latest_evaluation;
         const limits = Array.isArray(m.limitations) ? m.limitations.join("; ") : m.limitations;
         return (
-          <li key={m.id} className="rounded-md bg-raised/40 p-3" data-testid="registry-item">
+          <li key={m.id} className="border-l-2 border-line py-1 pl-3" data-testid="registry-item">
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-x-2">
@@ -204,7 +204,7 @@ export function ModelsTable({ rows }: { rows: ModelItem[] }) {
                     ["Promoted", m.promoted_at ? `${m.promoted_by ?? "—"} · ${fmtDateTimeET(m.promoted_at)}` : "Not promoted"],
                   ] as const
                 ).map(([l, v]) => (
-                  <div key={l} className="flex justify-between gap-3 border-b border-line/30 py-1">
+                  <div key={l} className="flex justify-between gap-3 border-b border-line py-1">
                     <dt className="text-muted">{l}</dt>
                     <dd className="num text-right text-ink">{v ?? <NA />}</dd>
                   </div>
@@ -228,7 +228,7 @@ export function BacktestsTable({ rows, caption = "Backtests" }: { rows: Backtest
     <>
       <ul className="space-y-2" aria-label={caption} data-testid="backtests-list">
         {shown.map((b) => (
-          <li key={b.id} className="rounded-md bg-raised/40 p-3" data-testid="registry-item">
+          <li key={b.id} className="border-l-2 border-line py-1 pl-3" data-testid="registry-item">
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-x-2">
@@ -256,7 +256,7 @@ export function BacktestsTable({ rows, caption = "Backtests" }: { rows: Backtest
         ))}
       </ul>
       {rows.length > 12 && (
-        <button type="button" className="mt-2 inline-flex min-h-[44px] items-center text-sm font-medium text-accent hover:underline md:min-h-0" aria-expanded={all} onClick={() => setAll((v) => !v)} data-testid="registry-more">
+        <button type="button" className="mt-2 inline-flex min-h-[44px] items-center text-sm font-medium link md:min-h-0" aria-expanded={all} onClick={() => setAll((v) => !v)} data-testid="registry-more">
           {all ? "Show fewer" : `Show all ${rows.length}`}
         </button>
       )}

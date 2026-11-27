@@ -53,7 +53,7 @@ export default function PlayerPropsPage() {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-9">
       <PageHeader
         title="Player Props"
         sub="Quoted and projected player markets for the slate, with descriptive history beside each line. Historical counts describe past games; model output is labelled separately."
@@ -66,7 +66,7 @@ export default function PlayerPropsPage() {
         </p>
       )}
 
-      <div className="grid grid-cols-2 gap-3 rounded-lg bg-card p-4 ring-1 ring-inset ring-line/60 md:grid-cols-4 xl:grid-cols-8" data-testid="props-filters">
+      <div className="grid grid-cols-2 gap-3 blk p-4 md:grid-cols-4 xl:grid-cols-8" data-testid="props-filters">
         <Field label="Search" className="col-span-2">
           <Input type="search" placeholder="Player name" value={text} onChange={(e) => { setText(e.target.value); reset(); }} data-testid="props-search" />
         </Field>
@@ -110,7 +110,7 @@ export default function PlayerPropsPage() {
           </Select>
         </Field>
         <label className="flex min-h-[44px] cursor-pointer items-center gap-2 self-end text-sm text-soft md:min-h-9">
-          <input type="checkbox" checked={quoted} onChange={(e) => { setQuoted(e.target.checked); reset(); }} className="h-4 w-4 accent-[rgb(0,229,160)]" data-testid="props-quoted" />
+          <input type="checkbox" checked={quoted} onChange={(e) => { setQuoted(e.target.checked); reset(); }} className="h-4 w-4 accent-ink" data-testid="props-quoted" />
           Quoted only
         </label>
       </div>
@@ -147,8 +147,8 @@ export default function PlayerPropsPage() {
         ) : (
           <EmptyState title="Manual market entry is available to the owner account only." />
         )}
-        <div className="mt-5 border-t border-line/50 pt-4">
-          <div className="mb-1 text-2xs font-semibold uppercase tracking-wide text-muted">Manual entries for this date</div>
+        <div className="mt-5 border-t border-line pt-4">
+          <div className="mb-1 text-2xs font-semibold text-muted">Manual entries for this date</div>
           <QueryView query={manual} rows={2}>
             {(d) => <ManualEntries items={d.items} />}
           </QueryView>

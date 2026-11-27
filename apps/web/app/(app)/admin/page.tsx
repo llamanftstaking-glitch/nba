@@ -73,8 +73,8 @@ export default function AdminPage() {
   const q = useQuery({ queryKey: ["operations"], queryFn: api.operations, refetchInterval: 30_000 });
   const ready = useQuery({ queryKey: ["ready"], queryFn: api.ready, refetchInterval: 30_000 });
   return (
-    <div className="space-y-4">
-      <PageHeader title="Operations Admin" sub="Owner-only controls. Pausing affects research jobs only; this system has no execution path."  right={<DLink href="/admin/ai-budget" className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline">AI budget →</DLink>} />
+    <div className="space-y-9">
+      <PageHeader title="Operations Admin" sub="Owner-only controls. Pausing affects research jobs only; this system has no execution path."  right={<DLink href="/admin/ai-budget" className="inline-flex items-center gap-1 text-xs font-medium link">AI budget →</DLink>} />
       <Panel title="Service readiness">
         <QueryView query={ready} rows={1}>
           {(r) => (
@@ -91,11 +91,11 @@ export default function AdminPage() {
       </Panel>
       <QueryView query={q} rows={8}>
         {(d) => (
-          <div className="space-y-4">
+          <div className="space-y-9">
             <Panel title="Pause toggle" tone={d.paused ? "warn" : undefined}>
               <PauseControl paused={d.paused} />
             </Panel>
-            <div className="grid gap-4 xl:grid-cols-2">
+            <div className="grid gap-x-12 gap-y-9 xl:grid-cols-2">
               <Panel title="Heartbeats">
                 {d.heartbeats.length === 0 ? <EmptyState title="No worker has reported a heartbeat." /> : <DataTable columns={BEAT_COLUMNS} rows={d.heartbeats} rowKey={(b) => b.worker} caption="Worker heartbeats" dense />}
               </Panel>

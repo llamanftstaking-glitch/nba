@@ -81,7 +81,7 @@ export function MinutesNotes({ meta }: { meta: MinutesMeta }) {
   const m = meta.model;
   const production = m?.status === "production";
   return (
-    <div className="space-y-1.5 rounded-lg bg-card px-4 py-3 text-sm ring-1 ring-inset ring-line/60" data-testid="minutes-notes">
+    <div className="space-y-1.5 blk px-4 py-3 text-sm" data-testid="minutes-notes">
       <p className="text-soft">Tiers and classifications are descriptive context about playing time. They are not qualification rules and they are not predictions.</p>
       <p className="flex flex-wrap items-center gap-x-2 text-muted">
         <span>Minutes model:</span>
@@ -106,7 +106,7 @@ export function MinutesNotes({ meta }: { meta: MinutesMeta }) {
 }
 
 export type MinutesSort = { key: string; order: "asc" | "desc" };
-const TH = "px-2 pb-2 text-2xs font-semibold uppercase tracking-wide text-muted";
+const TH = "px-2 pb-2 text-2xs font-semibold text-muted";
 
 function PlayerCell({ r }: { r: MinutesRow }) {
   return (
@@ -128,13 +128,13 @@ function PlayerCell({ r }: { r: MinutesRow }) {
 function Card({ r, children }: { r: MinutesRow; children?: ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
-    <article className="rounded-lg bg-card ring-1 ring-inset ring-line/60" data-testid="minutes-card" data-player-id={r.player_id}>
+    <article className="blk" data-testid="minutes-card" data-player-id={r.player_id}>
       <div className="flex items-center gap-3 p-3">
         <div className="min-w-0 flex-1">
           <PlayerCell r={r} />
         </div>
         <div className="shrink-0 text-right">
-          <div className="text-2xs font-medium uppercase text-muted">Proj min</div>
+          <div className="text-2xs font-medium text-muted">Proj min</div>
           <ProjMinutes r={r} className="text-base" />
         </div>
         <button type="button" aria-expanded={open} aria-label={`${open ? "Collapse" : "Expand"} ${r.player_name}`} onClick={() => setOpen((v) => !v)} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-muted hover:bg-raised" data-testid="minutes-card-toggle">
@@ -147,7 +147,7 @@ function Card({ r, children }: { r: MinutesRow; children?: ReactNode }) {
         <MinutesFlags r={r} />
       </div>
       {open && (
-        <div className="space-y-3 border-t border-line/50 p-3">
+        <div className="space-y-3 border-t border-line p-3">
           <dl className="grid grid-cols-5 gap-2">
             {(
               [
@@ -159,7 +159,7 @@ function Card({ r, children }: { r: MinutesRow; children?: ReactNode }) {
               ] as const
             ).map(([l, v]) => (
               <div key={l}>
-                <dt className="text-2xs font-medium uppercase text-muted">{l}</dt>
+                <dt className="text-2xs font-medium text-muted">{l}</dt>
                 <dd className="num text-sm text-ink">
                   <Val v={fmtNum(v)} />
                 </dd>
@@ -168,19 +168,19 @@ function Card({ r, children }: { r: MinutesRow; children?: ReactNode }) {
           </dl>
           <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
             <div>
-              <dt className="text-2xs font-medium uppercase text-muted">Starting status</dt>
+              <dt className="text-2xs font-medium text-muted">Starting status</dt>
               <dd><Role r={r} /></dd>
             </div>
             <div>
-              <dt className="text-2xs font-medium uppercase text-muted">Variability (L10)</dt>
+              <dt className="text-2xs font-medium text-muted">Variability (L10)</dt>
               <dd><Variability r={r} /></dd>
             </div>
             <div>
-              <dt className="text-2xs font-medium uppercase text-muted">Starts L10 · tier</dt>
+              <dt className="text-2xs font-medium text-muted">Starts L10 · tier</dt>
               <dd className="num text-ink"><Val v={r.starts_l10} /> · {r.tier ?? "—"}</dd>
             </div>
             <div>
-              <dt className="text-2xs font-medium uppercase text-muted">Sample</dt>
+              <dt className="text-2xs font-medium text-muted">Sample</dt>
               <dd className="num text-ink">n={r.games_season} season</dd>
             </div>
           </dl>
@@ -199,7 +199,7 @@ export function MinutesTable({ rows, sort, onSort }: { rows: MinutesRow[]; sort:
   const th = (key: string | null, label: string, align = "text-right", title?: string) => (
     <th scope="col" className={cn(TH, align)} title={title} aria-sort={key && sort.key === key ? (sort.order === "asc" ? "ascending" : "descending") : undefined}>
       {key ? (
-        <button type="button" className={cn("uppercase hover:text-ink", sort.key === key && "text-ink")} onClick={() => onSort(key)} data-sort={key}>
+        <button type="button" className={cn("hover:text-ink", sort.key === key && "text-ink")} onClick={() => onSort(key)} data-sort={key}>
           {label}
           {sort.key === key ? (sort.order === "asc" ? " ↑" : " ↓") : ""}
         </button>
@@ -254,7 +254,7 @@ function FragmentRow({ r, open, onToggle }: { r: MinutesRow; open: boolean; onTo
   );
   return (
     <>
-      <tr className="cursor-pointer border-b border-line/40 align-middle hover:bg-raised/40" onClick={onToggle} data-testid="minutes-row" data-player-id={r.player_id} aria-expanded={open}>
+      <tr className="cursor-pointer border-b border-line align-middle hover:bg-raised/40" onClick={onToggle} data-testid="minutes-row" data-player-id={r.player_id} aria-expanded={open}>
         <td className="px-2 py-2">
           <PlayerCell r={r} />
         </td>
@@ -291,7 +291,7 @@ function FragmentRow({ r, open, onToggle }: { r: MinutesRow; open: boolean; onTo
         </td>
       </tr>
       {open && (
-        <tr className="border-b border-line/40 bg-raised/30" data-testid="minutes-row-detail">
+        <tr className="border-b border-line bg-raised/30" data-testid="minutes-row-detail">
           <td colSpan={13} className="px-3 py-2 text-sm text-soft">
             <span className="font-medium text-ink">{r.classification_label}:</span> {r.classification_reason}
             <span className="num ml-3 text-xs text-muted">
@@ -311,8 +311,8 @@ export function MinutesCompact({ rows: allRows, limit = 12 }: { rows: MinutesRow
   const rows = all ? allRows : allRows.slice(0, limit);
   return (
     <>
-    <ul className="divide-y divide-line/30" data-testid="minutes-compact">
-      <li className="hidden grid-cols-[minmax(0,2.2fr)_1.1fr_1.1fr_0.6fr_0.6fr_0.7fr_1fr_1.6fr] gap-x-3 pb-2 text-2xs font-semibold uppercase tracking-wide text-muted lg:grid" aria-hidden>
+    <ul className="divide-y divide-line" data-testid="minutes-compact">
+      <li className="hidden grid-cols-[minmax(0,2.2fr)_1.1fr_1.1fr_0.6fr_0.6fr_0.7fr_1fr_1.6fr] gap-x-3 pb-2 text-2xs font-semibold text-muted lg:grid" aria-hidden>
         <span>Player</span>
         <span>Role</span>
         <span className="text-right">Proj min [band]</span>
@@ -336,7 +336,7 @@ export function MinutesCompact({ rows: allRows, limit = 12 }: { rows: MinutesRow
             {r.lineup_role ? titleCase(r.lineup_role) : "Role —"} <LineupStatusLabel status={r.lineup_status} short className="text-xs" />
           </span>
           <span className="text-right text-sm">
-            <span className="mr-1 text-2xs uppercase text-muted lg:hidden">Proj</span>
+            <span className="mr-1 text-2xs text-muted lg:hidden">Proj</span>
             <ProjMinutes r={r} />
           </span>
           {(
@@ -347,7 +347,7 @@ export function MinutesCompact({ rows: allRows, limit = 12 }: { rows: MinutesRow
             ] as const
           ).map(([l, v]) => (
             <span key={l} className="num text-sm text-soft lg:text-right">
-              <span className="mr-1 text-2xs uppercase text-muted lg:hidden">{l}</span>
+              <span className="mr-1 text-2xs text-muted lg:hidden">{l}</span>
               <Val v={fmtNum(v)} />
             </span>
           ))}
@@ -362,7 +362,7 @@ export function MinutesCompact({ rows: allRows, limit = 12 }: { rows: MinutesRow
       ))}
     </ul>
       {allRows.length > 6 && (
-        <button type="button" className={cn("mt-2 inline-flex min-h-[44px] items-center text-xs font-medium text-accent hover:underline md:min-h-0", allRows.length <= limit && "md:hidden")} aria-expanded={all} onClick={() => setAll((v) => !v)} data-testid="minutes-compact-more">
+        <button type="button" className={cn("mt-2 inline-flex min-h-[44px] items-center text-xs font-medium link md:min-h-0", allRows.length <= limit && "md:hidden")} aria-expanded={all} onClick={() => setAll((v) => !v)} data-testid="minutes-compact-more">
           {all ? "Show fewer players" : `Show all ${allRows.length} players`}
         </button>
       )}
@@ -374,7 +374,7 @@ export function MinutesCompact({ rows: allRows, limit = 12 }: { rows: MinutesRow
 export function MinutesProfile({ r }: { r: MinutesRow }) {
   const cell = (label: string, v: ReactNode) => (
     <div className="min-w-0">
-      <dt className="text-2xs font-medium uppercase tracking-wide text-muted">{label}</dt>
+      <dt className="text-2xs font-medium text-muted">{label}</dt>
       <dd className="num text-sm font-medium text-ink">{v}</dd>
     </div>
   );
@@ -382,18 +382,18 @@ export function MinutesProfile({ r }: { r: MinutesRow }) {
     <div className="space-y-3" data-testid="minutes-profile">
       <div className="flex flex-wrap items-end gap-x-8 gap-y-3">
         <div>
-          <div className="text-2xs font-medium uppercase tracking-wide text-muted">Projected minutes [band]</div>
+          <div className="text-2xs font-medium text-muted">Projected minutes [band]</div>
           <ProjMinutes r={r} className="text-xl" />
         </div>
         <div>
-          <div className="text-2xs font-medium uppercase tracking-wide text-muted">Classification · tier</div>
+          <div className="text-2xs font-medium text-muted">Classification · tier</div>
           <MinutesClass r={r} />
           <span className="num ml-2 text-xs text-muted">Tier {r.tier ?? "—"}</span>
         </div>
         <MinutesFlags r={r} />
       </div>
       <p className="text-sm text-soft">{r.classification_reason}</p>
-      <dl className="grid grid-cols-3 gap-x-4 gap-y-3 rounded-md bg-raised/50 p-3 sm:grid-cols-5 lg:grid-cols-10">
+      <dl className="grid grid-cols-3 gap-x-4 gap-y-3 border-l-2 border-line py-1 pl-3 sm:grid-cols-5 lg:grid-cols-10">
         {cell("L3", <Val v={fmtNum(r.l3)} />)}
         {cell("L5", <Val v={fmtNum(r.l5)} />)}
         {cell("L10", <Val v={fmtNum(r.l10)} />)}

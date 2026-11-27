@@ -33,14 +33,14 @@ export function KindList({ kind, title, pageSize, formula = false, testId }: { k
   return (
     <section data-testid={testId} data-kind={kind}>
       <SectionTitle right={q.data ? <span className="num" data-testid="kind-total">{q.data.total} records</span> : undefined}>{title}</SectionTitle>
-      <div className="rounded-lg bg-card p-1.5 ring-1 ring-inset ring-line/60">
+      <div className="blk p-1.5">
         <QueryView query={q} rows={5}>
           {(d) =>
             d.items.length === 0 ? (
               <EmptyState title={`No ${title.toLowerCase()} records in the library yet.`}>Records appear here as they are written. Nothing is filled in to make this list look complete.</EmptyState>
             ) : (
               <>
-                <ul className="divide-y divide-line/30">
+                <ul className="divide-y divide-line">
                   {d.items.map((c) => (
                     <ConceptRow key={c.slug} c={c} extra={formula ? <RowFormula slug={c.slug} /> : undefined} />
                   ))}
@@ -72,7 +72,7 @@ export function Encyclopedia({ overview, department, onDepartment }: { overview:
   const filtered = Boolean(search || department || kind || verification);
   return (
     <div className="space-y-4" data-testid="encyclopedia">
-      <div className="grid gap-3 rounded-lg bg-card p-4 ring-1 ring-inset ring-line/60 md:grid-cols-2 xl:grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)]">
+      <div className="grid gap-3 blk p-4 md:grid-cols-2 xl:grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)]">
         <Field label="Search the library">
           <span className="relative block">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-faint" aria-hidden />
@@ -122,8 +122,8 @@ export function Encyclopedia({ overview, department, onDepartment }: { overview:
                 The library holds only what has been written. Search is by keyword, not by meaning, so try the plain term a rulebook or box score would use.
               </EmptyState>
             ) : (
-              <div className="rounded-lg bg-card p-1.5 ring-1 ring-inset ring-line/60">
-                <ul className="divide-y divide-line/30" data-testid="concept-list">
+              <div className="blk p-1.5">
+                <ul className="divide-y divide-line" data-testid="concept-list">
                   {d.items.map((c) => (
                     <ConceptRow key={c.slug} c={c} />
                   ))}

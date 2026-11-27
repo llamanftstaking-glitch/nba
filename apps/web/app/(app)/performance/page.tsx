@@ -49,7 +49,7 @@ const KINDS: [StrategyGroup["kind"], string][] = [
 
 function View({ d }: { d: StrategiesResponse }) {
   return (
-    <div className="space-y-5">
+    <div className="space-y-9">
       {KINDS.map(([kind, title]) => {
         const rows = d.groups.filter((g) => g.kind === kind);
         return (
@@ -64,7 +64,7 @@ function View({ d }: { d: StrategiesResponse }) {
         ) : (
           <DataTable
             columns={[
-              { key: "stat", header: "Stat", primary: true, cell: (r) => <span className="font-semibold uppercase text-ink">{statLabel(r.stat)}</span> },
+              { key: "stat", header: "Stat", primary: true, cell: (r) => <span className="font-semibold text-ink">{statLabel(r.stat)}</span> },
               { key: "n", header: "Sample", align: "right", cell: (r) => <span className="num">n={fmtInt(r.n)}</span> },
               { key: "mae", header: "Mean absolute error", align: "right", cell: (r) => <Val v={fmtNum(r.mae, 2)} /> },
               { key: "cov", header: "80% interval coverage", align: "right", cell: (r) => <Val v={fmtPct(r.coverage_80)} /> },
@@ -76,7 +76,7 @@ function View({ d }: { d: StrategiesResponse }) {
           />
         )}
       </Panel>
-      <p className="rounded-lg bg-card px-4 py-3 text-sm text-soft ring-1 ring-inset ring-line/60" data-testid="strategies-disclaimer">
+      <p className="blk px-4 py-3 text-sm text-soft" data-testid="strategies-disclaimer">
         {d.disclaimer}
       </p>
     </div>

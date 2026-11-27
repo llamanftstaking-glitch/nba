@@ -52,12 +52,12 @@ function PlayerLine({ p }: { p: LineupPlayer }) {
 function Group({ title, players, empty }: { title: string; players: LineupPlayer[]; empty: string }) {
   return (
     <div>
-      <div className="mt-3 flex items-baseline justify-between border-b border-line/50 pb-1">
-        <h4 className="text-2xs font-semibold uppercase tracking-wide text-muted">
+      <div className="mt-3 flex items-baseline justify-between border-b border-line pb-1">
+        <h4 className="text-2xs font-semibold text-muted">
           {title} <span className="num text-faint">· {players.length}</span>
         </h4>
       </div>
-      {players.length === 0 ? <p className="py-2 text-sm text-muted">{empty}</p> : <ul className="divide-y divide-line/30">{players.map((p, i) => <PlayerLine key={`${p.player_id ?? p.name}-${i}`} p={p} />)}</ul>}
+      {players.length === 0 ? <p className="py-2 text-sm text-muted">{empty}</p> : <ul className="divide-y divide-line">{players.map((p, i) => <PlayerLine key={`${p.player_id ?? p.name}-${i}`} p={p} />)}</ul>}
     </div>
   );
 }
@@ -65,12 +65,12 @@ function Group({ title, players, empty }: { title: string; players: LineupPlayer
 /** One team's lineup: status header, starters (never padded), bench, unavailable. */
 export function TeamLineupPanel({ lineup, side }: { lineup: TeamLineup; side: "Away" | "Home" }) {
   return (
-    <div className="min-w-0 rounded-lg bg-card p-4 ring-1 ring-inset ring-line/60" data-testid="team-lineup" data-team={lineup.team.abbr}>
+    <div className="min-w-0 blk p-4" data-testid="team-lineup" data-team={lineup.team.abbr}>
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
         <div className="flex min-w-0 items-center gap-2.5">
           <TeamLogo team={lineup.team} size={32} />
           <div className="min-w-0">
-            <div className="font-display text-lg font-semibold uppercase leading-5 tracking-wide text-ink">{lineup.team.name}</div>
+            <div className="font-display text-lg font-semibold leading-5 text-ink">{lineup.team.name}</div>
             <div className="text-xs text-muted">{side}</div>
           </div>
         </div>
@@ -82,7 +82,7 @@ export function TeamLineupPanel({ lineup, side }: { lineup: TeamLineup; side: "A
       </p>
       {lineup.note && <p className="mt-1 text-xs text-muted">{lineup.note}</p>}
 
-      <div className="mt-3 hidden grid-cols-[2rem_minmax(0,1fr)_6.5rem_3rem_3rem_3rem] gap-x-2.5 text-2xs font-semibold uppercase tracking-wide text-muted sm:grid">
+      <div className="mt-3 hidden grid-cols-[2rem_minmax(0,1fr)_6.5rem_3rem_3rem_3rem] gap-x-2.5 text-2xs font-semibold text-muted sm:grid">
         <span>Pos</span>
         <span>Player</span>
         <span>Availability</span>
@@ -92,7 +92,7 @@ export function TeamLineupPanel({ lineup, side }: { lineup: TeamLineup; side: "A
       </div>
 
       {lineup.starters.length === 0 ? (
-        <p className="mt-3 rounded-md bg-raised/40 px-3 py-3 text-sm font-medium text-soft" data-testid="no-lineup">
+        <p className="mt-3 border-l-2 border-line py-1 pl-3 text-sm font-medium text-soft" data-testid="no-lineup">
           No lineup information available
         </p>
       ) : (
@@ -120,7 +120,7 @@ export function LineupTable({ away, home }: { away: TeamLineup; home: TeamLineup
           ]}
         />
       </div>
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-x-12 gap-y-9 lg:grid-cols-2">
         <div className={cn(side === "away" ? "block" : "hidden", "lg:block")}>
           <TeamLineupPanel lineup={away} side="Away" />
         </div>

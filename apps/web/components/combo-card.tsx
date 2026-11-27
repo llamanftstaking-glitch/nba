@@ -37,7 +37,7 @@ const LEG_COLUMNS: Column<ComboLeg>[] = [
 function Sub({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="min-w-0">
-      <h4 className="mb-1.5 text-2xs font-semibold uppercase tracking-wide text-muted">{title}</h4>
+      <h4 className="mb-1.5 text-2xs font-semibold text-muted">{title}</h4>
       {children}
     </div>
   );
@@ -45,10 +45,10 @@ function Sub({ title, children }: { title: string; children: ReactNode }) {
 
 export function PricingBlock({ combo }: { combo: Pick<Combo, "observed_quote" | "reference_price"> }) {
   return (
-    <div className="space-y-2 rounded-md bg-raised/50 p-3" data-testid="pricing-block">
+    <div className="space-y-2 border-l-2 border-line py-1 pl-3" data-testid="pricing-block">
       {combo.observed_quote ? (
         <div>
-          <div className="text-2xs uppercase tracking-wide text-muted">Observed combined quote</div>
+          <div className="text-2xs text-muted">Observed combined quote</div>
           <div className="num text-sm text-ink">
             {fmtAmerican(combo.observed_quote.american)} <span className="text-muted">({combo.observed_quote.decimal.toFixed(2)} decimal)</span>
           </div>
@@ -60,15 +60,15 @@ export function PricingBlock({ combo }: { combo: Pick<Combo, "observed_quote" | 
         <p className="text-sm font-medium text-warn">{NO_QUOTE_TEXT}</p>
       )}
       {combo.reference_price ? (
-        <div className="border-t border-line/50 pt-2">
-          <div className="text-2xs uppercase tracking-wide text-muted">{REFERENCE_PRICE_LABEL}</div>
+        <div className="border-t border-line pt-2">
+          <div className="text-2xs text-muted">{REFERENCE_PRICE_LABEL}</div>
           <div className="num text-sm text-soft">
             {fmtAmerican(combo.reference_price.american)} <span className="text-muted">({combo.reference_price.decimal.toFixed(2)} decimal)</span>
           </div>
           {combo.reference_price.note && <p className="text-2xs text-muted">{combo.reference_price.note}</p>}
         </div>
       ) : (
-        <p className="border-t border-line/50 pt-2 text-2xs text-muted">Leg-price reference: not available (one or more legs have no price).</p>
+        <p className="border-t border-line pt-2 text-2xs text-muted">Leg-price reference: not available (one or more legs have no price).</p>
       )}
     </div>
   );
@@ -77,17 +77,17 @@ export function PricingBlock({ combo }: { combo: Pick<Combo, "observed_quote" | 
 export function ComboDetail({ combo }: { combo: Combo }) {
   const c = combo.correlation;
   return (
-    <div className="space-y-4 border-t border-line/50 p-4" data-testid="combo-detail">
+    <div className="space-y-4 border-t border-line p-4" data-testid="combo-detail">
       {combo.invalidated && (
-        <p className="rounded-md bg-bad/10 px-3 py-2 text-sm text-bad ring-1 ring-inset ring-bad/40">
+        <p className="border-l-4 border-bad pl-3 px-3 py-2 text-sm text-bad">
           INVALIDATED{combo.invalidation_reason ? ` — ${combo.invalidation_reason}` : ""}
         </p>
       )}
       <DataTable columns={LEG_COLUMNS} rows={combo.legs} rowKey={(l) => l.selection_id} caption={`Legs of ${combo.name}`} dense />
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-x-10 gap-y-9 lg:grid-cols-3">
         <Sub title="Joint probability">
-          <dl className="grid grid-cols-2 gap-4 rounded-md bg-raised/50 p-3">
+          <dl className="grid grid-cols-2 gap-4 border-l-2 border-line py-1 pl-3">
             <Metric label="Correlation-adjusted">
               <ProbInterval prob={combo.joint_prob} low={combo.joint_low} high={combo.joint_high} stack />
             </Metric>
@@ -102,7 +102,7 @@ export function ComboDetail({ combo }: { combo: Combo }) {
         </Sub>
 
         <Sub title="Correlation">
-          <div className="space-y-1.5 rounded-md bg-raised/50 p-3 text-xs">
+          <div className="space-y-1.5 border-l-2 border-line py-1 pl-3 text-xs">
             <p className="text-soft">
               <span className="text-muted">Method </span>
               {c.method}
@@ -112,7 +112,7 @@ export function ComboDetail({ combo }: { combo: Combo }) {
             </p>
             <p className="break-words text-soft">{c.assessment}</p>
             {c.pairwise.length > 0 ? (
-              <ul className="divide-y divide-line/40 border-t border-line/50">
+              <ul className="divide-y divide-line border-t border-line">
                 {c.pairwise.map((p, i) => (
                   <li key={i} className="flex items-baseline justify-between gap-2 py-1">
                     <span className="min-w-0 break-words text-muted">
@@ -152,15 +152,15 @@ export function ComboDetail({ combo }: { combo: Combo }) {
       <Sub title="Evidence by leg">
         <div className="grid gap-2 md:grid-cols-2">
           {combo.legs.map((l) => (
-            <div key={l.selection_id} className="rounded-md bg-raised/50 p-3">
+            <div key={l.selection_id} className="border-l-2 border-line py-1 pl-3">
               <div className="mb-1.5 text-sm font-medium text-ink">{l.label}</div>
               <div className="grid gap-2 sm:grid-cols-2">
                 <div>
-                  <div className="text-2xs uppercase text-muted">Supporting</div>
+                  <div className="text-2xs text-muted">Supporting</div>
                   {l.supporting.length ? <BulletList items={l.supporting} tone="accent" /> : <p className="text-xs text-muted">None recorded.</p>}
                 </div>
                 <div>
-                  <div className="text-2xs uppercase text-muted">Opposing</div>
+                  <div className="text-2xs text-muted">Opposing</div>
                   {l.opposing.length ? <BulletList items={l.opposing} tone="warn" /> : <p className="text-xs text-muted">None recorded.</p>}
                 </div>
               </div>
@@ -175,7 +175,7 @@ export function ComboDetail({ combo }: { combo: Combo }) {
         </Sub>
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line/50 pt-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-2">
         <p className="text-2xs text-muted">
           {titleCase(combo.designation)} · created {fmtDateTimeET(combo.created_at) ?? "—"} · uid <span className="num">{combo.uid}</span>
         </p>
@@ -200,7 +200,7 @@ export function ComboCard({ combo, defaultOpen = false }: { combo: Combo; defaul
   const summary = combo.legs.map((l) => l.label).join("  +  ");
   return (
     <article
-      className={cn("min-w-0 rounded-lg bg-card ring-1 ring-inset", combo.invalidated ? "ring-bad/40" : "ring-line/60")}
+      className={cn("min-w-0 border-t-2", combo.invalidated ? "border-bad" : "border-ink")}
       data-testid="combo-card"
       data-combo-uid={combo.uid}
     >
@@ -208,11 +208,11 @@ export function ComboCard({ combo, defaultOpen = false }: { combo: Combo; defaul
         type="button"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="block w-full rounded-lg p-4 text-left transition-colors hover:bg-raised/30"
+        className="block w-full py-4 text-left transition-colors hover:bg-raised/60"
         data-testid="combo-toggle"
       >
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <h3 className="font-display text-lg font-semibold uppercase tracking-wide text-ink">{combo.name}</h3>
+          <h3 className="font-display text-lg font-semibold text-ink">{combo.name}</h3>
           <span className="text-xs text-muted">
             {combo.n_legs} legs · {combo.structure === "SGP" ? "Same game" : combo.structure === "CROSS" ? "Cross game" : "Mixed"}
           </span>
@@ -225,7 +225,7 @@ export function ComboCard({ combo, defaultOpen = false }: { combo: Combo; defaul
         <p className="mt-1 break-words text-sm text-soft">{summary}</p>
         <div className="mt-2 flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
           <div>
-            <div className="text-2xs font-medium uppercase tracking-wide text-muted">Joint probability [interval]</div>
+            <div className="text-2xs font-medium text-muted">Joint probability [interval]</div>
             <ProbInterval prob={combo.joint_prob} low={combo.joint_low} high={combo.joint_high} size="lg" />
           </div>
           <div className="text-xs">

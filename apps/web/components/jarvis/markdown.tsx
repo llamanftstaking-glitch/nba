@@ -56,7 +56,7 @@ export function Markdown({ text }: { text: string }) {
       while (i < lines.length && !(lines[i] ?? "").startsWith("```")) body.push(lines[i++] ?? "");
       i++;
       blocks.push(
-        <pre key={key} className="num overflow-x-auto rounded-md bg-raised/70 p-3 text-xs text-soft">
+        <pre key={key} className="num overflow-x-auto border-l-2 border-line py-1 pl-3 text-xs text-soft">
           {body.join("\n")}
         </pre>,
       );
@@ -65,7 +65,7 @@ export function Markdown({ text }: { text: string }) {
     const h = /^(#{1,4})\s+(.*)$/.exec(line);
     if (h) {
       const level = (h[1] ?? "#").length;
-      const cls = level <= 2 ? "font-display text-lg font-semibold uppercase tracking-wide text-ink" : "text-sm font-semibold text-ink";
+      const cls = level <= 2 ? "h-sub pt-2 text-ink" : "pt-1 text-base font-bold text-ink";
       blocks.push(level <= 2 ? <h3 key={key} className={cls}>{inline(h[2] ?? "", key)}</h3> : <h4 key={key} className={cls}>{inline(h[2] ?? "", key)}</h4>);
       i++;
       continue;
@@ -76,20 +76,20 @@ export function Markdown({ text }: { text: string }) {
       const rows: string[][] = [];
       while (i < lines.length && (lines[i] ?? "").includes("|") && (lines[i] ?? "").trim()) rows.push(cells(lines[i++] ?? ""));
       blocks.push(
-        <div key={key} className="overflow-x-auto rounded-md bg-raised/40" data-testid="md-table">
+        <div key={key} className="overflow-x-auto" data-testid="md-table">
           <table className="w-full border-collapse text-sm">
             <thead>
-              <tr className="border-b border-line">
+              <tr>
                 {head.map((c, k) => (
-                  <th key={k} scope="col" className="px-2.5 py-1.5 text-left text-2xs font-semibold uppercase tracking-wide text-muted">{inline(c, `${key}h${k}`)}</th>
+                  <th key={k} scope="col" className="px-2.5 text-left">{inline(c, `${key}h${k}`)}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {rows.map((r, ri) => (
-                <tr key={ri} className="border-b border-line/40 last:border-0">
+                <tr key={ri} className="border-b border-line">
                   {head.map((_, k) => (
-                    <td key={k} className="num px-2.5 py-1.5 align-top text-soft">{inline(r[k] ?? "", `${key}r${ri}c${k}`)}</td>
+                    <td key={k} className="num px-2.5 py-2 align-top text-soft">{inline(r[k] ?? "", `${key}r${ri}c${k}`)}</td>
                   ))}
                 </tr>
               ))}
@@ -118,5 +118,5 @@ export function Markdown({ text }: { text: string }) {
       </p>,
     );
   }
-  return <div className="space-y-2.5 text-sm leading-relaxed" data-testid="markdown">{blocks}</div>;
+  return <div className="space-y-3 leading-relaxed" data-testid="markdown">{blocks}</div>;
 }

@@ -19,7 +19,7 @@ const BASIS: Record<Ticket["price_basis"], string> = {
 export function TicketCard({ t }: { t: Ticket }) {
   const s = t.settlement;
   return (
-    <article className="min-w-0 rounded-lg bg-card ring-1 ring-inset ring-line/60" data-testid="ticket-card" data-ticket-id={t.id}>
+    <article className="min-w-0 blk" data-testid="ticket-card" data-ticket-id={t.id}>
       <header className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-line px-3 py-2">
         <span className="num text-sm font-semibold text-ink">Paper ticket #{t.id}</span>
         <Badge>{t.engine}</Badge>
@@ -52,8 +52,8 @@ export function TicketCard({ t }: { t: Ticket }) {
         </p>
 
         <div>
-          <h4 className="mb-1 text-2xs font-semibold uppercase tracking-wide text-muted">Legs</h4>
-          <ul className="divide-y divide-line/40 rounded-md bg-raised/40">
+          <h4 className="mb-1 text-2xs font-semibold text-muted">Legs</h4>
+          <ul className="divide-y divide-line rounded-md bg-raised/40">
             {t.legs.map((l, i) => {
               const lr = s?.leg_results.find((r) => r.label === l.label) ?? s?.leg_results[i];
               return (
@@ -84,8 +84,8 @@ export function TicketCard({ t }: { t: Ticket }) {
         </div>
 
         {s && (
-          <div className="rounded-md bg-raised/50 p-3" data-testid="forensic-report">
-            <h4 className="text-2xs font-semibold uppercase tracking-wide text-muted">Forensic report</h4>
+          <div className="border-l-2 border-line py-1 pl-3" data-testid="forensic-report">
+            <h4 className="text-2xs font-semibold text-muted">Forensic report</h4>
             <p className="mt-1 break-words text-sm text-ink">{s.forensic.verdict}</p>
             {s.forensic.findings.length > 0 ? (
               <div className="mt-1.5">

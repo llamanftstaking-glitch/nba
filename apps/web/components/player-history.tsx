@@ -17,7 +17,7 @@ export const NOT_A_PROBABILITY = "descriptive history, not a probability";
 
 function MeasurementB({ mh }: { mh: Threshold["market_history"] }) {
   return (
-    <div className="rounded-md bg-raised/50 px-3 py-2.5" data-testid="measurement-b">
+    <div className="border-l-2 border-line py-1 pl-3" data-testid="measurement-b">
       <Label>Measurement B · results against the lines that were actually quoted</Label>
       {mh.available ? (
         <p className="num text-sm text-ink">
@@ -148,7 +148,7 @@ export function PlayerHistory({
                   {statLabel(t.stat)} by game against a threshold of {t.line}
                 </caption>
                 <thead>
-                  <tr className="text-left text-2xs uppercase tracking-wide text-muted">
+                  <tr className="text-left text-2xs text-muted">
                     <th scope="col" className="px-3 py-2 font-semibold">Date</th>
                     <th scope="col" className="px-2 py-2 font-semibold">Opp</th>
                     <th scope="col" className="px-2 py-2 text-right font-semibold">Min</th>
@@ -158,7 +158,7 @@ export function PlayerHistory({
                 </thead>
                 <tbody>
                   {t.games.map((g) => (
-                    <tr key={g.game_id} className="border-t border-line/40">
+                    <tr key={g.game_id} className="border-t border-line">
                       <td className="num px-3 py-1.5 text-soft">{fmtDate(g.date) ?? g.date}</td>
                       <td className="num px-2 py-1.5 text-soft">{g.is_home ? "vs" : "@"} {g.opp_abbr}</td>
                       <td className="num px-2 py-1.5 text-right text-soft">{g.min}</td>

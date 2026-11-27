@@ -19,7 +19,7 @@ function GameLineups({ g }: { g: LineupGame }) {
   const [history, setHistory] = useState(false);
   return (
     <section className="space-y-3" data-testid="lineup-game" data-game-id={g.game.id}>
-      <div className="rounded-lg bg-bg2 p-4 ring-1 ring-inset ring-line/60">
+      <div className="rounded-lg bg-bg2 p-4 ring-1 ring-inset ring-line-strong">
         <MatchupHeader game={g.game} />
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
           <Button variant="ghost" aria-expanded={history} onClick={() => setHistory((v) => !v)} data-testid="lineup-history-toggle">
@@ -31,7 +31,7 @@ function GameLineups({ g }: { g: LineupGame }) {
           </DLink>
         </div>
         {history && (
-          <div className="mt-2 border-t border-line/50 pt-2">
+          <div className="mt-2 border-t border-line pt-2">
             <LineupHistoryList gameId={g.game.id} />
           </div>
         )}
@@ -62,7 +62,7 @@ export default function LineupsPage() {
         {(d) => (
           <>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              <div className="inline-flex rounded-md bg-bg2 p-0.5 ring-1 ring-inset ring-line/60" role="group" aria-label="Lineup view">
+              <div className="inline-flex rounded-md bg-bg2 p-0.5 ring-1 ring-inset ring-line-strong" role="group" aria-label="Lineup view">
                 {(["cards", "detailed"] as const).map((v) => (
                   <button
                     key={v}

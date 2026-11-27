@@ -9,7 +9,7 @@
 // Uses the globally installed Playwright; it is intentionally not a project dependency.
 
 import { createRequire } from "node:module";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -48,6 +48,19 @@ const NAV = ["/live", "/jarvis", "/cortex", "/", "/games", "/picks", "/player-pr
 const OTHER = ["/kalshi-intelligence/KXFIX-A-PTS25", "/kalshi-intelligence/KXFIX-A-DD", "/games/FIX-G1", "/games/FIX-G2", "/players/9001", "/players/9004", "/players/compare?ids=9001,9005", "/teams", "/teams/1", "/exposure", "/markets", "/simulations", "/backtesting", "/admin", "/admin/ai-budget", "/live/following", "/live/research-tracker", "/games/FIX-G1?tab=boxscore", "/games/FIX-G1?tab=plays", "/games/FIX-G1?tab=rotations", "/games/FIX-G1?tab=overview", "/cortex?tab=encyclopedia", "/cortex?tab=playbook", "/cortex?tab=statistics", "/cortex?tab=player-dna", "/cortex?tab=player-dna&player=9001", "/cortex?tab=team-dna", "/cortex?tab=team-dna&team=1", "/cortex?tab=coach-dna", "/cortex?tab=coach-dna&team=1", "/cortex?tab=research", "/cortex?tab=sources", "/cortex?tab=coverage", "/cortex?tab=evaluations", "/cortex/fix-shot-clock"];
 // The ten pages captured at every viewport for design review.
 const GALLERY = [["/", "overview"], ["/games", "games"], ["/lineups", "lineups"], ["/player-props", "player-props"], ["/players/9001", "player-profile"], ["/games/FIX-G1", "game"], ["/parlays", "parlays"], ["/results", "results"], ["/agents", "agents"], ["/data-health", "data-health"], ["/kalshi-intelligence", "kalshi"], ["/kalshi-intelligence/KXFIX-A-PTS25", "kalshi-detail"], ["/minutes", "minutes"], ["/injuries", "injuries"], ["/jarvis", "jarvis"], ["/admin/ai-budget", "ai-budget"], ["/live", "live"], ["/games/FIX-G1?tab=overview", "live-game"], ["/games/FIX-G1?tab=boxscore", "live-boxscore"], ["/games/FIX-G1?tab=rotations", "live-rotations"], ["/cortex", "cortex"], ["/cortex?tab=encyclopedia", "cortex-encyclopedia"], ["/cortex/fix-shot-clock", "cortex-record"], ["/cortex?tab=player-dna&player=9001", "cortex-player"], ["/cortex?tab=team-dna&team=1", "cortex-team"]];
+// The navigation list (lib/nav-destinations.json) is the source of truth for the shell. The list on
+// `main` (the 27-link sidebar plus the 9 pages it hid) is read from git so the test proves nothing was lost.
+const NAVDATA = JSON.parse(readFileSync(join(HERE, "..", "lib", "nav-destinations.json"), "utf8"));
+const DESTINATIONS = NAVDATA.workspaces.flatMap((w) => w.pages.map((p) => ({ ...p, workspace: w.id, workspaceLabel: w.label, primary: w.primary })));
+let LEGACY = null;
+try {
+  const { execSync } = require("node:child_process");
+  const old = execSync("git show main:apps/web/lib/nav.ts", { cwd: HERE, stdio: ["ignore", "pipe", "ignore"] }).toString();
+  LEGACY = [...old.matchAll(/href:\s*"([^"]+)"\s*,\s*label:\s*"([^"]+)"/g)].map((m) => ({ href: m[1], label: m[2] })).filter((x, i, a) => !["Home", "Games", "Props", "Parlays"].includes(x.label) || a.findIndex((y) => y.href === x.href) === i);
+  LEGACY = LEGACY.filter((x, i, a) => a.findIndex((y) => y.href === x.href) === i);
+} catch {
+  LEGACY = null; // not a git checkout, or no main branch: the comparison is reported as not run
+}
 const VIEWPORTS = [[1920, 1080], [1440, 900], [1280, 800], [1024, 768], [768, 1024], [430, 932], [390, 844]];
 
 let passed = 0;
@@ -86,7 +99,7 @@ async function overflow(page) {
   });
 }
 
-/** Smallest rendered font size among visible text nodes (the design system floor is 11px). */
+/** Smallest rendered font size among visible text nodes (the design system floor is 13px). */
 async function minFont(page) {
   return page.evaluate(() => {
     let min = 99;
@@ -124,7 +137,7 @@ async function visit(page, route, label, errors) {
     check(`[${label}] ${route} does not describe the system as AI-powered, intelligent or smart`, !boast, boast ? boast[0] : "");
   }
   const mf = await minFont(page);
-  check(`[${label}] ${route} has no text below 11px`, mf >= 11, `smallest ${mf}px`);
+  check(`[${label}] ${route} has no text below 13px`, mf >= 13, `smallest ${mf}px`);
   check(`[${label}] ${route} raised no page/console errors`, errors.length === before, errors.slice(before).join(" | "));
   return text;
 }
@@ -182,7 +195,8 @@ async function liveFlow(page, label, errors, shot) {
   check(`[${label}] live: one pulsing LIVE marker on the strip card, with period, clock and freshness`, (await strip.locator(`${g1} [data-testid="live-dot"]`).count()) === 1 && /Q1/.test(await strip.locator(g1).innerText()) && /6:12/.test(await strip.locator(g1).innerText()) && (await strip.locator(`${g1} [data-testid="freshness"][data-stale="0"]`).count()) === 1);
   check(`[${label}] live: strip shows the observed score`, /14/.test(await strip.locator(g1).innerText()) && /12/.test(await strip.locator(g1).innerText()));
   check(`[${label}] live: Live section holds the game with a line score and leaders`, (await page.locator(`[data-testid="live-live"] [data-testid="live-card"]`).count()) === 1 && (await page.locator('[data-testid="live-live"] [data-testid="line-score"]').count()) === 1 && (await page.locator('[data-testid="live-live"] [data-testid="live-leaders"]').count()) <= 1 && (await page.locator('[data-testid="live-upcoming"] [data-testid="live-card"]').count()) >= 1);
-  if (!isMobile) check(`[${label}] live: sidebar shows the live dot beside Live Games`, (await page.locator('[data-testid="sidebar"] nav a[href^="/live"] [data-testid="live-dot"]').count()) === 1);
+  if (!isMobile) check(`[${label}] live: the Games workspace row shows the live dot beside Live Games, and the top bar beside Games`, (await page.locator('[data-testid="subnav"] a[data-nav-href="/live"] [data-testid="live-dot"]').count()) === 1 && (await page.locator('[data-testid="primary-nav"] a[data-workspace="games"] [data-testid="live-dot"]').count()) === 1);
+  else check(`[${label}] live: the bottom tab bar shows the live dot beside Games`, (await page.locator('[data-testid="bottom-nav"] a[data-workspace="games"] [data-testid="live-dot"]').count()) === 1);
   await shot("live");
 
   // day navigation on /live
@@ -484,8 +498,8 @@ async function cortexFlow(page, label, errors, shot) {
   await go("/cortex?tab=encyclopedia");
   const rows = page.locator('[data-testid="concept-row"]');
   check(`[${label}] encyclopedia: browse mode shows 30 of 260 with pagination`, (await rows.count()) === 30 && (await page.locator('[data-testid="concept-count"]').getAttribute("data-total")) === "260" && /1–30 of 260/.test(await page.locator('nav[aria-label="Pagination"]').innerText()));
-  const chipsOk = await rows.evaluateAll((a) => a.every((e) => { const v = e.querySelector('[data-testid="verification-chip"]'); const t = v.innerText.trim().toLowerCase(); const cls = v.firstElementChild.className; return e.querySelector('[data-testid="kind-chip"]') && e.querySelector('[data-testid="ruleset-chip"]') && (v.dataset.verification === "checked_against_source" ? t === "checked against source" && /text-accent/.test(cls) : t === "not checked" && /text-warn/.test(cls)); }));
-  check(`[${label}] encyclopedia: every row has kind, ruleset and a verification chip (emerald when checked, amber when not)`, chipsOk && (await page.locator('[data-testid="verification-chip"][data-verification="authored_not_checked"]').count()) >= 1 && (await page.locator('[data-testid="verification-chip"][data-verification="checked_against_source"]').count()) >= 1);
+  const chipsOk = await rows.evaluateAll((a) => a.every((e) => { const v = e.querySelector('[data-testid="verification-chip"]'); const t = v.innerText.trim().toLowerCase(); const cls = v.firstElementChild.className; return e.querySelector('[data-testid="kind-chip"]') && e.querySelector('[data-testid="ruleset-chip"]') && (v.dataset.verification === "checked_against_source" ? t === "checked against source" && /text-ink/.test(cls) && !/text-warn/.test(cls) : t === "not checked" && /text-warn/.test(cls)); }));
+  check(`[${label}] encyclopedia: every row has kind, ruleset and a verification chip (ink when checked, amber when not)`, chipsOk && (await page.locator('[data-testid="verification-chip"][data-verification="authored_not_checked"]').count()) >= 1 && (await page.locator('[data-testid="verification-chip"][data-verification="checked_against_source"]').count()) >= 1);
   await page.locator('nav[aria-label="Pagination"] button', { hasText: "Next" }).click();
   await page.waitForFunction(() => /31–60 of 260/.test(document.querySelector('nav[aria-label="Pagination"]')?.innerText ?? ""), null, { timeout: 8000 }).catch(() => {});
   check(`[${label}] encyclopedia: next page`, /31–60 of 260/.test(await page.locator('nav[aria-label="Pagination"]').innerText()) && (await rows.count()) === 30);
@@ -709,24 +723,176 @@ async function runViewport(browser, label, viewport) {
     check(`[${label}] ${route} has no horizontal overflow`, !o, o ? JSON.stringify(o) : "");
   }
 
-  // --- navigation ---
+  // --- navigation: nothing lost, everything reachable by click ---
   await visit(page, "/", label, errors);
+  const hrefs = DESTINATIONS.map((d) => d.href);
+  if (label === "desktop") {
+    check(`[nav] the destination list has no duplicates and at most five primary workspaces`, new Set(hrefs).size === hrefs.length && NAVDATA.workspaces.filter((w) => w.primary).length === 5, `${hrefs.length} destinations`);
+    check(`[nav] the list on main could be read from git`, Array.isArray(LEGACY) && LEGACY.length === 36, LEGACY ? `${LEGACY.length} destinations on main` : "git show main:apps/web/lib/nav.ts failed");
+    if (LEGACY) {
+      const missing = LEGACY.filter((o) => !hrefs.includes(o.href));
+      check(`[nav] every destination on main (27 sidebar links + 9 hidden pages) is still a destination`, missing.length === 0 && hrefs.length >= LEGACY.length, `before ${LEGACY.length}, after ${hrefs.length}; missing: ${missing.map((m) => m.href).join(", ") || "none"}`);
+      const renamed = LEGACY.filter((o) => DESTINATIONS.find((d) => d.href === o.href)?.label !== o.label);
+      check(`[nav] every destination keeps the label it had on main`, renamed.length === 0, renamed.map((r) => `${r.href} "${r.label}"`).join(", "));
+    }
+  }
+  const pathOf = () => new URL(page.url()).pathname;
   if (isMobile) {
     const nav = (await page.locator('[data-testid="bottom-nav"]').innerText()).replace(/\s+/g, " ").trim();
-    check(`[${label}] bottom nav is Home | Games | Props | Parlays | More`, nav === "Home Games Props Parlays More", nav);
+    check(`[${label}] bottom nav is Today | Games | Players | Research | More (five items)`, nav === "Today Games Players Research More" && (await page.locator('[data-testid="bottom-nav"] a, [data-testid="bottom-nav"] button').count()) === 5, nav);
     const small = await page.evaluate(() => [...document.querySelectorAll('[data-testid="bottom-nav"] a, [data-testid="bottom-nav"] button')].filter((e) => e.getBoundingClientRect().height < 44).length);
     check(`[${label}] bottom nav targets are at least 44px`, small === 0, `${small} too small`);
     await page.click('[data-testid="more-button"]');
     await page.waitForSelector('[role="dialog"]');
-    check(`[${label}] More sheet lists the navigation groups`, (await page.locator('[role="dialog"] a').count()) >= 27 && /CORTEX/.test(await page.locator('[role="dialog"]').innerText()) && /Live Games/.test(await page.locator('[role="dialog"]').innerText()) && /JARVIS/.test(await page.locator('[role="dialog"]').innerText()) && /Kalshi Markets/.test(await page.locator('[role="dialog"]').innerText()) && /Minutes Intelligence/.test(await page.locator('[role="dialog"]').innerText()));
+    const listed = await page.locator('[role="dialog"] a[data-nav-href]').evaluateAll((a) => a.map((e) => e.getAttribute("data-nav-href")));
+    check(`[${label}] More sheet lists every destination, grouped by workspace`, hrefs.every((h) => listed.includes(h)) && listed.length === hrefs.length && (await page.locator('[role="dialog"] [data-workspace]').count()) === NAVDATA.workspaces.length && /CORTEX/.test(await page.locator('[role="dialog"]').innerText()) && /Live Games/.test(await page.locator('[role="dialog"]').innerText()) && /JARVIS/.test(await page.locator('[role="dialog"]').innerText()) && /Kalshi Markets/.test(await page.locator('[role="dialog"]').innerText()) && /Minutes Intelligence/.test(await page.locator('[role="dialog"]').innerText()), `${listed.length} of ${hrefs.length}`);
+    const smallRows = await page.locator('[role="dialog"] a[data-nav-href]').evaluateAll((a) => a.filter((e) => e.getBoundingClientRect().height < 44).length);
+    check(`[${label}] More sheet rows are at least 44px tall`, smallRows === 0, `${smallRows} too small`);
+    const inside = await page.evaluate(() => document.querySelector('[role="dialog"]')?.contains(document.activeElement));
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("Tab");
+    check(`[${label}] More sheet takes focus and keeps it`, inside === true && (await page.evaluate(() => document.querySelector('[role="dialog"]')?.contains(document.activeElement))) === true);
     await shot("more-sheet");
     await page.keyboard.press("Escape");
+    await page.waitForFunction(() => !document.querySelector('[role="dialog"]') && document.activeElement?.getAttribute("data-testid") === "more-button", null, { timeout: 3000 }).catch(() => {});
+    check(`[${label}] More sheet: Escape closes it and focus returns to More`, (await page.locator('[role="dialog"]').count()) === 0 && (await page.evaluate(() => document.activeElement?.getAttribute("data-testid"))) === "more-button");
+    // every destination, by tapping it in the More sheet
+    let reached = 0;
+    const failed = [];
+    for (const d of DESTINATIONS) {
+      await page.click('[data-testid="more-button"]');
+      await page.locator(`[data-testid="all-pages"] a[data-nav-href="${d.href}"]`).click();
+      const ok = await page.waitForFunction((h) => location.pathname === h, d.href, { timeout: 10000 }).then(() => true).catch(() => false);
+      await page.locator("main h1").first().waitFor({ state: "attached", timeout: 10000 }).catch(() => {});
+      if (ok && (await page.locator('[data-testid="all-pages"]').count()) === 0 && (await page.locator("main h1").count()) > 0) reached++;
+      else failed.push(d.href);
+    }
+    check(`[${label}] all ${DESTINATIONS.length} destinations are reachable by tapping them in the More sheet`, reached === DESTINATIONS.length, `reached ${reached}; failed: ${failed.join(", ")}`);
+    await page.goto(`${BASE}/kalshi-intelligence`);
+    await settle(page);
+    check(`[${label}] a page outside the four tabs marks More as current and still shows its workspace row`, (await page.locator('[data-testid="more-button"]').evaluate((e) => /font-bold/.test(e.className))) && (await page.locator('[data-testid="subnav"][data-workspace="markets"] a[aria-current="page"]').innerText()).trim() === "Kalshi Markets");
   } else {
-    const side = await page.locator('[data-testid="sidebar"]').innerText();
-    check(`[${label}] sidebar has the four groups`, ["COMMAND CENTER", "PLAYER INTELLIGENCE", "MY RESEARCH", "SYSTEM"].every((g) => side.toUpperCase().includes(g)));
-    check(`[${label}] sidebar has 27 destinations led by Live Games, incl. JARVIS, CORTEX, Kalshi Markets and Minutes Intelligence`, (await page.locator('[data-testid="sidebar"] nav a').count()) === 27 && (await page.locator('[data-testid="sidebar"] nav a').first().innerText()).trim() === "Live Games" && /JARVIS/.test(side) && (await page.locator('[data-testid="sidebar"] nav a').nth(2).innerText()).trim() === "CORTEX" && /Kalshi Markets/.test(side) && /Minutes Intelligence/.test(side));
-    check(`[${label}] brand caption present`, /PARLAY COMMAND CENTER/i.test(side));
+    const primary = await page.locator('[data-testid="primary-nav"] a').allInnerTexts();
+    check(`[${label}] top bar has the five workspaces, Today first`, primary.map((t) => t.trim()).join("|") === "Today|Games|Players|Markets|Research", primary.join("|"));
+    check(`[${label}] top bar has the wordmark, search, All pages, Ask JARVIS and the account control`, (await page.locator('[data-testid="topbar"] a[href="/"] [aria-label^="GIZER NBA"]').count()) === 1 && (await page.locator('[data-testid="search-trigger"]:visible').count()) === 1 && (await page.locator('[data-testid="all-pages-button"]:visible').count()) === 1 && (await page.locator('[data-testid="jarvis-launcher"]:visible').count()) === 1 && (await page.locator('[data-testid="account-button"]:visible').count()) === 1);
+    // every destination of a primary workspace: click the workspace, then the page in its row
+    let reached = 0;
+    const failed = [];
+    for (const w of NAVDATA.workspaces.filter((x) => x.primary)) {
+      await page.locator(`[data-testid="primary-nav"] a[data-workspace="${w.id}"]`).click();
+      await page.waitForFunction((h) => location.pathname === h, w.href, { timeout: 10000 }).catch(() => {});
+      const row = await page.locator('[data-testid="subnav"] a[data-nav-href]').evaluateAll((a) => a.map((e) => e.getAttribute("data-nav-href")));
+      if (!w.pages.every((p) => row.includes(p.href)) || row.length !== w.pages.length) failed.push(`${w.id} row lists ${row.length} of ${w.pages.length}`);
+      for (const p of w.pages) {
+        const link = page.locator(`[data-testid="subnav"] a[data-nav-href="${p.href}"]`);
+        const visible = await link.evaluate((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.left >= 0 && r.right <= window.innerWidth; }).catch(() => false);
+        await link.click();
+        const ok = await page.waitForFunction((h) => location.pathname === h, p.href, { timeout: 10000 }).then(() => true).catch(() => false);
+        await page.locator("main h1").first().waitFor({ state: "attached", timeout: 10000 }).catch(() => {});
+        const current = await page.locator('[data-testid="subnav"] a[aria-current="page"]').getAttribute("data-nav-href").catch(() => null);
+        const ws = await page.locator('[data-testid="primary-nav"] a[aria-current="true"]').getAttribute("data-workspace").catch(() => null);
+        if (ok && visible && current === p.href && ws === w.id && (await page.locator("main h1").count()) > 0) reached++;
+        else failed.push(`${p.href}${visible ? "" : " (link not in view)"}`);
+      }
+    }
+    const nPrimary = DESTINATIONS.filter((d) => d.primary).length;
+    check(`[${label}] every page of the five workspaces (${nPrimary}) is reachable by click from the top bar and the workspace row, and is marked current there`, reached === nPrimary, `reached ${reached}; failed: ${failed.join(", ")}`);
+    // All pages menu: every destination, including the Intelligence & System group
+    await page.click('[data-testid="all-pages-button"]');
+    await page.waitForSelector('[data-testid="all-pages"]');
+    const listed = await page.locator('[data-testid="all-pages"] a[data-nav-href]').evaluateAll((a) => a.map((e) => e.getAttribute("data-nav-href")));
+    check(`[${label}] All pages menu lists every destination, grouped by workspace`, hrefs.every((h) => listed.includes(h)) && listed.length === hrefs.length && (await page.locator('[data-testid="all-pages"] [data-workspace]').count()) === NAVDATA.workspaces.length, `${listed.length} of ${hrefs.length}`);
+    await shot("all-pages");
+    await page.keyboard.press("Escape");
+    await page.locator('[data-testid="all-pages-button"]').focus();
+    await page.keyboard.press("Enter");
+    await page.waitForSelector('[data-testid="all-pages"]');
+    const inside = await page.evaluate(() => document.querySelector('[data-testid="all-pages"]')?.contains(document.activeElement));
+    await page.locator('[data-testid="all-pages"] a[data-nav-href="/admin/ai-budget"]').focus();
+    await page.keyboard.press("Enter");
+    const kb = await page.waitForFunction(() => location.pathname === "/admin/ai-budget", null, { timeout: 10000 }).then(() => true).catch(() => false);
+    check(`[${label}] All pages menu opens from the keyboard, holds focus, and Enter on a link navigates`, inside === true && kb && (await page.locator('[data-testid="all-pages"]').count()) === 0);
+    reached = 0;
+    failed.length = 0;
+    for (const d of DESTINATIONS) {
+      await page.click('[data-testid="all-pages-button"]');
+      await page.locator(`[data-testid="all-pages"] a[data-nav-href="${d.href}"]`).click();
+      const ok = await page.waitForFunction((h) => location.pathname === h, d.href, { timeout: 10000 }).then(() => true).catch(() => false);
+      await page.locator("main h1").first().waitFor({ state: "attached", timeout: 10000 }).catch(() => {});
+      if (ok && (await page.locator('[data-testid="all-pages"]').count()) === 0 && (await page.locator("main h1").count()) > 0) reached++;
+      else failed.push(d.href);
+    }
+    check(`[${label}] all ${DESTINATIONS.length} destinations are reachable by click from the All pages menu`, reached === DESTINATIONS.length, `reached ${reached}; failed: ${failed.join(", ")}`);
+    await page.goto(`${BASE}/data-health`);
+    await settle(page);
+    check(`[${label}] a System page shows the System row with itself marked current`, (await page.locator('[data-testid="subnav"][data-workspace="system"] a[data-nav-href]').count()) === NAVDATA.workspaces.find((w) => w.id === "system").pages.length && (await page.locator('[data-testid="subnav"] a[aria-current="page"]').innerText()).trim() === "Data Health");
   }
+
+  // --- skip link, titles, breadcrumb, search ---
+  await page.goto(`${BASE}/player-props`);
+  await settle(page);
+  await page.evaluate(() => { window.scrollTo(0, 0); document.activeElement?.blur(); });
+  await page.keyboard.press("Tab");
+  const skip = await page.evaluate(() => ({ id: document.activeElement?.getAttribute("data-testid"), top: Math.round(document.activeElement?.getBoundingClientRect().top ?? -1), href: document.activeElement?.getAttribute("href") }));
+  await page.keyboard.press("Enter");
+  check(`[${label}] skip link is the first Tab stop, becomes visible on focus and moves focus to the main content`, skip.id === "skip-link" && skip.top >= 0 && skip.href === "#main" && (await page.evaluate(() => document.activeElement?.id)) === "main", JSON.stringify(skip));
+  if (!isMobile) {
+    await page.evaluate(() => { window.scrollTo(0, 0); document.activeElement?.blur(); });
+    let stops = 0;
+    for (; stops < 40; stops++) {
+      await page.keyboard.press("Tab");
+      if (await page.evaluate(() => Boolean(document.activeElement?.closest("main")))) break;
+    }
+    check(`[${label}] with the skip link, the main content is two Tab stops away; without it fewer than 30 (was 43)`, stops < 30, `${stops + 1} stops`);
+  }
+  const titles = {};
+  for (const r of [...hrefs, "/games/FIX-G1", "/players/9001", "/kalshi-intelligence/KXFIX-A-PTS25", "/cortex/fix-shot-clock", "/teams/1"]) {
+    await page.goto(`${BASE}${r}`, { waitUntil: "domcontentloaded" });
+    await page.waitForFunction(() => document.title !== "GIZER NBA" && document.title !== "", null, { timeout: 10000 }).catch(() => {});
+    await page.locator("main h1").first().waitFor({ state: "attached", timeout: 10000 }).catch(() => {});
+    await page.waitForTimeout(150);
+    titles[r] = await page.title();
+  }
+  const seen = Object.values(titles);
+  const dup = seen.filter((t, i) => seen.indexOf(t) !== i);
+  check(`[${label}] every destination and detail page has its own document title ending in GIZER NBA`, dup.length === 0 && seen.every((t) => / · GIZER NBA$/.test(t)), `${new Set(seen).size} distinct of ${seen.length}; duplicates: ${[...new Set(dup)].join(" | ") || "none"}; e.g. ${titles["/picks"]}`);
+  check(`[${label}] titles name the page: Top Picks, a game by its teams, a player by name`, /^Top Picks · Research · GIZER NBA$/.test(titles["/picks"]) && /Detroit Pistons at Orlando Magic/.test(titles["/games/FIX-G1"]) && /FIXTURE Player A/.test(titles["/players/9001"]), `${titles["/picks"]} | ${titles["/games/FIX-G1"]} | ${titles["/players/9001"]}`);
+  await page.goto(`${BASE}/players/9001`);
+  await settle(page);
+  const crumb = (await page.locator('[data-testid="breadcrumb"]').innerText().catch(() => "")).replace(/\s+/g, " ");
+  check(`[${label}] a detail page has a breadcrumb back to its workspace and list`, /Players \/ Player Explorer \/ FIXTURE Player A/.test(crumb) && (await page.locator('[data-testid="breadcrumb"] a[href^="/players"]').count()) === 2, crumb);
+  check(`[${label}] a destination page has no breadcrumb (the workspace row marks it)`, (await page.goto(`${BASE}/picks`)) && (await page.locator('[data-testid="breadcrumb"]').count()) === 0);
+  await settle(page);
+  // search: a page, then a player, by keyboard
+  await page.click('[data-testid="search-trigger"]');
+  await page.waitForSelector('[data-testid="search-dialog"]');
+  check(`[${label}] search: the dialog opens with focus in the field and lists pages before anything is typed`, (await page.evaluate(() => document.activeElement?.getAttribute("data-testid"))) === "search-input" && (await page.locator('[data-testid="search-hit"][data-kind="page"]').count()) >= DESTINATIONS.length);
+  await page.fill('[data-testid="search-input"]', "minutes");
+  await page.waitForFunction(() => document.querySelector('[data-testid="search-hit"]')?.getAttribute("data-href") === "/minutes", null, { timeout: 5000 }).catch(() => {});
+  check(`[${label}] search: finds a page by name`, (await page.locator('[data-testid="search-hit"]').first().getAttribute("data-href")) === "/minutes");
+  await page.keyboard.press("Enter");
+  check(`[${label}] search: Enter opens it and closes the dialog`, (await page.waitForFunction(() => location.pathname === "/minutes", null, { timeout: 10000 }).then(() => true).catch(() => false)) && (await page.locator('[data-testid="search-dialog"]').count()) === 0);
+  await settle(page);
+  await page.evaluate(() => document.activeElement?.blur());
+  await page.keyboard.press("/");
+  await page.waitForSelector('[data-testid="search-dialog"]', { timeout: 5000 }).catch(() => {});
+  check(`[${label}] search: "/" opens it from anywhere outside a field`, (await page.locator('[data-testid="search-dialog"]').count()) === 1);
+  const pReq = page.waitForRequest((r) => /\/api\/v1\/players\?/.test(r.url()) && /q=Player(\+|%20)E/.test(r.url()), { timeout: 8000 }).catch(() => null);
+  await page.fill('[data-testid="search-input"]', "Player E");
+  const sawReq = await pReq;
+  await page.locator('[data-testid="search-hit"][data-kind="player"]').first().waitFor({ timeout: 8000 }).catch(() => {});
+  check(`[${label}] search: players come from GET /players?q=`, sawReq !== null && (await page.locator('[data-testid="search-hit"][data-kind="player"][data-href="/players/9005"]').count()) === 1);
+  await page.locator('[data-testid="search-hit"][data-kind="player"][data-href="/players/9005"]').click();
+  check(`[${label}] search: a player result opens the profile`, await page.waitForFunction(() => location.pathname === "/players/9005", null, { timeout: 10000 }).then(() => true).catch(() => false));
+  await settle(page);
+  await page.click('[data-testid="search-trigger"]');
+  await page.fill('[data-testid="search-input"]', "zzqqxx");
+  await page.waitForFunction(() => /Nothing matches/.test(document.querySelector('[data-testid="search-empty"]')?.textContent ?? ""), null, { timeout: 8000 }).catch(() => {});
+  check(`[${label}] search: no match says so and invents nothing`, (await page.locator('[data-testid="search-hit"]').count()) === 0 && /Nothing matches/.test(await page.locator('[data-testid="search-empty"]').innerText().catch(() => "")));
+  await page.keyboard.press("Escape");
+  await page.waitForFunction(() => !document.querySelector('[data-testid="search-dialog"]') && document.activeElement?.getAttribute("data-testid") === "search-trigger", null, { timeout: 3000 }).catch(() => {});
+  check(`[${label}] search: Escape closes it and focus returns to the trigger`, (await page.locator('[data-testid="search-dialog"]').count()) === 0 && (await page.evaluate(() => document.activeElement?.getAttribute("data-testid"))) === "search-trigger");
+  await visit(page, "/", label, errors);
 
   // --- Overview ---
   let text = await bodyText(page);
@@ -741,11 +907,27 @@ async function runViewport(browser, label, viewport) {
   check(`[${label}] overview: per-team lineup status on game cards`, (await page.locator('[data-game-id="FIX-G2"] [data-testid="card-lineups"]').innerText()).replace(/\s+/g, " ").match(/BOS lineup Awaiting NYK lineup Projected/i) !== null);
   check(`[${label}] overview: prop research rows`, (await page.locator('[data-testid="overview-props"] [data-testid="prop-row"]').count()) >= 3);
   check(`[${label}] overview: parlay category strip`, (await page.locator('[data-testid="parlay-strip"] a').count()) === 8);
+  await page.evaluate(() => window.scrollTo(0, 0));
   const order = await page.evaluate(() => {
     const y = (sel) => document.querySelector(sel)?.getBoundingClientRect().top ?? -1;
-    return [y('[data-testid="stat-strip"]'), y('[data-testid="game-card"]'), y('[data-testid="overview-props"]'), y("#high-confidence"), y('[data-testid="ops-status"]')];
+    return [y('[data-testid="home-hero"]'), y('[data-testid="game-card"]'), y('[data-testid="stat-strip"]'), y('[data-testid="overview-props"]'), y("#high-confidence"), y('[data-testid="ops-status"]')];
   });
-  check(`[${label}] overview: basketball first, diagnostics last`, order.every((v, i) => v >= 0 && (i === 0 || v > order[i - 1])), order.join(","));
+  check(`[${label}] overview: basketball first (scoreboard, slate, numbers, props, research), system status last`, order.every((v, i) => v >= 0 && (i === 0 || v > order[i - 1])) && (await page.evaluate(() => { const o = document.querySelector('[data-testid="ops-status"]').getBoundingClientRect().top; return ["home-picks", "home-briefing", "warnings", "parlay-strip", "summary-compact", "stat-strip"].every((t) => { const e = document.querySelector(`[data-testid="${t}"]`); return e && e.getBoundingClientRect().top < o; }); })), order.join(","));
+  const hero = page.locator('[data-testid="home-hero"]');
+  check(`[${label}] overview: compact scoreboard hero for one game, with a line to its game page`, (await hero.count()) === 1 && (await hero.locator("tbody tr").count()) === 2 && /\/games\/FIX-G\d/.test((await hero.locator('[data-testid="hero-link"]').getAttribute("href")) ?? "") && (await hero.locator('[data-testid="status-chip"]').count()) === 1);
+  const fold = await page.evaluate(() => {
+    const r = (sel) => { const e = document.querySelector(sel); if (!e) return null; const b = e.getBoundingClientRect(); return { top: Math.round(b.top), bottom: Math.round(b.bottom) }; };
+    const rows = [...document.querySelectorAll('[data-testid="home-pick"]')].map((e) => Math.round(e.getBoundingClientRect().bottom));
+    return { h: window.innerHeight, picks: r('[data-testid="home-picks"]'), rows, hero: r('[data-testid="home-hero"]'), text: document.querySelector('[data-testid="home-picks"]')?.innerText ?? "" };
+  });
+  check(`[${label}] overview: top picks lead with the model estimate, labelled, then contract and price`, fold.rows.length === 3 && /MODEL ESTIMATE/i.test(fold.text) && /58\.2%\s*\[53\.2–63\.2\]\s*FIXTURE ORL \+2\.5[\s\S]*-110/.test(fold.text) && /not an observed hit rate/.test(fold.text), fold.text.replace(/\s+/g, " ").slice(0, 160));
+  if (!isMobile) check(`[${label}] overview: every top pick is above the fold at 1440x900, beside the scoreboard, not under it`, viewport.width === 1440 && viewport.height === 900 && fold.rows.every((b) => b <= fold.h) && fold.picks.top < fold.hero.bottom, JSON.stringify(fold).slice(0, 200));
+  else check(`[${label}] overview: on a phone the top picks follow the scoreboard directly`, fold.picks.top > fold.hero.top && fold.picks.top < fold.hero.bottom + 120, JSON.stringify(fold).slice(0, 160));
+  await page.click('[data-testid="home-ask-jarvis"]');
+  await page.locator('[data-testid="jarvis-panel"] textarea').waitFor({ timeout: 8000 }).catch(() => {});
+  check(`[${label}] overview: the JARVIS entry opens the panel with the slate question written, not sent`, /read on today's slate/.test(await page.locator('[data-testid="jarvis-panel"] textarea').inputValue().catch(() => "")) && (await page.locator('[data-testid="jarvis-panel"] [data-testid="jarvis-owner"]').count()) === 0);
+  await page.keyboard.press("Escape");
+  await page.locator('[data-testid="jarvis-panel"]').waitFor({ state: "detached", timeout: 5000 }).catch(() => {});
   check(`[${label}] date selector lists available dates`, (await page.locator('[data-testid="date-selector"] option').count()) >= 3);
   await page.click('button[aria-label="Previous day"]');
   await page.waitForURL(/date=\d{4}-\d{2}-\d{2}/);
@@ -877,7 +1059,21 @@ async function runViewport(browser, label, viewport) {
   const controls = (await page.locator("main button, main a").allInnerTexts()).join(" | ");
   check(`[${label}] kalshi: no buy / sell / trade / order controls`, !/\b(buy|sell|trade|order|bet)\b/i.test(controls), controls.slice(0, 120));
   const upColor = await page.locator('[data-move="up"]:visible').first().evaluate((e) => getComputedStyle(e).color);
-  check(`[${label}] kalshi: moves use the neutral data hue, not green/red`, upColor === "rgb(125, 196, 240)", upColor);
+  const downColor = await page.locator('[data-move="down"]:visible').first().evaluate((e) => getComputedStyle(e).color);
+  check(`[${label}] kalshi: moves are signed ink with an arrow: not green, not red, not the estimate orange`, upColor === "rgb(18, 22, 26)" && downColor === "rgb(18, 22, 26)" && (await page.locator('[data-move="up"]:visible svg').count()) >= 1, `${upColor} / ${downColor}`);
+  if (!isMobile) {
+    check(`[${label}] kalshi: table rows keep row semantics; the contract name is a real button in a row header`, (await page.locator('[data-testid="kalshi-table"] tr[role="button"], [data-testid="kalshi-table"] tr[tabindex]').count()) === 0 && (await page.locator('[data-testid="kalshi-row"] th[scope="row"] button[data-testid="kalshi-row-open"]').count()) === 7 && (await page.locator('[data-testid="kalshi-table"] thead th[scope="col"]').count()) >= 10);
+    await page.locator('[data-testid="kalshi-row"][data-ticker="KXFIX-A-PTS30"] [data-testid="kalshi-row-open"]').focus();
+    await page.keyboard.press("Enter");
+    await page.locator('[data-testid="kalshi-drawer"] [data-testid="kalshi-detail"]').waitFor({ timeout: 10000 }).catch(() => {});
+    const inDrawer = await page.evaluate(() => document.querySelector('[data-testid="kalshi-drawer"]')?.contains(document.activeElement));
+    for (let k = 0; k < 12; k++) await page.keyboard.press("Tab");
+    const stillIn = await page.evaluate(() => document.querySelector('[data-testid="kalshi-drawer"]')?.contains(document.activeElement));
+    await page.keyboard.press("Escape");
+    await page.locator('[data-testid="kalshi-drawer"]').waitFor({ state: "detached", timeout: 5000 }).catch(() => {});
+    await page.waitForFunction(() => document.activeElement?.getAttribute("data-testid") === "kalshi-row-open", null, { timeout: 3000 }).catch(() => {});
+    check(`[${label}] kalshi drawer: opens from the keyboard, traps focus, and returns it to the contract button on close`, inDrawer === true && stillIn === true && (await page.evaluate(() => document.activeElement?.closest("[data-ticker]")?.getAttribute("data-ticker"))) === "KXFIX-A-PTS30");
+  }
   await page.selectOption('[data-testid="kalshi-kind"]', "player");
   check(`[${label}] kalshi: kind filter`, await kCount(4));
   await page.selectOption('[data-testid="kalshi-interp"]', "unsupported");
@@ -927,6 +1123,51 @@ async function runViewport(browser, label, viewport) {
 
   await visit(page, "/kalshi-intelligence/KXFIX-G1-ML", label, errors);
   check(`[${label}] kalshi detail page: game contract wording`, (await page.locator('[data-testid="kd-no-research"]').innerText()).trim() === "Model research is shown for player contracts only.");
+
+  // --- Kalshi: slow, hung and failing list (the frontend half of docs/design/aesthetic/05) ---
+  {
+    const LIST = (u) => u.pathname === "/api/v1/kalshi/markets";
+    let mode = "hang";
+    let calls = 0;
+    const release = [];
+    await page.route(LIST, async (route) => {
+      calls++;
+      if (mode === "hang") return new Promise((res) => release.push(() => route.abort().catch(() => {}).then(res)));
+      if (mode === "fail") return route.fulfill({ status: 502, contentType: "application/json", body: JSON.stringify({ error: { code: "bad_gateway", message: "FIXTURE: upstream did not answer." } }) });
+      return route.continue();
+    });
+    errors.length = 0;
+    await page.goto(`${BASE}/kalshi-intelligence`, { waitUntil: "domcontentloaded" });
+    await page.locator('[data-testid="kalshi-loading"]').waitFor({ timeout: 8000 }).catch(() => {});
+    await page.waitForFunction(() => document.querySelectorAll('[data-testid="kalshi-game"] option').length === 4, null, { timeout: 5000 }).catch(() => {});
+    const early = await page.evaluate(() => ({ h1: document.querySelector("main h1")?.innerText ?? "", filters: document.querySelectorAll('[data-testid="kalshi-filters"] input, [data-testid="kalshi-filters"] select').length, games: document.querySelectorAll('[data-testid="kalshi-game"] option').length, sync: document.querySelector('[data-testid="kalshi-sync-pending"]')?.innerText ?? "", loading: document.querySelector('[data-testid="kalshi-loading"]')?.innerText ?? "", bars: document.querySelectorAll('main .animate-pulse').length }));
+    check(`[${label}] kalshi slow: title, all six filters (with the slate's games) and a sync status line render while the list is pending`, /Kalshi Market Watch/i.test(early.h1) && early.filters === 6 && early.games === 4 && /Checking sync/i.test(early.sync), JSON.stringify(early).slice(0, 220));
+    check(`[${label}] kalshi slow: the wait is stated in words, never as a skeleton alone`, /Loading contracts for this slate/.test(early.loading) && early.bars === 0);
+    await page.locator('[data-testid="kalshi-slow"]').waitFor({ timeout: 14000 }).catch(() => {});
+    const slowText = await page.locator('[data-testid="kalshi-slow"]').innerText().catch(() => "");
+    check(`[${label}] kalshi slow: at the deadline it says "Still loading… this list is large" with Retry and Keep waiting`, /Still loading… this list is large\./.test(slowText) && /for \d+ seconds/.test(slowText) && (await page.locator('[data-testid="kalshi-retry"]').count()) === 1 && (await page.locator('[data-testid="kalshi-keep-waiting"]').count()) === 1 && (await page.locator('[data-testid="kalshi-list"]').getAttribute("data-state")) === "slow", slowText.replace(/\s+/g, " ").slice(0, 140));
+    check(`[${label}] kalshi slow: no silent retry was issued (one request so far)`, calls === 1, `${calls} requests`);
+    await page.click('[data-testid="kalshi-keep-waiting"]');
+    check(`[${label}] kalshi slow: Keep waiting withdraws the prompt and keeps the same request`, (await page.locator('[data-testid="kalshi-slow"]').count()) === 0 && (await page.locator('[data-testid="kalshi-loading"]').count()) === 1 && calls === 1);
+    mode = "fail";
+    release.splice(0).forEach((f) => f());
+    await page.locator('[data-testid="kalshi-list"] [data-state="error"]').waitFor({ timeout: 8000 }).catch(() => {});
+    const errText = await page.locator('[data-testid="kalshi-list"] [data-state="error"]').innerText().catch(() => "");
+    check(`[${label}] kalshi error: a real error state with the reason and Retry replaces the wait`, /The contract list did not load/.test(errText) && /Retry/.test(errText) && (await page.locator('[data-testid="kalshi-loading"], [data-testid="kalshi-slow"]').count()) === 0 && /Sync unknown/i.test(await page.locator('[data-testid="kalshi-sync-pending"]').innerText().catch(() => "")), errText.replace(/\s+/g, " ").slice(0, 140));
+    const before502 = calls;
+    await page.locator('[data-testid="kalshi-list"] [data-state="error"] button').click();
+    await page.waitForTimeout(600);
+    check(`[${label}] kalshi error: a 502 is shown with its status, and Retry sends exactly one new request`, calls === before502 + 1 && /FIXTURE: upstream did not answer\. \(HTTP 502\)/.test(await page.locator('[data-testid="kalshi-list"] [data-state="error"]').innerText().catch(() => "")), `${calls - before502} request(s)`);
+    mode = "ok";
+    await page.locator('[data-testid="kalshi-list"] [data-state="error"] button').click();
+    check(`[${label}] kalshi error: Retry recovers once the API answers`, (await kCount(7)) && (await page.locator('[data-testid="kalshi-list"]').getAttribute("data-state")) === "ready" && (await page.locator('[data-testid="kalshi-sync"]').count()) === 1);
+    await page.unroute(LIST);
+    await page.fill('[data-testid="kalshi-search"]', "zzqq-no-such-contract");
+    await page.locator('[data-testid="kalshi-clear"]').waitFor({ timeout: 8000 }).catch(() => {});
+    await page.locator('[data-testid="kalshi-clear"]').click().catch(() => {});
+    check(`[${label}] kalshi empty: a filter that matches nothing says so and offers Clear filters, which restores the list`, (await kCount(7)) && (await page.locator('[data-testid="kalshi-search"]').inputValue()) === "");
+    errors.length = 0; // the aborted and 502 requests above are expected
+  }
 
   // --- Minutes intelligence ---
   text = await visit(page, "/minutes", label, errors);
@@ -1236,7 +1477,8 @@ async function runViewport(browser, label, viewport) {
   await ans.locator('[data-testid="jarvis-sources"] summary').click();
   check(`[${label}] jarvis: sources list tool label and args`, /FIXTURE: Inspecting the injury report/.test(await ans.locator('[data-testid="jarvis-sources"]').innerText()) && /material=true/.test(await ans.locator('[data-testid="jarvis-sources"]').innerText()));
   check(`[${label}] jarvis: stream request is a POST with CSRF and mode "deep"`, jReqs.length === 1 && jReqs[0].method === "POST" && jReqs[0].headers["x-csrf-token"] === "fixture-csrf-token" && jReqs[0].body.mode === "deep");
-  check(`[${label}] jarvis: deep review toggle resets after each send`, !(await page.locator(`${P} [data-testid="jarvis-deep"]`).isChecked()));
+  check(`[${label}] jarvis: deep review resets after each send, back to Standard`, !(await page.locator(`${P} [data-testid="jarvis-deep"]`).isChecked()) && (await page.locator(`${P} [data-testid="jarvis-standard"]`).isChecked()));
+  check(`[${label}] jarvis: Quick answers / Standard / Deep review is one control (a radio group of three)`, (await page.locator(`${P} [data-testid="jarvis-depth"] input[type="radio"]`).count()) === 3 && (await page.locator(`${P} [data-testid="jarvis-depth"] input[type="radio"]:checked`).count()) === 1 && (await page.locator(`${P} input[type="checkbox"]`).count()) === 0);
   check(`[${label}] jarvis: pill returns to Ready after the turn`, await pillIs(P, "ready"));
   if (!isMobile) {
     await page.waitForFunction((prev) => document.querySelector('[data-testid="jarvis-spent"]')?.textContent !== prev, spentBefore, { timeout: 8000 }).catch(() => {});
@@ -1421,15 +1663,32 @@ async function runViewport(browser, label, viewport) {
   check(`[${label}] panel: opens from a game page with the game context chip`, /DET @ ORL/.test(await page.locator(`${PN} [data-testid="ctx-game"]`).innerText().catch(() => "")) && /\/games\/FIX-G1/.test(await page.locator(`${PN} [data-testid="ctx-page"]`).innerText().catch(() => "")));
   const box = await page.locator(PN).boundingBox();
   check(`[${label}] panel: ${isMobile ? "full-screen drawer on mobile" : "about 420px side panel on desktop"}`, box && (isMobile ? Math.round(box.width) === viewport.width && Math.round(box.height) === viewport.height : Math.round(box.width) === 420 && Math.round(box.x + box.width) === viewport.width), JSON.stringify(box));
+  check(`[${label}] panel: focus moves to the question field on open`, (await page.evaluate(() => document.activeElement?.getAttribute("data-testid"))) === "jarvis-input");
   check(`[${label}] panel: composer also accepts image attachments`, (await page.locator(`${PN} [data-testid="jarvis-attach"]`).count()) === 1 && (await page.locator(`${PN} [data-testid="jarvis-suggest-image"]`).count()) === 0);
   check(`[${label}] panel: context-specific suggestion first`, /What matters in DET @ ORL/.test(await page.locator(`${PN} [data-testid="jarvis-suggestion"]`).first().innerText().catch(() => "")));
   await sendJ(PN, "Summarise this game");
   check(`[${label}] panel: answers in place`, (await answered(PN, 1)) && (await page.locator(`${PN} [data-testid="md-table"]`).count()) === 1);
   const po = await overflow(page);
   check(`[${label}] panel has no horizontal overflow`, !po, po ? JSON.stringify(po) : "");
+  {
+    const inPanel = () => page.evaluate(() => Boolean(document.querySelector('[data-testid="jarvis-panel"]')?.contains(document.activeElement)));
+    const starts = await inPanel();
+    let held = true;
+    for (let k = 0; k < 30; k++) {
+      await page.keyboard.press("Tab");
+      held = held && (await inPanel());
+    }
+    for (let k = 0; k < 6; k++) {
+      await page.keyboard.press("Shift+Tab");
+      held = held && (await inPanel());
+    }
+    check(`[${label}] panel: focus starts inside and Tab / Shift+Tab never leave it (36 presses)`, starts && held && (await page.locator('[data-testid="jarvis-panel"]').getAttribute("role")) === "dialog");
+    check(`[${label}] panel: the page behind is inert while it is open`, await page.evaluate(() => { const m = document.getElementById("main"); return Boolean(m?.closest("[aria-hidden='true'], [inert]")) || getComputedStyle(document.body).pointerEvents === "none"; }));
+  }
   await shot("jarvis-panel");
   await page.click('[data-testid="jarvis-panel-close"]');
-  check(`[${label}] panel: closes`, (await page.locator(PN).count()) === 0);
+  await page.waitForFunction(() => !document.querySelector('[data-testid="jarvis-panel"]') && document.activeElement?.getAttribute("data-testid") === "jarvis-launcher", null, { timeout: 3000 }).catch(() => {});
+  check(`[${label}] panel: closes, and focus returns to the launcher that opened it`, (await page.locator(PN).count()) === 0 && (await page.evaluate(() => document.activeElement?.getAttribute("data-testid"))) === "jarvis-launcher");
   await page.keyboard.press("Control+j");
   await page.locator(PN).waitFor({ timeout: 8000 }).catch(() => {});
   check(`[${label}] panel: Ctrl+J opens it and reuses the conversation while the context is unchanged`, (await page.locator(PN).count()) === 1 && (await answered(PN, 1)));
@@ -1497,6 +1756,8 @@ async function runViewport(browser, label, viewport) {
   await page.goto(`${BASE}/settings`);
   await settle(page);
   if (isMobile) await page.click('[data-testid="more-button"]');
+  else await page.click('[data-testid="account-button"]');
+  check(`[${label}] account: the signed-in email is shown beside Log out`, /owner@fixture\.test/.test(await page.locator(isMobile ? '[data-testid="all-pages"]' : '[data-testid="account-menu"]').innerText()));
   await Promise.all([page.waitForURL((u) => u.pathname === "/login"), page.locator('[data-testid="logout"]:visible').click()]);
   await page.goto(`${BASE}/`);
   check(`[${label}] logout clears the session`, new URL(page.url()).pathname === "/login", page.url());

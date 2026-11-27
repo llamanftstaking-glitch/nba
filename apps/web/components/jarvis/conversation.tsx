@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, Check, ChevronDown, ImagePlus, Loader2, Send, Square, X } from "lucide-react";
+import { Check, ChevronDown, ImagePlus, Loader2, Send, Square, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type ClipboardEvent, type DragEvent, type KeyboardEvent } from "react";
 import { IMAGE_ACCEPT, IMAGE_TYPES, MAX_IMAGES, prepareImage, type PreparedImage } from "@/lib/image-prep";
 import { LoadingState } from "@/components/ui/states";
@@ -26,9 +26,9 @@ export function ToolActivity({ tools, className }: { tools: LiveTool[]; classNam
   return (
     <ul className={cn("space-y-1", className)} data-testid="jarvis-tools">
       {tools.map((t) => (
-        <li key={t.id} className="flex items-center gap-2 text-xs text-muted" data-testid="jarvis-tool" data-status={t.status}>
-          {t.status === "running" ? <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-info" aria-label="running" /> : t.status === "ok" ? <Check className="h-3.5 w-3.5 shrink-0 text-accent" aria-label="finished" /> : <X className="h-3.5 w-3.5 shrink-0 text-bad" aria-label="failed" />}
-          <span className="min-w-0 break-words text-soft">{t.label}</span>
+        <li key={t.id} className="flex items-center gap-2 text-sm text-muted" data-testid="jarvis-tool" data-status={t.status}>
+          {t.status === "running" ? <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted" aria-label="running" /> : t.status === "ok" ? <Check className="h-4 w-4 shrink-0 text-faint" aria-label="finished" /> : <X className="h-4 w-4 shrink-0 text-bad" aria-label="failed" />}
+          <span className="min-w-0 break-words text-muted">{t.label}</span>
           {t.ms !== undefined && <span className="num shrink-0">{t.ms} ms</span>}
           {t.error && <span className="min-w-0 break-words text-bad">{t.error}</span>}
         </li>
@@ -38,17 +38,17 @@ export function ToolActivity({ tools, className }: { tools: LiveTool[]; classNam
 }
 
 function Sources({ sources }: { sources: JarvisSource[] }) {
-  if (sources.length === 0) return <span className="text-xs text-muted">No sources recorded</span>;
+  if (sources.length === 0) return <span className="text-sm text-faint">No sources recorded</span>;
   return (
     <details className="group" data-testid="jarvis-sources">
-      <summary className="inline-flex min-h-[44px] cursor-pointer list-none items-center gap-1 text-xs font-medium text-accent md:min-h-0 [&::-webkit-details-marker]:hidden">
+      <summary className="link inline-flex min-h-[44px] cursor-pointer list-none items-center gap-1 text-sm text-ink md:min-h-0 [&::-webkit-details-marker]:hidden">
         Sources ({sources.length}) <ChevronDown className="h-3 w-3 transition-transform group-open:rotate-180" aria-hidden />
       </summary>
       <ul className="mt-1 space-y-1">
         {sources.map((s, i) => (
-          <li key={i} className="text-xs">
+          <li key={i} className="text-sm">
             <span className="text-soft">{s.label}</span>
-            <span className="num block break-all text-faint">
+            <span className="num block break-all text-2xs text-faint">
               {s.tool} · {argText(s.args)}
             </span>
           </li>
@@ -58,20 +58,23 @@ function Sources({ sources }: { sources: JarvisSource[] }) {
   );
 }
 
+/** An answer set like an article: readable measure, the trail and the sources quiet underneath. */
 function Answer({ text, model, cost, sources, streaming }: { text: string; model: string | null; cost: number | null; sources?: JarvisSource[]; streaming?: boolean }) {
   return (
-    <div className="flex gap-3" data-testid="jarvis-answer" data-streaming={streaming ? "1" : "0"}>
-      <JarvisMark className="mt-0.5 h-6 w-6" active={streaming} />
-      <div className="min-w-0 flex-1">
-        {text ? <Markdown text={text} /> : streaming ? null : <p className="text-sm text-muted">No text was returned for this turn.</p>}
-        {!streaming && (
-          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted" data-testid="jarvis-meta">
-            <span>{modelLabel(model)}</span>
-            <span className="num">{cost === null ? "Cost —" : `$${cost.toFixed(4)}`}</span>
-            {sources && <Sources sources={sources} />}
-          </div>
-        )}
-      </div>
+    <div className="max-w-[72ch]" data-testid="jarvis-answer" data-streaming={streaming ? "1" : "0"} aria-live={streaming ? "off" : "polite"}>
+      {streaming && (
+        <p className="mb-1 flex items-center gap-2 text-sm text-muted">
+          <JarvisMark className="h-4 w-4" active /> JARVIS is answering
+        </p>
+      )}
+      <div className="text-base leading-relaxed text-ink">{text ? <Markdown text={text} /> : streaming ? null : <p className="text-sm text-muted">No text was returned for this turn.</p>}</div>
+      {!streaming && (
+        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-line pt-2 text-sm text-faint" data-testid="jarvis-meta">
+          <span>{modelLabel(model)}</span>
+          <span className="num">{cost === null ? "Cost —" : `$${cost.toFixed(4)}`}</span>
+          {sources && <Sources sources={sources} />}
+        </div>
+      )}
     </div>
   );
 }
@@ -96,7 +99,7 @@ function ImageOverlay({ src, onClose }: { src: string; onClose: () => void }) {
   }, [onClose]);
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/85 p-4" role="dialog" aria-modal="true" aria-label="Attached image" data-testid="image-overlay" onClick={onClose}>
-      <button ref={closeRef} type="button" onClick={onClose} aria-label="Close image" className="absolute right-3 top-3 inline-flex h-11 w-11 items-center justify-center rounded-md bg-raised text-ink ring-1 ring-inset ring-line" data-testid="image-overlay-close">
+      <button ref={closeRef} type="button" onClick={onClose} aria-label="Close image" className="absolute right-3 top-3 inline-flex h-11 w-11 items-center justify-center rounded-md bg-bg2 text-ink ring-1 ring-inset ring-line-strong" data-testid="image-overlay-close">
         <X className="h-5 w-5" aria-hidden />
       </button>
       <img src={src} alt="Attached image, enlarged" className="max-h-full max-w-full rounded-md object-contain" onClick={(e) => e.stopPropagation()} />
@@ -108,19 +111,20 @@ function Owner({ text, images = [] }: { text: string; images?: string[] }) {
   const [open, setOpen] = useState<string | null>(null);
   const close = useCallback(() => setOpen(null), []);
   return (
-    <div className="flex flex-col items-end gap-1.5" data-testid="jarvis-owner">
+    <div className="flex flex-col gap-1.5 border-t-2 border-ink pt-3 first:border-t-0 first:pt-0" data-testid="jarvis-owner">
+      <span className="text-sm text-faint">You asked</span>
       {images.length > 0 && (
-        <ul className="flex max-w-[85%] flex-wrap justify-end gap-1.5" data-testid="jarvis-message-images">
+        <ul className="flex flex-wrap gap-1.5" data-testid="jarvis-message-images">
           {images.map((src, i) => (
             <li key={src}>
-              <button type="button" onClick={() => setOpen(src)} aria-label={`Open attached image ${i + 1} of ${images.length}`} className="block overflow-hidden rounded-md ring-1 ring-inset ring-line hover:ring-accent" data-testid="jarvis-message-image">
+              <button type="button" onClick={() => setOpen(src)} aria-label={`Open attached image ${i + 1} of ${images.length}`} className="block overflow-hidden rounded border border-line hover:border-ink" data-testid="jarvis-message-image">
                 <img src={src} alt={`Attached image ${i + 1}`} className="h-24 w-24 object-cover" loading="lazy" />
               </button>
             </li>
           ))}
         </ul>
       )}
-      {text && <p className="max-w-[85%] whitespace-pre-wrap break-words rounded-lg bg-raised px-3.5 py-2 text-sm text-ink">{text}</p>}
+      {text && <p className="h-section max-w-[40ch] whitespace-pre-wrap break-words text-ink">{text}</p>}
       {open && <ImageOverlay src={open} onClose={close} />}
     </div>
   );
@@ -128,15 +132,15 @@ function Owner({ text, images = [] }: { text: string; images?: string[] }) {
 
 export function ContextChips({ context, className }: { context: JarvisContext | null | undefined; className?: string }) {
   const c = context ?? {};
-  const chip = "inline-flex min-h-[28px] max-w-full items-center gap-1 rounded-full bg-raised px-2.5 text-xs text-soft";
+  const chip = "inline-flex min-h-[32px] max-w-full items-center gap-1.5 rounded bg-raised px-2.5 text-sm font-semibold text-ink";
   const items = [
-    c.game && <DLink key="g" href={`/games/${encodeURIComponent(c.game.game_id)}`} className={cn(chip, "hover:text-ink")} data-testid="ctx-game"><span className="text-muted">Game</span> <span className="truncate">{c.game.label}</span></DLink>,
-    c.player && <DLink key="p" href={`/players/${c.player.player_id}`} className={cn(chip, "hover:text-ink")} data-testid="ctx-player"><span className="text-muted">Player</span> <span className="truncate">{c.player.name}</span></DLink>,
-    c.kalshi_market && <DLink key="k" href={`/kalshi-intelligence/${encodeURIComponent(c.kalshi_market.ticker)}`} className={cn(chip, "hover:text-ink")} data-testid="ctx-market"><span className="text-muted">Market</span> <span className="truncate">{c.kalshi_market.title}</span></DLink>,
-    c.selection && <span key="s" className={chip} data-testid="ctx-selection"><span className="text-muted">Selection record</span> <span className="num">{String(c.selection.record_id)}</span></span>,
-    c.combination && <span key="c" className={chip} data-testid="ctx-combo"><span className="text-muted">Combination record</span> <span className="num">{String(c.combination.record_id)}</span></span>,
-    c.page && <span key="pg" className={chip} data-testid="ctx-page"><span className="text-muted">Page</span> <span className="num truncate">{c.page}</span></span>,
-    c.date && <span key="d" className={chip}><span className="text-muted">Date</span> <span className="num">{c.date}</span></span>,
+    c.game && <DLink key="g" href={`/games/${encodeURIComponent(c.game.game_id)}`} className={cn(chip, "hover:text-ink")} data-testid="ctx-game"><span className="font-normal text-muted">Game</span> <span className="truncate">{c.game.label}</span></DLink>,
+    c.player && <DLink key="p" href={`/players/${c.player.player_id}`} className={cn(chip, "hover:text-ink")} data-testid="ctx-player"><span className="font-normal text-muted">Player</span> <span className="truncate">{c.player.name}</span></DLink>,
+    c.kalshi_market && <DLink key="k" href={`/kalshi-intelligence/${encodeURIComponent(c.kalshi_market.ticker)}`} className={cn(chip, "hover:text-ink")} data-testid="ctx-market"><span className="font-normal text-muted">Market</span> <span className="truncate">{c.kalshi_market.title}</span></DLink>,
+    c.selection && <span key="s" className={chip} data-testid="ctx-selection"><span className="font-normal text-muted">Selection record</span> <span className="num">{String(c.selection.record_id)}</span></span>,
+    c.combination && <span key="c" className={chip} data-testid="ctx-combo"><span className="font-normal text-muted">Combination record</span> <span className="num">{String(c.combination.record_id)}</span></span>,
+    c.page && <span key="pg" className={chip} data-testid="ctx-page"><span className="font-normal text-muted">Page</span> <span className="num truncate">{c.page}</span></span>,
+    c.date && <span key="d" className={chip}><span className="font-normal text-muted">Date</span> <span className="num">{c.date}</span></span>,
   ].filter(Boolean);
   if (items.length === 0) return <span className={cn("text-xs text-muted", className)}>No page context</span>;
   return <div className={cn("flex flex-wrap gap-1.5", className)} data-testid="jarvis-context">{items}</div>;
@@ -310,18 +314,17 @@ export function JarvisConversationView({
       onDrop={onDrop}
     >
       {dragging && (
-        <div className="pointer-events-none absolute inset-2 z-10 flex items-center justify-center rounded-lg border-2 border-dashed border-accent bg-bg/85" data-testid="jarvis-drop-target">
+        <div className="pointer-events-none absolute inset-2 z-10 flex items-center justify-center rounded border-2 border-dashed border-ink bg-bg2/90" data-testid="jarvis-drop-target">
           <span className="flex items-center gap-2 text-sm font-semibold text-ink">
-            <ImagePlus className="h-5 w-5 text-accent" aria-hidden /> Drop images to attach (up to {MAX_IMAGES})
+            <ImagePlus className="h-5 w-5" aria-hidden /> Drop images to attach (up to {MAX_IMAGES})
           </span>
         </div>
       )}
-      <div className={cn("min-h-0 flex-1 space-y-5 overflow-y-auto", compact ? "p-3" : "p-4 md:p-5")} data-testid="jarvis-scroll">
+      <div className={cn("min-h-0 flex-1 space-y-6 overflow-y-auto", compact ? "px-4 py-4" : "py-5 pr-2")} data-testid="jarvis-scroll" tabIndex={0} role="region" aria-label="Conversation">
         {serverState === "provider_unavailable" && (
-          <div role="status" className="flex items-start gap-2.5 rounded-md bg-warn/10 px-3 py-2.5 text-sm text-soft ring-1 ring-inset ring-warn/40" data-testid="jarvis-unavailable">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warn" aria-hidden />
+          <div role="status" className="border-l-4 border-warn pl-4 text-sm text-soft" data-testid="jarvis-unavailable">
             <span className="min-w-0">
-              <span className="block font-semibold text-warn">The model provider is unavailable.</span>
+              <span className="block text-base font-bold text-warn">The model provider is unavailable.</span>
               <span className="block break-words">{serverMessage}</span>
               <span className="block text-muted">{SLASH_NOTE}</span>
             </span>
@@ -330,27 +333,27 @@ export function JarvisConversationView({
         {loading ? (
           <LoadingState rows={3} label="Loading conversation" />
         ) : empty ? (
-          <div className="mx-auto flex max-w-xl flex-col items-center py-6 text-center" data-testid="jarvis-empty">
-            <JarvisMark className={compact ? "h-12 w-12" : "h-16 w-16"} />
-            <p className="mt-3 text-sm text-soft">JARVIS answers questions about the slate, players, markets, research records and system health by calling the platform’s own tools. Every number in an answer comes from platform records.</p>
-            <ul className="mt-4 flex flex-wrap justify-center gap-2" data-testid="jarvis-suggestions">
+          <div className="max-w-[64ch]" data-testid="jarvis-empty">
+            <JarvisMark className={compact ? "h-8 w-8" : "h-10 w-10"} />
+            <p className="mt-3 text-base text-soft">JARVIS answers questions about the slate, players, markets, research records and system health by calling the platform’s own tools. Every number in an answer comes from platform records.</p>
+            <ul className="mt-5 border-t border-rule-2" data-testid="jarvis-suggestions">
               {noContext && (
                 <li>
-                  <button type="button" disabled={streaming} onClick={pickFile} className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full bg-raised/70 px-3.5 text-left text-sm text-soft ring-1 ring-inset ring-line hover:bg-raised hover:text-ink disabled:cursor-not-allowed md:min-h-9" data-testid="jarvis-suggest-image">
-                    <ImagePlus className="h-4 w-4 text-accent" aria-hidden /> Analyse a parlay screenshot
+                  <button type="button" disabled={streaming} onClick={pickFile} className="flex min-h-[44px] w-full items-center gap-2 border-b border-line py-2 text-left text-base font-semibold text-ink hover:bg-raised disabled:cursor-not-allowed disabled:text-faint" data-testid="jarvis-suggest-image">
+                    <ImagePlus className="h-4 w-4" aria-hidden /> Analyse a parlay screenshot
                   </button>
                 </li>
               )}
               {extraSuggestions.map((t) => (
                 <li key={t}>
-                  <button type="button" disabled={streaming} onClick={() => submit(t)} className="inline-flex min-h-[44px] items-center rounded-full bg-raised/70 px-3.5 text-left text-sm text-soft ring-1 ring-inset ring-line hover:bg-raised hover:text-ink disabled:cursor-not-allowed md:min-h-9" data-testid="jarvis-suggestion">
+                  <button type="button" disabled={streaming} onClick={() => submit(t)} className="flex min-h-[44px] w-full items-center gap-2 border-b border-line py-2 text-left text-base font-semibold text-ink hover:bg-raised disabled:cursor-not-allowed disabled:text-faint" data-testid="jarvis-suggestion">
                     {t}
                   </button>
                 </li>
               ))}
               {(suggestions.data?.items ?? []).slice(0, compact ? 5 : 8).map((s) => (
                 <li key={s.text}>
-                  <button type="button" disabled={streaming} onClick={() => submit(s.text)} className="inline-flex min-h-[44px] items-center rounded-full bg-raised/70 px-3.5 text-left text-sm text-soft ring-1 ring-inset ring-line hover:bg-raised hover:text-ink disabled:cursor-not-allowed md:min-h-9" title={s.text} data-testid="jarvis-suggestion">
+                  <button type="button" disabled={streaming} onClick={() => submit(s.text)} className="flex min-h-[44px] w-full items-center gap-2 border-b border-line py-2 text-left text-base font-semibold text-ink hover:bg-raised disabled:cursor-not-allowed disabled:text-faint" title={s.text} data-testid="jarvis-suggestion">
                     {s.label}
                   </button>
                 </li>
@@ -366,22 +369,21 @@ export function JarvisConversationView({
           <>
             <Owner text={live.userText} images={live.images} />
             <div data-testid="jarvis-live">
-              <ToolActivity tools={live.tools} className="mb-2 pl-9" />
+              <ToolActivity tools={live.tools} className="mb-3" />
               <Answer text={live.text} model={live.model} cost={live.cost} streaming />
             </div>
           </>
         )}
         {error && (
-          <div role="alert" className="flex items-start gap-2.5 rounded-md bg-bad/10 px-3 py-2.5 text-sm ring-1 ring-inset ring-bad/40" data-testid="jarvis-error" data-code={error.code}>
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-bad" aria-hidden />
-            <span className="min-w-0 break-words text-soft">{error.message}</span>
+          <div role="alert" className="border-l-4 border-bad pl-4 text-base" data-testid="jarvis-error" data-code={error.code}>
+            <span className="min-w-0 break-words font-semibold text-bad">{error.message}</span>
           </div>
         )}
         <div ref={endRef} />
       </div>
 
       <form
-        className={cn("border-t border-line/60 bg-bg2", compact ? "p-2.5" : "p-3 md:p-4")}
+        className={cn("rounded border border-ink bg-bg2", compact ? "mx-3 mb-3 p-2.5" : "p-3 md:p-4")}
         onSubmit={(e) => {
           e.preventDefault();
           submit(text);
@@ -389,28 +391,43 @@ export function JarvisConversationView({
         data-testid="jarvis-composer"
       >
         {(attachments.length > 0 || preparing) && (
-          <ul className="mb-2 flex flex-wrap gap-2" data-testid="jarvis-attachments" aria-label="Images attached to the next message">
+          <ul className="mb-2 flex flex-wrap gap-3" data-testid="jarvis-attachments" aria-label="Images attached to the next message">
             {attachments.map((a, i) => (
               <li key={a.id} className="relative" data-testid="jarvis-attachment">
-                <img src={a.url} alt={`Attachment ${i + 1}: ${a.name}`} className="h-16 w-16 rounded-md object-cover ring-1 ring-inset ring-line" />
-                <button type="button" onClick={() => remove(a.id)} aria-label={`Remove attachment ${i + 1}: ${a.name}`} className="absolute -right-2 -top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-raised text-ink ring-1 ring-line hover:bg-line" data-testid="jarvis-attachment-remove">
-                  <X className="h-3.5 w-3.5" aria-hidden />
+                <img src={a.url} alt={`Attachment ${i + 1}: ${a.name}`} className="h-16 w-16 rounded border border-line object-cover" />
+                <button type="button" onClick={() => remove(a.id)} aria-label={`Remove attachment ${i + 1}: ${a.name}`} className="absolute -right-2.5 -top-2.5 inline-flex h-7 w-7 items-center justify-center rounded-full bg-ink text-bg2 hover:bg-soft" data-testid="jarvis-attachment-remove">
+                  <X className="h-4 w-4" aria-hidden />
                 </button>
               </li>
             ))}
             {preparing && (
-              <li className="flex h-16 w-16 items-center justify-center rounded-md bg-raised" role="status" aria-label="Preparing image">
-                <Loader2 className="h-4 w-4 animate-spin text-info" aria-hidden />
+              <li className="flex h-16 w-16 items-center justify-center rounded bg-raised" role="status" aria-label="Preparing image">
+                <Loader2 className="h-4 w-4 animate-spin text-muted" aria-hidden />
               </li>
             )}
           </ul>
         )}
         {attachError && (
-          <p role="alert" className="mb-2 break-words text-sm text-bad" data-testid="jarvis-attach-error">
+          <p role="alert" className="mb-2 break-words text-sm font-semibold text-bad" data-testid="jarvis-attach-error">
             {attachError}
           </p>
         )}
-        <div className="flex items-end gap-2">
+        <label className="block min-w-0">
+          <span className="sr-only">Message to JARVIS</span>
+          <textarea
+            ref={inputRef}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={onKey}
+            onPaste={onPaste}
+            rows={compact ? 2 : 2}
+            maxLength={8000}
+            placeholder="Ask about a game, a player, a contract or the system"
+            className="block w-full resize-none border-0 bg-transparent px-1 py-1 text-base text-ink placeholder:text-faint focus:outline-none"
+            data-testid="jarvis-input"
+          />
+        </label>
+        <div className="mt-1 flex items-center gap-1.5 sm:gap-2">
           <input
             ref={fileRef}
             type="file"
@@ -426,46 +443,40 @@ export function JarvisConversationView({
             }}
             data-testid="jarvis-file"
           />
-          <button type="button" onClick={pickFile} disabled={streaming} aria-label="Attach images" title="Attach a parlay or pick slip screenshot" className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-raised text-soft ring-1 ring-inset ring-line hover:text-ink disabled:cursor-not-allowed disabled:text-faint" data-testid="jarvis-attach">
-            <ImagePlus className="h-4 w-4" aria-hidden />
+          <button type="button" onClick={pickFile} disabled={streaming} aria-label="Attach images" title="Attach a parlay or pick slip screenshot" className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded text-ink hover:bg-raised disabled:cursor-not-allowed disabled:text-faint" data-testid="jarvis-attach">
+            <ImagePlus className="h-5 w-5" aria-hidden />
           </button>
-          <label className="min-w-0 flex-1">
-            <span className="sr-only">Message to JARVIS</span>
-            <textarea
-              ref={inputRef}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={onKey}
-              onPaste={onPaste}
-              rows={compact ? 2 : 3}
-              maxLength={8000}
-              placeholder="Ask about a game, player, market or the system"
-              className="block w-full resize-none rounded-md bg-bg px-3 py-2 text-sm text-ink ring-1 ring-inset ring-line placeholder:text-faint focus:outline-none focus:ring-accent"
-              data-testid="jarvis-input"
-            />
-          </label>
+          {/* One control for the depth of the answer. Deep review applies to the next message only; Quick answers is remembered. */}
+          <fieldset className="inline-flex overflow-hidden rounded border border-line-strong" data-testid="jarvis-depth" disabled={streaming}>
+            <legend className="sr-only">Answer depth</legend>
+            {(
+              [
+                ["quick", "Quick answers", "Haiku, lowest cost", !deep && quick, () => { setDeep(false); saveQuick(true); }, "jarvis-quick"],
+                ["standard", "Standard", "The default model", !deep && !quick, () => { setDeep(false); saveQuick(false); }, "jarvis-standard"],
+                ["deep", "Deep review", "Opus, costs more, this message only", deep, () => setDeep(true), "jarvis-deep"],
+              ] as const
+            ).map(([id, label, hint, on, pick, tid], i) => (
+              <label key={id} title={hint} className={cn("relative inline-flex min-h-[44px] cursor-pointer items-center whitespace-nowrap px-2.5 text-sm font-semibold has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:-outline-offset-2 has-[:focus-visible]:outline-ink sm:px-3 md:min-h-[40px]", i > 0 && "border-l border-line-strong", on ? "bg-ink text-bg2 has-[:focus-visible]:outline-bg2" : "text-muted hover:text-ink")}>
+                <input type="radio" name={`jarvis-depth-${compact ? "panel" : "page"}`} value={id} checked={on} onChange={pick} className="absolute inset-0 h-full w-full cursor-pointer opacity-0" aria-label={`${label} (${hint})`} data-testid={tid} />
+                {id === "standard" ? label : <><span className={compact ? undefined : "sm:hidden"}>{id === "quick" ? "Quick" : "Deep"}</span>{!compact && <span className="hidden sm:inline">{label}</span>}</>}
+              </label>
+            ))}
+          </fieldset>
+          <span className="flex-1" />
           {streaming ? (
-            <button type="button" onClick={onStop} className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-md bg-raised px-3 text-sm font-medium text-ink ring-1 ring-inset ring-line" data-testid="jarvis-stop">
+            <button type="button" onClick={onStop} className="inline-flex h-11 shrink-0 items-center gap-2 rounded border border-ink bg-bg2 px-3.5 text-sm font-semibold text-ink" data-testid="jarvis-stop">
               <Square className="h-3.5 w-3.5" aria-hidden /> Stop
             </button>
           ) : (
-            <button type="submit" disabled={(!text.trim() && attachments.length === 0) || preparing} className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-md bg-accent px-3.5 text-sm font-semibold text-bg shadow-accent disabled:bg-accent/30 disabled:shadow-none" data-testid="jarvis-send">
-              <Send className="h-3.5 w-3.5" aria-hidden /> Send
+            <button type="submit" disabled={(!text.trim() && attachments.length === 0) || preparing} className="inline-flex h-11 shrink-0 items-center gap-2 rounded bg-ink px-4 text-sm font-semibold text-bg2 hover:bg-soft disabled:bg-raised disabled:text-faint" data-testid="jarvis-send">
+              <Send className="h-4 w-4" aria-hidden /> <span className={compact ? "sr-only" : "max-sm:sr-only"}>Send</span>
             </button>
           )}
         </div>
-        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
+        <p className="mt-1.5 flex flex-wrap gap-x-4 px-1 text-sm text-faint">
           <span data-testid="jarvis-attach-hint">Attach a parlay or pick slip screenshot</span>
-          <label className="flex min-h-[44px] cursor-pointer items-center gap-2 md:min-h-0">
-            <input type="checkbox" checked={deep} disabled={streaming} onChange={(e) => setDeep(e.target.checked)} className="h-4 w-4 accent-[rgb(0,229,160)]" data-testid="jarvis-deep" />
-            Deep review (Opus, costs more)
-          </label>
-          <label className="flex min-h-[44px] cursor-pointer items-center gap-2 md:min-h-0">
-            <input type="checkbox" checked={quick} disabled={streaming || deep} onChange={(e) => saveQuick(e.target.checked)} className="h-4 w-4 accent-[rgb(0,229,160)]" data-testid="jarvis-quick" />
-            Quick answers (Haiku, lowest cost)
-          </label>
-          <span className="ml-auto hidden text-faint sm:inline">Enter to send · Shift+Enter for a new line</span>
-        </div>
+          <span className="hidden sm:inline">{deep ? "Deep review uses Opus and costs more; it applies to this message only." : quick ? "Quick answers uses Haiku, the lowest cost." : "Enter sends, Shift+Enter starts a new line."}</span>
+        </p>
       </form>
     </div>
   );

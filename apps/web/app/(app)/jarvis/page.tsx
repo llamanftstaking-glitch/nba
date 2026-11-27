@@ -69,12 +69,12 @@ function LeftColumn({ activeId, onSelect, onNew, onSuggest, tab, setTab }: { act
         <Label>History</Label>
         <QueryView query={list} rows={3} isEmpty={(d) => d.items.filter(started).length === 0} empty={<p className="text-sm text-muted">No conversations yet. The first question starts one.</p>}>
           {(d) => (
-            <ul className="max-h-[38vh] space-y-0.5 overflow-y-auto" data-testid="jarvis-history">
+            <ul className="max-h-[38vh] overflow-y-auto border-t border-rule-2" data-testid="jarvis-history">
               {d.items.filter(started).map((c) => (
-                <li key={c.id} className={cn("flex items-center gap-1 rounded-md", String(c.id) === activeId && tab === "conversation" ? "bg-accent/10 ring-1 ring-inset ring-accent/40" : "hover:bg-raised/60")} data-testid="jarvis-history-item">
-                  <button type="button" className="min-w-0 flex-1 px-2.5 py-2 text-left" onClick={() => onSelect(String(c.id))}>
-                    <span className="block truncate text-sm font-medium text-ink">{c.title || "Untitled conversation"}</span>
-                    <span className="num block text-xs text-muted">{fmtDateTimeET(c.updated_at) ?? "—"}</span>
+                <li key={c.id} className={cn("flex items-center gap-1 border-b border-line", String(c.id) === activeId && tab === "conversation" ? "border-l-4 border-l-ink bg-raised pl-2" : "hover:bg-raised/60")} data-testid="jarvis-history-item">
+                  <button type="button" className="min-w-0 flex-1 py-2 text-left" aria-current={String(c.id) === activeId && tab === "conversation" ? "true" : undefined} onClick={() => onSelect(String(c.id))}>
+                    <span className="block truncate text-base font-semibold text-ink">{c.title || "Untitled conversation"}</span>
+                    <span className="num block text-sm text-faint">{fmtDateTimeET(c.updated_at) ?? "—"}</span>
                   </button>
                   <ConfirmButton label={<Trash2 className="h-3.5 w-3.5" aria-label="Delete conversation" />} onConfirm={() => del.mutate(c.id)} disabled={del.isPending} testId="jarvis-delete" />
                 </li>
@@ -84,24 +84,24 @@ function LeftColumn({ activeId, onSelect, onNew, onSuggest, tab, setTab }: { act
         </QueryView>
       </div>
       <div>
-        <Label>Suggested research commands</Label>
-        <ul className="space-y-1">
+        <Label>Suggested questions</Label>
+        <ul className="border-t border-rule-2">
           {(suggestions.data?.items ?? []).slice(0, 6).map((s) => (
-            <li key={s.text}>
-              <button type="button" onClick={() => onSuggest(s.text)} className="flex min-h-[44px] w-full items-center rounded-md bg-raised/50 px-2.5 text-left text-sm text-soft hover:bg-raised hover:text-ink md:min-h-9" title={s.text}>
+            <li key={s.text} className="border-b border-line">
+              <button type="button" onClick={() => onSuggest(s.text)} className="flex min-h-[44px] w-full items-center py-2 text-left text-base font-semibold text-ink hover:bg-raised" title={s.text}>
                 <span className="min-w-0 truncate">{s.label}</span>
               </button>
             </li>
           ))}
         </ul>
       </div>
-      <nav aria-label="JARVIS sections" className="flex flex-wrap gap-x-4 gap-y-1 border-t border-line/60 pt-3 text-sm">
+      <nav aria-label="JARVIS sections" className="flex flex-wrap gap-x-5 gap-y-1 text-sm">
         {(["memory", "briefings", "events"] as const).map((t) => (
-          <button key={t} type="button" onClick={() => setTab(t)} className={cn("min-h-[44px] font-medium md:min-h-0", tab === t ? "text-ink" : "text-accent hover:underline")}>
+          <button key={t} type="button" onClick={() => setTab(t)} className={cn("min-h-[44px] md:min-h-0", tab === t ? "font-bold text-ink" : "link")}>
             {titleCase(t)}
           </button>
         ))}
-        <DLink href="/admin/ai-budget" className="inline-flex min-h-[44px] items-center font-medium text-accent hover:underline md:min-h-0" data-testid="jarvis-budget-link">
+        <DLink href="/admin/ai-budget" className="link inline-flex min-h-[44px] items-center md:min-h-0" data-testid="jarvis-budget-link">
           AI budget
         </DLink>
       </nav>
@@ -114,13 +114,13 @@ function RightColumn({ conversation, tools, streaming, state, lastModel }: { con
   const cc = useQuery({ queryKey: ["command-center", date ?? "today"], queryFn: () => api.commandCenter(date) });
   const b = state?.budget;
   return (
-    <div className="space-y-5" data-testid="jarvis-right">
+    <div className="space-y-9" data-testid="jarvis-right">
       <div>
         <Label>Research context</Label>
         {conversation ? <ContextChips context={conversation.context} /> : <p className="text-sm text-muted">No conversation selected. A new conversation starts without page context.</p>}
       </div>
       <div>
-        <Label>Tool activity · this turn</Label>
+        <Label>Tool activity, this turn</Label>
         {tools.length === 0 ? <p className="text-sm text-muted">{streaming ? "No tool call has been reported yet." : "No tool calls in the current turn."}</p> : <ToolActivity tools={tools} />}
       </div>
       <div>
@@ -145,13 +145,13 @@ function RightColumn({ conversation, tools, streaming, state, lastModel }: { con
         {b && state ? (
           <>
             <dl className="grid grid-cols-3 gap-2">
-              <div><dt className="text-2xs font-medium uppercase text-muted">Spent</dt><dd className="num text-base font-semibold text-ink" data-testid="jarvis-spent">{usd(b.spent_usd)}</dd></div>
-              <div><dt className="text-2xs font-medium uppercase text-muted">Remaining</dt><dd className="num text-base font-semibold text-ink">{usd(b.remaining_usd)}</dd></div>
-              <div><dt className="text-2xs font-medium uppercase text-muted">Today</dt><dd className="num text-base font-semibold text-ink">{usd(b.today_usd)}</dd></div>
+              <div><dt className="text-2xs text-muted">Spent</dt><dd className="num text-lg font-bold text-ink" data-testid="jarvis-spent">{usd(b.spent_usd)}</dd></div>
+              <div><dt className="text-2xs text-muted">Remaining</dt><dd className="num text-lg font-bold text-ink">{usd(b.remaining_usd)}</dd></div>
+              <div><dt className="text-2xs text-muted">Today</dt><dd className="num text-lg font-bold text-ink">{usd(b.today_usd)}</dd></div>
             </dl>
-            <p className="num mt-1 text-xs text-muted">Daily cap {usd(state.daily_cap_usd)} · lifetime cap {usd(state.lifetime_cap_usd)}</p>
-            <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-line/70" role="img" aria-label={`Today ${usd(b.today_usd)} of ${usd(state.daily_cap_usd)}`}>
-              <div className="h-full rounded-full bg-info" style={{ width: `${Math.min(100, state.daily_cap_usd > 0 ? (b.today_usd / state.daily_cap_usd) * 100 : 0)}%` }} />
+            <p className="num mt-1 text-sm text-faint">Daily cap {usd(state.daily_cap_usd)}, lifetime cap {usd(state.lifetime_cap_usd)}</p>
+            <div className="mt-1.5 h-1 w-full overflow-hidden bg-line" role="img" aria-label={`Today ${usd(b.today_usd)} of ${usd(state.daily_cap_usd)}`}>
+              <div className="h-full bg-ink" style={{ width: `${Math.min(100, state.daily_cap_usd > 0 ? (b.today_usd / state.daily_cap_usd) * 100 : 0)}%` }} />
             </div>
           </>
         ) : (
@@ -170,8 +170,8 @@ function MemoryTab() {
   const add = useMutation({ mutationFn: () => jarvis.addMemory({ category, text: text.trim() }), onSuccess: () => { setText(""); void qc.invalidateQueries({ queryKey: ["jarvis", "memory"] }); } });
   const del = useMutation({ mutationFn: (id: number) => jarvis.removeMemory(id), onSuccess: () => void qc.invalidateQueries({ queryKey: ["jarvis", "memory"] }) });
   return (
-    <div className="space-y-5 p-4 md:p-5" data-testid="jarvis-memory">
-      <form className="grid gap-3 rounded-md bg-raised/40 p-3 sm:grid-cols-[10rem_1fr_auto] sm:items-end" onSubmit={(e) => { e.preventDefault(); if (text.trim()) add.mutate(); }}>
+    <div className="space-y-6 py-5" data-testid="jarvis-memory">
+      <form className="grid gap-3 border-l-2 border-line py-1 pl-3 sm:grid-cols-[10rem_1fr_auto] sm:items-end" onSubmit={(e) => { e.preventDefault(); if (text.trim()) add.mutate(); }}>
         <Field label="Category">
           <Select value={category} onChange={(e) => setCategory(e.target.value)} name="category">
             {["research", "operational", "preference", "conversation"].map((c) => (
@@ -189,7 +189,7 @@ function MemoryTab() {
       </form>
       <QueryView query={q} rows={4} isEmpty={(d) => d.items.length === 0} empty={<EmptyState title="Nothing is stored in memory yet.">Notes you add here, and facts JARVIS records with their sources, will be listed with their status.</EmptyState>}>
         {(d) => (
-          <ul className="divide-y divide-line/30">
+          <ul className="divide-y divide-line">
             {d.items.map((m) => (
               <li key={m.id} className="flex items-start gap-3 py-3" data-testid="memory-item">
                 <div className="min-w-0 flex-1">
@@ -222,8 +222,8 @@ function BriefingsTab() {
   const [kind, setKind] = useState<string>("morning");
   const run = useMutation({ mutationFn: () => jarvis.runBriefing(kind), onSuccess: () => { void qc.invalidateQueries({ queryKey: ["jarvis", "briefings"] }); void qc.invalidateQueries({ queryKey: ["jarvis", "state"] }); } });
   return (
-    <div className="space-y-5 p-4 md:p-5" data-testid="jarvis-briefings">
-      <div className="flex flex-wrap items-end gap-3 rounded-md bg-raised/40 p-3">
+    <div className="space-y-6 py-5" data-testid="jarvis-briefings">
+      <div className="flex flex-wrap items-end gap-3">
         <Field label="Run now" className="w-44">
           <Select value={kind} onChange={(e) => setKind(e.target.value)} data-testid="briefing-kind">
             {KINDS.map((k) => (
@@ -243,14 +243,14 @@ function BriefingsTab() {
       </div>
       <QueryView query={q} rows={4} isEmpty={(d) => d.items.length === 0} empty={<EmptyState title="No briefings have been generated yet.">Briefings are written on the schedule, or when you run one above.</EmptyState>}>
         {(d) => (
-          <ul className="space-y-2">
+          <ul>
             {[...d.items].sort((a, b) => b.created_at.localeCompare(a.created_at)).map((b, i) => (
               <li key={b.id} data-testid="briefing-item">
                 <Collapsible
                   defaultOpen={i === 0}
                   title={
                     <span className="flex flex-wrap items-center gap-x-3">
-                      <span className="font-display text-[15px] font-semibold uppercase tracking-wide text-ink">{titleCase(b.kind)}</span>
+                      <span className="h-sub text-ink">{titleCase(b.kind)}</span>
                       <span className="num text-xs text-muted">{fmtDate(b.date, { weekday: true }) ?? b.date}</span>
                     </span>
                   }
@@ -273,10 +273,10 @@ function BriefingsTab() {
 function EventsTab() {
   const q = useQuery({ queryKey: ["jarvis", "events"], queryFn: jarvis.events });
   return (
-    <div className="p-4 md:p-5" data-testid="jarvis-events">
+    <div className="py-5" data-testid="jarvis-events">
       <QueryView query={q} rows={4} isEmpty={(d) => d.items.length === 0} empty={<EmptyState title="No events have been recorded.">Availability, lineup, market and system events appear here as they are detected.</EmptyState>}>
         {(d) => (
-          <ul className="divide-y divide-line/30">
+          <ul className="divide-y divide-line">
             {d.items.map((e) => (
               <li key={e.id} className="grid gap-x-4 gap-y-0.5 py-2.5 sm:grid-cols-[6.5rem_1fr_auto]" data-testid="event-item">
                 <StatusDot tone={e.severity === "alert" ? "bad" : e.severity === "notice" ? "warn" : "neutral"}>{titleCase(e.severity)}</StatusDot>
@@ -341,28 +341,25 @@ export default function JarvisPage() {
   const right = <RightColumn conversation={chat.conversation} tools={tools} streaming={chat.streaming} state={state.data} lastModel={lastModel} />;
 
   return (
-    <div className="flex h-[calc(100dvh-11.5rem-var(--strip-h,0px))] min-h-[420px] flex-col lg:h-[calc(100dvh-8.5rem-var(--strip-h,0px))]" data-testid="jarvis-page">
-      <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2" data-testid="jarvis-statusbar">
-        <JarvisMark className="h-9 w-9" active={chat.streaming} />
-        <h1 className="font-display text-[26px] font-bold uppercase italic leading-7 tracking-wide text-ink">JARVIS</h1>
+    <div className="flex h-[calc(100dvh-var(--chrome-h)-6.5rem)] min-h-[560px] flex-col lg:h-[calc(100dvh-var(--chrome-h)-3rem)] lg:min-h-[520px]" data-testid="jarvis-page">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b-2 border-ink pb-3" data-testid="jarvis-statusbar">
+        <JarvisMark className="h-8 w-8" active={chat.streaming} />
+        <h1 className="h-page">JARVIS</h1>
         <JarvisPill state={pill} message={chat.error?.message ?? state.data?.message} showMessage className="min-w-0 flex-1" />
-        <div className="flex gap-1.5 lg:hidden">
-          <button type="button" onClick={() => setHistoryOpen(true)} aria-label="History and commands" className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-raised text-soft ring-1 ring-inset ring-line" data-testid="jarvis-history-btn">
-            <History className="h-4 w-4" aria-hidden />
+        <div className="flex gap-1 lg:hidden">
+          <button type="button" onClick={() => setHistoryOpen(true)} aria-label="History and commands" className="inline-flex h-11 w-11 items-center justify-center rounded text-ink hover:bg-raised" data-testid="jarvis-history-btn">
+            <History className="h-5 w-5" aria-hidden />
           </button>
-          <button type="button" onClick={() => setDetailsOpen(true)} aria-label="Context, activity and budget" className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-raised text-soft ring-1 ring-inset ring-line" data-testid="jarvis-details-btn">
-            <PanelRight className="h-4 w-4" aria-hidden />
+          <button type="button" onClick={() => setDetailsOpen(true)} aria-label="Context, activity and budget" className="inline-flex h-11 w-11 items-center justify-center rounded text-ink hover:bg-raised" data-testid="jarvis-details-btn">
+            <PanelRight className="h-5 w-5" aria-hidden />
           </button>
         </div>
+        <p className="hidden w-full text-sm text-muted lg:block">The research assistant. Answers are assembled from tool calls over the platform’s verified records; it never produces a probability.</p>
       </div>
-      <p className="mb-3 hidden text-xs text-muted lg:block">Joint Analytics, Research, Verification &amp; Intelligence System. Answers are assembled from tool calls over the platform’s verified records.</p>
 
-      <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[260px_minmax(0,1fr)_300px]">
-        <aside className="hidden min-h-0 overflow-y-auto rounded-lg bg-card p-4 ring-1 ring-inset ring-line/60 lg:block">{left}</aside>
-        <section className="flex min-h-0 flex-col overflow-hidden rounded-lg bg-card ring-1 ring-inset ring-line/60" aria-label="JARVIS workspace">
-          <div className="border-b border-line/60 px-3 py-2">
-            <Tabs label="JARVIS section" size="sm" scroll value={tab} onChange={(t) => setParams({ tab: t === "conversation" ? null : t })} items={TABS.map(([id, label]) => ({ id, label }))} />
-          </div>
+      <div className="grid min-h-0 flex-1 gap-x-12 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_360px]">
+        <section className="flex min-h-0 flex-col pb-1" aria-label="JARVIS workspace">
+          <Tabs label="JARVIS section" size="sm" scroll value={tab} onChange={(t) => setParams({ tab: t === "conversation" ? null : t })} items={TABS.map(([id, label]) => ({ id, label }))} />
           {tab === "conversation" ? (
             <JarvisConversationView
               messages={messages}
@@ -379,7 +376,10 @@ export default function JarvisPage() {
             <div className="min-h-0 flex-1 overflow-y-auto">{tab === "memory" ? <MemoryTab /> : tab === "briefings" ? <BriefingsTab /> : <EventsTab />}</div>
           )}
         </section>
-        <aside className="hidden min-h-0 overflow-y-auto rounded-lg bg-card p-4 ring-1 ring-inset ring-line/60 lg:block">{right}</aside>
+        <aside className="hidden min-h-0 space-y-8 overflow-y-auto pb-4 pr-1 pt-4 lg:block" aria-label="History, context and budget">
+          {left}
+          {right}
+        </aside>
       </div>
 
       <Sheet open={historyOpen} onClose={() => setHistoryOpen(false)} title="History and commands" side="auto" testId="jarvis-history-sheet">

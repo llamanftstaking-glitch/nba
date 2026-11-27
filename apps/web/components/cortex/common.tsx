@@ -51,7 +51,7 @@ export function ConceptRow({ c, extra, showDepartment = true }: { c: ConceptShor
     <li data-testid="concept-row" data-slug={c.slug}>
       <DLink href={`/cortex/${encodeURIComponent(c.slug)}`} className="block rounded-md px-3 py-3 hover:bg-raised/50">
         <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-          <span className="min-w-0 break-words text-[15px] font-semibold text-ink">{c.title}</span>
+          <span className="min-w-0 break-words text-base font-semibold text-ink">{c.title}</span>
           {showDepartment && <span className="text-xs text-muted">{c.department_name}</span>}
         </span>
         <ConceptChips c={c} className="mt-1.5" />
@@ -65,12 +65,12 @@ export function ConceptRow({ c, extra, showDepartment = true }: { c: ConceptShor
 /** A capability that does not exist, with the reason the API gives. Never hidden, never softened. */
 export function NotAvailablePanel({ title, reason, testId }: { title: string; reason: string; testId?: string }) {
   return (
-    <section className="rounded-lg bg-card p-4 ring-1 ring-inset ring-line/60" data-testid={testId ?? "not-available-panel"}>
-      <h3 className="flex items-center gap-2 font-display text-[17px] font-semibold uppercase tracking-wide text-ink">
+    <section className="blk p-4" data-testid={testId ?? "not-available-panel"}>
+      <h3 className="flex items-center gap-2 font-display text-lg font-semibold text-ink">
         <Ban className="h-[18px] w-[18px] text-muted" aria-hidden />
         {title}
       </h3>
-      <p className="mt-2 text-sm font-semibold uppercase tracking-wide text-warn">Not available</p>
+      <p className="mt-2 text-sm font-semibold text-warn">Not available</p>
       <p className="mt-1 break-words text-sm text-soft">{reason}</p>
     </section>
   );
@@ -94,8 +94,8 @@ export function PlainList({ items, testId, tone = "muted" }: { items: string[]; 
 export function Stat({ label, value, sub }: { label: string; value: ReactNode; sub?: ReactNode }) {
   return (
     <div className="min-w-0">
-      <dt className="text-2xs font-medium uppercase tracking-wide text-muted">{label}</dt>
-      <dd className="num text-[15px] font-semibold text-ink">{value}</dd>
+      <dt className="text-2xs font-medium text-muted">{label}</dt>
+      <dd className="num text-base font-semibold text-ink">{value}</dd>
       {sub && <dd className="num text-xs text-muted">{sub}</dd>}
     </div>
   );
@@ -104,7 +104,7 @@ export function Stat({ label, value, sub }: { label: string; value: ReactNode; s
 /** Formula in a monospace block. Text only: rendered as a string, never as markup. */
 export function FormulaBlock({ formula, className }: { formula: string; className?: string }) {
   return (
-    <pre className={cn("overflow-x-auto whitespace-pre-wrap break-words rounded-md bg-bg px-3 py-2 font-mono text-[13px] leading-5 text-info ring-1 ring-inset ring-line/60", className)} data-testid="formula">
+    <pre className={cn("overflow-x-auto whitespace-pre-wrap break-words rounded-md bg-bg px-3 py-2 font-mono text-[13px] leading-5 text-info ring-1 ring-inset ring-line-strong", className)} data-testid="formula">
       {formula}
     </pre>
   );

@@ -72,14 +72,14 @@ function Evaluation({ ids, legs, onLabels }: { ids: number[]; legs: Leg[]; onLab
   return (
     <div className="space-y-4" data-testid="builder-evaluation" data-fetching={q.isFetching ? "1" : "0"}>
       {!ev.reliable && (
-        <div role="alert" className="rounded-md bg-bad/10 ring-1 ring-inset ring-bad/40 px-2 py-2" data-testid="unreliable-banner">
-          <p className="text-xs font-semibold uppercase tracking-wide text-bad">Estimate not reliable</p>
+        <div role="alert" className="border-l-4 border-bad pl-3 px-2 py-2" data-testid="unreliable-banner">
+          <p className="text-xs font-semibold text-bad">Estimate not reliable</p>
           <p className="mt-0.5 text-xs text-soft">
             The model could not produce a dependable joint probability for this combination. Treat the figures below as indicative research only.
           </p>
         </div>
       )}
-      <dl className="grid grid-cols-2 gap-2 rounded-md bg-raised/50 p-3">
+      <dl className="grid grid-cols-2 gap-2 border-l-2 border-line py-1 pl-3">
         <Metric label="Joint probability [interval]">
           <span data-testid="builder-joint">
             <ProbInterval prob={ev.joint_prob} low={ev.joint_low} high={ev.joint_high} stack />
@@ -97,13 +97,13 @@ function Evaluation({ ids, legs, onLabels }: { ids: number[]; legs: Leg[]; onLab
       </div>
       <EvidenceMeter score={ev.evidence_score} />
       {ev.warnings.length > 0 && (
-        <div className="rounded-md bg-warn/10 ring-1 ring-inset ring-warn/40 p-2" data-testid="builder-warnings">
-          <h4 className="mb-1 text-2xs font-semibold uppercase tracking-wide text-warn">Warnings</h4>
+        <div className="border-l-4 border-warn pl-3 p-2" data-testid="builder-warnings">
+          <h4 className="mb-1 text-2xs font-semibold text-warn">Warnings</h4>
           <BulletList items={ev.warnings} tone="warn" />
         </div>
       )}
       <div className="text-xs">
-        <h4 className="mb-1 text-2xs font-semibold uppercase tracking-wide text-muted">Correlation</h4>
+        <h4 className="mb-1 text-2xs font-semibold text-muted">Correlation</h4>
         <p className="break-words text-soft">{ev.correlation.assessment}</p>
         <p className="num mt-0.5 text-2xs text-muted">
           {ev.correlation.method} · draws <Val v={fmtInt(ev.correlation.draws)} /> · MC error <Val v={ev.correlation.mc_se === null ? null : fmtNum(ev.correlation.mc_se, 4)} />
@@ -111,20 +111,20 @@ function Evaluation({ ids, legs, onLabels }: { ids: number[]; legs: Leg[]; onLab
       </div>
       {ev.correlation.shared_risks.length > 0 && (
         <div>
-          <h4 className="mb-1 text-2xs font-semibold uppercase tracking-wide text-muted">Shared risks</h4>
+          <h4 className="mb-1 text-2xs font-semibold text-muted">Shared risks</h4>
           <BulletList items={ev.correlation.shared_risks} tone="warn" />
         </div>
       )}
       {ev.weakest_assumption && (
         <div>
-          <h4 className="mb-1 text-2xs font-semibold uppercase tracking-wide text-muted">Weakest assumption</h4>
+          <h4 className="mb-1 text-2xs font-semibold text-muted">Weakest assumption</h4>
           <p className="break-words text-xs text-soft">{ev.weakest_assumption}</p>
         </div>
       )}
       <PricingBlock combo={ev} />
       {ev.rejection_reasons.length > 0 && (
         <div>
-          <h4 className="mb-1 text-2xs font-semibold uppercase tracking-wide text-bad">Rejection reasons</h4>
+          <h4 className="mb-1 text-2xs font-semibold text-bad">Rejection reasons</h4>
           <BulletList items={ev.rejection_reasons} tone="bad" />
         </div>
       )}
@@ -139,9 +139,9 @@ const legOf = (s: Selection): Leg => ({ id: s.id, label: s.market_label, game_la
 function CombinationPanel({ legs, onRemove, onClear, onLabels }: { legs: Leg[]; onRemove: (id: number) => void; onClear: () => void; onLabels: (m: Map<number, ComboLeg>) => void }) {
   const ids = useMemo(() => legs.map((l) => l.id), [legs]);
   return (
-    <div className="space-y-4">
+    <div className="space-y-9">
       {legs.length > 0 && (
-        <ul className="divide-y divide-line/40 rounded-md bg-raised/40" data-testid="builder-legs">
+        <ul className="divide-y divide-line rounded-md bg-raised/40" data-testid="builder-legs">
           {legs.map((l, i) => (
             <li key={l.id} className="flex items-start gap-2 px-3 py-2">
               <span className="num mt-0.5 text-xs text-muted">{i + 1}</span>
@@ -170,7 +170,7 @@ function CombinationPanel({ legs, onRemove, onClear, onLabels }: { legs: Leg[]; 
 
 function GameGroup({ label, items, open, children }: { label: string; items: number; open: boolean; children: React.ReactNode }) {
   return (
-    <Collapsible title={<span className="font-display text-[15px] font-semibold uppercase tracking-wide">{label}</span>} right={`${items} selection(s)`} defaultOpen={open} testId="builder-game-group">
+    <Collapsible title={<span className="font-display text-base font-semibold">{label}</span>} right={`${items} selection(s)`} defaultOpen={open} testId="builder-game-group">
       {children}
     </Collapsible>
   );
@@ -248,7 +248,7 @@ export default function BuilderPage() {
               <Input type="search" placeholder="Player, team or market" value={text} onChange={(e) => setText(e.target.value)} data-testid="builder-search" />
             </Field>
             <label className="flex min-h-[44px] cursor-pointer items-center gap-2 text-sm text-soft md:min-h-0">
-              <input type="checkbox" checked={watch} onChange={(e) => setWatch(e.target.checked)} className="h-4 w-4 accent-[rgb(0,229,160)]" data-testid="builder-watchlist" />
+              <input type="checkbox" checked={watch} onChange={(e) => setWatch(e.target.checked)} className="h-4 w-4 accent-ink" data-testid="builder-watchlist" />
               Include watchlist
             </label>
             <QueryView
@@ -302,7 +302,7 @@ export default function BuilderPage() {
             </QueryView>
           </Panel>
 
-          <Collapsible title="Load a researched combination" className="bg-card ring-1 ring-inset ring-line/60" testId="builder-load-panel">
+          <Collapsible title="Load a researched combination" className="blk" testId="builder-load-panel">
             <Field label="Category">
               <Select value={category} onChange={(e) => { setCategory(e.target.value); setLoadAll(false); }}>
                 {CATEGORIES.map(([id, label]) => (
@@ -381,7 +381,7 @@ export default function BuilderPage() {
       {/* Below lg: expandable drawer that sits above the bottom navigation */}
       <div className="fixed inset-x-0 bottom-14 z-30 border-t border-accent/50 bg-bg2 lg:hidden" data-testid="builder-drawer" data-open={drawerOpen ? "1" : "0"}>
         <button type="button" aria-expanded={drawerOpen} onClick={() => setDrawerOpen((v) => !v)} className="flex h-11 w-full items-center justify-between px-3 text-sm" data-testid="builder-drawer-toggle">
-          <span className="font-semibold uppercase tracking-wide text-ink">
+          <span className="font-semibold text-ink">
             Current combination · <span className="num">{legs.length}</span> leg(s)
           </span>
           <span className="text-muted">{drawerOpen ? "Close" : "Open"}</span>

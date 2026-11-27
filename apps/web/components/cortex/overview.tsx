@@ -14,7 +14,7 @@ export function VerificationSplit({ o }: { o: CortexOverview }) {
   const pct = total > 0 ? (o.records_checked_against_a_source / total) * 100 : 0;
   return (
     <div data-testid="verification-split">
-      <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-line/70" role="img" aria-label={`${o.records_checked_against_a_source} records checked against a source, ${o.records_authored_not_checked} authored and not checked`}>
+      <div className="flex h-2.5 w-full overflow-hidden rounded bg-line" role="img" aria-label={`${o.records_checked_against_a_source} records checked against a source, ${o.records_authored_not_checked} authored and not checked`}>
         {total > 0 && <div className="h-full bg-accent" style={{ width: `${pct}%` }} />}
         {total > 0 && <div className="h-full bg-warn" style={{ width: `${100 - pct}%` }} />}
       </div>
@@ -73,7 +73,7 @@ export function Overview({ o, onDepartment }: { o: CortexOverview; onDepartment:
           <span data-testid="count-unresolved">{fmtInt(o.unresolved_hypotheses)}</span>
         </Tile>
         <Tile label="Last knowledge update" icon={FileSearch} sub={`${fmtInt(o.retrievals_logged)} library searches logged`}>
-          <span className="text-[15px] leading-7" data-testid="last-update">{fmtDateTimeET(o.last_knowledge_update) ?? <NA />}</span>
+          <span className="text-base leading-7" data-testid="last-update">{fmtDateTimeET(o.last_knowledge_update) ?? <NA />}</span>
         </Tile>
       </div>
 
@@ -88,7 +88,7 @@ export function Overview({ o, onDepartment }: { o: CortexOverview; onDepartment:
           ) : (
             <dl className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3" data-testid="by-kind">
               {Object.entries(o.by_kind).map(([k, n]) => (
-                <div key={k} className="flex items-baseline justify-between gap-2 border-b border-line/30 pb-1">
+                <div key={k} className="flex items-baseline justify-between gap-2 border-b border-line pb-1">
                   <dt className="text-sm text-soft">{kindLabel(k)}</dt>
                   <dd className="num text-sm font-semibold text-ink">{fmtInt(n)}</dd>
                 </div>
@@ -106,7 +106,7 @@ export function Overview({ o, onDepartment }: { o: CortexOverview; onDepartment:
               <button
                 type="button"
                 onClick={() => onDepartment(d.id)}
-                className="flex min-h-[64px] w-full items-center gap-3 rounded-lg bg-card px-3.5 py-2.5 text-left ring-1 ring-inset ring-line/60 hover:ring-accent/50"
+                className="flex min-h-[64px] w-full items-center gap-3 blk px-3.5 py-2.5 text-left hover:ring-accent/50"
                 data-testid="department-card"
                 data-department={d.id}
                 data-records={d.records}
@@ -115,7 +115,7 @@ export function Overview({ o, onDepartment }: { o: CortexOverview; onDepartment:
                 <span className="min-w-0 flex-1 break-words text-sm font-medium text-ink">{d.name}</span>
                 <span className="shrink-0 text-right">
                   <span className={`num block text-lg font-semibold leading-5 ${d.records === 0 ? "text-muted" : "text-ink"}`}>{fmtInt(d.records)}</span>
-                  <span className="block text-2xs uppercase tracking-wide text-muted">{d.records === 1 ? "record" : "records"}</span>
+                  <span className="block text-2xs text-muted">{d.records === 1 ? "record" : "records"}</span>
                 </span>
               </button>
             </li>

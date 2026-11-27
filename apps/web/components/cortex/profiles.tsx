@@ -22,7 +22,7 @@ const int = (v: number | null | undefined): ReactNode => fmtInt(v) ?? <NA />;
 
 function BackButton({ onClick, children }: { onClick: () => void; children: ReactNode }) {
   return (
-    <button type="button" onClick={onClick} className="inline-flex min-h-[44px] items-center gap-1 text-sm font-medium text-accent hover:underline md:min-h-0" data-testid="profile-back">
+    <button type="button" onClick={onClick} className="inline-flex min-h-[44px] items-center gap-1 text-sm font-medium link md:min-h-0" data-testid="profile-back">
       <ArrowLeft className="h-4 w-4" aria-hidden /> {children}
     </button>
   );
@@ -42,7 +42,7 @@ function ProfileMeta({ method, generated, season }: { method: string | null; gen
 /** A descriptive label that always travels with the rule that produced it. */
 export function ArchetypeChip({ a }: { a: { key: string; label: string; rule: string } }) {
   return (
-    <li className="rounded-md bg-raised/40 px-3 py-2" data-testid="archetype" data-key={a.key}>
+    <li className="border-l-2 border-line py-1 pl-3" data-testid="archetype" data-key={a.key}>
       <Badge tone="info">{a.label}</Badge>
       <p className="mt-1.5 break-words font-mono text-xs text-soft" data-testid="archetype-rule">{a.rule}</p>
     </li>
@@ -55,11 +55,11 @@ function PlayerProfile({ d }: { d: PlayerDna }) {
   const r = d.recent_10;
   return (
     <div className="space-y-4" data-testid="player-dna" data-available={d.available ? "1" : "0"}>
-      <section className="rounded-lg bg-card p-4 ring-1 ring-inset ring-line/60">
+      <section className="blk p-4">
         <div className="flex flex-wrap items-center gap-4">
           <PlayerAvatar name={id.name} src={id.headshot_url} size={64} />
           <div className="min-w-0 flex-1">
-            <h2 className="break-words font-display text-2xl font-semibold uppercase tracking-wide text-ink">{id.name}</h2>
+            <h2 className="break-words font-display text-2xl font-semibold text-ink">{id.name}</h2>
             <p className="num text-sm text-soft">
               {[id.team, id.position, id.jersey ? `#${id.jersey}` : null].filter(Boolean).join(" · ") || "Team not recorded"}
               {id.last_game_date ? ` · last game ${fmtDate(id.last_game_date, { year: true })}` : ""}
@@ -164,7 +164,7 @@ function PlayerProfile({ d }: { d: PlayerDna }) {
                   <table className="w-full min-w-[420px] border-collapse text-sm" data-testid="teammate-context">
                     <caption className="sr-only">Usage with and without each teammate</caption>
                     <thead>
-                      <tr className="border-b border-line text-2xs font-semibold uppercase tracking-wide text-muted">
+                      <tr className="border-b border-line text-2xs font-semibold text-muted">
                         <th scope="col" className="pb-2 pr-2 text-left">Teammate</th>
                         <th scope="col" className="px-2 pb-2 text-right">Games with</th>
                         <th scope="col" className="px-2 pb-2 text-right">Usage with</th>
@@ -174,10 +174,10 @@ function PlayerProfile({ d }: { d: PlayerDna }) {
                     </thead>
                     <tbody>
                       {d.teammate_context.map((t) => (
-                        <tr key={t.teammate} className="border-b border-line/30" data-testid="teammate-row" data-small={t.small_sample ? "1" : "0"}>
+                        <tr key={t.teammate} className="border-b border-line" data-testid="teammate-row" data-small={t.small_sample ? "1" : "0"}>
                           <th scope="row" className="py-1.5 pr-2 text-left font-medium text-ink">
                             {t.teammate}
-                            {t.small_sample && <span className="ml-2 whitespace-nowrap text-2xs font-semibold uppercase tracking-wide text-warn" data-testid="small-sample">small sample</span>}
+                            {t.small_sample && <span className="ml-2 whitespace-nowrap text-2xs font-semibold text-warn" data-testid="small-sample">small sample</span>}
                           </th>
                           <td className="num px-2 py-1.5 text-right text-soft">{fmtInt(t.games_with)}</td>
                           <td className="num px-2 py-1.5 text-right text-ink">{n1(t.usage_with)}</td>
@@ -243,7 +243,7 @@ export function PlayerDnaSection({ playerId, onSelect }: { playerId: string | nu
               <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3" data-testid="cortex-players">
                 {d.items.map((p) => (
                   <li key={p.player_id}>
-                    <button type="button" onClick={() => onSelect(String(p.player_id))} className="flex min-h-[56px] w-full items-center gap-3 rounded-lg bg-card px-3 py-2 text-left ring-1 ring-inset ring-line/60 hover:ring-accent/50" data-testid="cortex-player" data-player-id={p.player_id}>
+                    <button type="button" onClick={() => onSelect(String(p.player_id))} className="flex min-h-[56px] w-full items-center gap-3 blk px-3 py-2 text-left hover:ring-accent/50" data-testid="cortex-player" data-player-id={p.player_id}>
                       <PlayerAvatar name={p.name} src={p.headshot_url} size={36} />
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm font-semibold text-ink">{p.name}</span>
@@ -280,7 +280,7 @@ function TeamGrid({ onSelect, intro }: { onSelect: (id: string) => void; intro: 
             <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5" data-testid="cortex-teams">
               {d.items.map((t: CortexTeamRow) => (
                 <li key={t.team_id}>
-                  <button type="button" onClick={() => onSelect(String(t.team_id))} className="flex min-h-[64px] w-full items-center gap-3 rounded-lg bg-card px-3 py-2 text-left ring-1 ring-inset ring-line/60 hover:ring-accent/50" data-testid="cortex-team" data-team-id={t.team_id} data-available={t.profile_available ? "1" : "0"}>
+                  <button type="button" onClick={() => onSelect(String(t.team_id))} className="flex min-h-[64px] w-full items-center gap-3 blk px-3 py-2 text-left hover:ring-accent/50" data-testid="cortex-team" data-team-id={t.team_id} data-available={t.profile_available ? "1" : "0"}>
                     <TeamMark team={t} size={32} />
                     <span className="min-w-0 flex-1">
                       <span className="block break-words text-sm font-semibold text-ink">{t.name}</span>
@@ -299,11 +299,11 @@ function TeamGrid({ onSelect, intro }: { onSelect: (id: string) => void; intro: 
 
 function TeamHeader({ d, sub }: { d: TeamDna; sub?: ReactNode }) {
   return (
-    <section className="rounded-lg bg-card p-4 ring-1 ring-inset ring-line/60">
+    <section className="blk p-4">
       <div className="flex flex-wrap items-center gap-4">
         <TeamMark team={d} size={56} />
         <div className="min-w-0 flex-1">
-          <h2 className="break-words font-display text-2xl font-semibold uppercase tracking-wide text-ink">{d.name}</h2>
+          <h2 className="break-words font-display text-2xl font-semibold text-ink">{d.name}</h2>
         </div>
         <DLink href={`/teams/${d.team_id}`} className={`${linkButton} max-sm:w-full max-sm:justify-center`}>
           Team page
@@ -338,7 +338,7 @@ function RotationBlock({ r }: { r: TeamRotation }) {
           ) : (
             <ul className="space-y-2" data-testid="starting-fives">
               {r.most_used_starting_fives.map((f, i) => (
-                <li key={i} className="flex items-start justify-between gap-3 rounded-md bg-raised/40 px-3 py-2 text-sm">
+                <li key={i} className="flex items-start justify-between gap-3 border-l-2 border-line py-1 pl-3 text-sm">
                   <span className="min-w-0 break-words text-soft">{f.players.join(" · ")}</span>
                   <span className="num shrink-0 font-semibold text-ink">{f.games} g</span>
                 </li>
@@ -351,7 +351,7 @@ function RotationBlock({ r }: { r: TeamRotation }) {
           {r.minutes_leaders.length === 0 ? (
             <p className="text-sm text-muted">None recorded.</p>
           ) : (
-            <ul className="divide-y divide-line/30" data-testid="minutes-leaders">
+            <ul className="divide-y divide-line" data-testid="minutes-leaders">
               {r.minutes_leaders.map((p) => (
                 <li key={`${p.player_id}-${p.name}`} className="flex items-baseline justify-between gap-3 py-1.5 text-sm">
                   {p.player_id !== null ? (
@@ -368,8 +368,8 @@ function RotationBlock({ r }: { r: TeamRotation }) {
           )}
         </div>
       </div>
-      <div className="rounded-md bg-raised/40 px-3 py-2.5 text-sm" data-testid="first-substitution">
-        <span className="text-2xs font-semibold uppercase tracking-wide text-muted">First substitution</span>
+      <div className="border-l-2 border-line py-1 pl-3 text-sm" data-testid="first-substitution">
+        <span className="text-2xs font-semibold text-muted">First substitution</span>
         {fs === null ? (
           <p className="text-soft">Not available.</p>
         ) : fs.average_minutes_into_game !== null && fs.average_minutes_into_game !== undefined ? (
@@ -424,7 +424,7 @@ function TeamProfile({ d }: { d: TeamDna }) {
                 </>
               ) : (
                 <p className="text-sm text-soft" data-testid="team-ratings-unavailable">
-                  <span className="font-semibold uppercase tracking-wide text-warn">Not available.</span> No possession counts are held for this team’s games, so no rating is computed.
+                  <span className="font-semibold text-warn">Not available.</span> No possession counts are held for this team’s games, so no rating is computed.
                 </p>
               )}
             </Panel>
@@ -438,13 +438,13 @@ function TeamProfile({ d }: { d: TeamDna }) {
                 </dl>
               ) : (
                 <p className="text-sm text-soft">
-                  <span className="font-semibold uppercase tracking-wide text-warn">Not available.</span>
+                  <span className="font-semibold text-warn">Not available.</span>
                 </p>
               )}
             </Panel>
           </div>
           <Panel title="Rotation">
-            {d.rotation ? <RotationBlock r={d.rotation} /> : <p className="text-sm text-soft"><span className="font-semibold uppercase tracking-wide text-warn">Not available.</span></p>}
+            {d.rotation ? <RotationBlock r={d.rotation} /> : <p className="text-sm text-soft"><span className="font-semibold text-warn">Not available.</span></p>}
           </Panel>
           <div className="grid items-start gap-4 xl:grid-cols-3">
             <NotAvailablePanel title="Tactical identity" reason={d.tactical_identity?.reason ?? "The server did not give a reason."} testId="tactical-identity" />
@@ -465,8 +465,8 @@ function CoachProfile({ d }: { d: TeamDna }) {
   return (
     <div className="space-y-4" data-testid="coach-dna" data-available={d.available ? "1" : "0"}>
       <TeamHeader d={d} />
-      <div className="rounded-lg bg-card p-4 ring-1 ring-inset ring-warn/40" data-testid="coach-note">
-        <p className="font-display text-[17px] font-semibold uppercase tracking-wide text-warn">Coach not identified</p>
+      <div className="border-l-4 border-warn py-1 pl-4" data-testid="coach-note">
+        <p className="font-display text-lg font-semibold text-warn">Coach not identified</p>
         <p className="mt-1 break-words text-sm text-soft">{d.coach?.note ?? d.note ?? "Coach identities are not in our data."}</p>
       </div>
       <Panel title="Rotation tendencies (coach not identified)">
@@ -474,7 +474,7 @@ function CoachProfile({ d }: { d: TeamDna }) {
           <RotationBlock r={d.rotation} />
         ) : (
           <p className="text-sm text-soft" data-testid="coach-rotation-unavailable">
-            <span className="font-semibold uppercase tracking-wide text-warn">Not available.</span> {d.note ?? "No rotation data is held for this team."}
+            <span className="font-semibold text-warn">Not available.</span> {d.note ?? "No rotation data is held for this team."}
           </p>
         )}
       </Panel>

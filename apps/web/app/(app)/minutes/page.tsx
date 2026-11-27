@@ -43,10 +43,10 @@ export default function MinutesPage() {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-9">
       <PageHeader title="Minutes Intelligence" sub="Projected and recent playing time for players on the slate, with role, variability and availability. Averages count games played; a missed game is never a zero." />
       {q.data && <MinutesNotes meta={q.data} />}
-      <div className="grid grid-cols-2 gap-3 rounded-lg bg-card p-4 ring-1 ring-inset ring-line/60 md:grid-cols-5" data-testid="minutes-filters">
+      <div className="grid grid-cols-2 gap-3 blk p-4 md:grid-cols-5" data-testid="minutes-filters">
         <Field label="Search" className="col-span-2">
           <Input type="search" placeholder="Player name" value={text} onChange={(e) => { setText(e.target.value); setOffset(0); }} data-testid="minutes-search" />
         </Field>

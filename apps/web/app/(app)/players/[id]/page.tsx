@@ -51,9 +51,9 @@ function AveragesStrip({ windows }: { windows: AveragesWindow[] }) {
   return (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" data-testid="averages-strip">
       {pick.map((w) => (
-        <div key={w.key} className="rounded-lg bg-card p-4 ring-1 ring-inset ring-line/60" data-window={w.key}>
+        <div key={w.key} className="blk p-4" data-window={w.key}>
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h3 className="font-display text-lg font-semibold uppercase tracking-wide text-ink">{w.label}</h3>
+            <h3 className="font-display text-lg font-semibold text-ink">{w.label}</h3>
             <span className="num text-xs text-muted" data-testid="window-sample">{sampleText(w)}</span>
           </div>
           {!w.available ? (
@@ -63,7 +63,7 @@ function AveragesStrip({ windows }: { windows: AveragesWindow[] }) {
               <dl className="mt-2 grid grid-cols-5 gap-1">
                 {STRIP_STATS.map((s) => (
                   <div key={s}>
-                    <dt className="text-2xs font-medium uppercase text-muted">{statLabel(s)}</dt>
+                    <dt className="text-2xs font-medium text-muted">{statLabel(s)}</dt>
                     <dd className="num text-base font-semibold text-ink">
                       <Val v={fmtNum(w.stats[s]?.mean)} />
                     </dd>
@@ -145,8 +145,8 @@ function GameLog({ id }: { id: string }) {
     return items;
   }, [q.data, sort]);
   const th = (key: SortKey, label: string, align = "text-right") => (
-    <th scope="col" className={cn("px-2 pb-2 text-2xs font-semibold uppercase tracking-wide text-muted", align)} aria-sort={sort.key === key ? (sort.dir === 1 ? "ascending" : "descending") : "none"}>
-      <button type="button" className={cn("uppercase hover:text-ink", sort.key === key && "text-ink")} onClick={() => setSort((s) => ({ key, dir: s.key === key ? (s.dir === 1 ? -1 : 1) : -1 }))} data-sort={key}>
+    <th scope="col" className={cn("px-2 pb-2 text-2xs font-semibold text-muted", align)} aria-sort={sort.key === key ? (sort.dir === 1 ? "ascending" : "descending") : "none"}>
+      <button type="button" className={cn("hover:text-ink", sort.key === key && "text-ink")} onClick={() => setSort((s) => ({ key, dir: s.key === key ? (s.dir === 1 ? -1 : 1) : -1 }))} data-sort={key}>
         {label}
         {sort.key === key ? (sort.dir === 1 ? " ↑" : " ↓") : ""}
       </button>
@@ -188,14 +188,14 @@ function GameLog({ id }: { id: string }) {
                 <thead>
                   <tr className="border-b border-line">
                     {th("date", "Date", "text-left")}
-                    <th scope="col" className="px-2 pb-2 text-left text-2xs font-semibold uppercase tracking-wide text-muted">Opp · result</th>
-                    <th scope="col" className="px-2 pb-2 text-left text-2xs font-semibold uppercase tracking-wide text-muted">Role</th>
+                    <th scope="col" className="px-2 pb-2 text-left text-2xs font-semibold text-muted">Opp · result</th>
+                    <th scope="col" className="px-2 pb-2 text-left text-2xs font-semibold text-muted">Role</th>
                     {stats.map(([k, l]) => th(k, l))}
                   </tr>
                 </thead>
                 <tbody>
                   {sorted.map((r) => (
-                    <tr key={r.game_id} className="border-b border-line/40 last:border-0 hover:bg-raised/40">
+                    <tr key={r.game_id} className="border-b border-line last:border-0 hover:bg-raised/40">
                       <td className="num px-2 py-1.5 text-soft">{fmtDate(r.date, { year: true }) ?? r.date}</td>
                       <td className="num px-2 py-1.5 text-soft">
                         {r.is_home ? "vs" : "@"} {r.opp_abbr} · {r.result ?? "—"} {r.team_points ?? "—"}–{r.opp_points ?? "—"}
@@ -211,7 +211,7 @@ function GameLog({ id }: { id: string }) {
             </div>
             <ul className="grid gap-2 md:grid-cols-2 xl:hidden">
               {sorted.map((r: GameLogRow) => (
-                <li key={r.game_id} className="rounded-md bg-raised/40 p-3">
+                <li key={r.game_id} className="border-l-2 border-line py-1 pl-3">
                   <div className="num flex items-baseline justify-between text-sm">
                     <span className="font-semibold text-ink">
                       {fmtDate(r.date) ?? r.date} · {r.is_home ? "vs" : "@"} {r.opp_abbr}
@@ -223,7 +223,7 @@ function GameLog({ id }: { id: string }) {
                   <dl className="mt-1.5 grid grid-cols-5 gap-x-2 gap-y-1">
                     {stats.map(([k, l]) => (
                       <div key={k}>
-                        <dt className="text-2xs font-medium uppercase text-muted">{l}</dt>
+                        <dt className="text-2xs font-medium text-muted">{l}</dt>
                         <dd className="num text-sm text-ink">{r[k]}</dd>
                       </div>
                     ))}
@@ -233,7 +233,7 @@ function GameLog({ id }: { id: string }) {
             </ul>
             <Pagination offset={offset} limit={LOG_LIMIT} total={d.total} onChange={setOffset} />
             <p className="mt-2 text-xs text-muted">Source: {d.source}. Sorting applies to the games on this page.</p>
-            <div className="mt-4 border-t border-line/50 pt-3" data-testid="missed-games">
+            <div className="mt-4 border-t border-line pt-3" data-testid="missed-games">
               <Label>Missed games · {d.missed.length}</Label>
               {d.missed.length === 0 ? (
                 <p className="text-sm text-muted">No missed team games in this span.</p>
@@ -265,9 +265,9 @@ function LiveNow({ id, name }: { id: string; name: string }) {
   const l = d.live;
   const line = l?.line ?? null;
   return (
-    <section className="rounded-lg bg-card p-4 ring-1 ring-inset ring-line/60" aria-label="Live" data-testid="player-live" data-live={l ? "1" : "0"}>
+    <section className="blk p-4" aria-label="Live" data-testid="player-live" data-live={l ? "1" : "0"}>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-display text-[17px] font-semibold uppercase tracking-wide text-ink">{l ? "Live now" : "Following"}</h2>
+        <h2 className="font-display text-lg font-semibold text-ink">{l ? "Live now" : "Following"}</h2>
         <FollowButton kind="player" refId={Number(id)} followed={d.followed} label={name} />
       </div>
       {l ? (
@@ -294,7 +294,7 @@ function LiveNow({ id, name }: { id: string; name: string }) {
                 ] as const
               ).map(([k, v]) => (
                 <div key={k}>
-                  <dt className="text-2xs font-medium uppercase text-muted">{k}</dt>
+                  <dt className="text-2xs font-medium text-muted">{k}</dt>
                   <dd className="font-display text-2xl font-semibold leading-7 text-ink">{v ?? "—"}</dd>
                 </div>
               ))}
@@ -307,7 +307,7 @@ function LiveNow({ id, name }: { id: string; name: string }) {
         <p className="mt-1 text-sm text-muted">No game in progress for this player right now.</p>
       )}
       {d.milestones.length > 0 && (
-        <ul className="mt-2 divide-y divide-line/20 border-t border-line/50" data-testid="player-live-milestones">
+        <ul className="mt-2 divide-y divide-line border-t border-line" data-testid="player-live-milestones">
           {d.milestones.map((m) => (
             <MilestoneRow key={m.id} m={m} />
           ))}
@@ -329,11 +329,11 @@ function View({ d, id }: { d: PlayerDetail; id: string }) {
   const availability = d.injury ? d.injury.status : "available";
 
   return (
-    <div className="space-y-5" data-testid="player-page">
-      <section className="flex flex-wrap items-center gap-4 rounded-lg bg-card p-4 ring-1 ring-inset ring-line/60 md:p-5" aria-label="Player">
+    <div className="space-y-9" data-testid="player-page">
+      <section className="flex flex-wrap items-center gap-4 blk p-4 md:p-5" aria-label="Player">
         <PlayerAvatar name={p.name} src={p.headshot_url} size={72} />
         <div className="min-w-0 flex-1">
-          <h1 className="font-display text-[30px] font-bold uppercase italic leading-8 tracking-wide text-ink">{p.name}</h1>
+          <h1 className="font-display text-[30px] font-bold leading-8 text-ink">{p.name}</h1>
           <p className="num mt-0.5 text-sm text-soft">
             {p.team_abbr ?? "No team"} · {p.position ?? "Position —"} · {p.jersey ? `#${p.jersey}` : "Jersey —"} · sample n={d.sample.games} games
           </p>
@@ -346,13 +346,13 @@ function View({ d, id }: { d: PlayerDetail; id: string }) {
             ) : (
               <span className="text-xs text-muted">Lineup role not available</span>
             )}
-            <DLink href={`/cortex?tab=player-dna&player=${p.id}`} className="text-xs font-medium text-accent hover:underline" data-testid="cortex-profile-link">
+            <DLink href={`/cortex?tab=player-dna&player=${p.id}`} className="text-xs font-medium link" data-testid="cortex-profile-link">
               Profile (CORTEX)
             </DLink>
           </div>
         </div>
-        <div className="rounded-md bg-raised/50 px-4 py-2.5 text-sm" data-testid="next-game">
-          <div className="text-2xs font-semibold uppercase tracking-wide text-muted">Next game</div>
+        <div className="border-l-2 border-line py-1 pl-3 text-sm" data-testid="next-game">
+          <div className="text-2xs font-semibold text-muted">Next game</div>
           {d.next_game ? (
             <DLink href={`/games/${encodeURIComponent(d.next_game.game_id)}`} className="block hover:underline">
               <span className="font-semibold text-ink">
@@ -417,7 +417,7 @@ function View({ d, id }: { d: PlayerDetail; id: string }) {
         {markets.length === 0 ? (
           <EmptyState title="No prop markets for this player on the current slate." icon={Target} />
         ) : (
-          <div className="divide-y divide-line/40">
+          <div className="divide-y divide-line">
             {markets.map((m) => (
               <PropRow key={propKey(m)} p={m} onOpen={setOpen} showPlayer={false} />
             ))}
@@ -463,10 +463,10 @@ function View({ d, id }: { d: PlayerDetail; id: string }) {
             {d.projections.length === 0 ? (
               <EmptyState title="No projections for upcoming games." />
             ) : (
-              <ul className="divide-y divide-line/40">
+              <ul className="divide-y divide-line">
                 {d.projections.map((r, i) => (
                   <li key={i} className="grid grid-cols-[3rem_1fr_auto] items-baseline gap-x-3 py-2 text-sm">
-                    <span className="font-semibold uppercase text-ink">{statLabel(r.stat)}</span>
+                    <span className="font-semibold text-ink">{statLabel(r.stat)}</span>
                     <span className="min-w-0 text-xs text-muted">
                       {r.game_label} · <span className="num">{r.model_version}</span> · {fmtDateTimeET(r.created_at) ?? "—"}
                     </span>
@@ -484,10 +484,10 @@ function View({ d, id }: { d: PlayerDetail; id: string }) {
             {d.forecast_accuracy.length === 0 ? (
               <EmptyState title="No settled forecasts for this player yet." />
             ) : (
-              <ul className="divide-y divide-line/40">
+              <ul className="divide-y divide-line">
                 {d.forecast_accuracy.map((r) => (
                   <li key={r.stat} className="num grid grid-cols-[3rem_1fr_1fr_1fr] items-baseline gap-x-3 py-2 text-sm">
-                    <span className="font-semibold uppercase text-ink">{statLabel(r.stat)}</span>
+                    <span className="font-semibold text-ink">{statLabel(r.stat)}</span>
                     <span className="text-soft">n={r.n}</span>
                     <span className="text-soft">MAE <Val v={fmtNum(r.mae, 2)} /></span>
                     <span className="text-soft">80% coverage <Val v={fmtPct(r.coverage_80)} /></span>

@@ -39,7 +39,7 @@ function LoginForm() {
   return (
     <form onSubmit={onSubmit} className="space-y-4" data-testid="login-form">
       <Field label="Email">
-        <Input type="email" name="email" autoComplete="username" required value={email} onChange={(e) => setEmail(e.target.value)} className="h-9" />
+        <Input type="email" name="email" autoComplete="username" required value={email} onChange={(e) => setEmail(e.target.value)} />
       </Field>
       <Field label="Password">
         <Input
@@ -49,11 +49,10 @@ function LoginForm() {
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="h-9"
         />
       </Field>
       {error && (
-        <p role="alert" className="rounded-md bg-bad/10 ring-1 ring-inset ring-bad/40 px-2 py-1.5 text-xs text-bad">
+        <p role="alert" className="border-l-4 border-bad pl-3 text-sm font-semibold text-bad">
           {error}
         </p>
       )}
@@ -66,20 +65,17 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center px-4">
+    <main className="flex min-h-screen items-center justify-center bg-bg px-4">
       <div className="w-full max-w-sm">
-        <div className="mb-4 text-center">
-          <div className="text-lg font-bold tracking-[0.2em] text-ink">
-            GIZER <span className="text-accent">NBA</span>
-          </div>
-          <p className="mt-1 text-xs text-muted">Private quantitative research terminal · owner access only</p>
-        </div>
-        <div className="rounded-lg bg-card ring-1 ring-inset ring-line/60 p-4">
-          <Suspense fallback={null}>
-            <LoginForm />
-          </Suspense>
-        </div>
-        <p className="mt-3 text-center text-2xs text-muted">{DISCLAIMER}</p>
+        <h1 className="flex items-baseline gap-2 border-b-2 border-ink pb-3 text-[2.5rem] leading-none text-ink" style={{ fontStretch: "62%" }}>
+          <span className="font-black">GIZER</span>
+          <span className="font-normal">NBA</span>
+        </h1>
+        <p className="mb-6 mt-3 text-base text-muted">Private NBA research terminal. Owner access only.</p>
+        <Suspense fallback={null}>
+          <LoginForm />
+        </Suspense>
+        <p className="mt-6 text-sm text-faint">{DISCLAIMER}</p>
       </div>
     </main>
   );

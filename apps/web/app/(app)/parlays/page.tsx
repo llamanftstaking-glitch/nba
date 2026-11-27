@@ -54,7 +54,7 @@ export default function ParlaysPage() {
         title="Parlay Research"
         sub="Combination research with correlation-adjusted joint probabilities. Every combination is research only or paper testing."
         right={
-          <DLink href="/builder" className="inline-flex min-h-[44px] items-center rounded-md bg-raised px-3 text-sm font-medium text-ink ring-1 ring-inset ring-line hover:bg-line/70 md:min-h-0 md:h-8 md:text-xs">
+          <DLink href="/builder" className="inline-flex min-h-[44px] items-center rounded-md bg-bg2 px-3 text-sm font-medium text-ink ring-1 ring-inset ring-line-strong hover:bg-line md:min-h-0 md:h-8 md:text-xs">
             Open research builder
           </DLink>
         }
@@ -62,7 +62,7 @@ export default function ParlaysPage() {
       <Tabs items={items} value={tab.id} onChange={setTab} label="Combination category" />
       <div className="mt-3" role="tabpanel" aria-label={tab.label}>
         {tab.id === "six" && (
-          <p className="mb-2 rounded-md bg-warn/10 ring-1 ring-inset ring-warn/40 px-2 py-1.5 text-xs text-warn">
+          <p className="mb-2 border-l-4 border-warn pl-3 px-2 py-1.5 text-xs text-warn">
             Experimental: six-leg joint probabilities are small and their intervals are wide. Treat as exploratory research.
           </p>
         )}

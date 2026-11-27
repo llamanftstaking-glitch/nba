@@ -1,6 +1,7 @@
 "use client";
 
-import { ExternalLink, X } from "lucide-react";
+import * as Dialog from "@radix-ui/react-dialog";
+import { X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { DLink, useSelectedDate } from "@/lib/date";
@@ -30,41 +31,62 @@ function Panel({ contextInput, conversationId, creating, createError, onConversa
   const state = useJarvisState();
   const chat = useJarvisChat({ conversationId, onConversationId, context: contextInput });
   const pill = pillState(state.data?.state, chat.streaming, chat.error);
+  // The panel mounts when it opens: remember what had focus (the launcher, an "Ask JARVIS" button, or
+  // wherever the owner was when pressing Ctrl/Cmd+J) and give it back on close.
+  const [opener] = useState<HTMLElement | null>(() => (typeof document === "undefined" ? null : (document.activeElement as HTMLElement | null)));
   return (
-    <div className="fixed inset-0 z-50 md:inset-y-0 md:left-auto md:right-0 md:w-[420px]" role="dialog" aria-label="JARVIS assistant" data-testid="jarvis-panel">
-      <div className="flex h-full flex-col bg-bg2 shadow-2xl ring-1 ring-line md:rounded-l-lg">
-        <header className="flex items-center gap-2 border-b border-line/60 px-3 py-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
-          <JarvisMark className="h-7 w-7" active={chat.streaming} />
-          <span className="font-display text-lg font-semibold uppercase tracking-wide text-ink">JARVIS</span>
-          <JarvisPill state={pill} message={chat.error?.message ?? state.data?.message} />
-          <span className="flex-1" />
-          <DLink href={conversationId !== null ? `/jarvis?c=${conversationId}` : "/jarvis"} onClick={onClose} className="inline-flex h-11 items-center gap-1 rounded-md px-2 text-xs font-medium text-accent hover:bg-raised md:h-8" data-testid="jarvis-open-full">
-            Open full page <ExternalLink className="h-3 w-3" aria-hidden />
-          </DLink>
-          <button type="button" onClick={onClose} aria-label="Close JARVIS" className="inline-flex h-11 w-11 items-center justify-center rounded-md text-muted hover:bg-raised hover:text-ink md:h-8 md:w-8" data-testid="jarvis-panel-close">
-            <X className="h-4 w-4" aria-hidden />
-          </button>
-        </header>
-        <div className="border-b border-line/60 px-3 py-2" data-testid="jarvis-panel-context">
-          <div className="mb-1 text-2xs font-semibold uppercase tracking-wide text-muted">JARVIS is looking at</div>
-          {creating ? <span className="text-xs text-muted">Resolving page context…</span> : createError ? <span className="text-xs text-bad">{createError}</span> : <ContextChips context={chat.conversation?.context} />}
-        </div>
-        <JarvisConversationView
-          compact
-          messages={chat.conversation?.messages ?? []}
-          live={chat.live}
-          loading={chat.loading}
-          error={chat.error}
-          streaming={chat.streaming}
-          serverState={state.data?.state}
-          serverMessage={state.data?.message}
-          contextInput={contextInput}
-          draft={draft}
-          onSend={chat.send}
-          onStop={chat.stop}
-        />
-      </div>
-    </div>
+    <Dialog.Root open onOpenChange={(v) => !v && onClose()}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-ink/25" />
+        {/* A modal sheet: focus moves to the question field, stays inside, and returns to what opened it. */}
+        <Dialog.Content
+          aria-describedby={undefined}
+          onCloseAutoFocus={(e) => {
+            e.preventDefault();
+            if (opener && opener.isConnected) opener.focus();
+          }}
+          onOpenAutoFocus={(e) => {
+            e.preventDefault();
+            (e.currentTarget as HTMLElement | null)?.querySelector<HTMLTextAreaElement>('[data-testid="jarvis-input"]')?.focus();
+          }}
+          className="fixed inset-0 z-50 flex flex-col bg-bg2 shadow-sheet focus:outline-none md:inset-y-0 md:left-auto md:right-0 md:w-[420px] md:border-l md:border-line"
+          data-testid="jarvis-panel"
+        >
+          <header className="flex items-center gap-2.5 border-b-2 border-ink py-1.5 pl-4 pr-1.5 pt-[max(0.375rem,env(safe-area-inset-top))]">
+            <JarvisMark className="h-6 w-6" active={chat.streaming} />
+            <Dialog.Title className="text-2xl leading-none text-ink" style={{ fontStretch: "62%", fontWeight: 900 }}>
+              JARVIS
+            </Dialog.Title>
+            <JarvisPill state={pill} message={chat.error?.message ?? state.data?.message} />
+            <span className="flex-1" />
+            <DLink href={conversationId !== null ? `/jarvis?c=${conversationId}` : "/jarvis"} onClick={onClose} className="link inline-flex h-11 items-center gap-1 px-1 text-sm text-ink" data-testid="jarvis-open-full">
+              Open full page
+            </DLink>
+            <Dialog.Close aria-label="Close JARVIS" className="inline-flex h-11 w-11 items-center justify-center rounded text-ink hover:bg-raised" data-testid="jarvis-panel-close">
+              <X className="h-5 w-5" aria-hidden />
+            </Dialog.Close>
+          </header>
+          <div className="border-b border-line px-4 py-2.5" data-testid="jarvis-panel-context">
+            <div className="mb-1 text-sm text-faint">Looking at</div>
+            {creating ? <span className="text-sm text-muted">Resolving page context…</span> : createError ? <span className="text-sm font-semibold text-bad">{createError}</span> : <ContextChips context={chat.conversation?.context} />}
+          </div>
+          <JarvisConversationView
+            compact
+            messages={chat.conversation?.messages ?? []}
+            live={chat.live}
+            loading={chat.loading}
+            error={chat.error}
+            streaming={chat.streaming}
+            serverState={state.data?.state}
+            serverMessage={state.data?.message}
+            contextInput={contextInput}
+            draft={draft}
+            onSend={chat.send}
+            onStop={chat.stop}
+          />
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
 
@@ -124,7 +146,7 @@ export function JarvisPanelProvider({ children }: { children: ReactNode }) {
       if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "j") {
         e.preventDefault();
         setOpen((v) => !v);
-      } else if (e.key === "Escape") setOpen(false);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -145,9 +167,10 @@ export function JarvisLauncher() {
   const pathname = usePathname();
   if (pathname === "/jarvis") return null;
   return (
-    <button type="button" onClick={() => open()} aria-expanded={isOpen} aria-keyshortcuts="Control+J Meta+J" title="Ask JARVIS (Ctrl/Cmd+J)" className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-md bg-raised px-2.5 text-sm font-medium text-ink ring-1 ring-inset ring-line hover:bg-line/70 md:h-9" data-testid="jarvis-launcher">
-      <JarvisMark className="h-5 w-5" />
-      <span className="hidden sm:inline">JARVIS</span>
+    <button type="button" onClick={() => open()} aria-haspopup="dialog" aria-expanded={isOpen} aria-keyshortcuts="Control+J Meta+J" title="Ask JARVIS (Ctrl/Cmd+J)" className="inline-flex h-11 shrink-0 items-center gap-2 whitespace-nowrap rounded bg-ink px-3 text-sm font-semibold text-bg2 hover:bg-soft md:px-4" data-testid="jarvis-launcher">
+      <JarvisMark className="h-5 w-5" onDark />
+      <span className="sm:hidden">Ask</span>
+      <span className="hidden sm:inline">Ask JARVIS</span>
     </button>
   );
 }
@@ -156,7 +179,7 @@ export function JarvisLauncher() {
 export function AskJarvisButton({ context, className }: { context: JarvisContextInput; className?: string }) {
   const { open } = useJarvisPanel();
   return (
-    <button type="button" onClick={() => open(context)} className={className ?? "inline-flex min-h-[44px] items-center gap-1.5 rounded-md px-2.5 text-sm font-medium text-muted hover:bg-raised hover:text-ink md:min-h-0 md:h-8 md:text-xs"} data-testid="ask-jarvis">
+    <button type="button" onClick={() => open(context)} className={className ?? "inline-flex min-h-[44px] items-center gap-2 rounded border border-line-strong bg-bg2 px-3 text-sm font-semibold text-ink hover:border-ink md:min-h-0 md:h-9"} data-testid="ask-jarvis">
       <JarvisMark className="h-4 w-4" />
       Ask JARVIS
     </button>

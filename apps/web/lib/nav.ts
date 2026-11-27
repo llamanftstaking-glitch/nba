@@ -1,118 +1,40 @@
-import {
-  Activity,
-  CandlestickChart,
-  Timer,
-  BarChart3,
-  BookOpen,
-  CalendarDays,
-  ClipboardList,
-  Database,
-  FlaskConical,
-  GitCompare,
-  HeartPulse,
-  History,
-  Home,
-  Layers,
-  LayoutDashboard,
-  LineChart,
-  ListOrdered,
-  Network,
-  Settings,
-  Swords,
-  Target,
-  Ticket,
-  Trophy,
-  UserSearch,
-  Users,
-  Wrench,
-  Bot,
-  Boxes,
-  Wallet,
-  Radio,
-  LibraryBig,
-} from "lucide-react";
-import type { ComponentType } from "react";
-import { JarvisMark } from "@/components/jarvis/mark";
+import data from "./nav-destinations.json";
 
-export type NavIcon = ComponentType<{ className?: string }>;
-export type NavItem = { href: string; label: string; icon: NavIcon; short?: string };
+// The navigation is data (lib/nav-destinations.json) so the shell, the All pages menu, the mobile
+// More sheet, global search and the smoke test all read one list, and a test can prove that no
+// destination was lost.
+export type NavItem = { href: string; label: string; was?: string; keywords?: string };
+export type Workspace = { id: string; label: string; href: string; primary: boolean; summary: string; pages: NavItem[] };
 export type NavGroup = { title: string; items: NavItem[] };
 
-export const NAV_GROUPS: NavGroup[] = [
-  {
-    title: "Command Center",
-    items: [
-      { href: "/live", label: "Live Games", icon: Radio },
-      { href: "/jarvis", label: "JARVIS", icon: JarvisMark },
-      { href: "/cortex", label: "CORTEX", icon: LibraryBig },
-      { href: "/", label: "Overview", icon: LayoutDashboard },
-      { href: "/games", label: "Today's Games", icon: CalendarDays },
-      { href: "/picks", label: "Top Picks", icon: ListOrdered },
-      { href: "/player-props", label: "Player Props", icon: Target },
-      { href: "/kalshi-intelligence", label: "Kalshi Markets", icon: CandlestickChart },
-      { href: "/lineups", label: "Starting Lineups", icon: Users },
-      { href: "/parlays", label: "Parlay Research", icon: Layers },
-      { href: "/parlays/same-game", label: "Same-Game Research", icon: Network },
-    ],
-  },
-  {
-    title: "Player Intelligence",
-    items: [
-      { href: "/players", label: "Player Explorer", icon: UserSearch },
-      { href: "/minutes", label: "Minutes Intelligence", icon: Timer },
-      { href: "/players/compare", label: "Player Comparison", icon: GitCompare },
-      { href: "/players/history", label: "Historical Performance", icon: History },
-      { href: "/matchups", label: "Matchup Intelligence", icon: Swords },
-      { href: "/injuries", label: "Injuries & Availability", icon: HeartPulse },
-    ],
-  },
-  {
-    title: "My Research",
-    items: [
-      { href: "/builder", label: "Research Builder", icon: Wrench },
-      { href: "/tickets", label: "Paper Tickets", icon: Ticket },
-      { href: "/research/daily", label: "Daily Editions", icon: BookOpen },
-      { href: "/results", label: "Results", icon: Trophy },
-      { href: "/performance", label: "Strategy Performance", icon: LineChart },
-    ],
-  },
-  {
-    title: "System",
-    items: [
-      { href: "/research-lab", label: "Research Lab", icon: FlaskConical },
-      { href: "/agents", label: "Agent Operations", icon: Bot },
-      { href: "/models", label: "Model Registry", icon: Boxes },
-      { href: "/data-health", label: "Data Health", icon: Database },
-      { href: "/settings", label: "Settings", icon: Settings },
-    ],
-  },
-];
+export const WORKSPACES: Workspace[] = data.workspaces;
+/** The five workspaces in the top bar. */
+export const PRIMARY: Workspace[] = WORKSPACES.filter((w) => w.primary);
+/** Every destination, in menu order. */
+export const ALL_PAGES: (NavItem & { workspace: Workspace })[] = WORKSPACES.flatMap((w) => w.pages.map((p) => ({ ...p, workspace: w })));
+export const SHORTCUTS: (NavItem & { workspace: string })[] = data.shortcuts;
 
-/** Reachable from within System / Research pages (Settings lists them), not from the sidebar. */
-export const EXTRA_PAGES: NavItem[] = [
-  { href: "/admin", label: "Operations Admin", icon: Activity },
-  { href: "/admin/ai-budget", label: "AI Budget", icon: Wallet },
-  { href: "/live/following", label: "My Following", icon: Radio },
-  { href: "/live/research-tracker", label: "Research Tracker", icon: Radio },
-  { href: "/exposure", label: "Shared-Risk Monitor", icon: Network },
-  { href: "/markets", label: "Markets", icon: BarChart3 },
-  { href: "/simulations", label: "Simulations", icon: ClipboardList },
-  { href: "/backtesting", label: "Backtesting", icon: History },
-  { href: "/teams", label: "Teams", icon: Users },
-];
+/** Kept for older call sites: the grouped list of every page. */
+export const NAV_GROUPS: NavGroup[] = WORKSPACES.map((w) => ({ title: w.label, items: w.pages }));
+/** Pages that were not in the old sidebar. They are ordinary destinations now. */
+export const EXTRA_PAGES: NavItem[] = ALL_PAGES.filter((p) => p.was?.startsWith("hidden"));
 
-export const MOBILE_NAV: NavItem[] = [
-  { href: "/", label: "Home", icon: Home },
-  { href: "/games", label: "Games", icon: CalendarDays },
-  { href: "/player-props", label: "Props", icon: Target },
-  { href: "/parlays", label: "Parlays", icon: Layers },
-];
+/** Bottom tab bar on phones: four workspaces, then More (the full grouped list). */
+export const MOBILE_TABS: Workspace[] = ["today", "games", "players", "research"].map((id) => WORKSPACES.find((w) => w.id === id) as Workspace);
 
-const ALL_HREFS = [...NAV_GROUPS.flatMap((g) => g.items), ...EXTRA_PAGES].map((i) => i.href);
+const ALL_HREFS = ALL_PAGES.map((i) => i.href);
+const matches = (pathname: string, h: string) => (h === "/" ? pathname === "/" : pathname === h || pathname.startsWith(`${h}/`));
 
 /** Active when it is the most specific navigation entry matching the path. */
 export function isActive(pathname: string, href: string): boolean {
-  const matches = (h: string) => (h === "/" ? pathname === "/" : pathname === h || pathname.startsWith(`${h}/`));
-  if (!matches(href)) return false;
-  return !ALL_HREFS.some((h) => h !== href && h.length > href.length && matches(h));
+  if (!matches(pathname, href)) return false;
+  return !ALL_HREFS.some((h) => h !== href && h.length > href.length && matches(pathname, h));
+}
+
+/** The destination a path belongs to (the most specific match), with its workspace. */
+export function locate(pathname: string): { page: NavItem; workspace: Workspace; exact: boolean } | null {
+  // Detail routes that live under another page's subject.
+  const alias = pathname.startsWith("/kalshi-intelligence/") ? "/kalshi-intelligence" : pathname.startsWith("/cortex/") ? "/cortex" : pathname;
+  const hit = ALL_PAGES.find((p) => isActive(alias, p.href));
+  return hit ? { page: hit, workspace: hit.workspace, exact: hit.href === pathname } : null;
 }

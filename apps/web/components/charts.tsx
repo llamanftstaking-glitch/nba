@@ -22,16 +22,16 @@ import { fmtDate } from "@/lib/format";
 
 // Chart tokens. One data hue (sky) on the dark surface; reference marks are neutral.
 // Emerald/amber/red are reserved for research status and are never used as series colours.
-const SERIES = "#7DC4F0";
-const GRID = "#1A2732";
-const AXIS = "#22313E";
-const REFERENCE = "#94a3b8";
-const TICK = { fill: "#94a3b8", fontSize: 11 } as const;
+const SERIES = "#1F4E79";
+const GRID = "#E6E7E2";
+const AXIS = "#D5D7D1";
+const REFERENCE = "#646B72";
+const TICK = { fill: "#646B72", fontSize: 13 } as const;
 
 const tooltipStyle = {
-  contentStyle: { background: "#121F2B", border: "1px solid #22313E", borderRadius: 8, fontSize: 12, padding: "8px 10px" },
-  labelStyle: { color: "#C7D1DD", marginBottom: 2 },
-  itemStyle: { color: "#F3F6FA", fontVariantNumeric: "tabular-nums" },
+  contentStyle: { background: "#FFFFFF", border: "1px solid #D5D7D1", borderRadius: 4, fontSize: 13, padding: "8px 10px" },
+  labelStyle: { color: "#454C53", marginBottom: 2 },
+  itemStyle: { color: "#12161A", fontVariantNumeric: "tabular-nums" },
 } as const;
 
 function LegendRow({ items }: { items: { label: string; kind: "dot" | "line" | "dash" }[] }) {
@@ -83,7 +83,7 @@ export function CalibrationChart({ data }: { data: CalibrationBucket[] }) {
               tickFormatter={pct}
               stroke={AXIS}
               tickLine={false} tick={TICK}
-              label={{ value: "Predicted probability", position: "insideBottom", offset: -10, fill: REFERENCE, fontSize: 11 }}
+              label={{ value: "Predicted probability", position: "insideBottom", offset: -10, fill: REFERENCE, fontSize: 13 }}
             />
             <YAxis type="number" dataKey="observed" domain={[0, 1]} ticks={[0, 0.2, 0.4, 0.6, 0.8, 1]} tickFormatter={pct} stroke={AXIS} tickLine={false} tick={TICK} width={40} />
             <ReferenceLine segment={[{ x: 0, y: 0 }, { x: 1, y: 1 }]} stroke={REFERENCE} strokeDasharray="4 4" ifOverflow="visible" />
@@ -96,7 +96,7 @@ export function CalibrationChart({ data }: { data: CalibrationBucket[] }) {
                 return p ? `Bucket ${p.bucket} · n=${p.n}` : "";
               }}
             />
-            <Scatter dataKey="observed" fill={SERIES} stroke="#0D1720" strokeWidth={2} isAnimationActive={false}>
+            <Scatter dataKey="observed" fill={SERIES} stroke="#F5F5F1" strokeWidth={2} isAnimationActive={false}>
               <ErrorBar dataKey="err" direction="y" width={5} strokeWidth={1.5} stroke={SERIES} />
             </Scatter>
           </ComposedChart>
@@ -127,7 +127,7 @@ export function EquityChart({ data }: { data: { date: string; pnl_units: number;
                 name === "cumulative" ? "Cumulative" : "Day",
               ]}
             />
-            <Line type="linear" dataKey="cumulative" stroke={SERIES} strokeWidth={2} dot={data.length <= 40 ? { r: 3, fill: SERIES, stroke: "#0D1720", strokeWidth: 2 } : false} activeDot={{ r: 5 }} isAnimationActive={false} />
+            <Line type="linear" dataKey="cumulative" stroke={SERIES} strokeWidth={2} dot={data.length <= 40 ? { r: 3, fill: SERIES, stroke: "#F5F5F1", strokeWidth: 2 } : false} activeDot={{ r: 5 }} isAnimationActive={false} />
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -139,7 +139,7 @@ export function EquityChart({ data }: { data: { date: string; pnl_units: number;
 export function TrendChart({ data, label }: { data: { x: string; y: number | null }[]; label: string }) {
   return (
     <div>
-      <div className="mb-1 text-2xs uppercase tracking-wide text-muted">{label}</div>
+      <div className="mb-1 text-2xs text-muted">{label}</div>
       <div className="h-36 w-full" role="img" aria-label={`${label} by game. Values are listed in the game log table.`}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 6, right: 8, bottom: 0, left: 0 }}>
@@ -158,7 +158,7 @@ export function TrendChart({ data, label }: { data: { x: string; y: number | nul
 // ---------- HistoryBarChart ----------
 // Over / under / equal are descriptive categories, so they use brand-neutral data colours rather than
 // the status palette: teal (over), slate (under), amber (equal). The legend and tooltip carry the labels.
-export const HISTORY_COLORS = { over: "#00BFA6", under: "#5B6B7E", equal: "#F5B942" } as const;
+export const HISTORY_COLORS = { over: "#5F6B76", under: "#7C858E", equal: "#B36B00" } as const;
 
 export type HistoryBar = { date: string; opp_abbr: string; is_home: boolean; min: number | null; value: number; outcome: "over" | "under" | "equal"; starter?: boolean | null };
 
@@ -166,7 +166,7 @@ function HistoryTooltip({ active, payload, statLabel }: { active?: boolean; payl
   const g = active ? payload?.[0]?.payload : undefined;
   if (!g) return null;
   return (
-    <div className="rounded-md bg-raised px-3 py-2 text-xs shadow-lg ring-1 ring-line" data-testid="history-tooltip">
+    <div className="rounded-md bg-bg2 px-3 py-2 text-xs shadow-lg ring-1 ring-line-strong" data-testid="history-tooltip">
       <div className="font-semibold text-ink">
         {fmtDate(g.date, { year: true }) ?? g.date} · {g.is_home ? "vs" : "@"} {g.opp_abbr}
       </div>
@@ -192,7 +192,7 @@ export function HistoryBarChart({ games, line, statLabel, height = 220 }: { game
           </li>
         ))}
         <li className="flex items-center gap-1.5">
-          <span className="inline-block w-4 border-t border-dashed" style={{ borderColor: "#F3F6FA" }} aria-hidden />
+          <span className="inline-block w-4 border-t border-dashed" style={{ borderColor: "#12161A" }} aria-hidden />
           Threshold <span className="num text-soft">{line}</span>
         </li>
       </ul>
@@ -208,7 +208,7 @@ export function HistoryBarChart({ games, line, statLabel, height = 220 }: { game
                 <Cell key={i} fill={HISTORY_COLORS[g.outcome]} />
               ))}
             </Bar>
-            <ReferenceLine y={line} stroke="#F3F6FA" strokeDasharray="5 4" strokeWidth={1.5} ifOverflow="extendDomain" />
+            <ReferenceLine y={line} stroke="#12161A" strokeDasharray="5 4" strokeWidth={1.5} ifOverflow="extendDomain" />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -216,7 +216,7 @@ export function HistoryBarChart({ games, line, statLabel, height = 220 }: { game
   );
 }
 
-const OVERLAY = ["#3B9AE6", "#BF8A12", "#A866DC"] as const; // validated with the dataviz palette checker (dark)
+const OVERLAY = ["#2F6FA8", "#8A5200", "#7A4FB3"] as const; // validated with the dataviz palette checker (dark)
 
 /** Up to three players' recent values on one axis (same stat, same unit). */
 export function OverlayLineChart({ series, statLabel }: { series: { name: string; values: number[] }[]; statLabel: string }) {
@@ -248,7 +248,7 @@ export function OverlayLineChart({ series, statLabel }: { series: { name: string
             <YAxis stroke={AXIS} tickLine={false} tick={TICK} width={30} />
             <Tooltip {...tooltipStyle} cursor={{ stroke: AXIS }} formatter={(v, name) => [String(v), series[Number(String(name).slice(1))]?.name ?? String(name)]} />
             {series.map((s, k) => (
-              <Line key={s.name} type="linear" dataKey={`s${k}`} stroke={OVERLAY[k]} strokeWidth={2} dot={{ r: 3, fill: OVERLAY[k], stroke: "#0D1720", strokeWidth: 2 }} isAnimationActive={false} connectNulls={false} />
+              <Line key={s.name} type="linear" dataKey={`s${k}`} stroke={OVERLAY[k]} strokeWidth={2} dot={{ r: 3, fill: OVERLAY[k], stroke: "#F5F5F1", strokeWidth: 2 }} isAnimationActive={false} connectNulls={false} />
             ))}
           </LineChart>
         </ResponsiveContainer>
@@ -258,7 +258,7 @@ export function OverlayLineChart({ series, statLabel }: { series: { name: string
 }
 
 // ---------- Kalshi price history ----------
-export const TIMELINE_COLORS = { availability: "#F5B942", lineup: "#00BFA6", market_status: "#94A3B8" } as const;
+export const TIMELINE_COLORS = { availability: "#B36B00", lineup: "#5F6B76", market_status: "#646B72" } as const;
 export type PricePoint = { t: number; price: number | null; band: [number, number] | null; spread: number | null; volume: number | null };
 export type TimelineMark = { t: number; type: keyof typeof TIMELINE_COLORS; own: boolean; text: string };
 
