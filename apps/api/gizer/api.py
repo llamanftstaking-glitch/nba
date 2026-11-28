@@ -129,9 +129,13 @@ class View:
         self.inv_sel = {int(r[1]): r[2].get("reason") for r in inv if r[0] == "selection"}
         self.inv_combo = {r[1]: r[2].get("reason") for r in inv if r[0] == "combo"}
         # the forecast of record for each game is its latest evaluation (frozen at tipoff)
-        rows = s.execute(select(Selection.game_id, func.max(Selection.edition_id)).where(Selection.game_date == d)
-                         .group_by(Selection.game_id)).all()
-        self.game_edition = {r[0]: r[1] for r in rows}
+        # one index lookup per game (ix_selections_game_edition); a group-by over the date scanned every edition's rows
+        self.game_edition = {}
+        for g in self.games:
+            eid = s.scalar(select(func.max(Selection.edition_id)).where(Selection.game_id == g.id,
+                                                                    Selection.game_date == d))
+            if eid is not None:
+                self.game_edition[g.id] = eid
         self._sels = None
         self._heads: dict[int, str | None] | None = None
 
@@ -171,7 +175,7 @@ class View:
                     if ck[2]:
                         for x in rows:
                             self.s.expunge(x)
-                        while len(_SEL_CACHE) >= 96:
+                        while len(_SEL_CACHE) >= 32:  # about three slates; full rows are large
                             _SEL_CACHE.pop(next(iter(_SEL_CACHE)), None)
                         _SEL_CACHE[ck] = rows
                 out += rows
@@ -197,13 +201,17 @@ class View:
                              "opposing": ev.get("opposing", [])},
                 "classification": "invalidated" if x.id in self.inv_sel else x.classification,
                 "rejection_reasons": x.rejection_reasons or [], "rank_in_game": x.rank_in_game,
+                "main_line": ev.get("main_line"),
                 "model": {"id": m.id, "name": m.name, "version": m.version, "status": m.status} if m else None,
                 "verified_at": x.verified_at, "invalidated": x.id in self.inv_sel,
                 "invalidation_reason": self.inv_sel.get(x.id),
                 "context": ev.get("context"), "origin": ev.get("origin") or "provider"}
 
     def combo(self, c: Combo) -> dict:
-        return combo_dict(c, self.inv_combo)
+        d = combo_dict(c, self.inv_combo)  # legs are fresh dicts (_leg), so the stored row is never touched
+        for leg in d["legs"]:
+            leg["headshot_url"] = self.headshot(leg.get("subject_id")) if leg.get("subject_type") == "player" else None
+        return d
 
     def current_combos(self) -> list[Combo]:
         cur = {x.id for x in self.selections()}
@@ -228,7 +236,7 @@ def injury_row(i: InjurySnapshot, teams: dict, extra: dict | None = None) -> dic
 
 
 def _leg(leg: dict) -> dict:
-    keep = ("selection_id", "label", "game_id", "game_label", "market", "subject_name", "side", "line", "price_american",
+    keep = ("selection_id", "label", "game_id", "game_label", "market", "subject_name", "subject_id", "subject_type", "side", "line", "price_american",
             "prob", "prob_low", "prob_high", "classification", "evidence_score", "sample_size", "supporting", "opposing")
     return {k: leg.get(k) for k in keep}
 

@@ -6,6 +6,7 @@ import { ClassificationBadge } from "@/components/classification-badge";
 import { AskJarvisButton } from "@/components/jarvis/panel";
 import { EvidenceMeter, ProbInterval } from "@/components/prob";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { SlipLeg } from "@/components/pick-tile";
 import { SaveTicketButton } from "@/components/save-ticket-button";
 import { linkButton } from "@/components/ui/button";
 import { DataTable, type Column } from "@/components/ui/data-table";
@@ -222,11 +223,19 @@ export function ComboCard({ combo, defaultOpen = false }: { combo: Combo; defaul
             {open ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
           </span>
         </div>
-        <p className="mt-1 break-words text-sm text-soft">{summary}</p>
-        <div className="mt-2 flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
+        <ul className="mt-1 divide-y divide-line" aria-label={summary}>
+          {combo.legs.map((l) => (
+            <SlipLeg key={l.selection_id} l={l} />
+          ))}
+        </ul>
+        <div className="mt-2 flex flex-wrap items-end justify-between gap-x-6 gap-y-1 border-t border-line pt-2">
           <div>
-            <div className="text-2xs font-medium text-muted">Joint probability [interval]</div>
+            <div className="text-xs text-muted">Model hit chance [interval]</div>
             <ProbInterval prob={combo.joint_prob} low={combo.joint_low} high={combo.joint_high} size="lg" />
+          </div>
+          <div title={REFERENCE_PRICE_LABEL}>
+            <div className="text-xs text-muted">Combined leg odds</div>
+            <div className="num text-xl font-bold text-ink">{fmtAmerican(combo.reference_price?.american) ?? "—"}</div>
           </div>
           <div className="text-xs">
             {combo.invalidated ? (

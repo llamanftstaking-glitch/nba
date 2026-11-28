@@ -1,6 +1,6 @@
 # Project state
 
-_Last updated: 2026-11-26, after GIZER CORTEX (0.7.0)._
+_Last updated: 2026-11-27, after 0.8.1 (main-line picks, page load fix)._
 
 ## Status
 | Area | Status |
@@ -19,6 +19,7 @@ _Last updated: 2026-11-26, after GIZER CORTEX (0.7.0)._
 | GIZER LIVE interface (scoreboard strip, `/live`, game centre tabs, following, research tracker, installable app) | IMPLEMENTED, TESTED (2,894 smoke checks against the mock). VERIFIED locally against real games (in progress and finished) for rendering. Stream reconnect, stale state and browser notifications verified only against the mock |
 | GIZER CORTEX (0.7.0): knowledge library (260 records, 14 sources), keyword retrieval, Player DNA / Team DNA with rotation tendencies, six JARVIS tools, benchmark (204 questions), Knowledge Center `/cortex` | IMPLEMENTED, TESTED (160 backend tests; smoke against the mock). Profiles and screens VERIFIED locally on real data. Knowledge text: 63 records checked against an opened source, 197 not checked. Retrieval MEASURED at 68.8% top-five on the 64 evaluable questions. Benchmark keys NOT REVIEWED by a person; JARVIS's benchmark score NOT RUN. Not built: semantic search, possession reconstruction, coach identities, film study |
 | Player model 1.1.0: minutes uncertainty in the variance, multi-line prop calibration (D-040) | IMPLEMENTED, TESTED on development data (10/11 player families pass the unchanged gate; props back in top picks on the 2026-11-25 snapshot, 0 to 10). Production needs `gizer backtest` (or the weekly job) after deploy to register and promote 1.1.0. Forward accuracy NOT VERIFIED |
+| Risk policy `gizer-risk-1.3` (D-041): top picks = main line per player and stat, model ≥ 55%, best margin first; board-style picks and parlay slips; page-load index (0.8.1) | IMPLEMENTED, TESTED (backend 165). Effect checked on the production 2026-11-27 edition (read-only query). NOT VERIFIED: deployed timings, forward hit rate |
 | Risk policy `gizer-risk-1.2` (top picks need model probability ≥ 65%, most likely first; D-037) | IMPLEMENTED, TESTED (161 backend tests). Effect checked on the 2026-11-25 edition in the development database. Forward hit rate of 65%+ picks NOT VERIFIED: no settled record under 1.2 yet |
 | Lineup projection without loaded history (last ESPN box score) and `gizer quickstart` | IMPLEMENTED, TESTED, rehearsed on an empty database; not yet run on Server M |
 | Minutes model `minutes_blend 1.0.0` | Candidate — failed its gate (5.40 vs 5.34 minutes MAE for the best baseline) |

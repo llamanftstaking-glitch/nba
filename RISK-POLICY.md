@@ -1,4 +1,4 @@
-# Risk Policy — `gizer-risk-1.2`
+# Risk Policy — `gizer-risk-1.3`
 
 The policy is the constant `RISK_POLICY` in `apps/api/gizer/research.py`, applied by `guard()` (Agent 16,
 "GIZER GUARD"). It is version-controlled; there is no runtime switch, API or prompt that changes it.
@@ -55,7 +55,8 @@ containing the model probability, re-centred by that bin's calibration error.
 
 ## Ranking (top five per game)
 
-Qualified selections only, ordered by tier, then lower-bound margin over break-even, then evidence score.
+Qualified main-line selections with model probability ≥ 55% only (see 1.3 below), ordered by tier, then lower-bound
+margin over break-even, then model probability, then evidence score.
 One slot per underlying view (spread and moneyline share a slot). Fewer than five is normal; zero is normal.
 
 ## Combinations
@@ -99,3 +100,19 @@ in the codebase, and adding any of them requires explicit owner approval and a c
 * A model probability of 65% is the model's estimate, not an observed hit rate. The models are not yet validated
   against market prices; the forward paper record is what will show whether 65% means 65%.
 
+
+## 1.3 — main lines, best value first (owner decision D-041, 2026-11-27; supersedes the floor and order of 1.2)
+* Owner: picks should read like a sportsbook board (one O/U line per player and stat) and be broken down into
+  combinations. On 2026-11-27 the 1.2 list was 24 unders and 11 overs, every one priced -322 to -564 with a 1 to 3
+  point margin: ordering by probability on Kalshi ladders always chose the farthest rung.
+* **Main line**: a Kalshi ladder keeps one line per player and stat, the threshold whose break-even is closest to 50%
+  (over side when priced, else under; ties to the lower line). Game markets and single-line books are their own main
+  line. The choice uses market prices only, never the model. Stored as `evidence.main_line`.
+* Top picks: qualified, main line, model probability ≥ 55% (`top_picks.min_prob`), at most five per game, one side
+  per market. Order: margin of the interval's lower end over break-even, then probability, then evidence.
+* Combinations and automatic paper tickets are built from that list, as before.
+* Other ladder rungs are still evaluated and stored with their classification; they never enter top picks.
+* Every other gate is unchanged: evidence, positive lower-bound margin, 10-point maximum plausible edge, 15%–85%
+  break-even band, freshness, candidate models research-only.
+* Effect measured on the 2026-11-27 pregame edition (v23) in production: 261 qualified main-line selections
+  (139 under, 122 over), 148 at ≥ 55%. Forward hit rate under 1.3 NOT VERIFIED.

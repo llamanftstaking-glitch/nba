@@ -55,6 +55,8 @@ export type Selection = {
   classification: string;
   rejection_reasons: string[];
   rank_in_game: number | null;
+  /** The market's main line (ladder rung priced closest to even; risk policy 1.3). Older editions: null. */
+  main_line?: boolean | null;
   model: { id: number; name: string; version: string; status: string } | null;
   verified_at: string;
   invalidated: boolean;
@@ -91,6 +93,9 @@ export type ComboLeg = {
   game_label: string;
   market: string;
   subject_name: string;
+  subject_id?: number | null;
+  subject_type?: string | null;
+  headshot_url?: string | null;
   side: string;
   line: number | null;
   price_american: number | null;

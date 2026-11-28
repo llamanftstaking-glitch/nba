@@ -49,28 +49,48 @@ def test_product_source_has_no_certainty_marketing():
                     assert not banned.search(f.read()), fn
 
 
-def test_top_picks_require_sixty_five_percent_and_rank_most_likely_first(monkeypatch):
-    """Owner decision D-037. The shipped constant is 65%; a selection below it is never ranked, whatever its margin."""
+def test_top_picks_use_main_lines_and_rank_best_value_first(monkeypatch):
+    """Owner decision D-041 (supersedes D-037's floor and ordering). The shipped floor is 55% on main lines only;
+    ranking is margin over the price at the conservative end of the interval."""
     import inspect
     from types import SimpleNamespace as NS
 
     from gizer import research as R
-    assert '"top_picks": {"min_prob": 0.65, "max_per_game": 5}' in inspect.getsource(R)        # the production value
-    monkeypatch.setitem(R.RISK_POLICY["top_picks"], "min_prob", 0.65)
+    assert '"top_picks": {"min_prob": 0.55, "max_per_game": 5, "main_line_only": True}' in inspect.getsource(R)
+    monkeypatch.setitem(R.RISK_POLICY["top_picks"], "min_prob", 0.55)
 
-    def sel(prob, low, be, cls="standard", ev=90):
-        return NS(prob=prob, prob_low=low, breakeven=be, classification=cls, evidence_score=ev)
-    long_shot = sel(0.30, 0.27, 0.18)            # big margin over the price, unlikely to happen
-    coin_flip = sel(0.58, 0.55, 0.50)
-    likely = sel(0.72, 0.68, 0.64)
-    very_likely = sel(0.81, 0.77, 0.74)
-    rejected = sel(0.90, 0.88, 0.80, cls="rejected")
-    watch = sel(0.75, 0.70, 0.72, cls="watchlist")
-    assert [R.top_pick_eligible(x) for x in (long_shot, coin_flip, likely, very_likely, rejected, watch)] == [False, False, True, True, False, False]
-    ranked = sorted([x for x in (long_shot, coin_flip, likely, very_likely) if R.top_pick_eligible(x)], key=R._rank_key)
-    assert ranked == [very_likely, likely]                                                      # most likely first
-    old_order = sorted([long_shot, likely, very_likely], key=lambda x: -(x.prob_low - x.breakeven))
-    assert old_order[0] is long_shot                                                            # what 1.1 would have put on top
+    def sel(prob, low, be, cls="standard", ev=90, main=True):
+        return NS(prob=prob, prob_low=low, breakeven=be, classification=cls, evidence_score=ev,
+                  evidence={"main_line": main})
+    long_shot = sel(0.30, 0.27, 0.18)
+    thin_fav = sel(0.86, 0.85, 0.84)             # -525 rung: very likely, almost no margin
+    value = sel(0.60, 0.58, 0.50)                # near-even main line with a real margin
+    small = sel(0.57, 0.55, 0.53)
+    off_ladder = sel(0.90, 0.89, 0.80, main=False)  # a far ladder rung is never a top pick
+    rejected = sel(0.70, 0.66, 0.55, cls="rejected")
+    watch = sel(0.62, 0.48, 0.52, cls="watchlist")
+    xs = (long_shot, thin_fav, value, small, off_ladder, rejected, watch)
+    assert [R.top_pick_eligible(x) for x in xs] == [False, True, True, True, False, False, False]
+    ranked = sorted([x for x in xs if R.top_pick_eligible(x)], key=R._rank_key)
+    assert ranked == [value, small, thin_fav]                                                    # best value first
     assert R.RISK_POLICY["standard"]["min_edge_low"] == 0.0 and R.RISK_POLICY["max_plausible_edge"] == 0.10   # other gates untouched
     assert R.RISK_POLICY["qualifying_price_band"] == [0.15, 0.85]
+
+
+def test_main_line_is_the_ladder_rung_priced_closest_to_even():
+    """A Kalshi ladder keeps one main line per player and stat, chosen from market prices only."""
+    from types import SimpleNamespace as NS
+
+    from gizer import research as R
+
+    def q(line, side, be, market="player_fg3m", pid=7, book="Kalshi"):
+        return NS(market=market, subject_type="player", subject_id=pid, book=book, line=line, side=side,
+                  breakeven=be, evidence={})
+    ladder = [q(0.5, "over", 0.90), q(0.5, "under", 0.14), q(1.5, "over", 0.62), q(1.5, "under", 0.42),
+              q(2.5, "over", 0.41), q(2.5, "under", 0.63), q(3.5, "over", 0.18), q(3.5, "under", 0.85)]
+    single = [q(24.5, "over", 0.52, market="player_pts", book="DK"), q(24.5, "under", 0.52, market="player_pts", book="DK")]
+    game = [NS(market="total", subject_type="team", subject_id=None, book="Kalshi", line=221.5, side="over", breakeven=0.5, evidence={})]
+    R.mark_main_lines(ladder + single + game)
+    assert [x.line for x in ladder if x.evidence["main_line"]] == [2.5, 2.5]   # 0.41 is closest to 0.5
+    assert all(x.evidence["main_line"] for x in single + game)
 

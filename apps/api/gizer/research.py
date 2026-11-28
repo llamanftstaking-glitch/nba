@@ -28,10 +28,12 @@ FORBIDDEN_PHRASES = ("guaranteed", "free money", "risk-free", "risk free", "cann
 
 # Version-controlled risk policy. Changing it requires a commit; no agent or LLM can alter it at runtime.
 RISK_POLICY = {
-    "version": "gizer-risk-1.2",
-    # Owner decision D-037: the ranked "top picks" (and everything built from them: combinations, automatic paper
-    # tickets) contain only selections the model gives at least this probability. Every other gate still applies.
-    "top_picks": {"min_prob": 0.65, "max_per_game": 5},
+    "version": "gizer-risk-1.3",
+    # Owner decision D-041 (supersedes the ordering and floor of D-037): the ranked "top picks" (and everything built
+    # from them: combinations, automatic paper tickets) use only each player's main line for a stat (the listed
+    # threshold priced closest to even, the way a sportsbook shows one O/U line), need at least this model
+    # probability, and are ordered by margin over the price at the conservative end of the interval.
+    "top_picks": {"min_prob": 0.55, "max_per_game": 5, "main_line_only": True},
     "qualifying_price_band": [0.15, 0.85],  # break-even outside this band cannot rise above watchlist
     "max_quote_age_hours": 12, "fresh_quote_hours": 3,
     "max_injury_age_hours": 8, "max_box_staleness_days": 3,
@@ -479,15 +481,47 @@ def selection_key(g: Game, c: dict) -> str:
 
 
 def _rank_key(sel: Selection):
-    """Most likely first: the conservative end of the model's probability interval, then the margin over the
-    price, then evidence. (Before 1.2 this ranked by margin alone, which pushed long shots to the top.)"""
+    """Best value first among main lines (1.3, D-041): margin of the conservative end of the model's interval over
+    the price's break-even, then model probability, then evidence. 1.2 ranked by probability alone, which on Kalshi
+    ladders always chose the farthest rung (for example under 3.5 threes at -564) and filled the list with unders."""
     order = {"high_confidence": 0, "standard": 1}
-    return (order.get(sel.classification, 9), -(sel.prob_low if sel.prob_low is not None else sel.prob or 0),
-            -((sel.prob_low or 0) - (sel.breakeven or 0)), -(sel.evidence_score or 0))
+    low = sel.prob_low if sel.prob_low is not None else sel.prob or 0
+    return (order.get(sel.classification, 9), -(low - (sel.breakeven or 0)), -(sel.prob or 0), -(sel.evidence_score or 0))
+
+
+def is_main_line(sel) -> bool:
+    ev = getattr(sel, "evidence", None) or {}
+    return bool(ev.get("main_line"))
 
 
 def top_pick_eligible(sel: Selection) -> bool:
-    return sel.classification in QUALIFIED and sel.prob is not None and sel.prob >= RISK_POLICY["top_picks"]["min_prob"]
+    P = RISK_POLICY["top_picks"]
+    return (sel.classification in QUALIFIED and sel.prob is not None and sel.prob >= P["min_prob"]
+            and (not P.get("main_line_only") or is_main_line(sel)))
+
+
+def mark_main_lines(sels: list) -> None:
+    """Flag each selection whose quote is the main line of its market (evidence["main_line"]).
+
+    Game markets and single-line books quote one line, so it is the main line. A Kalshi ladder lists many
+    thresholds for one player and stat; the main line is the threshold whose break-even is closest to 50%
+    (the market's own median), judged on the over side when it is priced, else the under side. Ties go to the
+    lower line. The choice uses only market prices, never the model, so the model cannot pick its own line."""
+    groups: dict[tuple, list] = {}
+    for x in sels:
+        groups.setdefault((x.market, x.subject_id if x.subject_type == "player" else None, x.book), []).append(x)
+    for xs in groups.values():
+        lines = {x.line for x in xs}
+        main = None
+        if len(lines) > 1:
+            for side in ("over", "under"):
+                priced = [x for x in xs if x.side == side and x.breakeven is not None and x.line is not None]
+                if priced:
+                    main = min(priced, key=lambda x: (abs(x.breakeven - 0.5), x.line)).line
+                    break
+        for x in xs:
+            flag = len(lines) <= 1 or (main is not None and x.line == main)
+            x.evidence = {**(x.evidence or {}), "main_line": flag}
 
 
 # ---------------------------------------------------------------- combination engines
@@ -726,6 +760,7 @@ def publish_edition(d: date, kind: str = "morning", now: datetime | None = None)
                     evidence=v["evidence"], classification=v["classification"],
                     rejection_reasons=v["rejection_reasons"], verified_at=ctx.now)
                 per_game.append(sel)
+            mark_main_lines(per_game)
             ranked = sorted([x for x in per_game if top_pick_eligible(x)], key=_rank_key)
             # one side per market per game in the ranked list, at most five
             seen, rank = set(), 0

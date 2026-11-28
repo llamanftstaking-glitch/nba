@@ -47,7 +47,7 @@ export default function PicksPage() {
     <div className="space-y-9">
       <PageHeader
         title="Top Picks"
-        sub="Qualified selections the model puts at 65% or higher, most likely first, at most five per game. Other tabs page through every evaluated selection."
+        sub="One main line per player and stat, the line the market prices closest to even. Qualified picks the model puts at 55% or higher, best value over the price first, at most five per game. Other tabs page through every evaluated line."
         right={
           q.data?.edition ? (
             <p className="max-w-[44ch] text-sm text-muted">

@@ -5,6 +5,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ClassificationBadge } from "@/components/classification-badge";
 import { ProbabilityDisplay, ProbScale } from "@/components/prob";
+import { PickTile } from "@/components/pick-tile";
 import { SelectionCard } from "@/components/selection-card";
 import { NA, Val } from "@/components/ui/na";
 import { cn } from "@/lib/cn";
@@ -95,7 +96,7 @@ export function SelectionHead() {
   );
 }
 
-/** Selection rows grouped by game, with at most `perGame` shown per game until expanded. */
+/** Picks grouped by game as board lines (PickTile), with at most `perGame` shown per game until expanded. */
 export function SelectionsByGame({ items, perGame = 5, showSave = true }: { items: Selection[]; perGame?: number; showSave?: boolean }) {
   const groups = useMemo(() => {
     const m = new Map<string, { label: string; items: Selection[] }>();
@@ -108,7 +109,6 @@ export function SelectionsByGame({ items, perGame = 5, showSave = true }: { item
   }, [items]);
   return (
     <div className="space-y-8" data-testid="selections-by-game">
-      <SelectionHead />
       {groups.map(([id, g]) => (
         <GameGroup key={id} label={g.label} items={g.items} perGame={perGame} showSave={showSave} />
       ))}
@@ -129,7 +129,7 @@ function GameGroup({ label, items, perGame, showSave }: { label: string; items: 
       </h3>
       <ul>
         {shown.map((s) => (
-          <SelectionRow key={s.id} s={s} showGame={false} showSave={showSave} />
+          <PickTile key={s.id} s={s} showGame={false} showSave={showSave} />
         ))}
       </ul>
       {items.length > perGame && (

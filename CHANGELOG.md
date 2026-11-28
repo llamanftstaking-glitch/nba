@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.8.1 — 2026-11-27 (picks read like a betting board; page load fix)
+* Risk policy `gizer-risk-1.3` (owner decision D-041). Owner: "all we saw was a bunch of unders when there are
+  clearly better picks"; picks should look like a sportsbook board and be broken down by combinations. Cause found on
+  the production 2026-11-27 pregame edition: 1.2 ranked by probability, so on Kalshi ladders the farthest rung always
+  won (24 of 35 top picks were unders, all priced -322 to -564 with 1–3 points of margin). Top picks now use one main
+  line per player and stat (the rung priced closest to even, chosen from prices only), need model probability ≥ 55%,
+  and rank by lower-bound margin over break-even. On the same edition: 261 qualified main lines, 139 under / 122 over.
+  Combinations and paper tickets follow automatically (they are built from top picks).
+* Picks show as board lines: player photo, name, stat, projection, model %, break-even, edge, and an Over/Under pill
+  with the American price. Parlay cards list each leg the same way with the combined leg odds (labelled as the
+  product of leg prices, not a sportsbook quote) and the model hit chance. Leg dicts gain `subject_id`,
+  `subject_type`, `headshot_url`; selections gain `main_line` (additive API changes).
+* Page load: every page request ran a group-by over all of the day's selection rows (about 149,000 across 23
+  editions; 2.6 s on Server M) to find each game's latest edition. Now one index lookup per game on the new index
+  `ix_selections_game_edition` (migration 0007). The API's selection cache is capped at 32 game blocks (was 96) to
+  relieve memory on Server M, which was out of swap.
+* TESTED: backend 165 passed; web typecheck, lint, build; browser smoke against the mock 3697 passed, 0 failed.
+  NOT VERIFIED: production page timings after deploy, forward hit rate under 1.3.
+
 ## 0.8.0 — 2026-11-27 (Project Aesthetic stage one: "Courtside" design, owner approved)
 * "Courtside" design applied to the real app: light theme, Archivo Variable. Owner condition: the left sidebar keeps
   the production menu exactly (same four groups, order, names and icons) and the phone bar keeps Home, Games, Props,

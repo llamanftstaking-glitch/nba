@@ -348,6 +348,8 @@ class Selection(Base):
     rank_in_game: Mapped[int | None] = mapped_column(Integer)
     verified_at: Mapped[datetime] = _ts(default=utcnow)
     created_at: Mapped[datetime] = _ts(default=utcnow)
+    # latest edition per game is looked up on every page request; without this it scans the whole day
+    __table_args__ = (Index("ix_selections_game_edition", "game_id", "edition_id"),)
 
 
 class Combo(Base):
